@@ -1,0 +1,49 @@
+{
+  "2025-01-07": {
+    "reported_by": "Joe Deez Nutzz",
+    "approved_by":"36",
+    "header_constant": {
+      "reportDate": "2025-01-07",
+      "projectName": "Sati Darshan, Malad",
+      "location": "Malad(W), Mumbai",
+      "employer": "M/s Goyal Sati Darshan LLP",
+      "contractNo": "2223-57",
+      "startDate": "02-05-2022",
+      "endDate": "16-05-2025"
+    },
+    "labourProgress": {
+      "agencyName": ["Agency 1", "A2", "A3"],
+      "mason": [5, 7, 9],
+      "carp": [3, 4, 5],
+      "fitter": [0, 1, 0],
+      "electrical": [0, 0, 2],
+      "painter": [0, 1, 0],
+      "gypsum": [0, 0, 1],
+      "plumber": [0, 0, 0],
+      "helper": [10, 12, 8],
+      "staff": [2, 1, 1],
+      "total": [20, 26, 26],
+      "remarks": ["Good progress", "Satisfactory", "On track"]
+    },
+    "todaysProgress": [
+      {
+        "task": "Concrete Pouring",
+        "quantity": 150
+      },
+      {
+        "task": "Steel Work",
+        "quantity": 200
+      }
+    ],
+    "tomorrowsPlanning": [
+      {
+        "task": "Plastering",
+        "quantity": 120
+      },
+      {
+        "task": "Painting",
+        "quantity": 60
+      }
+    ]
+  }
+}
