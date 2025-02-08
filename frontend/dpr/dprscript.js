@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   // Retrieve the session
-  const username = getSession();
+  // const username = getSession();
 
   if (!username) {
     // If session is not valid, redirect to login page
