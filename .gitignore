@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -128,3 +129,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+=======
+backend/data/*.json
+*.txt
+>>>>>>> 012a46a18f694bbf2e7828df3a88761892e7d174
