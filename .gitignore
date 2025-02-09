@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ffd74bf (updated gitignore)
 # Logs
 logs
 *.log
@@ -132,14 +128,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-<<<<<<< HEAD
-=======
-backend/data/*.json
-*.txt
->>>>>>> 012a46a18f694bbf2e7828df3a88761892e7d174
-=======
 
 backend/data/*.json
 *.txt
 *.md
->>>>>>> ffd74bf (updated gitignore)
+
