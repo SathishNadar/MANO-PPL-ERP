@@ -132,4 +132,4 @@ dist
 backend/data/*.json
 *.txt
 *.md
-
+*Mano
