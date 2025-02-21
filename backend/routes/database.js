@@ -1,9 +1,12 @@
 import mysql from 'mysql2';
 import dotenv from 'dotenv';
+import Fuse from "fuse.js";
+
 
 // Load environment variables
-// const result = dotenv.config();
-const result = dotenv.config({ path: './Mano/.env' });
+// const result = dotenv.config({ path: './backend/.env' });
+const result = dotenv.config({ path: '.env' });
+
 if (result.error) {
     console.error("Error loading .env file:", result.error);
 }
@@ -13,16 +16,15 @@ const pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
-    // password: "mysql#8983",
     database: process.env.MYSQL_DATABASE,
 }).promise();
 
 // ----------------------- RAW FUNCTIONS ----------------------- //
 
-// ----------> DPR
-// Function to fetch DPR by ID
-export async function r_fetchDprByID(id) {
-    const query = "SELECT * FROM dpr WHERE dpr_id = ?";
+// ----------> USER
+// Function to fetch USER by ID
+export async function r_fetchUserByID(id) {
+    const query = "SELECT * FROM Users WHERE user_id = ?";
     try {
         const [row] = await pool.query(query, [id]);
         return row[0] || null;
@@ -34,7 +36,7 @@ export async function r_fetchDprByID(id) {
 
 // Function to fetch user by username
 export async function r_fetchUserByName(name) {
-    const query = "SELECT * FROM users WHERE user_name = ?"
+    const query = "SELECT * FROM Users WHERE user_name = ?"
     try {
         const [row] = await pool.query(query, [name]);
         return row[0] || null;
@@ -78,6 +80,19 @@ export async function r_isEmailOrPhoneTaken(email, phone) {
         return rows[0].count > 0;
     } catch (error) {
         console.error("Error checking email or phone:", error);
+        throw error;
+    }
+}
+
+// ----------> DPR
+// Function to fetch DPR by ID
+export async function r_fetchDprByID(id) {
+    const query = "SELECT * FROM dpr WHERE dpr_id = ?";
+    try {
+        const [row] = await pool.query(query, [id]);
+        return row[0] || null;
+    } catch (error) {
+        console.error("Error fetching DPR by ID:", error);
         throw error;
     }
 }
@@ -158,18 +173,128 @@ export async function r_updateDPR(dprId, updatedData) {
 
 
 // ----------> Vendors List
-// Function to fetch vendors with pagination
-export async function r_fetchVendorsByTab(tabNumber = 1, limit = 25) {
-    const offset = (tabNumber - 1) * limit; // Calculates the starting point
-    const query = "SELECT * FROM Vendors ORDER BY name ASC LIMIT ? OFFSET ?";
+// Function to fetch vendors with pagination and filtering
+export async function r_fetchVendorsByTab({
+    category = 1,
+    tab = 1,
+    limit = 25,
+    locationIds = [],
+    jobNatureIds = [],
+    order = 'ASC'
+} = {}) {
+
+    const offset = (tab - 1) * limit;
     
+    let baseQuery = "FROM Vendors WHERE 1";
+    
+    const params = [];
+    
+    if (locationIds.length > 0) {
+        baseQuery += ` AND location_id IN (${locationIds.map(() => '?').join(',')})`;
+        params.push(...locationIds);
+    }
+    
+    if (jobNatureIds.length > 0) {
+        baseQuery += ` AND job_nature_id IN (${jobNatureIds.map(() => '?').join(',')})`;
+        params.push(...jobNatureIds);
+    }
+    
+    let query = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+    
+    let countQuery = `SELECT COUNT(*) AS total ${baseQuery}`;
+
     try {
-        const [rows] = await pool.query(query, [limit, offset]);
-        return rows;
+        const [[{ total }]] = await pool.query(countQuery, params.slice(0, -2));
+        const [rows] = await pool.query(query, params);
+
+        return {
+            vendors: rows,
+            vendorCount: total
+        };
     } catch (error) {
         console.error("Error fetching vendors:", error);
         throw error;
     }
+}
+
+// Generic function to fetch ID-name pairs from any table
+export async function r_fetchIdNamePairs(tableName) {
+    const query = `SELECT id, name FROM \`${tableName}\``;
+    try {
+        const [rows] = await pool.query(query);
+        return Object.fromEntries(rows.map(row => [row.name, row.id]));
+    } catch (error) {
+        console.error(`Error fetching data from ${tableName}:`, error);
+        throw error;
+    }
+}
+
+// Function to fetch Count of vendors in table
+export async function r_fetchVendorsCount() {
+    const query = "SELECT COUNT(*) AS count FROM Vendors";
+    try {
+        const [[result]] = await pool.query(query);
+        return result.count;
+    } catch (error) {
+        console.error("Error fetching vendor count:", error);
+        throw error;
+    }
+}
+
+
+// Function to fetch all Job Natures in table
+export async function r_fetchVendorsAllJobNatures() {
+    return await r_fetchIdNamePairs("JobNatures");
+}
+
+// Function to fetch all Locations in table
+export async function r_fetchVendorsAllLocations() {
+    return await r_fetchIdNamePairs("Locations");
+}
+
+// Function to fetch all Locations in table
+export async function r_searchVendors({
+    queryString = "",
+    category = 1,
+    tabNumber = 1,
+    limit = 25,
+    locationIds = [],
+    jobNatureIds = [],
+} = {}) {
+    const { vendors } = await r_fetchVendorsByTab({
+        category,
+        tabNumber: 1,
+        limit: 10000, 
+        locationIds,
+        jobNatureIds,
+    });
+
+    if (!vendors || vendors.length === 0) {
+        console.log("No vendors found");
+        return [];
+    }
+
+    if (!queryString.trim()) {
+        const offset = (tabNumber - 1) * limit;
+        return vendors.slice(offset, offset + limit);
+    }
+
+    const fuse = new Fuse(vendors, {
+        keys: ["name", "remarks", "reference", "contact_person"],
+        threshold: 0.4,
+    });
+
+    let results = fuse.search(queryString).map(result => result.item);
+
+    const vendorCount = results.length;
+    const offset = (tabNumber - 1) * limit;
+    results = results.slice(offset, offset + limit)
+    console.log(results, results.length);
+    return {
+        vendors: results,
+        vendorCount,
+    };
 }
 
 
@@ -190,8 +315,10 @@ export async function InsertDprByID(dprData) {
 
 
 
-// const nice = await r_fetchVendorsByTab()
-// console.log(nice)
+// const nice = await r_searchVendors({
+//     queryString: "abc"
+// })
+// console.log("nice : ", nice)
 
 
 
