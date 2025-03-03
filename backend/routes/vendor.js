@@ -14,9 +14,7 @@ router.post("/api", async (req, res) => {
             locationIds = [],
             jobNatureIds = []
         } = req.body || {};
-        console.log(tab, order)
         
-        // const vendors = await DB.r_fetchVendorsByTab(category, tab, limit, locationIds, jobNatureIds, order);
         const vendors = await DB.r_fetchVendorsByTab({ 
             category, 
             tab, 
@@ -46,7 +44,15 @@ router.post("/api/search", async (req, res) => {
             jobNatureIds = []
         } = req.body || {};
         
-        const vendors = await DB.r_searchVendors(queryString, category, tab, limit, locationIds, jobNatureIds, order);
+        const vendors = await DB.r_searchVendors({ 
+            queryString,
+            category, 
+            tab, 
+            limit, 
+            locationIds, 
+            jobNatureIds, 
+            order 
+        });
         
         res.json(vendors);
     } catch (error) {

@@ -48,7 +48,7 @@ export async function r_fetchUserByName(name) {
 
 // Function to add user
 export async function r_addUser(user_data) {
-    const query = "INSERT INTO users (user_name, user_password, email, mob_no) VALUES (?, ?, ?, ?);";
+    const query = "INSERT INTO Users (user_name, user_password, email, phone_no) VALUES (?, ?, ?, ?);";
     
     try {
         const [result] = await pool.query(query, user_data);
@@ -61,7 +61,7 @@ export async function r_addUser(user_data) {
 
 // Function to check user_name exists
 export async function r_usernameExist(user_name) {
-    const query = "SELECT user_name FROM users WHERE user_name = ?";
+    const query = "SELECT user_id FROM Users WHERE user_name = ?";
     try {
         const [rows] = await pool.query(query, user_name);
         return rows[0]
@@ -73,7 +73,7 @@ export async function r_usernameExist(user_name) {
 
 // Function to check Email or PhoneNo. is Taken
 export async function r_isEmailOrPhoneTaken(email, phone) {
-    const query = "SELECT COUNT(*) AS count FROM users WHERE email = ? OR mob_no = ?";
+    const query = "SELECT COUNT(*) AS count FROM Users WHERE email = ? OR phone_no = ?";
     
     try {
         const [rows] = await pool.query(query, [email, phone]);
@@ -185,9 +185,8 @@ export async function r_fetchVendorsByTab({
 
     const offset = (tab - 1) * limit;
     
-    let baseQuery = "FROM Vendors WHERE 1";
-    
-    const params = [];
+    let baseQuery = "FROM Vendors WHERE category_id = ?";
+    const params = [category];
     
     if (locationIds.length > 0) {
         baseQuery += ` AND location_id IN (${locationIds.map(() => '?').join(',')})`;
@@ -290,7 +289,6 @@ export async function r_searchVendors({
     const vendorCount = results.length;
     const offset = (tabNumber - 1) * limit;
     results = results.slice(offset, offset + limit)
-    console.log(results, results.length);
     return {
         vendors: results,
         vendorCount,
