@@ -15,6 +15,6 @@ app.use("/auth", loginRoutes);
 // app.use("/report", reportRoutes); 
 app.use("/vendor", vendorRoutes); 
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
