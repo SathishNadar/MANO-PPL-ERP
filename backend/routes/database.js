@@ -4,8 +4,8 @@ import Fuse from "fuse.js";
 
 
 // Load environment variables
-// const result = dotenv.config({ path: './backend/.env' });
-const result = dotenv.config({ path: '.env' });
+const result = dotenv.config({ path: './backend/.env' });
+// const result = dotenv.config({ path: '.env' });
 
 if (result.error) {
     console.error("Error loading .env file:", result.error);
