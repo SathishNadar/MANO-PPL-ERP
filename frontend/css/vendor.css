@@ -1,0 +1,319 @@
+.vendor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #009dff;
+  color: white;
+  font-size: 20px;
+}
+
+/* Hide navbar & sidebar when Vendor List is active */
+body.vendor-active .navbar, 
+body.vendor-active .sidebar {
+  display: none !important;
+}
+
+/* Employee Table */
+.employee-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.employee-table th, .employee-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #dddddd;
+}
+
+.employee-table th {
+  background-color: #009dff;
+  color: white;
+}
+
+.employee-table tr:hover {
+  background-color: #f5f5f5;
+}
+
+/* Pagination */
+#vendor-pagination {
+  text-align: center;
+  margin: 20px 0;
+}
+
+
+/* =p=pokdsffffffffffffffkosddddddddddddddddddddddddddoooooooooooooooooooooooooooooooooooooooooooooooooo */
+
+
+/* ✅ Vendor Details Popup */
+.vendor-popup {
+  display: none;
+  background: white;
+  padding: 20px;
+  width: 30vw;
+  max-height: 65vh;
+  overflow-y: auto;
+  max-width: 90%;
+  border-radius: 8px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  animation: popupFadeIn 0.3s ease-in-out;
+}
+
+/* ✅ Popup Close Button */
+.custom-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 35px;
+  cursor: pointer;
+  color: rgb(0, 0, 0);
+}
+
+/* ✅ Popup Fade-in Animation */
+@keyframes popupFadeIn {
+  from {
+      opacity: 0;
+      transform: translate(-50%, -55%);
+  }
+  to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+  }
+}
+
+/* ✅ Copy Icon Styling */
+.copy-text {
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.copy-text:hover {
+  border-bottom: 1px solid black ;
+}
+
+.website-link{
+  text-decoration: none;
+  color: black;
+}
+
+.copy-btn{
+  position: absolute;
+  top: 20px;
+  right: 50px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ✅ Table Styling */
+.vendor-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.vendor-table th, .vendor-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.vendor-table th {
+  background-color: #007bff;
+  color: white;
+}
+
+.vendor-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.description-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  z-index: 1000;
+}
+
+.description-overlay.active {
+  display: block;
+}
+
+/* ✅ Pagination Buttons */
+#vendor-pagination {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.pagination-btn {
+  margin: 0 5px;
+  padding: 8px 12px;
+  border: 1px solid #007bff;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.pagination-btn:hover {
+  background-color: #0056b3;
+}
+
+/* ✅ Active Page Button */
+.pagination-btn.active {
+  background-color: #0056b3;
+  font-weight: bold;
+}
+
+
+/* filter button css------------------------------------------- */
+.filters {
+  background-color: transparent;
+  color: white;
+  padding: 10px 20px;
+  border: 2px solid white;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.filters:hover {
+  background-color: white;
+  color: #37393b;
+}
+
+.filters:active {
+  background-color: #f1f1f1;
+  color: #343638;
+}
+
+
+.filter-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  z-index: 1000;
+}
+
+.filter-overlay.active {
+  display: block;
+}
+
+/* Dialog Box */
+.filter-dialog {
+  position: fixed;
+  top: 40%;
+  left: 82%;
+  transform: translate(-50%, -50%);
+  background: white;
+  width: 400px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  display: none;
+  z-index: 1001;
+  padding: 20px;
+}
+
+.filter-dialog.active {
+  display: block;
+}
+
+/* Dialog Header */
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.filter-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.close-btn{
+  font-size: 25px;
+  cursor: pointer;
+}
+
+/* Dialog Content */
+.filter-section {
+  margin-top: 10px;
+}
+
+.filter-title {
+  font-weight: bold;
+  cursor: pointer;
+  background: #f0f0f0;
+  padding: 8px;
+  border-radius: 5px;
+}
+
+.filter-options {
+  max-height: 150px;
+  overflow-y: auto;
+  display: none;
+  padding: 5px;
+  border: 1px solid #ccc;
+  background: white;
+}
+
+.filter-options label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 3px 0; 
+}
+
+/* Search Bar */
+.filter-search {
+  width: 97%;
+  padding: 5px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: none;
+}
+
+
+/* Dialog Footer */
+.filter-footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+  gap: 20px;
+}
+
+.filter-footer button {
+  padding: 8px 16px;
+  border: none;
+  background: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.filter-footer button:hover {
+  background: #0056b3;
+}

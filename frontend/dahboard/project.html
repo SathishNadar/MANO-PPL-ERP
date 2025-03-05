@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROJECTS</title>
+    <link rel="stylesheet" href="homepage.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .mega-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            width: 100%;
+            height: 50px;
+            background-color: #2B2B2B;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .layout {
+            display: flex;
+            margin-top: 80px; /* Prevents overlap with fixed header */
+            height: calc(100vh - 80px);
+        }
+
+        .sidebar-container {
+            position: fixed;
+    top: 50px; /* Align below header */
+    left: 0;
+    width: 40px; /* Collapsed width */
+    height: calc(100vh - 50px);
+    transition: width 0.3s ease-in-out;
+    z-index: 999;
+}
+
+        .sidebar {
+    width: 100%; /* Take full width of .sidebar-container */
+    height: 100%;
+    background-color: #343a40;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    overflow: hidden;
+    transition: width 0.3s ease-in-out;
+        }
+    .sidebar-container:hover {
+    width: 200px;
+}
+        .sidebar-container:not(:hover) {
+    width: 40px;
+}
+.sidebar-container:hover .sidebar {
+    width: 200px;
+}
+
+        .sidebar-container:not(:hover) .sidebar {
+            width: 40px;
+        }
+
+        .sidebar button {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    padding: 10px 20px;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+        }
+
+        .sidebar button i {
+    width: 30px;
+    text-align: center;
+}
+
+/* Hide text when collapsed */
+.sidebar-container:not(:hover) .sidebar span {
+    opacity: 0;
+    width: 0;
+    transition: opacity 0.3s ease-in-out, width 0.3s ease-in-out;
+    overflow: hidden;
+    display: inline-block;
+}
+.sidebar-container:hover .sidebar span {
+    opacity: 1;
+    width: auto;
+}
+
+        .sidebar button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+    flex-grow: 1;
+    padding: 20px;
+    width: 100%; /* Keep full width without shifting */
+    display: flex;
+    justify-content: center;
+}
+
+        .sidebar-container:not(:hover) ~ .main-content {
+            margin-left: 40px;
+            width: calc(100% - 40px);
+        }
+
+        .project-container {
+            width: fit-content;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* PROJECT BOX DESIGN */
+        .project-box {
+            width: 750px;
+            height: auto;
+            display: grid;
+            grid-template-rows: auto 1fr auto auto;
+            gap: 15px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+            border: 0.3px solid black;
+        }
+
+        .project-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .project-description {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .project-dates {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .project-button {
+            justify-self: end;
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: 0.3s ease-in-out;
+        }
+
+        .project-button:hover {
+            background: #0056b3;
+        }
+        .log-out{
+            height: 40px;
+            width: 200px;
+            border-radius: 40px;
+            border: 2px solid blue;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+        }
+        .log-out > img{
+            width: 50px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: lightblue;
+            margin-left: -5px;
+            transition: 0.3s;
+        }
+        .log-out:hover> img{
+            background-color: white;
+        }
+        .log-out:hover{
+            background-color: blue;
+            color: white;
+            border: 2px solid white;
+        }
+        .log-out:active{
+            background-color: rgb(0, 0, 107);
+            transition: 0s;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mega-container">
+        <div class="header">
+            <div class="logo"><img src="images/Mano-Logo-.png" alt="Logo"></div>
+            <button class="log-out"> <img src="images/profile-pic-actual.png">LOG OUT</button>
+        </div>
+
+        <div class="layout">
+            <div class="sidebar-container">
+                <div class="sidebar">
+                    <button><i class="fa-solid fa-user"></i> <span>Vendors</span></button>
+                    <button><i class="fa-solid fa-truck"></i> <span>Suppliers</span></button>
+                    <button style="background-color: #7b83f5;"><i class="fa-solid fa-folder"></i> <span>Projects</span></button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="project-container">
+                    <div class="project-box">
+                        <div class="project-title">PROJECT 1</div>
+                        <div class="project-description">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque assumenda pariatur iste. Ex veritatis eveniet velit deleniti! Harum quo cumque eveniet saepe, illum cum magni blanditiis, laudantium ducimus at odit ipsam quas quis rerum? Ullam voluptatibus eum id facilis doloremque, incidunt cupiditate exercitationem est magni inventore, corporis consequatur eos! Pariatur!
+                        </div>
+                        <div class="project-dates">
+                            <span>Start: 01/01/2025</span>
+                            <span>End: 12/31/2025</span>
+                        </div>
+                        <!-- <a href="play_on.html" class="project-button">View Details</a> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

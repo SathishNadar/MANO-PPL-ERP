@@ -1,0 +1,132 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    flex-direction: column;
+}
+
+.dashboard {
+    display: flex;
+    width: 100%;
+    flex: 1;
+}
+
+.sidebar {
+    z-index: 0;
+    background-color: #1a1a1a;
+    color: white;
+    width: 60px;
+    transition: width 0.3s ease-in-out;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 80px;
+}
+
+.sidebar:hover {
+    width: 200px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.sidebar ul li {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s, padding 0.3s;
+    width: 100%;
+    white-space: nowrap;
+    font-size: 14px; /* Fixed font size */
+}
+
+.sidebar ul li svg {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    flex-shrink: 0; /* Prevents resizing */
+}
+
+.sidebar ul  li:hover {
+    background-color: #333;
+}
+.sidebar ul li span {
+    display: inline-block;
+    font-size: 14px; /* Fixed size */
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    transition: opacity 0.3s, width 0.3s;
+}
+
+.sidebar:hover ul li span {
+    opacity: 1;
+    width: auto;
+    
+}
+
+
+.navbar {
+    z-index: 2;
+    background: #333;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+}
+
+.logo {
+    height: 40px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    right: 50px;
+}
+
+.user-info span {
+    margin-right: 10px;
+}
+
+.user-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    /* background: #f4f4f4; */
+    color: #1a1a1a;
+    padding: 20px; /* Add padding for better spacing */
+    margin-top: 60px; 
+    transition: margin-left 0.3s ease-in-out;
+}
+/* -------------------------------------------Functionality css-------------------------------------------- */
+
+.active-menu {
+    background-color: #5b5a5a !important;
+    color: white !important;
+    font-weight: bold;
+    border-left: 5px solid white;
+    transition: background-color 0.3s ease-in-out;
+}
+
