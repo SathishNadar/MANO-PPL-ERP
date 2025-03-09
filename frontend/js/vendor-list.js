@@ -51,7 +51,7 @@ async function fetchMetadata() {
         console.log("Job Nature Dictionary:", jobNatureDict);
         console.log("reverse Job Nature Dictionary:", ReverseJobNatureDict);
         console.log("Location Dictionary:", locationDict);
-        console.log("Reverse Location Dictionary:", locationReverseDict);
+        console.log("Reverse Location Dictionary:", ReverseLocationDict);
 
         renderVendorPagination(totalVendorCount, 1);
 
@@ -266,12 +266,12 @@ function loadFilterData(id) {
     let items;
 
     if (id === "job-options") {
-        items = Object.keys(jobNatureDict); 
+        items = jobNatureDict; 
     } else if(id == "category-options"){
-        items = categoryDict;
+        items = ReversecategoryDict;
     } 
     else {
-        items = Object.keys(locationDict); 
+        items = locationDict; 
     }
 
     populateFilterOptions(id, items, id);
@@ -466,10 +466,11 @@ function closePopup() {
 
 function filterSearch(inputId, listId) {
     let searchValue = document.getElementById(inputId).value.trim().toLowerCase();
-    if (searchValue.length == 0){
-        loadFilterData(listId);
-    } 
     let checkboxes = document.querySelectorAll(`#${listId} label`);
+    if (searchValue.length == 0){
+        checkboxes.forEach(label => label.style.display = "block");
+        return;
+    } 
 
     let items = Array.from(checkboxes).map(label => ({
         text: label.innerText.trim(),

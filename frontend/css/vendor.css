@@ -54,7 +54,7 @@ body.vendor-active .sidebar {
 .employee-table th:nth-child(5), .employee-table td:nth-child(5){
   max-width: 355px;
 }
-.employee-table th:nth-child(4), .employee-table td:nth-child(4){
+.employee-table th:nth-child(7), .employee-table td:nth-child(7){
   max-width: 135px;
 }
 
