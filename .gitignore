@@ -133,3 +133,5 @@ backend/data/*.json
 *.txt
 *.md
 *Mano
+
+*test.js

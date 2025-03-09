@@ -4,12 +4,14 @@ body {
     display: flex;
     height: 100vh;
     flex-direction: column;
+    /* overflow-y: hidden; */
 }
 
 .dashboard {
     display: flex;
     width: 100%;
     flex: 1;
+    min-height: 0;
 }
 
 .sidebar {
@@ -119,7 +121,7 @@ body {
     padding: 20px; /* Add padding for better spacing */
     margin-top: 60px; 
     transition: margin-left 0.3s ease-in-out;
-    /* overflow-y: auto; */
+    overflow-y: auto;
 }
 
 /* ------------------------------------------------------Vendor css---------------------------------------- */

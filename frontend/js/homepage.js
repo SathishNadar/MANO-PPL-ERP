@@ -111,6 +111,7 @@ function loadVendorList() {
               <tr>
                   <th>Name</th>
                   <th>Nature of Job</th>
+                  <th>Category</th>
                   <th>Phone</th>
                   <th>Email</th>
                   <th>Location</th>

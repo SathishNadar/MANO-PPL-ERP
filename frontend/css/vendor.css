@@ -20,12 +20,42 @@ body.vendor-active .sidebar {
   border-collapse: collapse;
   margin: 20px 0;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  /* table-layout: fixed; */
 }
 
-.employee-table th, .employee-table td {
+.employee-table th {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #dddddd;
+  max-width: 200px;/
+}
+
+.employee-table td{
+  padding: 12px 15px;
+  /* max-width: 200px; */
+  text-align: left;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.employee-table th:nth-child(1), .employee-table td:nth-child(1){
+  min-width: 135px;
+}
+
+.employee-table th:nth-child(2), .employee-table td:nth-child(2){
+  min-width: 120px;
+}
+.employee-table th:nth-child(3), .employee-table td:nth-child(3){
+  min-width: 80px;
+}
+.employee-table th:nth-child(4), .employee-table td:nth-child(4){
+  max-width: 135px;
+}
+.employee-table th:nth-child(5), .employee-table td:nth-child(5){
+  max-width: 355px;
+}
+.employee-table th:nth-child(4), .employee-table td:nth-child(4){
+  max-width: 135px;
 }
 
 .employee-table th {
@@ -35,12 +65,6 @@ body.vendor-active .sidebar {
 
 .employee-table tr:hover {
   background-color: #f5f5f5;
-}
-
-/* Pagination */
-#vendor-pagination {
-  text-align: center;
-  margin: 20px 0;
 }
 
 
@@ -152,30 +176,46 @@ body.vendor-active .sidebar {
 }
 
 /* ✅ Pagination Buttons */
+
 #vendor-pagination {
   text-align: center;
   margin: 20px 0;
 }
 
+
 .pagination-btn {
   margin: 0 5px;
-  padding: 8px 12px;
-  border: 1px solid #007bff;
+  padding: 8px 14px;
+  border: none;
   background-color: #007bff;
   color: white;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 20px; /* Rounded buttons */
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease-in-out;
 }
 
 .pagination-btn:hover {
   background-color: #0056b3;
 }
 
-/* ✅ Active Page Button */
 .pagination-btn.active {
-  background-color: #0056b3;
+  background-color: #004999;
+  color: white;
   font-weight: bold;
+}
+
+.pagination-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination-dots {
+  margin: 0 5px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #555;
 }
 
 
