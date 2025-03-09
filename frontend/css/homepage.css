@@ -119,7 +119,53 @@ body {
     padding: 20px; /* Add padding for better spacing */
     margin-top: 60px; 
     transition: margin-left 0.3s ease-in-out;
+    /* overflow-y: auto; */
 }
+
+/* ------------------------------------------------------Vendor css---------------------------------------- */
+
+/* Arrow Rotation */
+.arrow {
+    margin-left: auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+.vendor-menu.expanded .arrow {
+    transform: rotate(180deg);
+}
+
+/* Sub-items (appear below) */
+.vendor-sublist {
+    display: none; /* Hidden initially */
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+    background-color: #222;
+    color: white;
+    border-left: 5px solid rgba(255, 255, 255, 0.3); /* Subtle left border */
+}
+
+.vendor-sublist:hover {
+    background-color: #444;
+}
+
+/* Show sub-items when expanded */
+.show-subitems {
+    display: flex;
+}
+
+/* Active Menu Styling */
+.active-menu {
+    background-color: #5b5a5a !important;
+    color: white !important;
+    font-weight: bold;
+    border-left: 5px solid white;
+    transition: background-color 0.3s ease-in-out;
+}
+
+
+
 /* -------------------------------------------Functionality css-------------------------------------------- */
 
 .active-menu {

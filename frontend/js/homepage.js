@@ -46,14 +46,18 @@ function setActivePage(page) {
 
   if (page === "vendor") {
     loadVendorList();
-  } else {
+  } 
+  else if (selectedItem) {
     mainContent.innerHTML = `<h2>${selectedItem.dataset.text}</h2>`;
+  } 
+  else {
+     mainContent.innerHTML = `<h2>Page Not Found</h2>`; // or handle the error
+    console.warn(`No menu item found with data-page="${page}"`);
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   const menuItems = document.querySelectorAll(".sidebar li"); 
-  const mainContent = document.querySelector(".main-content");
 
   // Attach event listeners to all sidebar items
   menuItems.forEach((item) => {
@@ -63,6 +67,29 @@ document.addEventListener("DOMContentLoaded", () => {
         setActivePage(page);
       }
     });
+  });
+
+  const vendorMenu = document.querySelector(".vendor-menu");
+  const vendorToggle = document.querySelector(".vendor-toggle");
+  const vendorSubItems = document.querySelectorAll(".vendor-sublist");
+
+  // Toggle Vendor List expansion
+  vendorToggle.addEventListener("click", () => {
+      const isExpanded = vendorMenu.classList.contains("expanded");
+
+      if (isExpanded) {
+          vendorMenu.classList.remove("expanded");
+          vendorSubItems.forEach(item => item.style.display = "block");
+      } else {
+          vendorMenu.classList.add("expanded");
+          vendorSubItems.forEach(item => item.style.display = "None");
+      }
+  });
+
+  document.querySelectorAll(".vendor-sublist").forEach(item => {
+      item.addEventListener("click", () => {
+          setActivePage(item.dataset.page); 
+      });
   });
 
   // Restore active page on reload
@@ -96,7 +123,7 @@ function loadVendorList() {
 
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
-    script.src = "/frontend/js/vendor.js";
+    script.src = "/MANO-PPL-ERP/frontend/js/vendor-list.js";
     script.onload = () => {
       window.vendorScriptLoaded = true;
     };
@@ -106,15 +133,3 @@ function loadVendorList() {
     renderVendorList(1);
   }
 }
-
-async function fetchVendorData() {
-  const response = await fetch("/backend/data/contracto.json");
-  return await response.json();
-}
-
-async function main() {
-  const emp = await fetchVendorData(); // Await the promise
-  console.log(emp["vendors"]); // Now it's properly resolved
-}
-
-main()
