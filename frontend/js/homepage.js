@@ -73,16 +73,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const vendorToggle = document.querySelector(".vendor-toggle");
   const vendorSubItems = document.querySelectorAll(".vendor-sublist");
 
+  vendorSubItems.forEach(item => item.style.display = "none");
   // Toggle Vendor List expansion
   vendorToggle.addEventListener("click", () => {
       const isExpanded = vendorMenu.classList.contains("expanded");
 
       if (isExpanded) {
           vendorMenu.classList.remove("expanded");
-          vendorSubItems.forEach(item => item.style.display = "block");
-      } else {
+          vendorSubItems.forEach(item => item.style.display = "none");
+        } else {
           vendorMenu.classList.add("expanded");
-          vendorSubItems.forEach(item => item.style.display = "None");
+          vendorSubItems.forEach(item => item.style.display = "block");
       }
   });
 
