@@ -175,7 +175,7 @@ export async function r_updateDPR(dprId, updatedData) {
 // ----------> Vendors List
 // Function to fetch vendors with pagination and filtering
 export async function r_fetchVendorsByTab({
-    category = 1,
+    category = 0,
     tab = 1,
     limit = 25,
     locationIds = [],
@@ -185,8 +185,15 @@ export async function r_fetchVendorsByTab({
 
     const offset = (tab - 1) * limit;
     
-    let baseQuery = "FROM Vendors WHERE category_id = ?";
-    const params = [category];
+    let baseQuery = "FROM Vendors";
+    const params = [];
+
+    if (category !== 0) {
+        baseQuery += " WHERE category_id = ?";
+        params.push(category);
+    } else {
+        baseQuery += " WHERE 1";
+    }
     
     if (locationIds.length > 0) {
         baseQuery += ` AND location_id IN (${locationIds.map(() => '?').join(',')})`;

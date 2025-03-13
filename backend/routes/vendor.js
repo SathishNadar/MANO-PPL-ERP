@@ -4,13 +4,13 @@ import * as DB from "./database.js"
 const router = express.Router();
 
 // Post call to fetch Vendor data as per the filters
-router.post("/api", async (req, res) => {
+router.post("/", async (req, res) => {
     try {
         const {
             tab = 1,
             limit = 25,
             order = "ASC",
-            category = 1,
+            category = 0,
             locationIds = [],
             jobNatureIds = []
         } = req.body || {};
@@ -21,7 +21,7 @@ router.post("/api", async (req, res) => {
             limit, 
             locationIds, 
             jobNatureIds, 
-            order 
+            order
         });
         
         res.json(vendors);
@@ -32,7 +32,7 @@ router.post("/api", async (req, res) => {
 });
 
 // Post call to fetch Vendor data as per search and filters
-router.post("/api/search", async (req, res) => {
+router.post("/search", async (req, res) => {
     try {
         const {
             queryString,
@@ -62,7 +62,7 @@ router.post("/api/search", async (req, res) => {
 });
 
 // Get call to fetch All available Job Natures in Vendors List 
-router.get("/api/JobNatures", async (req, res) =>{
+router.get("/JobNatures", async (req, res) =>{
     try {
         const JobNatures = await DB.r_fetchVendorsAllJobNatures();
         res.json({ JobNatures});
@@ -73,7 +73,7 @@ router.get("/api/JobNatures", async (req, res) =>{
 })
 
 // Get call to fetch All available Locations in Vendors List 
-router.get("/api/Locations", async (req, res) =>{
+router.get("/Locations", async (req, res) =>{
     try {
         const Locations = await DB.r_fetchVendorsAllLocations();
         res.json({ Locations});
@@ -84,7 +84,7 @@ router.get("/api/Locations", async (req, res) =>{
 })
 
 // GET call to fetch all locations, job natures, and vendor count
-router.get("/api/metadata", async (req, res) => {
+router.get("/metadata", async (req, res) => {
     try {
         const locations = await DB.r_fetchVendorsAllLocations();
         const jobNatures = await DB.r_fetchVendorsAllJobNatures();
@@ -100,6 +100,5 @@ router.get("/api/metadata", async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 });
-
 
 export default router;

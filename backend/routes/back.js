@@ -1,7 +1,10 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import cors from "cors";
-import * as DB from "./database.js"
+import * as DB from "./database.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
 
 const router = express.Router();
 
