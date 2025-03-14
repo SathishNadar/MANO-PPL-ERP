@@ -147,6 +147,7 @@ body {
     background-color: #222;
     color: white;
     border-left: 5px solid rgba(255, 255, 255, 0.3); /* Subtle left border */
+    background-color: #333333;
 }
 
 .vendor-sublist:hover {

@@ -79,7 +79,7 @@ body.vendor-active .sidebar {
   width: 30vw;
   max-height: 65vh;
   overflow-y: auto;
-  max-width: 90%;
+  width: 480px;
   border-radius: 8px;
   position: fixed;
   top: 50%;
@@ -128,6 +128,7 @@ body.vendor-active .sidebar {
 }
 
 .copy-btn{
+  cursor: pointer;
   position: absolute;
   top: 20px;
   right: 50px;
@@ -271,6 +272,7 @@ body.vendor-active .sidebar {
   display: none;
   z-index: 1001;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .filter-dialog.active {
