@@ -29,7 +29,7 @@ let ReversecategoryDict = {
 
 async function fetchMetadata() {
     try {
-        const response = await fetch("http://35.154.101.129:3000/vendor/api/metadata/");
+        const response = await fetch("http://35.154.101.129:3000/vendor_api/metadata/");
         if (!response.ok) throw new Error("Network response was not ok");
 
         const data = await response.json();
@@ -62,7 +62,7 @@ async function fetchMetadata() {
 
 async function fetchVendorData(filters = {}) {
     try {
-        const response = await fetch("http://35.154.101.129:3000/vendor/api/", {
+        const response = await fetch("http://35.154.101.129:3000/vendor_api/", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -73,10 +73,6 @@ async function fetchVendorData(filters = {}) {
                 category: 2,
                 locationIds: filters.locationIds || [],
                 jobNatureIds: filters.jobNatureIds || [],
-                user_name: "Sathish Nadar",
-                user_password: "1234",
-                email: "sathish.mac23@gmail.com",
-                phone_no: "9321945896"
             })
         });
 
@@ -100,7 +96,7 @@ async function initializeVendorList() {
     await fetchMetadata();  // ✅ Wait for metadata to load
     fetchVendorData();  // ✅ Fetch vendors after metadata is ready
 }
-initializeVendorList();  // ✅ Calls both in sequence
+initializeVendorList();  
 
 
 async function renderVendorList(page) {
@@ -145,7 +141,6 @@ async function renderVendorList(page) {
 
         tbody.appendChild(row);
 
-        // ✅ Copy Phone & Email Functionality
         row.querySelectorAll(".copy-text").forEach(copyItem => {
             copyItem.addEventListener("click", () => {
                 navigator.clipboard.writeText(copyItem.dataset.copy)
@@ -154,15 +149,12 @@ async function renderVendorList(page) {
             });
         });
 
-        // ✅ Show Popup on Row Click (Except Copy Clicks)
         row.addEventListener("click", (event) => {
             if (!event.target.classList.contains("copy-text")) {
                 showPopup(vendor);
             }
         });
     }
-
-    renderVendorPagination(totalVendorCount, page);
 }
 
 
@@ -179,11 +171,23 @@ function renderVendorPagination(totalVendors, activePage) {
 
     if (totalPages <= 1) return; // Hide pagination if only one page
 
-    // ✅ Previous Button (Disabled on first page)
+    const createButton = (page, isActive = false) => {
+        const btn = document.createElement("button");
+        btn.className = "pagination-btn" + (isActive ? " active" : "");
+        btn.innerText = page;
+        btn.onclick = () => {
+            currentVendorPage = page;
+            renderVendorList(page);
+            renderVendorPagination(totalVendors, page);
+        };
+        return btn;
+    };
+
+    // Previous Button
     const left = document.createElement("button");
     left.className = "pagination-btn";
     left.innerText = "<";
-    left.disabled = activePage === 1; // Disable if on first page
+    left.disabled = activePage === 1;
     left.onclick = () => {
         if (currentVendorPage > 1) {
             currentVendorPage--;
@@ -193,59 +197,43 @@ function renderVendorPagination(totalVendors, activePage) {
     };
     paginationDiv.appendChild(left);
 
-    // ✅ First Page (Always show)
-    const firstPage = document.createElement("button");
-    firstPage.className = "pagination-btn" + (activePage === 1 ? " active" : "");
-    firstPage.innerText = "1";
-    firstPage.onclick = () => {
-        currentVendorPage = 1;
-        renderVendorList(1);
-        renderVendorPagination(totalVendors, 1);
-    };
-    paginationDiv.appendChild(firstPage);
+    // First Page (Always Show)
+    paginationDiv.appendChild(createButton(1, activePage === 1));
 
-    // ✅ Left Ellipsis if activePage is far from page 1
-    if (activePage > 2) {
+    let start = Math.max(2, activePage - 1);
+    let end = Math.min(totalPages - 1, activePage + 1);
+
+    // Left Ellipsis if needed
+    if (start > 2) {
         const leftDots = document.createElement("span");
         leftDots.innerText = "...";
         leftDots.style.margin = "0 5px";
         paginationDiv.appendChild(leftDots);
     }
 
-    // ✅ Middle Page (Current Page)
-    if (activePage !== 1 && activePage !== totalPages) {
-        const middlePage = document.createElement("button");
-        middlePage.className = "pagination-btn active";
-        middlePage.innerText = activePage;
-        paginationDiv.appendChild(middlePage);
+    // Middle Pages (Dynamically Generated)
+    for (let i = start; i <= end; i++) {
+        paginationDiv.appendChild(createButton(i, activePage === i));
     }
 
-    // ✅ Right Ellipsis if activePage is far from last page
-    if (activePage < totalPages - 2) {
+    // Right Ellipsis if needed
+    if (end < totalPages - 1) {
         const rightDots = document.createElement("span");
         rightDots.innerText = "...";
         rightDots.style.margin = "0 5px";
         paginationDiv.appendChild(rightDots);
     }
 
-    // ✅ Last Page (Always show)
+    // Last Page (Always Show)
     if (totalPages > 1) {
-        const lastPage = document.createElement("button");
-        lastPage.className = "pagination-btn" + (activePage === totalPages ? " active" : "");
-        lastPage.innerText = totalPages;
-        lastPage.onclick = () => {
-            currentVendorPage = totalPages;
-            renderVendorList(totalPages);
-            renderVendorPagination(totalVendors, totalPages);
-        };
-        paginationDiv.appendChild(lastPage);
+        paginationDiv.appendChild(createButton(totalPages, activePage === totalPages));
     }
 
-    // ✅ Next Button (Disabled on last page)
+    // Next Button
     const right = document.createElement("button");
     right.className = "pagination-btn";
     right.innerText = ">";
-    right.disabled = activePage === totalPages; // Disable if on last page
+    right.disabled = activePage === totalPages;
     right.onclick = () => {
         if (currentVendorPage < totalPages) {
             currentVendorPage++;
