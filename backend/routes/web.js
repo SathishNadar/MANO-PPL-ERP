@@ -15,6 +15,7 @@ router.get("/home", (req, res) => {
     res.sendFile(path.join(__dirname, "../../frontend/dahboard/homepage.html"));
   });
 
-router.use(express.static('frontend')); 
+// router.use(express.static('frontend'));
+router.use(express.static(path.join(__dirname, "../../frontend"))); 
   
 export default router;
