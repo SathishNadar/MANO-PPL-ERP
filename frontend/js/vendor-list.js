@@ -301,6 +301,7 @@ function populateFilterOptions(containerId, items, type) {
 function applyFilters() {
     let selectedJobs = getSelectedValues("job-options-checkbox"); 
     let selectedLocations = getSelectedValues("location-options-checkbox");
+    let selectedcategory= getSelectedValues("category-options-checkbox");
 
     console.log("Selected Jobs:", selectedJobs);
     console.log("Selected Locations:", selectedLocations);
@@ -487,7 +488,7 @@ function filterSearch(inputId, listId) {
 
 
 function clearFilters() {
-    document.querySelectorAll(".job-options-checkbox, .location-options-checkbox").forEach(checkbox => {
+    document.querySelectorAll(".job-options-checkbox, .location-options-checkbox, .category-options-checkbox").forEach(checkbox => {
         checkbox.checked = false;
         sessionStorage.removeItem(checkbox.value);
     });
