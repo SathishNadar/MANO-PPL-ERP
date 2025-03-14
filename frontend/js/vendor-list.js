@@ -133,7 +133,7 @@ async function renderVendorList(page) {
 
         // ✅ Function to handle empty, NaN, or undefined values
         const formatValue = (value) => {
-            return (value === undefined || value === "null" || value === "" || value === "NaN" || value === "-" || value === "nan") ? "nice" : value;
+            return (value === undefined || value === "null" || value === "" || value === "NaN" || value === "-" || value === "nan") ? "-----" : value;
         };
 
         row.innerHTML = `
@@ -428,6 +428,26 @@ function openFilterDialog() {
 }
 
 
+function copyToClipboard() {
+    const popup = document.getElementById("vendor-popup");
+    if (!popup) return;
+  
+    let textToCopy = "";
+  
+    const details = popup.querySelectorAll("p");
+    details.forEach(p => {
+      textToCopy += p.innerText + "\n"; 
+    });
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        console.log("Text copied to clipboard!");
+      })
+      .catch((err) => {
+        console.error("Failed to copy text: ", err);
+      });
+  }
+  
 
 function toggleDropdown(id) {
     loadFilterData(id);

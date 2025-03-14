@@ -135,3 +135,7 @@ function loadVendorList() {
     renderVendorList(1);
   }
 }
+
+function loadContarctorList(){
+  
+}
