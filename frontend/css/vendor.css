@@ -1,3 +1,11 @@
+/* @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;1,500&display=swap');
+
+*{
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+} */
+
 .vendor-header {
   display: flex;
   justify-content: space-between;
@@ -257,6 +265,7 @@ body.vendor-active .sidebar {
 
 .filter-overlay.active {
   display: block;
+  overflow-y: auto;
 }
 
 /* Dialog Box */
@@ -272,7 +281,6 @@ body.vendor-active .sidebar {
   display: none;
   z-index: 1001;
   padding: 20px;
-  overflow-y: auto;
 }
 
 .filter-dialog.active {

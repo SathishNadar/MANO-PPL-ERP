@@ -125,7 +125,7 @@ function loadVendorList() {
 
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
-    script.src = "/MANO-PPL-ERP/frontend/js/vendor-list.js";
+    script.src = "../js/vendor-list.js";
     script.onload = () => {
       window.vendorScriptLoaded = true;
     };
