@@ -6,7 +6,7 @@ let itemsPerPage = 25;
 let currentVendorPage = 1;
 let allVendors = [];
 let totalVendorCount = 0; 
-
+let appliedFilters = { locationIds: [], jobNatureIds: [], categoryIds: 0 };
 
 let jobNatureDict = {};
 let locationDict = {};
@@ -19,6 +19,7 @@ let CategoryDict = {
     2:"Contractor",
     3:"Supplier",
 }
+
 let ReversecategoryDict = {
     "Consultant":1,
     "Contractor":2,
@@ -70,9 +71,9 @@ async function fetchVendorData(tab_no ,filters = {}) {
             body: JSON.stringify({
                 tab: tab_no,
                 order: "ASC",
-                category: 0,
-                locationIds: filters.locationIds || [],
-                jobNatureIds: filters.jobNatureIds || [],
+                locationIds:  appliedFilters.locationIds || [],
+                jobNatureIds: appliedFilters.jobNatureIds || [],
+                category: appliedFilters.categoryIds
             })
         });
 
@@ -132,7 +133,7 @@ async function renderVendorList(page) {
 
         // ✅ Function to handle empty, NaN, or undefined values
         const formatValue = (value) => {
-            return (value === undefined || value === "null" || value === "" || value === "NaN" || value === "-" || value === "nan") ? "-_-" : value;
+            return (value === undefined || value === "null" || value === "" || value === "NaN" || value === "-" || value === "nan") ? "nice" : value;
         };
 
         row.innerHTML = `
@@ -189,7 +190,7 @@ function renderVendorPagination(totalVendors, activePage) {
         btn.innerText = page;
         btn.onclick = () => {
             if (currentVendorPage !== page) { 
-                fetchVendorData(page);  
+                fetchVendorData(page, appliedFilters); 
             }
         };
         return btn;
@@ -231,7 +232,7 @@ function renderVendorPagination(totalVendors, activePage) {
     right.disabled = activePage === totalPages;
     right.onclick = () => {
         if (currentVendorPage < totalPages) {
-            fetchVendorData(currentVendorPage + 1);
+            fetchVendorData(currentVendorPage + 1, appliedFilters);
         }
     };
     paginationDiv.appendChild(right);
@@ -293,13 +294,14 @@ function applyFilters() {
     console.log("Selected Locations:", selectedLocations);
     console.log("Selected Categories:", selectedCategory);
 
-    let filters = {
+    appliedFilters = {
         locationIds: selectedLocations.map(name => locationDict[name] || null).filter(Boolean),
         jobNatureIds: selectedJobs.map(name => jobNatureDict[name] || null).filter(Boolean),
-        categories: selectedCategory.map(name => ReversecategoryDict[name] || null).filter(Boolean),
+        categoryIds: ReversecategoryDict[selectedCategory],
     };
-    console.log(filters);
-    fetchVendorData(1, filters); 
+
+    console.log(appliedFilters);
+    fetchVendorData(1, appliedFilters); 
 }
 
 
