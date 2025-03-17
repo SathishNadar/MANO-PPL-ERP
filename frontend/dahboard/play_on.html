@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLAY ON!</title>
+    <style>
+       * {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: grid;
+    justify-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f4f4f9;
+    font-family: 'Arial', sans-serif;
+    color: #333;
+}
+
+.mega-container {
+    height: 100%;
+    width: 85%;
+    display: grid;
+    gap: 10px;
+}
+
+.except-header {
+    display: grid;
+    grid-template-areas: 
+        "banner banner banner"
+        "left-bar center-bar right-bar"
+        "left-bar timeline timeline"
+        "left-bar filter filter";
+    grid-template-rows: 220px 220px 250px auto;
+    grid-template-columns: 320px 1fr 1fr;
+    height: 100%;
+    width: 100%;
+    gap: 15px;
+}
+
+.header {
+    height: 80px;
+    width: auto;
+    background-color: #1e3a5f;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.banner {
+    background-color: #6596c5;
+    grid-area: banner;
+    font-size: 3.5em;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+    height: auto;
+    padding: 30px;
+    border-radius: 8px;
+}
+
+.left-bar, .center-bar, .right-bar, .timeline, .filter {
+    border-radius: 8px;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.left-bar {
+    grid-area: left-bar;
+}
+
+.center-bar {
+    grid-area: center-bar;
+}
+
+.right-bar {
+    grid-area: right-bar;
+}
+
+.timeline {
+    grid-area: timeline;
+    background-color: #eef2f6;
+    border-left: 4px solid #1e3a5f;
+}
+
+.filter {
+    grid-area: filter;
+    background-color: #eef2f6;
+}
+
+.image-logo img {
+    height: 60px;
+}
+
+.profile-pic {
+    height: 80px;
+    width: 80px;
+    border-radius: 50%;
+    margin-right: 15px;
+    border: 3px solid #1e3a5f;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.username span {
+    display: block;
+    font-weight: bold;
+    color: #1e3a5f;
+}
+
+.location span {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.location span i {
+    margin-right: 5px;
+    color: #1e3a5f;
+}
+
+.logout {
+    width: 120px;
+    height: 45px;
+    font-size: 1em;
+    background-color: #f44e4e;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.logout:hover {
+    background-color: #d43d3d;
+}
+
+.project-description p {
+    margin-bottom: 8px;
+    line-height: 1.5;
+    color: #444;
+    font-size: 0.95em;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #ddd;
+    margin: 15px 0;
+}
+
+@media (max-width: 650px) {
+    .except-header {
+        grid-template-areas: 
+            "banner"
+            "left-bar"
+            "center-bar"
+            "right-bar"
+            "timeline"
+            "filter";
+        grid-template-rows: auto auto auto auto auto auto;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .banner {
+        font-size: 2.5em;
+        padding: 20px;
+    }
+}
+
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <div class="mega-container">
+        <div class="header">
+            <div class="image-logo">
+                <img class="logo" src="images/Mano-Logo-.png" alt="Company Logo">
+            </div>
+            <div class="logout-div">
+                <button class="logout">LOGOUT</button>
+            </div>
+        </div>
+        <div class="except-header">
+            <div class="banner">PROJECT EXAMPLE</div>
+            <div class="left-bar">
+                <div class="user-profile">
+                    <img class="profile-pic" src="images/profile-pic.png" alt="User Profile Picture">
+                    <div class="username">
+                        <span>User Name</span>
+                        <span>User@gmail.com</span>
+                        <span>Role: Client</span>
+                    </div>
+                </div>
+                <div class="location">
+                    <span><i class="fa-solid fa-building"></i> Nice Bike Organization Pvt. Ltd</span>
+                    <span><i class="fa-solid fa-location-dot"></i> Mumbai</span>
+                </div>
+                <hr>
+                <div class="project-description">
+                    <p>PROJECT NAME: SkyVistaTower</p>
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi, impedit.</p>
+                </div>
+                <hr>
+                <div class="project-start_end">
+                    <p>Project Start: 2.05.2022</p>
+                    <p>Project Completion: 18.05.2025</p>
+                </div>
+            </div>
+            <div class="center-bar">center-bar</div>
+            <div class="right-bar">right-bar</div>
+            <div class="timeline"></div>
+            <div class="filter">filter</div>
+        </div>
+    </div>
+</body>
+</html>
