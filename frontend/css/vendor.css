@@ -35,7 +35,8 @@ body.vendor-active .sidebar {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #dddddd;
-  max-width: 200px;/
+  max-width: 200px;
+  /* border-right: 2px solid rgb(0, 157, 209); */
 }
 
 .employee-table td{
@@ -44,6 +45,7 @@ body.vendor-active .sidebar {
   text-align: left;
   text-overflow: ellipsis;
   overflow: hidden;
+  border-right: 2px solid rgb(224, 223, 223);
 }
 
 .employee-table th:nth-child(1), .employee-table td:nth-child(1){
@@ -126,6 +128,7 @@ body.vendor-active .sidebar {
   transition: color 0.3s;
 }
 
+
 .copy-text:hover {
   border-bottom: 1px solid black ;
 }
@@ -154,13 +157,16 @@ body.vendor-active .sidebar {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.vendor-table th, .vendor-table td {
+ .vendor-table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #ddd;
 }
 
 .vendor-table th {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
   background-color: #007bff;
   color: white;
 }

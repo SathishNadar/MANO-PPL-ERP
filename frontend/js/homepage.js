@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!username) {
     alert("Session expired or user not logged in. Please log in again.");
-    window.location.href = "/frontend/login/index.html";
+    window.location.href = "../login/index.html";
   } else {
     document.querySelector(".user-info span").textContent = username;
   }
@@ -46,18 +46,16 @@ function setActivePage(page) {
 
   if (page === "vendor") {
     loadVendorList();
-  } 
-  else if (selectedItem) {
+  } else if (selectedItem) {
     mainContent.innerHTML = `<h2>${selectedItem.dataset.text}</h2>`;
-  } 
-  else {
-     mainContent.innerHTML = `<h2>Page Not Found</h2>`; // or handle the error
+  } else {
+    mainContent.innerHTML = `<h2>Page Not Found</h2>`; // or handle the error
     console.warn(`No menu item found with data-page="${page}"`);
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const menuItems = document.querySelectorAll(".sidebar li"); 
+  const menuItems = document.querySelectorAll(".sidebar li");
 
   // Attach event listeners to all sidebar items
   menuItems.forEach((item) => {
@@ -73,24 +71,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const vendorToggle = document.querySelector(".vendor-toggle");
   const vendorSubItems = document.querySelectorAll(".vendor-sublist");
 
-  vendorSubItems.forEach(item => item.style.display = "none");
+  vendorSubItems.forEach((item) => (item.style.display = "none"));
   // Toggle Vendor List expansion
   vendorToggle.addEventListener("click", () => {
-      const isExpanded = vendorMenu.classList.contains("expanded");
+    const isExpanded = vendorMenu.classList.contains("expanded");
 
-      if (isExpanded) {
-          vendorMenu.classList.remove("expanded");
-          vendorSubItems.forEach(item => item.style.display = "none");
-        } else {
-          vendorMenu.classList.add("expanded");
-          vendorSubItems.forEach(item => item.style.display = "block");
-      }
+    if (isExpanded) {
+      vendorMenu.classList.remove("expanded");
+      vendorSubItems.forEach((item) => (item.style.display = "none"));
+    } else {
+      vendorMenu.classList.add("expanded");
+      vendorSubItems.forEach((item) => (item.style.display = "block"));
+    }
   });
 
-  document.querySelectorAll(".vendor-sublist").forEach(item => {
-      item.addEventListener("click", () => {
-          setActivePage(item.dataset.page); 
-      });
+  document.querySelectorAll(".vendor-sublist").forEach((item) => {
+    item.addEventListener("click", () => {
+      setActivePage(item.dataset.page);
+    });
   });
 
   // Restore active page on reload
@@ -103,25 +101,31 @@ function loadVendorList() {
 
   mainContent.innerHTML = `
       <div class="vendor-header">
-          <h2>Vendor List</h2>
-          <button class="filters" onclick="openFilterDialog()">Filter</button>
+      <h2>Vendor List</h2>
+      <div class="options">
+        <button class="filters" onclick="openFilterDialog()">Filter</button>
       </div>
-      <table class="employee-table">
-          <thead>
-              <tr>
-                  <th>Name</th>
-                  <th>Nature of Job</th>
-                  <th>Category</th>
-                  <th>Phone</th>
-                  <th>Email</th>
-                  <th>Location</th>
-                  <th>Website</th>
-              </tr>
-          </thead>
-          <tbody id="vendor-data"></tbody>
-      </table>
-      <div id="vendor-pagination"></div>
-  `;
+    </div>
+    <table class="employee-table">
+      <thead>
+          <tr>
+              <th onclick="changeorder()" ><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M6 9L12 3L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M18 15L12 21L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+Company Name</th>
+              <th>Nature of Job</th>
+              <th>Category</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Location</th>
+              <th>Website</th>
+          </tr>
+      </thead>
+      <tbody id="vendor-data"></tbody>
+    </table>
+    <div id="vendor-pagination"></div>
+`;
 
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
@@ -132,10 +136,54 @@ function loadVendorList() {
     document.head.appendChild(script);
     // console.log(script)
   } else {
-    renderVendorList(1);
+    initializeVendorList();
   }
 }
 
-function loadContarctorList(){
-  
+function loadContarctorList() {
+  const mainContent = document.querySelector(".main-content");
+
+  mainContent.innerHTML = `
+   <div class="mega-container">
+        <div class="header">
+            <div class="image-logo">
+                <img class="logo" src="" alt="Company Logo">
+            </div>
+            <div class="logout-div">
+                <button class="logout">LOGOUT</button>
+            </div>
+        </div>
+        <div class="except-header">
+            <div class="banner">PROJECT EXAMPLE</div>
+            <div class="left-bar">
+                <div class="user-profile">
+                    <img class="profile-pic" src="" alt="User Profile Picture">
+                    <div class="username">
+                        <span>User Name</span>
+                        <span>User@gmail.com</span>
+                        <span>Role: Client</span>
+                    </div>
+                </div>
+                <div class="location">
+                    <span><i class="fa-solid fa-building"></i> Nice Bike Organization Pvt. Ltd</span>
+                    <span><i class="fa-solid fa-location-dot"></i> Mumbai</span>
+                </div>
+                <hr>
+                <div class="project-description">
+                    <p>PROJECT NAME: SkyVistaTower</p>
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi, impedit.</p>
+                </div>
+                <hr>
+                <div class="project-start_end">
+                    <p>Project Start: 2.05.2022</p>
+                    <p>Project Completion: 18.05.2025</p>
+                </div>
+            </div>
+            <div class="center-bar">center-bar</div>
+            <div class="right-bar">right-bar</div>
+            <div class="timeline"></div>
+            <div class="filter">filter</div>
+        </div>
+    </div>
+  `;
 }
