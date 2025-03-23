@@ -46,17 +46,13 @@ function setActivePage(page) {
 
   if (page === "vendor") {
     loadVendorList();
-  } 
-  else if (page === "vendor-consultants") {
+  } else if (page === "vendor-consultants") {
     loadConsultantList();
-  } 
-  else if (page === "vendor-contractors") {
+  } else if (page === "vendor-contractors") {
     loadContractorList();
-  } 
-  else if (page === "vendor-suppliers") {
-    loadSupplierList()
-  } 
-  else if (selectedItem) {
+  } else if (page === "vendor-suppliers") {
+    loadSupplierList();
+  } else if (selectedItem) {
     mainContent.innerHTML = `<h2>${selectedItem.dataset.text}</h2>`;
   } else {
     mainContent.innerHTML = `<h2>Page Not Found</h2>`; // or handle the error
@@ -106,35 +102,49 @@ document.addEventListener("DOMContentLoaded", () => {
   setActivePage(savedPage);
 });
 
-function loadVendorList() {
-  const mainContent = document.querySelector(".main-content");
-
-  mainContent.innerHTML = `
-      <div class="vendor-header">
-      <h2>Vendor List</h2>
+function setMainContent(listname) {
+  return `
+    <div class="vendor-header">
+      <h2>${listname}</h2>
       <div class="options">
+        <div class="search-box">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="7" stroke="#888" stroke-width="2" fill="none"/>
+            <line x1="15" y1="15" x2="22" y2="22" stroke="#888" stroke-width="2"/>
+          </svg>
+          <input class="searchinput" type="text" placeholder="Search...">
+        </div>
         <button class="filters" onclick="openFilterDialog()">Filter</button>
       </div>
     </div>
+
     <table class="employee-table">
       <thead>
-          <tr>
-              <th class="order" onclick="changeorder()" ><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M18 15L12 21L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-Company Name</th>
-              <th>Nature of Job</th>
-              <th>Category</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Location</th>
-              <th>Website</th>
-          </tr>
+        <tr>
+          <th class="order" onclick="changeorder()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 10L12 15L6 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Company Name
+          </th>
+          <th>Nature of Job</th>
+          <th>Category</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Location</th>
+          <th>Website</th>
+        </tr>
       </thead>
       <tbody id="vendor-data"></tbody>
     </table>
+
     <div id="vendor-pagination"></div>
-`;
+  `;
+}
+
+function loadVendorList() {
+  const mainContent = document.querySelector(".main-content");
+  mainContent.innerHTML = setMainContent("Vendor List");
 
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
@@ -152,33 +162,7 @@ Company Name</th>
 
 function loadContractorList() {
   const mainContent = document.querySelector(".main-content");
-
-  mainContent.innerHTML = `
-      <div class="vendor-header">
-      <h2>Vendor List</h2>
-      <div class="options">
-        <button class="filters" onclick="openFilterDialog()">Filter</button>
-      </div>
-    </div>
-    <table class="employee-table">
-      <thead>
-          <tr>
-              <th class="order" onclick="changeorder()" ><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M18 15L12 21L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-Company Name</th>
-              <th>Nature of Job</th>
-              <th>Category</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Location</th>
-              <th>Website</th>
-          </tr>
-      </thead>
-      <tbody id="vendor-data"></tbody>
-    </table>
-    <div id="vendor-pagination"></div>
-`;
+  mainContent.innerHTML = setMainContent("Contractor List");
 
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
@@ -194,35 +178,9 @@ Company Name</th>
   }
 }
 
-function loadSupplierList() {
+function loadConsultantList() {
   const mainContent = document.querySelector(".main-content");
-
-  mainContent.innerHTML = `
-      <div class="vendor-header">
-      <h2>Vendor List</h2>
-      <div class="options">
-        <button class="filters" onclick="openFilterDialog()">Filter</button>
-      </div>
-    </div>
-    <table class="employee-table">
-      <thead>
-          <tr>
-              <<th class="order" onclick="changeorder()" ><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M18 15L12 21L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-Company Name</th>
-              <th>Nature of Job</th>
-              <th>Category</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Location</th>
-              <th>Website</th>
-          </tr>
-      </thead>
-      <tbody id="vendor-data"></tbody>
-    </table>
-    <div id="vendor-pagination"></div>
-`;
+  mainContent.innerHTML = setMainContent("Consultant List");
 
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
@@ -231,42 +189,15 @@ Company Name</th>
       window.vendorScriptLoaded = true;
     };
     document.head.appendChild(script);
-    // console.log(script)
   } else {
-    categoryIds = 3;
+    categoryIds = 1;
     initializeVendorList();
   }
 }
 
-function loadConsultantList() {
+function loadSupplierList() {
   const mainContent = document.querySelector(".main-content");
-
-  mainContent.innerHTML = `
-      <div class="vendor-header">
-      <h2>Vendor List</h2>
-      <div class="options">
-        <button class="filters" onclick="openFilterDialog()">Filter</button>
-      </div>
-    </div>
-    <table class="employee-table">
-      <thead>
-          <tr>
-              <th class="order" onclick="changeorder()" ><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M18 15L12 21L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-Company Name</th>
-              <th>Nature of Job</th>
-              <th>Category</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Location</th>
-              <th>Website</th>
-          </tr>
-      </thead>
-      <tbody id="vendor-data"></tbody>
-    </table>
-    <div id="vendor-pagination"></div>
-`;
+  mainContent.innerHTML = setMainContent("Supplier List");
 
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
@@ -275,9 +206,8 @@ Company Name</th>
       window.vendorScriptLoaded = true;
     };
     document.head.appendChild(script);
-    // console.log(script)
   } else {
-    categoryIds = 1;
+    categoryIds = 3;
     initializeVendorList();
   }
 }

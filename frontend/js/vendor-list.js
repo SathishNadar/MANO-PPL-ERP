@@ -203,7 +203,7 @@
         btn.innerText = page;
         btn.onclick = () => {
         if (currentVendorPage !== page) {
-            fetchVendorData(page, appliedFilters);
+            fetchVendorData(page, orders);
         }
         };
         return btn;
@@ -312,9 +312,9 @@
 
         if (svgPath) {
             if (orders === "ASC") {
-                svgPath.setAttribute("d", "M18 15L12 21L6 15");
+                svgPath.setAttribute("d", "M18 10L12 15L6 10");
             } else {
-                svgPath.setAttribute("d", "M6 19L12 13L18 19");
+                svgPath.setAttribute("d", "M6 12L12 7L18 12");
             }
         }
     }
