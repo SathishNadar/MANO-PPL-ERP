@@ -48,8 +48,14 @@ body.vendor-active .sidebar {
   border-right: 2px solid rgb(224, 223, 223);
 }
 
-.employee-table th:nth-child(1), .employee-table td:nth-child(1){
-  min-width: 135px;
+.employee-table th:nth-child(1){
+  min-width: 145px;
+  display: flex;
+  align-items: center;
+}
+
+.employee-table td:nth-child(1){
+  min-width: 145px;
 }
 
 .employee-table th:nth-child(2), .employee-table td:nth-child(2){
