@@ -1,20 +1,38 @@
-import express from "express";
-import bcrypt from "bcrypt";
-import jwt from 'jsonwebtoken';
+import express from 'express';
+import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import path from "path";
+import path from 'path';
+import jwt from 'jsonwebtoken';
 import { fileURLToPath } from "url";
 import * as DB from "./database.js";
 
-
-
+// Load environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const router = express.Router();
-
-// Load environment variables
 const result = dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
+const tokenExpirePeriod = "7d";
+
+
+export async function authenticateJWT(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (token == null) return res.sendStatus(401);
+    
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) return res.sendStatus(403);
+      req.user = user;
+      console.log(user);
+      next();
+    })
+}
+
+export async function generateJWT(user_data) {
+    return jwt.sign(user_data, process.env.JWT_SECRET, { expiresIn: tokenExpirePeriod});
+}
+
+
+const router = express.Router();
 
 // Login route
 router.post("/login", async (req, res) => {
@@ -23,16 +41,15 @@ router.post("/login", async (req, res) => {
     if (!user_name || !user_password) {
       return res.status(400).json({ message: "Username and password are required." });
     }
-
     const user_data = await DB.r_fetchUserByName(user_name);
     if (!user_data) {
       return res.status(404).json({ message: "Username not found" });
     }
-
     const isMatch = await bcrypt.compare(user_password, user_data.user_password);
     if (!isMatch) {
       return res.status(401).json({ message: "Incorrect password" });
     }
+
     const response_data = {
       user_id: user_data.user_id,
       user_name: user_data.user_name,
@@ -41,9 +58,9 @@ router.post("/login", async (req, res) => {
     res.status(200).json({ 
       message: "Login successful",
       user_data : response_data,
-      jwt: jwt.sign(response_data, process.env.JWT_SECRET, { expiresIn: "7d" })
-
+      jwt: await generateJWT(response_data)
     });
+
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Internal server error" });
