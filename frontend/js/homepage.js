@@ -117,7 +117,6 @@ function setMainContent(listname) {
         <button class="filters" onclick="openFilterDialog()">Filter</button>
       </div>
     </div>
-
     <table class="employee-table">
       <thead>
         <tr>

@@ -35,7 +35,7 @@ body.vendor-active .sidebar {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #dddddd;
-  max-width: 200px;
+  /* max-width: 300px; */
   /* border-right: 2px solid rgb(0, 157, 209); */
 }
 
