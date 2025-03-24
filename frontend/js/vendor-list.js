@@ -106,7 +106,7 @@ async function fetchVendorData(tab_no, orders) {
   }
 }
 
-async function search(tab_no, searchtext, orders) {
+async function search(tab_no, searchtext) {
   try {
     let response = await fetch(
       "http://35.154.101.129:3000/vendor_api/search/",
@@ -342,14 +342,19 @@ function changeorder() {
   orders = orders === "ASC" ? "DESC" : "ASC";
   fetchVendorData(1, orders);
 
-  let svgPath = document.querySelector(".order svg path");
+  let svgElement = document.querySelector(".order svg");
 
-  if (svgPath) {
-    if (orders === "ASC") {
-      svgPath.setAttribute("d", "M18 10L12 15L6 10");
-    } else {
-      svgPath.setAttribute("d", "M6 12L12 7L18 12");
-    }
+  if (svgElement) {
+    let currentRotation = svgElement.getAttribute("data-rotation") || "0";
+    let newRotation = parseInt(currentRotation) + 180;
+    svgElement.setAttribute("data-rotation", newRotation);
+    svgElement.style.transform = `rotate(${newRotation}deg)`;
+    svgElement.style.transformOrigin = "50% 70%"; 
+    svgElement.style.transition = "transform 0.3s ease";
+    svgElement.style.position = "relative";
+    
+    // let scaleY = orders === "ASC" ? 1 : -1;
+    // svgElement.setAttribute("style", `transform: scaleY(${scaleY}); transition: transform 0.3s ease;`);
   }
 }
 
@@ -576,12 +581,12 @@ function closeFilterDialog() {
 
 document.querySelector(".searchinput").addEventListener("keypress", (e) => {
   if (e.key === "Enter") {
-    let searchText = e.target.value.trim();
-    console.log(searchText);
-    if (searchText.length > 0) {
-      search(currentVendorPage, searchText, orders);
-    } else {
-      fetchVendorData(1, orders);
-    }
+  let searchText = e.target.value.trim();
+  console.log(searchText);
+  if (searchText.length > 0) {
+    search(1, searchText);
+  } else {
+    fetchVendorData(1, orders);
+  }
   }
 });
