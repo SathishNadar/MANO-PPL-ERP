@@ -1,10 +1,11 @@
 import express from "express";
-import * as DB from "./database.js"
+import * as DB from "./database.js";
+import * as JWT from "./auth.js";
 
 const router = express.Router();
 
 // Post call to fetch Vendor data as per the filters
-router.post("/", async (req, res) => {
+router.post("/", JWT.authenticateJWT, async (req, res) => {
     try {
         const {
             tab = 1,
@@ -32,7 +33,7 @@ router.post("/", async (req, res) => {
 });
 
 // Post call to fetch Vendor data as per search and filters
-router.post("/search", async (req, res) => {
+router.post("/search", JWT.authenticateJWT, async (req, res) => {
     try {
         const {
             queryString,
@@ -62,7 +63,7 @@ router.post("/search", async (req, res) => {
 });
 
 // Get call to fetch All available Job Natures in Vendors List 
-router.get("/JobNatures", async (req, res) =>{
+router.get("/JobNatures", JWT.authenticateJWT, async (req, res) =>{
     try {
         const JobNatures = await DB.r_fetchVendorsAllJobNatures();
         res.json({ JobNatures});
@@ -73,7 +74,7 @@ router.get("/JobNatures", async (req, res) =>{
 })
 
 // Get call to fetch All available Locations in Vendors List 
-router.get("/Locations", async (req, res) =>{
+router.get("/Locations", JWT.authenticateJWT, async (req, res) =>{
     try {
         const Locations = await DB.r_fetchVendorsAllLocations();
         res.json({ Locations});
@@ -84,7 +85,7 @@ router.get("/Locations", async (req, res) =>{
 })
 
 // GET call to fetch all locations, job natures, and vendor count
-router.get("/metadata", async (req, res) => {
+router.get("/metadata", JWT.authenticateJWT, async (req, res) => {
     try {
         const locations = await DB.r_fetchVendorsAllLocations();
         const jobNatures = await DB.r_fetchVendorsAllJobNatures();
