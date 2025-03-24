@@ -194,31 +194,7 @@ body {
   position: relative;
 }
 
-.search-box{
-    position: relative;
-    top: 3px;
-}
-.search-icon {
-  position: absolute;
-  left: 10px;
-  top: 43%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
 
-.searchinput {
-  width: 150px;
-  height: 15px;
-  padding: 10px 10px 10px 35px;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  outline: none;
-  font-size: 16px;
-}
-
-.searchinput:focus {
-  border-color: #007bff;
-}
 
 .order-container {
   position: relative;
@@ -233,3 +209,110 @@ body {
 .order-icon {
   transition: transform 0.3s ease;
 }
+
+
+/* Search Box Container */
+.search {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.search-box {
+  max-width: 250px;
+  min-width: 150px;
+  height: 35px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px 15px;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-box:hover {
+  border-color: #999;
+}
+
+/* Input Section */
+.search-field {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  left: -5px;
+  border: 0;
+}
+
+.input {
+  width: calc(100% - 29px);
+  height: 100%;
+  border: 0;
+  font-size: 1rem;
+  padding-right: 0px;
+  color: #333;
+  background: #fff;
+  border-right: 2px solid #ccc;
+  outline: none;
+}
+
+/* Placeholder */
+.input::placeholder {
+  color: #808080;
+}
+
+.input:focus::placeholder {
+  color: transparent;
+}
+
+/* Search Button */
+.search-box-icon {
+  width: 48px;
+  height: 46px;
+  position: absolute;
+  top: -6px;
+  right: -21px;
+  background: transparent;
+  border-bottom-right-radius: 5px;
+  border-top-right-radius: 5px;
+  transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+}
+
+.search-box-icon:hover {
+  background: #ddd;
+  cursor: pointer;
+}
+
+
+
+/* Search Button Icon */
+.btn-icon-content {
+  width: 2px;
+  height: 5px;
+  top: -6px;
+  right: -21px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-bottom-right-radius: 5px;
+  border-top-right-radius: 5px;
+  transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.4;
+}
+
+.btn-icon-content:hover {
+  opacity: 0.8;
+}
+
+/* Search Icon (Now Black) */
+.search-icon {
+  width: 21px;
+  height: 21px;
+  position: absolute;
+  top: 13px;
+  right: 15px;
+}
+

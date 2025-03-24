@@ -116,7 +116,7 @@ async function search(tab_no, searchtext) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          queryString: searchtext,
+          queryString: `${searchtext}`,
           tab: tab_no,
           order: orders,
           locationIds: appliedFilters.locationIds || [],
@@ -127,8 +127,8 @@ async function search(tab_no, searchtext) {
     );
 
     if (!response.ok) throw new Error("Network response was not ok");
-    let data = response.json();
-
+    let data = await response.json();
+    console.log(data);
     allVendors = data.vendors || [];
     totalVendorCount = data.vendorCount || 0;
 
@@ -579,14 +579,36 @@ function closeFilterDialog() {
   document.getElementById("filter-dialog").classList.remove("active");
 }
 
-document.querySelector(".searchinput").addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
-  let searchText = e.target.value.trim();
+document.addEventListener("keypress", (e) => {
+  const searchInput = document.querySelector(".searchinput");
+  if (!searchInput) return; // Stop if search input doesn't exist
+
+  if (e.key === "Enter" && e.target.classList.contains("searchinput")) {
+    handleSearch();
+  }
+});
+
+document.addEventListener("click", (e) => {
+  const searchInput = document.querySelector(".searchinput");
+  const searchIcon = document.querySelector(".search-icon");
+  if (!searchInput || !searchIcon) return; 
+
+  if (e.target.classList.contains("search-icon")) {
+    e.preventDefault(); 
+    searchInput.focus(); 
+    handleSearch();
+  }
+});
+
+function handleSearch() {
+  const searchInput = document.querySelector(".searchinput");
+  if (!searchInput) return; // Stop if search input is not found
+
+  let searchText = searchInput.value.trim();
   console.log(searchText);
   if (searchText.length > 0) {
     search(1, searchText);
   } else {
     fetchVendorData(1, orders);
   }
-  }
-});
+}
