@@ -76,6 +76,14 @@ async function fetchMetadata() {
 }
 
 async function fetchVendorData(tab_no, orders) {
+  const searchInput = document.querySelector(".search-field .input");
+  let searchText = searchInput?.value?.trim() || "";
+
+  if (searchText.length > 0) {
+    search(tab_no, searchText);
+    return;
+  }
+
   try {
     const response = await fetch("http://35.154.101.129:3000/vendor_api/", {
       method: "POST",
@@ -98,7 +106,9 @@ async function fetchVendorData(tab_no, orders) {
     allVendors = data.vendors || [];
     totalVendorCount = data.vendorCount || 0;
 
-    currentVendorPage = tab_no || 1;
+    // 🔹 Update current page correctly
+    currentVendorPage = tab_no;
+
     renderVendorList(currentVendorPage);
     renderVendorPagination(totalVendorCount, tab_no);
   } catch (error) {
@@ -107,6 +117,7 @@ async function fetchVendorData(tab_no, orders) {
 }
 
 async function search(tab_no, searchtext) {
+  console.log(categoryIds);
   try {
     let response = await fetch(
       "http://35.154.101.129:3000/vendor_api/search/",
@@ -132,7 +143,7 @@ async function search(tab_no, searchtext) {
     allVendors = data.vendors || [];
     totalVendorCount = data.vendorCount || 0;
 
-    currentVendorPage = tab_no || 1;
+    currentVendorPage = tab_no;
     renderVendorList(currentVendorPage);
     renderVendorPagination(totalVendorCount, tab_no);
   } catch (error) {
@@ -211,10 +222,35 @@ async function renderVendorList(page) {
       copyItem.addEventListener("click", () => {
         navigator.clipboard
           .writeText(copyItem.dataset.copy)
-          .then(() => console.log("Copied: " + copyItem.dataset.copy))
+          .then(() => {
+            Swal.fire({
+              toast: true,
+              position: "bottom-end",
+              icon: "success",
+              title: "Text Copied!",
+              showConfirmButton: false,
+              timer: 1000,
+              timerProgressBar: true,
+              showClass: { popup: "swal2-noanimation" },
+              hideClass: { popup: "" },
+              background: "#333",
+              color: "#fff",
+              customClass: {
+                popup: "small-toast",
+                timerProgressBar: "blue-progress-bar",
+              },
+              didOpen: (toast) => {
+                const progressBar = toast.querySelector(".swal2-timer-progress-bar");
+                if (progressBar) {
+                  progressBar.classList.add("animate-progress-faster");
+                }
+              },
+            });
+          })
           .catch((err) => console.error("Failed to copy:", err));
       });
     });
+    
 
     row.addEventListener("click", (event) => {
       if (!event.target.classList.contains("copy-text")) {
@@ -232,13 +268,24 @@ function renderVendorPagination(totalVendors, activePage) {
 
   if (totalVendors === 0 || totalPages <= 1) return;
 
+  const searchInput = document.querySelector(".search-field .input");
+  let searchText = searchInput?.value.trim() || "";
+
+  const goToPage = (page) => {
+    if (searchText.length > 0) {
+      search(page, searchText);
+    } else {
+      fetchVendorData(page, orders);
+    }
+  };
+
   const createButton = (page, isActive = false) => {
     const btn = document.createElement("button");
     btn.className = "pagination-btn" + (isActive ? " active" : "");
     btn.innerText = page;
     btn.onclick = () => {
       if (currentVendorPage !== page) {
-        fetchVendorData(page, orders);
+        goToPage(page); // 🔹 Now properly decides whether to call search() or fetchVendorData()
       }
     };
     return btn;
@@ -250,7 +297,7 @@ function renderVendorPagination(totalVendors, activePage) {
   left.disabled = activePage === 1;
   left.onclick = () => {
     if (currentVendorPage > 1) {
-      fetchVendorData(currentVendorPage - 1, orders);
+      goToPage(currentVendorPage - 1);
     }
   };
   paginationDiv.appendChild(left);
@@ -282,7 +329,7 @@ function renderVendorPagination(totalVendors, activePage) {
   right.disabled = activePage === totalPages;
   right.onclick = () => {
     if (currentVendorPage < totalPages) {
-      fetchVendorData(currentVendorPage + 1, orders);
+      goToPage(currentVendorPage + 1);
     }
   };
   paginationDiv.appendChild(right);
@@ -349,10 +396,10 @@ function changeorder() {
     let newRotation = parseInt(currentRotation) + 180;
     svgElement.setAttribute("data-rotation", newRotation);
     svgElement.style.transform = `rotate(${newRotation}deg)`;
-    svgElement.style.transformOrigin = "50% 70%"; 
+    svgElement.style.transformOrigin = "50% 70%";
     svgElement.style.transition = "transform 0.3s ease";
     svgElement.style.position = "relative";
-    
+
     // let scaleY = orders === "ASC" ? 1 : -1;
     // svgElement.setAttribute("style", `transform: scaleY(${scaleY}); transition: transform 0.3s ease;`);
   }
@@ -491,7 +538,29 @@ function copyToClipboard() {
   navigator.clipboard
     .writeText(textToCopy)
     .then(() => {
-      console.log("Text copied to clipboard!");
+      Swal.fire({
+        toast: true,
+        position: "bottom-end",
+        icon: "success",
+        title: "Text Copied!",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        showClass: { popup: "swal2-noanimation" },
+        hideClass: { popup: "" },
+        background: "#333",
+        color: "#fff",
+        customClass: {
+          popup: "small-toast",
+          timerProgressBar: "blue-progress-bar",
+        },
+        didOpen: (toast) => {
+          const progressBar = toast.querySelector(".swal2-timer-progress-bar");
+          if (progressBar) {
+            progressBar.classList.add("animate-progress");
+          }
+        },
+      });
     })
     .catch((err) => {
       console.error("Failed to copy text: ", err);
@@ -579,36 +648,31 @@ function closeFilterDialog() {
   document.getElementById("filter-dialog").classList.remove("active");
 }
 
-document.addEventListener("keypress", (e) => {
-  const searchInput = document.querySelector(".searchinput");
-  if (!searchInput) return; // Stop if search input doesn't exist
-
-  if (e.key === "Enter" && e.target.classList.contains("searchinput")) {
-    handleSearch();
-  }
-});
-
-document.addEventListener("click", (e) => {
-  const searchInput = document.querySelector(".searchinput");
-  const searchIcon = document.querySelector(".search-icon");
-  if (!searchInput || !searchIcon) return; 
-
-  if (e.target.classList.contains("search-icon")) {
-    e.preventDefault(); 
-    searchInput.focus(); 
-    handleSearch();
-  }
-});
-
 function handleSearch() {
-  const searchInput = document.querySelector(".searchinput");
-  if (!searchInput) return; // Stop if search input is not found
-
+  const searchInput = document.querySelector(".search-field input");
   let searchText = searchInput.value.trim();
-  console.log(searchText);
+  if (!searchInput || searchText.length == 0) {
+    return;
+  }
+  // console.log(searchText);
   if (searchText.length > 0) {
     search(1, searchText);
-  } else {
-    fetchVendorData(1, orders);
+  }
+}
+
+function attachSearchListeners() {
+  const searchInput = document.querySelector(".search-field .input");
+  const searchButton = document.querySelector(".search-box-icon");
+
+  if (searchInput && searchButton) {
+    searchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        handleSearch();
+      }
+    });
+
+    searchButton.addEventListener("click", () => {
+      handleSearch();
+    });
   }
 }

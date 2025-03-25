@@ -184,9 +184,29 @@ function loadVendorList() {
       window.vendorScriptLoaded = true;
     };
     document.head.appendChild(script);
-    // console.log(script)
   } else {
     categoryIds = 0;
+    initializeVendorList();
+    attachSearchListeners();
+  }
+}
+
+function loadConsultantList() {
+  const mainContent = document.querySelector(".main-content");
+  mainContent.innerHTML = setMainContent("Consultant List");
+
+  
+
+  if (!window.vendorScriptLoaded) {
+    const script = document.createElement("script");
+    script.src = "../js/vendor-list.js";
+    script.onload = () => {
+      window.vendorScriptLoaded = true;
+    };
+    document.head.appendChild(script);
+  } else {
+    categoryIds = 1;
+    attachSearchListeners();
     initializeVendorList();
   }
 }
@@ -206,25 +226,11 @@ function loadContractorList() {
   } else {
     categoryIds = 2;
     initializeVendorList();
+    attachSearchListeners();
   }
 }
 
-function loadConsultantList() {
-  const mainContent = document.querySelector(".main-content");
-  mainContent.innerHTML = setMainContent("Consultant List");
 
-  if (!window.vendorScriptLoaded) {
-    const script = document.createElement("script");
-    script.src = "../js/vendor-list.js";
-    script.onload = () => {
-      window.vendorScriptLoaded = true;
-    };
-    document.head.appendChild(script);
-  } else {
-    categoryIds = 1;
-    initializeVendorList();
-  }
-}
 
 function loadSupplierList() {
   const mainContent = document.querySelector(".main-content");
@@ -240,5 +246,6 @@ function loadSupplierList() {
   } else {
     categoryIds = 3;
     initializeVendorList();
+    attachSearchListeners();
   }
 }
