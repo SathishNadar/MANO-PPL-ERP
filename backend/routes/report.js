@@ -1,110 +1,146 @@
 import express from "express";
-import fs from "fs";
+import * as DB from "./database.js"
 
 const router = express.Router();
-const jsonFilePath = "./backend/data/dpr.json"; // File path for the DPR data
 
-// Function to read data from the file
-function readData() {
+// Post call to Insert DPR
+router.post("/insertDPR", async (req, res) => {
   try {
-    if (!fs.existsSync(jsonFilePath)) {
-      fs.writeFileSync(jsonFilePath, JSON.stringify({}, null, 2)); // Initialize as an empty object if file doesn't exist
-    }
-    const data = fs.readFileSync(jsonFilePath, "utf8");
-    return JSON.parse(data || "{}"); // Parse the JSON or return an empty object if file is empty
-  } catch (err) {
-    console.error("Error reading file:", err);
-    return {}; // Return an empty object on error
-  }
-}
-
-// Function to write data to the file
-function writeData(data) {
-  try {
-    fs.writeFileSync(jsonFilePath, JSON.stringify(data, null, 2));
-  } catch (err) {
-    console.error("Error writing to file:", err);
-    throw new Error("Failed to write data to file");
-  }
-}
-
-// Route to save a report
-router.post("/saveReport", (req, res) => {
-  const {
-    reportDate,
-    reported_by,
-    approved_by,
-    header_constant,
-    labourProgress,
-    todaysProgress,
-    tomorrowsPlanning,
-  } = req.body;
-
-  // Validate required fields
-  if (
-    !reportDate ||
-    !reported_by ||
-    !approved_by ||
-    !labourProgress ||
-    !todaysProgress ||
-    !tomorrowsPlanning
-  ) {
-    return res
-      .status(400)
-      .json({ message: "Missing required fields in the request body." });
-  }
-
-
-  try {
-    const data = readData(); // Read existing data
-    data[reportDate] = {
+    const {
+      project_id,
       reported_by,
-      approved_by,
-      header_constant,
-      labourProgress,
-      todaysProgress,
-      tomorrowsPlanning,
-    };
+      report_date,
+      site_condition = null,
+      agency = null,
+      mason = null,
+      carp = null,
+      fitter = null,
+      electrical = null,
+      painter = null,
+      gypsum = null,
+      plumber = null,
+      helper = null,
+      staff = null,
+      remarks = null,
+      cumulative_manpower = 0,
+      today_prog = null,
+      tomorrow_plan = null,
+      events_visit = null,
+      distribute = null,
+      approval = null,
+      prepared_by = "Mano Project Pvt. Ltd."
+    } = req.body || {};
 
-    console.log("Data to Save:", data[reportDate]); // Log the new data to be written
-
-    writeData(data); // Save the data
-    res.status(200).json({ message: "Report saved successfully." });
-  } catch (err) {
-    console.error("Error saving report:", err); // Log the error
-    res.status(500).json({ message: "Internal server error." });
-  }
-});
-
-// Route to retrieve a report
-router.get("/getReport", (req, res) => {
-  const { reportDate } = req.query;
-
-  // Validate required fields
-  if (!reportDate) {
-    return res
-      .status(400)
-      .json({ message: "Report date is required in the query." });
-  }
-
-  try {
-    const data = readData();
-
-    const report = data[reportDate];
-
-    if (!report) {
-      return res
-        .status(404)
-        .json({ message: `No report found for date: ${reportDate}.` });
+    if (!project_id || !reported_by || !report_date) {
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
-    res.status(200).json(report);
-  } catch (err) {
-    console.error("Error retrieving report:", err);
-    res
-      .status(500)
-      .json({ message: "Internal server error while retrieving report." });
+    const insertId = await DB.r_insertDPR({
+      project_id,
+      reported_by,
+      report_date,
+      site_condition,
+      agency,
+      mason,
+      carp,
+      fitter,
+      electrical,
+      painter,
+      gypsum,
+      plumber,
+      helper,
+      staff,
+      remarks,
+      cumulative_manpower,
+      today_prog,
+      tomorrow_plan,
+      events_visit,
+      distribute,
+      approval,
+      prepared_by
+    });
+
+    res.json({ success: true, insertId });
+
+  } catch (error) {
+    console.error("Error inserting DPR:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
+
+router.post("/updateDPR", async (req, res) => {
+  try {
+    const {
+      project_id,
+      reported_by,
+      report_date,
+      site_condition = null,
+      agency = null,
+      mason = null,
+      carp = null,
+      fitter = null,
+      electrical = null,
+      painter = null,
+      gypsum = null,
+      plumber = null,
+      helper = null,
+      staff = null,
+      remarks = null,
+      cumulative_manpower = 0,
+      today_prog = null,
+      tomorrow_plan = null,
+      events_visit = null,
+      distribute = null,
+      approval = null,
+      prepared_by = "Mano Project Pvt. Ltd.",
+      dpr_id
+    } = req.body || {};
+
+    if (!project_id || !reported_by || !report_date) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const insertId = await DB.r_updateDPR({
+      project_id,
+      reported_by,
+      report_date,
+      site_condition,
+      agency,
+      mason,
+      carp,
+      fitter,
+      electrical,
+      painter,
+      gypsum,
+      plumber,
+      helper,
+      staff,
+      remarks,
+      cumulative_manpower,
+      today_prog,
+      tomorrow_plan,
+      events_visit,
+      distribute,
+      approval,
+      prepared_by,
+      dpr_id
+    });
+
+    res.json({ success: true, insertId });
+
+  } catch (error) {
+    console.error("Error inserting DPR:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+
+
+
+
+
+
+
 
 export default router;
