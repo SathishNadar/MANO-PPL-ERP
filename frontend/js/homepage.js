@@ -179,7 +179,8 @@ function loadVendorList() {
 
   setTimeout(() => {
     attachSearchListeners();
-  }, );
+  }, 200);
+  
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
     script.src = "../js/vendor-list.js";
