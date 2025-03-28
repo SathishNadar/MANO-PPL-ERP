@@ -125,6 +125,7 @@ async function search(tab_no, searchtext) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+
         },
         body: JSON.stringify({
           queryString: `${searchtext}`,
@@ -661,6 +662,7 @@ function handleSearch() {
 }
 
 function attachSearchListeners() {
+  console.log("yo");  
   const searchInput = document.querySelector(".search-field .input");
   const searchButton = document.querySelector(".search-box-icon");
 

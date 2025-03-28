@@ -177,6 +177,9 @@ function loadVendorList() {
   const mainContent = document.querySelector(".main-content");
   mainContent.innerHTML = setMainContent("Vendor List");
 
+  setTimeout(() => {
+    attachSearchListeners();
+  }, );
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
     script.src = "../js/vendor-list.js";
