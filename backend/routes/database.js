@@ -1,9 +1,14 @@
 import mysql from 'mysql2';
 import dotenv from 'dotenv';
 import Fuse from "fuse.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
-const result = dotenv.config();
+const result = dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 if (result.error) {
     console.error("Error loading .env file:", result.error);
@@ -17,14 +22,13 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE,
 }).promise();
 
-// ----------------------- RAW FUNCTIONS ----------------------- //
+// ----------------------- USER FUNCTIONS ----------------------- //
 
-// ----------> USER
-// Function to fetch USER by ID
-export async function r_fetchUserByID(id) {
+// Function to fetch User by ID
+export async function r_fetchUserByID(user_id) {
     const query = "SELECT * FROM Users WHERE user_id = ?";
     try {
-        const [row] = await pool.query(query, [id]);
+        const [row] = await pool.query(query, [user_id]);
         return row[0] || null;
     } catch (error) {
         console.error("Error fetching DPR by ID:", error);
@@ -32,7 +36,33 @@ export async function r_fetchUserByID(id) {
     }
 }
 
-// Function to fetch user by username
+// Function to fetch Multiple Users by ID
+export async function r_fetchUsersByID(user_ids) {
+    const placeHolder = user_ids.map(() => "?").join(', ');
+    const query = `SELECT * FROM Users WHERE user_id IN (${placeHolder})`;
+
+    try {
+        const [rows] = await pool.query(query, user_ids);
+        return rows || null;
+    } catch (error) {
+        console.error("Error fetching DPR by ID:", error);
+        throw error;
+    }
+}
+
+// Function to fetch user_name by ID
+export async function r_fetchUserNameByID(user_id) {
+    const query = "SELECT user_name FROM Users WHERE user_id = ?";
+    try {
+        const [row] = await pool.query(query, [user_id]);
+        return row[0].user_name || null;
+    } catch (error) {
+        console.error("Error fetching DPR by ID:", error);
+        throw error;
+    }
+}
+
+// Function to fetch User by user_name
 export async function r_fetchUserByName(name) {
     const query = "SELECT * FROM Users WHERE user_name = ?"
     try {
@@ -82,24 +112,29 @@ export async function r_isEmailOrPhoneTaken(email, phone) {
     }
 }
 
-// ----------> DPR
+// ------------------------ DPR FUNCTIONS ------------------------- //
+
 // Function to fetch DPR by ID
 export async function r_fetchDprByID(id) {
-    const query = "SELECT * FROM dpr WHERE dpr_id = ?";
+    const query = "SELECT * FROM DPR WHERE dpr_id = ?";
     try {
         const [row] = await pool.query(query, [id]);
         return row[0] || null;
     } catch (error) {
-        console.error("Error fetching DPR by ID:", error);
+        console.error("❌ Error fetching DPR by ID:", error);
         throw error;
     }
 }
 
 // Function to Insert DPR
 export async function r_insertDPR(dprData) {
+    if (!dprData.project_id || !dprData.reported_by || !dprData.report_date) {
+        throw new Error("Missing required fields: project_id, reported_by, or report_date");
+    }
+
     const query = `
-    INSERT INTO dpr (
-        project_id, reported_by, report_date, approved_by, agency, mason,
+    INSERT INTO DPR (
+        project_id, reported_by, report_date, site_condition, agency, mason,
         carp, fitter, electrical, painter, gypsum, plumber, helper, staff,
         remarks, cumulative_manpower, today_prog, tomorrow_plan,
         events_visit, distribute, prepared_by, approval
@@ -107,70 +142,169 @@ export async function r_insertDPR(dprData) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
-    try {
-        const [result] = await pool.query(query, [
-            dprData.project_id,
-            dprData.reported_by,
-            dprData.report_date,
-            dprData.approved_by || null,
-            dprData.agency || null,
-            dprData.mason || null,
-            dprData.carp || null,
-            dprData.fitter || null,
-            dprData.electrical || null,
-            dprData.painter || null,
-            dprData.gypsum || null,
-            dprData.plumber || null,
-            dprData.helper || null,
-            dprData.staff || null,
-            dprData.remarks || null,
-            dprData.cumulative_manpower || 0,
-            dprData.today_prog || null,
-            dprData.tomorrow_plan || null,
-            dprData.events_visit || null,
-            dprData.distribute || null,
-            dprData.prepared_by || null,
-            dprData.approval || null,
-        ]);
 
+    const values = [
+        dprData.project_id,
+        dprData.reported_by,
+        dprData.report_date,
+        dprData.site_condition || null,
+        dprData.agency || null,
+        dprData.mason || null,
+        dprData.carp || null,
+        dprData.fitter || null,
+        dprData.electrical || null,
+        dprData.painter || null,
+        dprData.gypsum || null,
+        dprData.plumber || null,
+        dprData.helper || null,
+        dprData.staff || null,
+        dprData.remarks || null,
+        dprData.cumulative_manpower ?? 0,
+        dprData.today_prog || null,
+        dprData.tomorrow_plan || null,
+        dprData.events_visit || null,
+        dprData.distribute || null,
+        dprData.prepared_by || null,
+        dprData.approval ? JSON.stringify(dprData.approval) : null
+    ];
+
+    try {
+        const [result] = await pool.query(query, values);
         return result.insertId;
     } catch (error) {
-        console.error("Error inserting DPR:", error);
+        console.error("❌ Error inserting DPR:", error.message, "\nData:", dprData);
         throw error;
     }
 }
-
 
 // Function to Update DPR
-export async function r_updateDPR(dprId, updatedData) {
+export async function r_updateDPR(dprData) {
+    if (!dprData.project_id || !dprData.reported_by || !dprData.report_date) {
+        throw new Error("Missing required fields: project_id, reported_by, or report_date");
+    }
+
     const query = `
-    UPDATE dpr
-    SET 
-    project_id = ?, 
-    reported_by = ?, 
-    report_date = ?, 
-    details = ?, 
-    approved_by = ?
-    WHERE dpr_id = ?;
-    `;
+    UPDATE DPR
+    SET
+        project_id = ?,
+        reported_by = ?,
+        report_date = ?,
+        site_condition = ?,
+        agency = ?,
+        mason = ?,
+        carp = ?,
+        fitter = ?,
+        electrical = ?,
+        painter = ?,
+        gypsum = ?,
+        plumber = ?,
+        helper = ?,
+        staff = ?,
+        remarks = ?,
+        cumulative_manpower = ?,
+        today_prog = ?,
+        tomorrow_plan = ?,
+        events_visit = ?,
+        distribute = ?,
+        prepared_by = ?, 
+        approval = ?
+    WHERE
+        dpr_id = ?;
+`;
+
+
+
+    const values = [
+        dprData.project_id,
+        dprData.reported_by,
+        dprData.report_date,
+        dprData.site_condition || null,
+        dprData.agency || null,
+        dprData.mason || null,
+        dprData.carp || null,
+        dprData.fitter || null,
+        dprData.electrical || null,
+        dprData.painter || null,
+        dprData.gypsum || null,
+        dprData.plumber || null,
+        dprData.helper || null,
+        dprData.staff || null,
+        dprData.remarks || null,
+        dprData.cumulative_manpower ?? 0,
+        dprData.today_prog || null,
+        dprData.tomorrow_plan || null,
+        dprData.events_visit || null,
+        dprData.distribute || null,
+        dprData.prepared_by || null,
+        dprData.approval || null,
+        dprData.dpr_id
+    ];
+
     try {
-        const [result] = await pool.query(query, [
-            updatedData.project_id,
-            updatedData.reported_by,
-            updatedData.report_date,
-            updatedData.details || null,
-            updatedData.approved_by || null,
-            dprId
-        ]);
-        return result.affectedRows;
+        const [result] = await pool.query(query, values);
+        return result.insertId;
     } catch (error) {
-        console.error("Error updating DPR:", error);
+        console.error("❌ Error inserting DPR:", error.message, "\nData:", dprData);
+        throw error;
+    }
+}
+
+// Function to structure raw DPR into formatted object
+export async function FormatDprData(dpr_data) {
+    try {
+        const structuredDpr = { ...dpr_data };
+
+        // Parse site_condition to array
+        if (structuredDpr.site_condition) {
+            structuredDpr.site_condition = structuredDpr.site_condition.split("|");
+            if (structuredDpr.site_condition[1] === "rainy" && structuredDpr.site_condition[2]) {
+                structuredDpr.site_condition[2] = structuredDpr.site_condition[2].split(',');
+            }
+        }
+
+        // agency and distribute as arrays
+        if (structuredDpr.agency) {
+            structuredDpr.agency = structuredDpr.agency.split(",");
+        }
+        if (structuredDpr.distribute) {
+            structuredDpr.distribute = structuredDpr.distribute.split(",");
+        }
+
+        // Split comma-separated integer arrays
+        const comma_sep_int = ["mason", "carp", "fitter", "electrical", "painter", "gypsum", "plumber", "helper", "staff", "approval"];
+        comma_sep_int.forEach((agent) => {
+            if (structuredDpr[agent]) {
+                structuredDpr[agent] = structuredDpr[agent].split(",").map(num => {
+                    const parsed = parseInt(num, 10);
+                    return isNaN(parsed) ? null : parsed;
+                });
+            }
+        });
+
+        // Split progress/plans to [task, quantity] arrays
+        ["today_prog", "tomorrow_plan"].forEach((item) => {
+            if (structuredDpr[item]) {
+                structuredDpr[item] = structuredDpr[item].split("|").map(x => x.split("~"));
+            }
+        });
+
+        structuredDpr.reported_by = await r_fetchUserNameByID(structuredDpr.reported_by);
+
+        structuredDpr.approval = await Promise.all(
+            structuredDpr.approval.map(user_id => r_fetchUserNameByID(user_id))
+        );
+
+        return structuredDpr;
+
+    } catch (error) {
+        console.error("❌ Error formatting DPR:", error.message);
         throw error;
     }
 }
 
 
-// ----------> Vendors List
+// ----------------------- VENDOR FUNCTIONS ----------------------- //
+
 // Function to fetch vendors with pagination and filtering
 export async function r_fetchVendorsByTab({
     category = 0,
@@ -246,7 +380,6 @@ export async function r_fetchVendorsCount() {
     }
 }
 
-
 // Function to fetch all Job Natures in table
 export async function r_fetchVendorsAllJobNatures() {
     return await r_fetchIdNamePairs("JobNatures");
@@ -261,7 +394,7 @@ export async function r_fetchVendorsAllLocations() {
 export async function r_searchVendors({
     queryString = "",
     category = 1,
-    tabNumber = 1,
+    tab = 1,
     limit = 25,
     locationIds = [],
     jobNatureIds = [],
@@ -280,7 +413,7 @@ export async function r_searchVendors({
     }
 
     if (!queryString.trim()) {
-        const offset = (tabNumber - 1) * limit;
+        const offset = (tab - 1) * limit;
         return vendors.slice(offset, offset + limit);
     }
 
@@ -292,8 +425,11 @@ export async function r_searchVendors({
     let results = fuse.search(queryString).map(result => result.item);
 
     const vendorCount = results.length;
-    const offset = (tabNumber - 1) * limit;
+    const offset = (tab - 1) * limit;
+    results.forEach((vendor) => {console.log(vendor.id)})
     results = results.slice(offset, offset + limit)
+    console.log(offset, limit)
+    results.forEach((vendor) => {console.log(vendor.id)})
     return {
         vendors: results,
         vendorCount,
@@ -303,37 +439,42 @@ export async function r_searchVendors({
 
 
 
-// ----------------------- PROCESSED FUNCTIONS ----------------------- //
-const delimiter = '|'
-
-export async function InsertDprByID(dprData) {
-    let formated = {};
-    
-    
-    
-}
 
 
 
 
 
+// const dprData = {
+//     project_id: 1,
+//     reported_by: 5,
+//     report_date: "2024-03-18",
+//     site_condition: "normal",
+//     agency: "XYZ Constructions",
+//     mason: "John, Alex",
+//     carp: "David, Robert",
+//     fitter: "Mike, Steve",
+//     electrical: "Electric Corp",
+//     painter: "PainterX",
+//     gypsum: "GypsumPro",
+//     plumber: "PlumbIt",
+//     helper: "Helper1, Helper2",
+//     staff: "StaffA, StaffB",
+//     remarks: "Site inspected, materials arrived",
+//     cumulative_manpower: 20,
+//     today_prog: "Foundation work completed",
+//     tomorrow_plan: "Start brickwork",
+//     events_visit: "Safety audit scheduled",
+//     distribute: "Material to be distributed",
+//     prepared_by: "Site Manager",
+//     approval: "12, 15, 18"
+// };
 
-// const nice = await r_searchVendors({
-//     queryString: "abc"
-// })
-// console.log("nice : ", nice)
+// console.log(dprData);
 
 
+// const nice = await r_fetchDprByID(1);
+// console.log(nice)
+// const bike = await FormatDprData(nice);
+// console.log(bike)
 
 // pool.end()
-
-
-// Test function for debugging
-export async function test() {
-    try {
-        return "holy";
-    } catch (error) {
-        console.error("Error in test function:", error);
-        throw error;
-    }
-}
