@@ -253,3 +253,7 @@ function loadSupplierList() {
     attachSearchListeners();
   }
 }
+
+function userdropdown(){
+  
+}
