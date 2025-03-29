@@ -1,0 +1,601 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family: "Poppins",sans-serif;
+    font-weight: 300;
+}
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    background-color: lightgray;
+}
+
+.main-content{
+    max-width: 75%;
+    min-width: 90%;
+    height: auto;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: white;
+}
+.header{
+    width: 95%;
+    height: 80px;
+    align-items: flex-start;
+    border-radius: 10px;
+}
+.logo-container{
+  height: 100%;
+  width: 280px;
+  margin-bottom: 50px;
+}
+.below-header{
+    width: 95%;
+    height: 200px;
+    background-color: #009dff;
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+}
+.inside-below-header{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+    width: 50%;
+    height: 100%;
+}
+.except-header{
+    width: 95%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+.project-forms{
+    height: auto;
+    width: 100%;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;   
+    margin-bottom: 10px;
+}
+.table-header{
+    display: flex;
+    color: black;
+    width: 100%;
+    justify-content: flex-start;
+    font-size: 0.8em;
+    padding: 20px;
+}
+table {
+  border-collapse: separate; 
+  overflow: hidden;
+    width: 100%;
+    
+    margin-bottom: 20px;
+    font-size: 0.9em; /* Adjusted font size */
+    background-color: rgb(224, 227, 230);
+    color: black;
+    border: 1px solid black;
+    
+  }
+  table tbody tr:last-child td {
+    border-bottom: none; /* Remove border for the last row */
+  }
+  #labourTable > tbody > tr > td{
+    border-bottom: 1px solid rgba(6, 56, 221, 0.466);
+  }
+  #labourTable > thead > tr > th{
+    background-color: white;
+  }
+
+  table th:has(input[type="number"]),
+  table td:has(input[type="number"]),
+  table th:has(input[type="text"]),
+  table td:has(input[type="text"]){
+    padding: 0px;
+    height: 50px;
+    width: 150px;
+  }
+  table th {
+    background: var(--table-header-bg);
+    font-weight: bold;
+    background-color: white;
+    
+  }
+
+
+  td, th {
+    padding: 8px;
+    text-align: left;
+     /* Add border for all columns */
+    width: auto;
+    border-left: 1px solid rgb(15, 107, 245);
+  }
+
+  /* Remove the left border of the first column */
+  td:first-child, th:first-child {
+    border-left: none;
+  }
+
+.first-table >tbody >tr >td{
+  border-left:0px;
+}
+  .first-table tr:hover{
+    background-color: lightblue;
+  }
+  table tr{
+    border: 0.5px solid transparent;
+  }
+  table td:last-child {
+    width: 100px; /* Adjusting remarks column width */
+  }
+  
+  input[type="number"] {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    background-color: rgb(224, 232, 243);
+    font-size: 15px;
+    border-left: 2px black;
+  }
+  input[type="radio"]{
+    display: none;
+  }
+
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    background-color: rgb(224, 232, 243);
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  }
+  .today-tomorrow-planning{
+    display: flex;
+    flex-direction: row;
+    height: auto;
+ 
+  }
+  .today-planning,.tomorrow-planning{
+    width: 50%;
+    height: auto;
+    display: flex;
+    flex-direction:column;
+    gap: 10px;
+
+   
+  }
+  .action-buttons{
+    height: auto;
+    display: flex;
+    gap: 5px;
+    left: 0;
+    position: sticky;
+  }
+  .radio-label {
+    display: inline-block;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .radio-image {
+    display: block;
+    width: 35px;
+    height: 35px;
+    object-fit: cover;
+    transition: transform 0.3s, filter 0.3s;
+  }
+  input[type="radio"]:checked + .radio-label {
+    border:2px solid black;
+  }
+  p{
+    display: inline;
+  }
+  .rainy-button,.sunny-button,.slushy-button{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+  }
+  .rainy-button >p,.sunny-button >p,.slushy-button >p{
+    font-size: 20px;
+  }
+
+  img{
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+  }
+  .labourtable-button{
+    background-color: #087fc9;
+    border-radius: 5px;
+    border: none;
+    height: 50px;
+    width: 150px;
+    color: whitesmoke;
+    font-size: 20px;
+    cursor: pointer;
+    flex-grow: 1;
+  }
+  .timeslot-button{
+    background-color: green;
+    height: 40px;
+    width: 150px;
+    font-size: 15px;
+    display: inline-block;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .modal-buttons{
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+  .timeslot-button:hover{
+    background-color: darkgreen;
+  }
+  .labourtable-button:hover{
+    background-color:#333 ;
+  }
+  .labourtable-button:active{
+    background-color: #074870;
+  }
+  .submit-section{
+    padding-top: 60px;
+  }
+/* Modal Styles */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0, 0, 0, 0.5); /* Black with opacity */
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: #fefefe;
+  margin: 10% auto; /* 10% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 50%; /* Width of the modal */
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+}
+
+/* Form Styles */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input {
+  margin-bottom: 15px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button[type="submit"] {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button[type="submit"]:hover {
+  background-color: #45a049;
+}
+
+/* Time Slot Container */
+.time-slot {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  align-items: center;
+  flex-direction: row;
+}
+
+.time-slot input {
+  flex: 1;
+}
+
+/* Add Time Slot Button */
+#addTimeSlotBtn {
+  background-color: green;
+  color: white;
+  border: none;
+  height: 40px;
+  width: 130px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 5px;
+  font-size: 18px;
+}
+
+#addTimeSlotBtn:hover {
+  background-color: darkgreen;
+}
+
+/* Remove Time Slot Button */
+.remove-time-slot-button {
+  background-color: #fc2a12;
+  height: 30px;
+  width: 85px;
+  font-size: 15px;
+  font-weight: 400;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.time-slot-submit-button{
+  background-color: blue;
+  color: white;
+  border: none;
+  height: 40px;
+  width: 130px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+.time-slot-submit-button:hover{
+  background-color: darkblue;
+}
+.remove-time-slot-button:hover {
+  background-color: red;
+}
+.generate-dpr-btn{
+  background-color: blue;
+  height: 60px;
+  width: 180px;
+  border: none;
+  color: white;
+  border-radius: 15px;
+  cursor: pointer
+}
+/* Ensure the add row buttons are consistent */
+.todo-add-row-btn,
+.tomo-add-row-btn,.remove-row-btn {
+    background-color: blue;
+    height: 40px;
+    width: 130px;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    flex-grow: 1;
+    font-size: 14px; /* Added for consistency */
+    text-align: center; /* Center button text */
+}
+.planning-add-row{
+  width: 100%;
+  display: flex;
+  gap: 10px;
+}
+#today-table,#tomorrow-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+#today-progress-quantity{
+  border: 1px solid black;
+}
+#today-table th, #today-table td {
+  padding: 8px;  /* Add some padding */
+  border: 1px solid #ddd;  /* Optional borders */
+} 
+#today-table tbody,
+#tomorrow-table tbody {
+    display: table-row-group;
+    width: 100%;
+}
+#today-table tr:first-child,
+#tomorrow-table tr:first-child {
+  height: 50px; /* Set your desired fixed height */
+}
+
+/* Let other rows have dynamic height */
+#today-table tr:not(:first-child),
+#tomorrow-table tr:not(:first-child) {
+  height: auto;
+}
+
+
+#today-table td,
+#tomorrow-table td,
+#today-table th,
+#tomorrow-table th {
+  padding: 8px;
+  border: 1px solid #ddd;
+  vertical-align: middle;
+}
+
+#today-table input { /* Include padding in width */
+  width: 100%;  /* Fill available space */
+  padding: 6px;  /* Comfortable input padding */
+}
+/* Make input fields consistent and full-width */
+#today-table input[type="text"],
+#today-table input[type="number"],
+#tomorrow-table input[type="text"],
+#tomorrow-table input[type="number"] {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid black;
+  border-radius: 4px;
+  box-sizing: border-box;
+
+}
+/* Make sure tables align properly */
+.today-planning, 
+.tomorrow-planning {
+  width: calc(50% - 10px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.today-planning {
+  padding-right: 5px; /* Reduced from 15px */
+}
+
+.tomorrow-planning {
+  padding-left: 5px; /* Increased from 5px */
+}
+
+/* Make the tables expand to fill containers */
+.today-planning > table,
+.tomorrow-planning > table {
+  flex-grow: 1;
+}
+
+.submit-section{
+  width: 100%;
+  height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+  @media(max-width:600px){
+    body{
+      padding: 0;
+      /* overflow-x: hidden; */
+    }
+    .main-content{
+      overflow-x: hidden;
+    }
+    .project-forms::-webkit-scrollbar {
+        width: 8px; /* Width of scrollbar */
+      }
+      .project-forms::-webkit-scrollbar:horizontal {
+        background-color: rgba(11, 146, 236, 0.8); /* Scrollbar color */
+        border-radius: 5px; /* Rounded corners */
+        height: 8px;
+        cursor: grab;
+        width: 1px;
+      }
+      .project-forms::-webkit-scrollbar-thumb {
+        background-color: rgba(11, 146, 236, 0.8); /* Scrollbar color */
+        border-radius: 0px; /* Rounded corners */
+        height: 1px;
+        cursor: grab;
+      }
+      .project-forms::-webkit-scrollbar-track {
+        background-color: lightblue; /* Track color */
+      }
+      .project-forms::-webkit-scrollbar-button {
+        background-color: gray;
+        height: 3px; /* Track color */
+      }
+    .main-content{
+      width: 90%;
+    }
+    .table-header{
+      display: flex;
+      justify-content: center;
+      text-align: center;
+    }
+    .scrollable{
+      overflow-x:scroll ;
+    }
+    .fixed-header{
+      left: -120px;
+      position:sticky ;
+    }
+    .button-fixed{
+      position: fixed;
+    }
+    .fixed-header-smol{
+      left: -1px;
+      position: sticky;
+    }
+    .inside-below-header{
+      text-align: center;
+      font-size: 10px;
+    }
+    /* .after-600{
+      display: flex;
+      flex-direction: column;
+    } */
+    .rainy-button,.sunny-button,.slushy-button{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .rainy-button >p,.sunny-button >p{
+      font-size: 20px;
+    }
+    .today-tomorrow-planning{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      height: 150px;
+      width: 100%;
+    }
+    .today-planning,.tomorrow-planning{
+        width: 100%;
+    }
+    .action-buttons{
+      height: auto;
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      left: 0;
+      position: sticky;
+
+    }
+    .action-buttons > button{
+     width: 120px;
+     height: 60px;
+    }
+    body::-webkit-scrollbar {
+        width: 10px; /* Width of scrollbar */
+      }
+    
+  }
