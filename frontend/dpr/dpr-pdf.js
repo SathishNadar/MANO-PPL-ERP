@@ -72,3 +72,30 @@ document.getElementById("slushy-day-checkbox").style.backgroundColor = "green";
 if (parsedItem[1] =="dry"){
 document.getElementById("dry-day-checkbox").style.backgroundColor = "green";
 }
+
+//--------------------------------------FOR DISPLAYING TIME TABLE-------------------------//
+// Fetch stored time slots from sessionStorage
+document.addEventListener("DOMContentLoaded", function () {
+    const timeSlots = JSON.parse(sessionStorage.getItem("timeslots")) || [];
+    const table = document.querySelector(".from-to");
+
+    if (table) {
+        // Clear existing rows (if any)
+        table.innerHTML = "";
+
+        // Dynamically create and insert rows for each time slot
+        timeSlots.forEach(slot => {
+            const row = document.createElement("tr");
+
+            const fromTd = document.createElement("td");
+            fromTd.innerHTML = `From: <span>${slot.from}</span>`;
+
+            const toTd = document.createElement("td");
+            toTd.innerHTML = `To: <span>${slot.to}</span>`;
+
+            row.appendChild(fromTd);
+            row.appendChild(toTd);
+            table.appendChild(row);
+        });
+    }
+});
