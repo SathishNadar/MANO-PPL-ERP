@@ -523,7 +523,7 @@ function openFilterDialog() {
   }
 
   overlay.classList.add("active");
-  existingDialog.classList.add("active");
+  existingDialog.classList.add("active");          
 }
 
 function copyToClipboard() {
@@ -625,6 +625,7 @@ function filterSearch(inputId, listId) {
 
 function clearFilters() {
   document.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
+    console.log(checkbox)
     checkbox.checked = false;
     sessionStorage.removeItem(checkbox.value);
   });
