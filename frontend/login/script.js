@@ -16,9 +16,9 @@ async function loginUser(event) {
 
   const data = await response.json();
 
+  console.log("isyuabd")
   if (data.message === "Login successful") {
-    // Set session with 30 days expiry
-    setSession(data.user.user_name);
+    setSession(username);
 
     // Redirect to DPR page
     window.location.href = `../dahboard/homepage.html`;
@@ -28,7 +28,7 @@ async function loginUser(event) {
 }
 
 function setSession(username) {
-  const expiryTime = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
+  const expiryTime = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
   const sessionData = { username, expiry: expiryTime };
   localStorage.setItem("session", JSON.stringify(sessionData));
 }
@@ -80,19 +80,17 @@ async function handleSignup(event) {
   }
 }
 
-
 const form_slider = document.getElementById("form_slider");
 const btn = document.getElementById("btn");
 const header_cont = document.getElementById("header-cont");
-
 btn.addEventListener("click", () => {
-    form_slider.classList.toggle("move");
+  form_slider.classList.toggle("move");
 
-    if (form_slider.classList.contains("move")) {
-        header_cont.textContent = "USER SIGN IN";
-        btn.textContent = "ALREADY HAVE AN ACCOUNT?";
-    } else {
-        header_cont.textContent = "LOGIN HERE";
-        btn.textContent = "DON'T HAVE AN ACCOUNT?";
- }
+  if (form_slider.classList.contains("move")) {
+    header_cont.textContent = "USER SIGN IN";
+    btn.textContent = "ALREADY HAVE AN ACCOUNT?";
+  } else {
+    header_cont.textContent = "LOGIN HERE";
+    btn.textContent = "DON'T HAVE AN ACCOUNT?";
+  }
 });
