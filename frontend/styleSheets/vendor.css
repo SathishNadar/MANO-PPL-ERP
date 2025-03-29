@@ -1,14 +1,14 @@
-/* @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;1,500&display=swap');
 
 *{
-  font-family: "Poppins", sans-serif;
-  font-weight: 500;
+  /* font-family: "San Francisco"; */
   font-style: normal;
-} */
+}
 
 .vendor-header {
   display: flex;
   justify-content: space-between;
+  width: 98.4%;
   align-items: center;
   padding: 10px;
   background-color: #009dff;
@@ -36,6 +36,7 @@ body.vendor-active .sidebar {
   text-align: left;
   border-bottom: 1px solid #dddddd;
   max-width: 200px;
+  font-size: 15px;
   /* border-right: 2px solid rgb(0, 157, 209); */
 }
 
@@ -66,10 +67,10 @@ body.vendor-active .sidebar {
   min-width: 80px;
 }
 .employee-table th:nth-child(4), .employee-table td:nth-child(4){
-  max-width: 135px;
+  max-width: 125px;
 }
 .employee-table th:nth-child(5), .employee-table td:nth-child(5){
-  max-width: 355px;
+  max-width: 325px;
 }
 .employee-table th:nth-child(7), .employee-table td:nth-child(7){
   max-width: 135px;
