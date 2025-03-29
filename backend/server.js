@@ -12,8 +12,8 @@ app.use(express.json());
 
 // Routes
 app.use("/auth", loginRoutes); 
-app.use("/vendor_api", vendorRoutes); 
-app.use("/", webRoutes); 
+// app.use("/vendor_api", vendorRoutes); 
+// app.use("/", webRoutes); 
 // app.use("/report", reportRoutes); 
 
 app.listen(port, "0.0.0.0", () => {

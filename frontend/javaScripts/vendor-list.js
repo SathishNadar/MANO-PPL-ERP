@@ -7,6 +7,7 @@ let currentVendorPage = 1;
 let allVendors = [];
 let totalVendorCount = 0; 
 let appliedFilters = { locationIds: [], jobNatureIds: [], categoryIds: 0 };
+let orders = "ASC";
 
 let jobNatureDict = {};
 let locationDict = {};
@@ -61,7 +62,7 @@ async function fetchMetadata() {
     }
 }
 
-async function fetchVendorData(tab_no ,filters = {}) {
+async function fetchVendorData(tab_no , orders) {
     try {
         const response = await fetch("http://35.154.101.129:3000/vendor_api/", {
             method: "POST",
@@ -70,13 +71,13 @@ async function fetchVendorData(tab_no ,filters = {}) {
             },
             body: JSON.stringify({
                 tab: tab_no,
-                order: "ASC",
+                order: orders,
                 locationIds:  appliedFilters.locationIds || [],
                 jobNatureIds: appliedFilters.jobNatureIds || [],
                 category: appliedFilters.categoryIds
             })
         });
-
+        console.log(appliedFilters);
         if (!response.ok) throw new Error("Network response was not ok");
 
         const data = await response.json();
@@ -85,8 +86,8 @@ async function fetchVendorData(tab_no ,filters = {}) {
         allVendors = data.vendors || [];
         totalVendorCount = data.vendorCount || 0; // Update vendor count after filters
 
-        currentVendorPage = tab_no;
-        renderVendorList(tab_no);
+        currentVendorPage = tab_no || 1;
+        renderVendorList(currentVendorPage);
         renderVendorPagination(totalVendorCount, tab_no);
 
     } catch (error) {
@@ -96,13 +97,14 @@ async function fetchVendorData(tab_no ,filters = {}) {
 
 async function initializeVendorList() {
     await fetchMetadata();  
-    fetchVendorData(1);  
+    fetchVendorData(1);
+
 }
 initializeVendorList();  
 
 
 async function renderVendorList(page) {
-    console.log("Rendering Vendor List for Page:", page);
+    // console.log("Rendering Vendor List for Page:", page);
 
     const tbody = document.getElementById("vendor-data");
     if (!allVendors.length) {
@@ -133,7 +135,7 @@ async function renderVendorList(page) {
 
         // ✅ Function to handle empty, NaN, or undefined values
         const formatValue = (value) => {
-            return (value === undefined || value === "null" || value === "" || value === "NaN" || value === "-" || value === "nan") ? "-----" : value;
+            return (value === undefined || value === "null" || value === "" || value === "NaN" || value === "-" || value === "nan" || value === "undefined") ? "-_-" : value;
         };
 
         row.innerHTML = `
@@ -174,6 +176,7 @@ async function renderVendorList(page) {
             }
         });
     }
+    renderVendorPagination(totalVendorCount, page);
 }
 
 
@@ -258,37 +261,42 @@ function loadFilterData(id) {
 
 
 function populateFilterOptions(containerId, items, type) {
-    items = Object.keys(items);
-    // console.log(items);
     let container = document.getElementById(containerId);
-    // console.log(type);
-    container.innerHTML = ""; 
-    items.forEach(item => {
-        let checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.value = item;
-        checkbox.classList.add(`${type}-checkbox`);
+    container.innerHTML = "";
 
-        if (sessionStorage.getItem(item) === "true") {
-            checkbox.checked = true;
+    items = Object.keys(items);
+
+    items.forEach(item => {
+        let input = document.createElement("input");
+        input.type = (type === "category-options") ? "radio" : "checkbox"; 
+        input.value = item;
+        input.classList.add(`${type}-checkbox`);
+
+        if (type === "category-options") {
+            input.name = "categoryFilter"; // Ensures only one selection for category
         }
 
-        checkbox.addEventListener("change", () => {
-            sessionStorage.setItem(item, checkbox.checked);
+        if (sessionStorage.getItem(item) === "true") {
+            input.checked = true;
+        }
+
+        input.addEventListener("change", () => {
+            sessionStorage.setItem(item, input.checked);
         });
 
         let label = document.createElement("label");
-        label.appendChild(checkbox);
+        label.appendChild(input);
         label.appendChild(document.createTextNode(" " + item));
 
         container.appendChild(label);
     });
 }
 
+
 function applyFilters() {
-    let selectedJobs = getSelectedValues("job-options-checkbox"); 
+    let selectedJobs = getSelectedValues("job-options-checkbox");
     let selectedLocations = getSelectedValues("location-options-checkbox");
-    let selectedCategory= getSelectedValues("category-options-checkbox");
+    let selectedCategory= document.querySelector('input[name="categoryFilter"]:checked')?.value || null;
 
     console.log("Selected Jobs:", selectedJobs);
     console.log("Selected Locations:", selectedLocations);
@@ -297,14 +305,17 @@ function applyFilters() {
     appliedFilters = {
         locationIds: selectedLocations.map(name => locationDict[name] || null).filter(Boolean),
         jobNatureIds: selectedJobs.map(name => jobNatureDict[name] || null).filter(Boolean),
-        categoryIds: ReversecategoryDict[selectedCategory],
+        categoryIds: selectedCategory ? ReversecategoryDict[selectedCategory] || 0 : 0,
     };
 
     console.log(appliedFilters);
     fetchVendorData(1, appliedFilters); 
 }
 
-
+function changeorder(){
+    orders = orders === "ASC" ? "DESC": "ASC";
+    fetchVendorData(1 , orders);
+}
 
 
 
@@ -366,6 +377,7 @@ function getSelectedValues(className) {
     return Array.from(document.querySelectorAll(`.${className}:checked`))
         .map(checkbox => checkbox.value);
 }
+
 
 function openFilterDialog() {
     let existingDialog = document.getElementById("filter-dialog");
@@ -456,10 +468,14 @@ function toggleDropdown(id) {
 
     if (section.style.display === "block") {
         section.style.display = "none";
-        searchInput.style.display = "none";
+        if(searchInput){
+            searchInput.style.display = "none";
+        }
     } else {
         section.style.display = "block";
-        searchInput.style.display = "block"; 
+        if(searchInput){
+            searchInput.style.display = "block"; 
+        }
     }
 }
 
@@ -505,10 +521,29 @@ function filterSearch(inputId, listId) {
 
 
 function clearFilters() {
-    document.querySelectorAll(".job-options-checkbox, .location-options-checkbox, .category-options-checkbox").forEach(checkbox => {
+    // Uncheck all checkboxes
+    document.querySelectorAll("input[type='checkbox']").forEach(checkbox => {
         checkbox.checked = false;
         sessionStorage.removeItem(checkbox.value);
     });
+
+    // Uncheck all radio buttons
+    document.querySelectorAll("input[type='radio']").forEach(radio => {
+        radio.checked = false;
+        sessionStorage.removeItem(radio.value);
+    });
+
+    // Reset applied filters
+    appliedFilters = {
+        locationIds: [],
+        jobNatureIds: [],
+        categoryIds: 0,
+    };
+
+    console.log("Filters cleared:", appliedFilters);
+
+    // Refresh vendor data with no filters
+    fetchVendorData(1, appliedFilters);
 }
 
 function closeFilterDialog() {

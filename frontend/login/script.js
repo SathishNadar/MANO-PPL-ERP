@@ -1,23 +1,27 @@
-async function loginUser() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+async function loginUser(event) {
+  event.preventDefault();
+  const username = document.getElementById("login_username").value;
+  const password = document.getElementById("login_password").value;
 
-  const response = await fetch("http://localhost:3000/auth/login", {
+  const response = await fetch("http://35.154.101.129:3000/auth/login/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ 
+        "user_name": username,
+        "user_password": password
+    }),
   });
 
   const data = await response.json();
 
   if (data.message === "Login successful") {
     // Set session with 30 days expiry
-    setSession(data.user.username);
+    setSession(data.user.user_name);
 
     // Redirect to DPR page
-    window.location.href = `frontend\dpr\dpr.html`;
+    window.location.href = `../dahboard/homepage.html`;
   } else {
     alert(data.message);
   }
@@ -47,28 +51,28 @@ function getSession() {
 }
 
 
-document.getElementById("signupForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+// document.getElementById("signupForm").addEventListener("submit", async (e) => {
+//   e.preventDefault();
 
-  const username = document.getElementById("signupUsername").value;
-  const password = document.getElementById("signupPassword").value;
-  const confirmPassword = document.getElementById("confirmPassword").value;
-  const email = document.getElementById("email").value;
-  const phno = document.getElementById("phno").value;
+//   const username = document.getElementById("signupUsername").value;
+//   const password = document.getElementById("signupPassword").value;
+//   const confirmPassword = document.getElementById("confirmPassword").value;
+//   const email = document.getElementById("email").value;
+//   const phno = document.getElementById("phno").value;
 
-  const response = await fetch("http://localhost:3000/auth/signup", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username, password, confirmPassword, email, phno }),
-  });
+//   const response = await fetch("http://35.154.101.129:3000/auth/signup/", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({ username, password, confirmPassword, email, phno }),
+//   });
 
-  const data = await response.json();
+//   const data = await response.json();
 
-  if (response.ok) {
-    alert(data.message);
-  } else {
-    alert(data.message);
-  }
-});
+//   if (response.ok) {
+//     alert(data.message);
+//   } else {
+//     alert(data.message);
+//   }
+// });
