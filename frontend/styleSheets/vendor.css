@@ -1,9 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;1,500&display=swap');
-
-*{
-  /* font-family: "San Francisco"; */
-  font-style: normal;
-}
 
 .vendor-header {
   display: flex;
@@ -28,6 +22,8 @@ body.vendor-active .sidebar {
   border-collapse: collapse;
   margin: 20px 0;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  font-size: 20px;
+  font-weight: normal;
   /* table-layout: fixed; */
 }
 
@@ -36,7 +32,8 @@ body.vendor-active .sidebar {
   text-align: left;
   border-bottom: 1px solid #dddddd;
   max-width: 200px;
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 500;
   /* border-right: 2px solid rgb(0, 157, 209); */
 }
 
