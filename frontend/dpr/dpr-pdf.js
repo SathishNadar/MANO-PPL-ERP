@@ -22,33 +22,40 @@ if (tableData) {
 //-------------------------FOR TODAY TABLE ---------------------------------//
 console.log("YEAH even i can't believe i made it!!!")
 
+//-------------------------FOR TODAY TABLE ---------------------------------//
 if (todaytableData) {
-todaytableData.forEach(todayrow => {
+    todaytableData.forEach(todayrow => {
         const tr = document.createElement('tr');
         todayrow.forEach(cell => {
             const td = document.createElement('td');
             td.textContent = cell;
+            // Add empty cell styling if content is empty
+            if (cell === "") {
+                td.style.minHeight = "20px"; // Set minimum height for empty cells
+                td.style.border = "1px solid #ddd"; // Ensure borders are visible
+            }
             tr.appendChild(td);
         });
         todaydisplayTable.appendChild(tr);
     });
-} else {
-    
 }
 
-
+//-------------------------FOR TOMORROW TABLE ------------------------------//
 if (tomorrowtableData) {
     tomorrowtableData.forEach(tomorrowrow => {
         const tr = document.createElement('tr');
         tomorrowrow.forEach(cell => {
             const td = document.createElement('td');
             td.textContent = cell;
+            // Add empty cell styling if content is empty
+            if (cell === "") {
+                td.style.minHeight = "20px"; // Match height with today-table
+                td.style.border = "1px solid #ddd"; // Ensure borders are visible
+            }
             tr.appendChild(td);
         });
         tomorrowdisplayTable.appendChild(tr);
     });
-} else {
-    
 }
 
 function printit(){
