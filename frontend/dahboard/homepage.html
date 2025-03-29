@@ -4,13 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="../css/homepage.css" />
     <link rel="stylesheet" href="../css/vendor.css" />
     <!-- <link rel="stylesheet" href="../css/projects.css" /> -->
   </head>
   <body>
     <div class="navbar">
-      <img src="images/logo4.webp" alt="Logo" class="logo" />
+      <img src="images/MANO-PMC-GRAY.png" alt="Logo" class="logo" />
       <div class="user-info">
         <span></span>
         <img
@@ -20,7 +21,7 @@
         />
       </div>
     </div>
-
+    <input type="text" name="" id="" />
     <div class="dashboard">
       <div class="sidebar">
         <ul>
@@ -57,44 +58,85 @@
           </li>
           <li class="vendor-menu" data-page="vendor">
             <div class="vendor-toggle">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 6H20V8H4V6ZM4 11H20V13H4V11ZM4 16H12V18H4V16Z" fill="white"/>
-                </svg>
-                <span>Vendor List</span>
-                <span class="arrow">▼</span>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 6H20V8H4V6ZM4 11H20V13H4V11ZM4 16H12V18H4V16Z"
+                  fill="white"
+                />
+              </svg>
+              <span>Vendor List</span>
+              <span class="arrow">▼</span>
             </div>
           </li>
-          <li class="vendor-sublist" data-page="vendor-contractors" data-text="Vendor Contractors">
-            <svg width="24" height="24" fill="white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M6 2H18L20 6V22H4V6L6 2ZM18 8H6V20H18V8ZM10 10H14V14H10V10ZM7 16H17V18H7V16Z"/>
+          <li
+            class="vendor-sublist"
+            data-page="vendor-contractors"
+            data-text="Vendor Contractors"
+          >
+            <svg
+              width="24"
+              height="24"
+              fill="white"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M6 2H18L20 6V22H4V6L6 2ZM18 8H6V20H18V8ZM10 10H14V14H10V10ZM7 16H17V18H7V16Z"
+              />
             </svg>
             <span>Contractors</span>
           </li>
-          <li class="vendor-sublist" data-page="vendor-consultants" data-text="Vendor Consultants">
-              <svg width="24" height="24" fill="white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                  <path d="M12 2C10.3 2 9 3.3 9 5V6H5V8H19V6H15V5C15 3.3 13.7 2 12 2ZM12 4C12.6 4 13 4.4 13 5V6H11V5C11 4.4 11.4 4 12 4ZM4 10V20H20V10H4ZM6 12H18V18H6V12Z"/>
-              </svg>
-              <span>Consultants</span>
+          <li
+            class="vendor-sublist"
+            data-page="vendor-consultants"
+            data-text="Vendor Consultants"
+          >
+            <svg
+              width="24"
+              height="24"
+              fill="white"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 2C10.3 2 9 3.3 9 5V6H5V8H19V6H15V5C15 3.3 13.7 2 12 2ZM12 4C12.6 4 13 4.4 13 5V6H11V5C11 4.4 11.4 4 12 4ZM4 10V20H20V10H4ZM6 12H18V18H6V12Z"
+              />
+            </svg>
+            <span>Consultants</span>
           </li>
-          <li class="vendor-sublist" data-page="vendor-suppliers" data-text="Vendor Suppliers">
-              <svg width="24" height="24" fill="white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                  <path d="M3 2H21V10H3V2ZM5 4V8H19V4H5ZM4 12H20V22H4V12ZM6 14V20H18V14H6ZM10 15H14V17H10V15ZM10 18H14V19H10V18Z"/>
-              </svg>
-              <span>Suppliers</span>
+          <li
+            class="vendor-sublist"
+            data-page="vendor-suppliers"
+            data-text="Vendor Suppliers"
+          >
+            <svg
+              width="24"
+              height="24"
+              fill="white"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 2H21V10H3V2ZM5 4V8H19V4H5ZM4 12H20V22H4V12ZM6 14V20H18V14H6ZM10 15H14V17H10V15ZM10 18H14V19H10V18Z"
+              />
+            </svg>
+            <span>Suppliers</span>
           </li>
-        
-          
-        
-              
         </ul>
       </div>
 
-      <div class="main-content">
-        
-      </div>
+      <div class="main-content"></div>
     </div>
   </body>
   <script src="../js/homepage.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </html>
+
 
