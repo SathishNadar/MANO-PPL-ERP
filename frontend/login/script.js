@@ -1,5 +1,6 @@
 async function loginUser(event) {
   event.preventDefault();
+  console.log("isyuabd")
   const username = document.getElementById("login_username").value;
   const password = document.getElementById("login_password").value;
 
@@ -14,9 +15,12 @@ async function loginUser(event) {
     }),
   });
 
+  if (!response.ok) {
+    throw new Error("Network error: " + response.status);
+  }
+  
   const data = await response.json();
 
-  console.log("isyuabd")
   if (data.message === "Login successful") {
     setSession(username);
 
