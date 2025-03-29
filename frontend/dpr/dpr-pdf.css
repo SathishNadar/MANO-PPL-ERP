@@ -1,0 +1,299 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#pdf-container {
+    width: 100%;
+}
+.dpr-pdf-container {
+    height: auto;
+    width: 97%;
+    border: 1px solid black;
+    border-bottom: none;
+}
+.header {
+    display: grid;
+    grid-template-areas: "logo daily-progress";
+    grid-template-columns: 1fr 1fr;
+}
+.logo {
+    grid-area: logo;
+    height: 50px;
+    width: 150px;
+}
+.daily-progress-report {
+    grid-area: daily-progress;
+    text-align: center;
+    display: grid;
+    grid-template-areas: 
+        "daily daily"
+        "report dynamic-date";
+    grid-template-rows: auto auto;
+    grid-template-columns: 1fr 1fr;
+    border-left: 1px solid black;
+}
+.daily-progress-report > .daily{
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+}
+.daily-progress-report > .dynamic-date{
+    border-right: 1px solid black;
+}
+.daily-progress-report > .report{
+    border-bottom: 1px solid black;
+}
+.daily, .report, .dynamic-date {
+    
+    font-size: 16px; /* Normal size for desktop */
+}
+.project-label {
+    font-size: 16px; /* Normal size for desktop */
+    writing-mode: vertical-rl;
+    width: 2%;
+    transform: rotate(180deg);
+}
+.project-left {
+    display: flex;
+}
+table, tr, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    font-size: 14px; /* Normal size for desktop */
+}
+.project-table {
+    width: 100%;
+}
+#displayTable{
+    table-layout: fixed;
+    width: 100%;
+}
+#displayTable th, 
+#displayTable td {
+padding: 4px;
+text-align: center;
+word-wrap: break-word;
+}
+.labour-table-container{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+}
+.inside-labour-table-cotainer{
+    width: 100%;
+}
+.project-bottom {
+    display: flex;
+    margin-left: 1.5%;
+}
+.project-bottom > div {
+    border-bottom: 1px solid black;
+    border-left: 1px solid black;
+    font-size: 14px; /* Normal size for desktop */
+}
+.site {
+    display: flex;
+    margin-top: 5px; 
+    width: 100%;
+    gap: 0px;
+}
+.site-label {
+    width: auto;
+    font-size: 16px; /* Normal size for desktop */
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    width: auto;
+}
+.labour-table-lable{
+    width: auto;
+    font-size: 16px; /* Normal size for desktop */
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    width: auto;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    border-left: 1px solid black;
+}
+.site-condition {
+    border: 1px solid black;
+    display: flex;
+    justify-content: space-evenly;
+    padding: 5px;
+    font-size: 14px; /* Normal size for desktop */
+    width: 30%;
+    gap: 25px;
+}
+.from-to {
+    border: 1px solid black;
+    font-size: 14px; /* Normal size for desktop */
+    width: 40%;
+}
+.slushy-dry {
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid black;
+    padding: 5px;
+    font-size: 14px; /* Normal size for desktop */
+    width: 30%;
+}
+button {
+    width: auto;
+    height: 50px;
+}
+.normal-day,.rainy-day,.slushy-day,.dry-day{
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+.normal-day-checkbox,.rainy-day-checkbox,.slushy-day-checkbox,.dry-day-checkbox{
+    width: 20px;
+    height: 20px;
+    border: 0.5px solid black;
+}
+img{
+    width: 150px;
+    height: 50px;
+}
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    width: 100%;
+}
+button {
+background-color: #007BFF;
+color: white;
+border: none;
+padding: 12px 20px;
+font-size: 16px;
+font-weight: bold;
+border-radius: 8px;
+cursor: pointer;
+transition: all 0.3s ease-in-out;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+background-color: #0056b3;
+transform: translateY(-2px);
+}
+
+button:active {
+transform: scale(0.95);
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+/* Add these styles to your existing CSS */
+#labourTable {
+table-layout: fixed;
+width: 100%;
+}
+
+.bottom-of-labour-table {
+table-layout: fixed;
+width: 100%;
+}
+
+/* Specific column widths for main table */
+#displayTable th:nth-child(1), /* Agency Name */
+#displayTable td:nth-child(1) {
+width: 15%;
+min-width: 15%;
+}
+#displayTable th:nth-child(12), /* Remarks */
+#displayTable td:nth-child(12) {
+width: 15%;
+min-width: 15%;
+}
+
+/* Middle columns (2nd to 11th) - Auto-width based on "Electrical" */
+#displayTable th:nth-child(n+2):nth-child(-n+11),
+#displayTable td:nth-child(n+2):nth-child(-n+11) {
+white-space: nowrap; /* Prevents text wrapping */
+padding: 0 8px; /* Adds some spacing */
+}
+
+
+.bottom-of-labour-table td:nth-child(1) { width: 22%; } /* Agency (15%) + Mason (7%) */
+.bottom-of-labour-table td:nth-child(2) { width: 14%; } /* Carp + Fitter */
+.bottom-of-labour-table td:nth-child(3) { width: 35%; } /* Elec through Helper */
+.bottom-of-labour-table td:nth-child(4) { width: 14%; } /* Staff + Total */
+.bottom-of-labour-table td:nth-child(5) { width: 15%; } /* Remarks */
+
+/* Media Query for Mobile */
+@media(max-width: 600px) {
+    .daily, .report, .dynamic-date, .project-label, .site-label {
+        font-size: 10px; /* Smaller for mobile */
+    }
+    table, tr, td {
+        font-size: 9px; /* Smaller for mobile */
+    }
+    .project-bottom > div,
+    .site-condition,
+    .from-to,
+    .slushy-dry {
+        font-size: 9px; /* Smaller for mobile */
+    }
+    .normal-day,.rainy-day,.slushy-day,.dry-day{
+        font-size: 0.7em;
+    }
+    .normal-day-checkbox,.rainy-day-checkbox,.slushy-day-checkbox,.dry-day-checkbox{
+        height: 1em;
+        width: 1em;
+    }
+    span{
+        font-size: 0.8em;
+    }
+}
+@media print {
+button {
+display: none;
+}
+body {
+width: 21cm !important; /* A4 width */
+height: 29.7cm !important; /* A4 height */
+margin: 0 !important;
+padding: 0.5cm !important;
+-webkit-print-color-adjust: exact;
+print-color-adjust: exact;
+}
+/* Force tables to fit A4 width */
+.dpr-pdf-container {
+width: 100% !important;
+max-width: 20cm !important; /* Slightly less than A4 to account for margins */
+}
+th{
+font-size: 0.8rem;
+}
+/* Allow text to wrap in print */
+#displayTable th:nth-child(n+2):nth-child(-n+11),
+#displayTable td:nth-child(n+2):nth-child(-n+11) {
+white-space: nowrap !important;
+overflow: hidden !important;
+text-overflow: ellipsis !important;
+font-size: 0.85em !important; /* Slightly smaller font */
+padding: 1px 3px !important;  /* Reduced padding */
+line-height: 1.1 !important;  /* Tighter line spacing */
+}
+/* Specific fix for "Electrical" header */
+#displayTable th:nth-child(5) {  /* Electrical column */
+font-size: 0.8em !important; /* Slightly smaller than others */
+letter-spacing: -0.05em;     /* Tighten character spacing */
+}
+
+/* Ensure tables don't overflow */
+table {
+page-break-inside: avoid;
+}
+span {
+font-size: 0.9em;
+}
+::-webkit-scrollbar {
+display: none;
+}
+}
