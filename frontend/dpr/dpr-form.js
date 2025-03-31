@@ -75,12 +75,12 @@ sessionStorage.setItem("userTableData", JSON.stringify(tableData));
 const todaytable = document.getElementById("today-table");
 const todayrows = Array.from(todaytable.rows);
 
-// Start from index 1 to skip the header row
 const todaytableData = todayrows.slice(1).map((row) => {
     const cells = Array.from(row.cells);
     return cells.map((cell) => {
         const input = cell.querySelector("input");
-        return input ? input.value : cell.textContent.trim();
+        const value = input ? input.value.trim() : cell.textContent.trim();
+        return value === "" ? "--" : value;  // Replace empty with '--'
     });
 });
 
@@ -88,19 +88,21 @@ const todaytableData = todayrows.slice(1).map((row) => {
 const tomorrowtable = document.getElementById("tomorrow-table");
 const tomorrowrows = Array.from(tomorrowtable.rows);
 
-// Start from index 1 to skip the header row
 const tomorrowtableData = tomorrowrows.slice(1).map((row) => {
     const cells = Array.from(row.cells);
     return cells.map((cell) => {
         const input = cell.querySelector("input");
-        // Return empty string for both empty inputs and empty cells
-        return input ? input.value : "";
+        const value = input ? input.value.trim() : "";
+        return value === "" ? "--" : value;  // Replace empty with '--'
     });
 });
 
 // Save both table data to sessionStorage
 sessionStorage.setItem("todayTableData", JSON.stringify(todaytableData));
 sessionStorage.setItem("tomorrowTableData", JSON.stringify(tomorrowtableData));
+// Save both table data to sessionStorage
+    sessionStorage.setItem("todayTableData", JSON.stringify(todaytableData));
+    sessionStorage.setItem("tomorrowTableData", JSON.stringify(tomorrowtableData));
     sessionStorage.setItem("form-values", JSON.stringify(input_array));
     sessionStorage.setItem("timeslots", JSON.stringify(timeSlots));
 
@@ -133,15 +135,6 @@ sessionStorage.setItem("tomorrowTableData", JSON.stringify(tomorrowtableData));
   });
 
 
-
-    // Log the time slots
-    // console.log("Time Slots:", timeSlots);
-
-    // Close the modal after submission
-    
-  
-
-  // Add Time Slot Button Functionality
   // Add Time Slot Button Functionality
 // Add Time Slot Button Functionality
 let timeSlotCount = 1; // Counter for time slots
