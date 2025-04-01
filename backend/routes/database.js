@@ -112,7 +112,67 @@ export async function r_isEmailOrPhoneTaken(email, phone) {
     }
 }
 
+// ---------------------- PROJECT FUNCTIONS ----------------------- //
+
+// Function to fetch Project by ID
+export async function r_fetchProjectByID(project_id) {
+    const query = "SELECT * FROM Projects WHERE id = ?";
+    try {
+        let [row] = await pool.query(query, [project_id]);
+        row[0].start_date = row[0].start_date.toISOString().split("T")[0]
+        row[0].end_date = row[0].end_date.toISOString().split("T")[0]
+        return row[0] || null;
+    } catch (error) {
+        console.error("Error fetching Project by ID:", error);
+        throw error;
+    }
+}
+
 // ------------------------ DPR FUNCTIONS ------------------------- //
+
+const dprFormat = {
+    project_id: null,
+    reported_by: null,
+    report_date: "",
+
+    site_condition: {
+        ground_state: "",       // e.g., "dry", "slushy"
+        weather_state: "",      // e.g., "normal", "rainy"
+        timing: []              // e.g., ["11:00-12:00", "13:00-14:00"]
+    },
+    labour_report: {
+        agency: [],             // List of agencies
+        mason: [],              // Numbers per agency
+        carp: [],
+        fitter: [],
+        electrical: [],
+        painter: [],
+        gypsum: [],
+        plumber: [],
+        helper: [],
+        staff: [],
+        remarks: ""             // Any labour-specific remarks
+    },
+    cumulative_manpower: null, // Total count
+
+    today_prog: [              // Array of task objects
+        {
+            task: "",
+            qty: ""
+        }
+    ],
+    tomorrow_plan: [
+        {
+            task: "",
+            qty: ""
+        }
+    ],
+    
+    events_visit: "",          // Notes on events or visits
+    distribute: "",            // Material/Info distribution notes
+    prepared_by: "",           // Name or role
+    approval: {}               // e.g., { "Name": true/false }
+};
 
 // Function to fetch DPR by ID
 export async function r_fetchDprByID(id) {
@@ -134,12 +194,9 @@ export async function r_insertDPR(dprData) {
 
     const query = `
     INSERT INTO DPR (
-        project_id, reported_by, report_date, site_condition, agency, mason,
-        carp, fitter, electrical, painter, gypsum, plumber, helper, staff,
-        remarks, cumulative_manpower, today_prog, tomorrow_plan,
-        events_visit, distribute, prepared_by, approval
+        project_id, reported_by, report_date, site_condition, labour_report, cumulative_manpower, today_prog, tomorrow_plan, events_visit, remarks, distribute, prepared_by, approval
     ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
 
@@ -147,22 +204,13 @@ export async function r_insertDPR(dprData) {
         dprData.project_id,
         dprData.reported_by,
         dprData.report_date,
-        dprData.site_condition || null,
-        dprData.agency || null,
-        dprData.mason || null,
-        dprData.carp || null,
-        dprData.fitter || null,
-        dprData.electrical || null,
-        dprData.painter || null,
-        dprData.gypsum || null,
-        dprData.plumber || null,
-        dprData.helper || null,
-        dprData.staff || null,
-        dprData.remarks || null,
+        dprData.site_condition ? JSON.stringify(dprData.site_condition) : null,
+        dprData.labour_report ? JSON.stringify(dprData.labour_report) : null,
         dprData.cumulative_manpower ?? 0,
-        dprData.today_prog || null,
-        dprData.tomorrow_plan || null,
+        dprData.today_prog ? JSON.stringify(dprData.today_prog) : null,
+        dprData.tomorrow_plan ? JSON.stringify(dprData.tomorrow_plan) : null,
         dprData.events_visit || null,
+        dprData.remarks || null,
         dprData.distribute || null,
         dprData.prepared_by || null,
         dprData.approval ? JSON.stringify(dprData.approval) : null
@@ -249,57 +297,33 @@ export async function r_updateDPR(dprData) {
     }
 }
 
-// Function to structure raw DPR into formatted object
-export async function FormatDprData(dpr_data) {
+// Function to fetch last DPR cummulative manpower
+export async function r_fetchLastManPower(project_id) {
+    const query = "SELECT cumulative_manpower FROM DPR WHERE project_id = ? ORDER BY report_date DESC LIMIT 1;";
     try {
-        const structuredDpr = { ...dpr_data };
-
-        // Parse site_condition to array
-        if (structuredDpr.site_condition) {
-            structuredDpr.site_condition = structuredDpr.site_condition.split("|");
-            if (structuredDpr.site_condition[1] === "rainy" && structuredDpr.site_condition[2]) {
-                structuredDpr.site_condition[2] = structuredDpr.site_condition[2].split(',');
-            }
-        }
-
-        // agency and distribute as arrays
-        if (structuredDpr.agency) {
-            structuredDpr.agency = structuredDpr.agency.split(",");
-        }
-        if (structuredDpr.distribute) {
-            structuredDpr.distribute = structuredDpr.distribute.split(",");
-        }
-
-        // Split comma-separated integer arrays
-        const comma_sep_int = ["mason", "carp", "fitter", "electrical", "painter", "gypsum", "plumber", "helper", "staff", "approval"];
-        comma_sep_int.forEach((agent) => {
-            if (structuredDpr[agent]) {
-                structuredDpr[agent] = structuredDpr[agent].split(",").map(num => {
-                    const parsed = parseInt(num, 10);
-                    return isNaN(parsed) ? null : parsed;
-                });
-            }
-        });
-
-        // Split progress/plans to [task, quantity] arrays
-        ["today_prog", "tomorrow_plan"].forEach((item) => {
-            if (structuredDpr[item]) {
-                structuredDpr[item] = structuredDpr[item].split("|").map(x => x.split("~"));
-            }
-        });
-
-        structuredDpr.reported_by = await r_fetchUserNameByID(structuredDpr.reported_by);
-
-        structuredDpr.approval = await Promise.all(
-            structuredDpr.approval.map(user_id => r_fetchUserNameByID(user_id))
-        );
-
-        return structuredDpr;
-
+        const [data] = await pool.query(query, [project_id]);
+        return data.length > 0 ? data[0].cumulative_manpower : 0;
     } catch (error) {
-        console.error("❌ Error formatting DPR:", error.message);
+        console.error("❌ Error fetching last DPR cumulative manpower:", error);
         throw error;
     }
+}
+
+// Function to structure raw DPR into formatted object
+export async function DprInit(project_id, report_by) {
+
+    const project_data = r_fetchProjectByID(project_id);
+    let dpr = dprFormat;
+
+    dpr.project_id = project_id;
+    dpr.reported_by = report_by;
+    dpr.report_date = new Date().toISOString().split("T")[0];
+    dpr.cumulative_manpower = await r_fetchLastManPower(project_id);
+    dpr.labour_report.agency = project_data.agency.split(",");
+    dpr.project_name = project_data.project_name;
+    dpr.employer = project_data.employer;
+
+    return dpr;   
 }
 
 
@@ -426,10 +450,7 @@ export async function r_searchVendors({
 
     const vendorCount = results.length;
     const offset = (tab - 1) * limit;
-    results.forEach((vendor) => {console.log(vendor.id)})
     results = results.slice(offset, offset + limit)
-    console.log(offset, limit)
-    results.forEach((vendor) => {console.log(vendor.id)})
     return {
         vendors: results,
         vendorCount,
@@ -444,37 +465,49 @@ export async function r_searchVendors({
 
 
 
-// const dprData = {
-//     project_id: 1,
-//     reported_by: 5,
-//     report_date: "2024-03-18",
-//     site_condition: "normal",
-//     agency: "XYZ Constructions",
-//     mason: "John, Alex",
-//     carp: "David, Robert",
-//     fitter: "Mike, Steve",
-//     electrical: "Electric Corp",
-//     painter: "PainterX",
-//     gypsum: "GypsumPro",
-//     plumber: "PlumbIt",
-//     helper: "Helper1, Helper2",
-//     staff: "StaffA, StaffB",
-//     remarks: "Site inspected, materials arrived",
-//     cumulative_manpower: 20,
-//     today_prog: "Foundation work completed",
-//     tomorrow_plan: "Start brickwork",
-//     events_visit: "Safety audit scheduled",
-//     distribute: "Material to be distributed",
-//     prepared_by: "Site Manager",
-//     approval: "12, 15, 18"
-// };
+const dprData = {
+    project_id: 1,
+    reported_by: 5,
+    report_date: "2024-03-18",
+    site_condition: {
+        ground_state: "slushy",
+        weather_state: "rainy", 
+        timing: ["11:00-12:00", "13:00-14:25"]
+    },
+    labour_report: {
+        agency: ["MAPLANI", "L&T", "AMAZON", "NVIDIA"],
+        mason: [0, 0, 1, 0],
+        carp: [1, 0, 3, 5],
+        fitter: [2, 1, 0, 4],
+        electrical: [0, 2, 1, 3],
+        painter: [1, 1, 0, 0],
+        gypsum: [3, 0, 2, 1],
+        plumber: [0, 0, 0, 2],
+        helper: [5, 2, 3, 1],
+        staff: [2, 1, 1, 0],
+        remarks: "Nices remark"
+    },
+    cumulative_manpower: 20,
+    today_prog: [{ "task": "Task one done", "qty": "1Kg" }, { "task": "Task two done", "qty": "7Kg" }, { "task": "Task three done", "qty": "1L" }],
+    tomorrow_plan: [{ "task": "Task seven done", "qty": "1Kg" }, { "task": "Task eight done", "qty": "7Kg" }, { "task": "Task nine done", "qty": "1L" }],
+    events_visit: "Safety audit scheduled",
+    distribute: "Material to be distributed",
+    prepared_by: "Site Manager",
+    approval: {
+        "Mano Bharathi": true,
+        "Rajesh": true,
+        "Sathish Nadar": false
+    }
+};
+
+// const dpr_inserted = await r_insertDPR(dprData);
+// console.log(dpr_inserted);
+
+// const dpr = await r_fetchDprByID(9)
+// console.log(dpr);
 
 // console.log(dprData);
-
-
-// const nice = await r_fetchDprByID(1);
-// console.log(nice)
-// const bike = await FormatDprData(nice);
-// console.log(bike)
+// const project = await r_fetchProjectByID(2)
+// console.log(project)
 
 // pool.end()

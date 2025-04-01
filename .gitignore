@@ -136,3 +136,4 @@ backend/data/*.json
 
 *test.js
 .qodo
+.vscode

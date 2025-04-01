@@ -134,6 +134,17 @@ router.post("/updateDPR", async (req, res) => {
   }
 });
 
+// Get call to fetch Project Detail
+router.post("/getProject/:id", async (req, res) => {
+  try {
+    const project_data = await DB.r_fetchProjectByID(id);
+    res.json({ project_data })
+  } catch (error) {
+    console.error("Error fetching Project Details:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+})
+
 
 
 

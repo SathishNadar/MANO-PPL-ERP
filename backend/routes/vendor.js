@@ -5,7 +5,7 @@ import * as auth from "./auth.js";
 const router = express.Router();
 
 // Post call to fetch Vendor data as per the filters
-router.post("/", auth.authenticateJWT, async (req, res) => {
+router.post("/", async (req, res) => {
     try {
         const {
             tab = 1,
@@ -33,7 +33,7 @@ router.post("/", auth.authenticateJWT, async (req, res) => {
 });
 
 // Post call to fetch Vendor data as per search and filters
-router.post("/search", auth.authenticateJWT, async (req, res) => {
+router.post("/search", async (req, res) => {
     try {
         const {
             queryString,
@@ -85,7 +85,7 @@ router.get("/Locations", auth.authenticateJWT, async (req, res) =>{
 })
 
 // GET call to fetch all locations, job natures, and vendor count
-router.get("/metadata", auth.authenticateJWT, async (req, res) => {
+router.get("/metadata", async (req, res) => {
     try {
         const locations = await DB.r_fetchVendorsAllLocations();
         const jobNatures = await DB.r_fetchVendorsAllJobNatures();
