@@ -128,6 +128,38 @@ export async function r_fetchProjectByID(project_id) {
     }
 }
 
+// Function to insert Project
+export async function r_insertProject(projectData) {
+    const query = `
+        INSERT INTO Projects 
+        (project_name, project_description, start_date, end_date, location, contract_no, approvers, employer, agency)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const agencyString = Array.isArray(projectData.agency) ? projectData.agency.join("|") : projectData.agency || null;
+
+    const values = [
+        projectData.project_name,
+        projectData.project_description || null,
+        projectData.start_date || null,
+        projectData.end_date || null,
+        projectData.location || null,
+        projectData.contract_no || null,
+        projectData.approvers || null,
+        projectData.employer || null,
+        agencyString
+    ];
+
+    try {
+        const [result] = await pool.query(query, values);
+        return { success: true, insertId: result.insertId };
+    } catch (error) {
+        console.error("Error inserting new project:", error);
+        throw error;
+    }
+}
+
+
 // ------------------------ DPR FUNCTIONS ------------------------- //
 
 const dprFormat = {

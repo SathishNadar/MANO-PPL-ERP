@@ -135,15 +135,35 @@ router.post("/updateDPR", async (req, res) => {
 });
 
 // Get call to fetch Project Detail
-router.post("/getProject/:id", async (req, res) => {
+router.get("/getProject/:id", async (req, res) => {
   try {
-    const project_data = await DB.r_fetchProjectByID(id);
+    const project_data = await DB.r_fetchProjectByID(req.params['id']);
     res.json({ project_data })
   } catch (error) {
     console.error("Error fetching Project Details:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 })
+
+// Post call to add Project Detail
+router.post("/addProject", async (req, res) => {
+  try {
+    const projectData = req.body;
+
+    if (!projectData.project_name || !projectData.start_date || !projectData.end_date) {
+      return res.status(400).json({ message: "Project name, start date, and end date are required." });
+    }
+
+    const result = await DB.r_insertProject(projectData);
+
+    res.status(201).json({ message: "Project added successfully", project_id: result.insertId });
+  } catch (error) {
+    console.error("Error adding Project:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
 
 
 
