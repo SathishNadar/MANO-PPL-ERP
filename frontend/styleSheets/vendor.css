@@ -22,7 +22,7 @@ body.vendor-active .sidebar {
   border-collapse: collapse;
   margin: 20px 0;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: normal;
   /* table-layout: fixed; */
 }

@@ -177,15 +177,14 @@ function loadVendorList() {
   const mainContent = document.querySelector(".main-content");
   mainContent.innerHTML = setMainContent("Vendor List");
 
-  setTimeout(() => {
-    attachSearchListeners();
-  }, 200);
-  
+
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
     script.src = "../javaScripts/vendor-list.js";
     script.onload = () => {
       window.vendorScriptLoaded = true;
+      initializeVendorList();
+      attachSearchListeners();
     };
     document.head.appendChild(script);
   } else {
@@ -226,7 +225,6 @@ function loadContractorList() {
       window.vendorScriptLoaded = true;
     };
     document.head.appendChild(script);
-    // console.log(script)
   } else {
     categoryIds = 2;
     initializeVendorList();
