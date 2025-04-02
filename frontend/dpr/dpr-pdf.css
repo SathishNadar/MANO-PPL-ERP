@@ -2,6 +2,7 @@
     padding: 0;
     margin: 0;
     box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
 }
 body {
     display: flex;
@@ -55,7 +56,7 @@ body {
 .project-label {
     font-size: 16px; /* Normal size for desktop */
     writing-mode: vertical-rl;
-    width: 2%;
+    width: 30px;
     transform: rotate(180deg);
 }
 .project-left {
@@ -65,9 +66,18 @@ table, tr, td {
     border: 1px solid black;
     border-collapse: collapse;
     font-size: 14px; /* Normal size for desktop */
+    line-height: 20px;
 }
 .project-table {
+    table-layout: fixed;
     width: 100%;
+}
+.project-table td:first-child,
+.project-table th:first-child {
+    width: var(--first-col-width, auto); /* Will be set by JS */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 #displayTable{
     table-layout: fixed;
@@ -89,7 +99,7 @@ word-wrap: break-word;
 }
 .project-bottom {
     display: flex;
-    margin-left: 1.5%;
+    margin-left: 1.9%;
 }
 .project-bottom > div {
     border-bottom: 1px solid black;
@@ -251,49 +261,133 @@ padding: 0 8px; /* Adds some spacing */
     }
 }
 @media print {
-button {
-display: none;
+    /* Hide non-essential elements */
+    button {
+        display: none !important;
+    }
+    
+    /* A4 base setup */
+    body {
+        width: 21cm !important;
+        height: 29.7cm !important;
+        margin: 0 !important;
+        padding: 0.5cm !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        zoom: 90%; /* Slightly scale down everything */
+    }
+    
+    /* Main container adjustments */
+    .dpr-pdf-container {
+        width: 100% !important;
+        max-width: 19.5cm !important;
+        margin: 0 auto !important;
+        border:2px solid black;
+    }
+    
+    /* Font size hierarchy */
+    body {
+        font-size: 9pt !important;
+    }
+    
+    .daily, .report, .dynamic-date {
+        font-size: 10pt !important;
+    }
+    
+    .project-label, .site-label, .labour-table-lable {
+        font-size: 9pt !important;
+    }
+    
+    table, tr, td {
+        font-size: 8pt !important;
+    }
+    
+    /* Tables - force exact layout */
+    table {
+        table-layout: fixed !important;
+        width: 100% !important;
+        page-break-inside: avoid !important;
+    }
+    
+    /* Prevent any text wrapping */
+    th, td {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        padding: 1px 3px !important;
+        line-height: 1 !important;
+    }
+    
+    /* Specific column adjustments */
+    .project-table td:first-child,
+    .project-table th:first-child {
+        width: 120px;/* Match "Dur. in Days" width */
+    }
+    .durr{
+        width: 120px;
+    }
+    
+    /* Labour table columns */
+    #displayTable th:nth-child(1),
+    #displayTable td:nth-child(1) {
+        width: 15% !important;
+    }
+    
+    #displayTable th:nth-child(12),
+    #displayTable td:nth-child(12) {
+        width: 15% !important;
+    }
+    
+    /* Middle columns - ultra compact */
+    #displayTable th:nth-child(n+2):nth-child(-n+11),
+    #displayTable td:nth-child(n+2):nth-child(-n+11) {
+        font-size: 7pt !important;
+        padding: 0 2px !important;
+        letter-spacing: -0.05em !important;
+    }
+    
+    /* Electrical column special treatment */
+    #displayTable th:nth-child(5),
+    #displayTable td:nth-child(5) {
+        font-size: 6.5pt !important;
+        letter-spacing: -0.1em !important;
+    }
+    
+    /* Bottom labour table */
+    .bottom-of-labour-table td:nth-child(1) { width: 22% !important; }
+    .bottom-of-labour-table td:nth-child(2) { width: 14% !important; }
+    .bottom-of-labour-table td:nth-child(3) { width: 35% !important; }
+    .bottom-of-labour-table td:nth-child(4) { width: 14% !important; }
+    .bottom-of-labour-table td:nth-child(5) { width: 15% !important; }
+    
+    /* Checkbox adjustments */
+    .normal-day-checkbox,
+    .rainy-day-checkbox,
+    .slushy-day-checkbox,
+    .dry-day-checkbox {
+        width: 12px !important;
+        height: 12px !important;
+    }
+    
+    /* Force all borders to print */
+    table, tr, td, th,
+    .daily-progress-report > div,
+    .project-bottom > div,
+    .site-condition,
+    .from-to,
+    .slushy-dry {
+        border-color: black !important;
+        border-style: solid !important;
+        border-width: 1px !important;
+        font-size: 0.80em;
+    }
+    
+    /* Remove any shadows or transforms */
+    * {
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    .commulative{
+        font-size: 0.9em;
+    }
 }
-body {
-width: 21cm !important; /* A4 width */
-height: 29.7cm !important; /* A4 height */
-margin: 0 !important;
-padding: 0.5cm !important;
--webkit-print-color-adjust: exact;
-print-color-adjust: exact;
-}
-/* Force tables to fit A4 width */
-.dpr-pdf-container {
-width: 100% !important;
-max-width: 20cm !important; /* Slightly less than A4 to account for margins */
-}
-th{
-font-size: 0.8rem;
-}
-/* Allow text to wrap in print */
-#displayTable th:nth-child(n+2):nth-child(-n+11),
-#displayTable td:nth-child(n+2):nth-child(-n+11) {
-white-space: nowrap !important;
-overflow: hidden !important;
-text-overflow: ellipsis !important;
-font-size: 0.85em !important; /* Slightly smaller font */
-padding: 1px 3px !important;  /* Reduced padding */
-line-height: 1.1 !important;  /* Tighter line spacing */
-}
-/* Specific fix for "Electrical" header */
-#displayTable th:nth-child(5) {  /* Electrical column */
-font-size: 0.8em !important; /* Slightly smaller than others */
-letter-spacing: -0.05em;     /* Tighten character spacing */
-}
-
-/* Ensure tables don't overflow */
-table {
-page-break-inside: avoid;
-}
-span {
-font-size: 0.9em;
-}
-::-webkit-scrollbar {
-display: none;
-}
-}
+    
