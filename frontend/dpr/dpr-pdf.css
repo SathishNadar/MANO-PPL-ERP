@@ -296,6 +296,9 @@ padding: 0 8px; /* Adds some spacing */
     
     .project-label, .site-label, .labour-table-lable {
         font-size: 9pt !important;
+        writing-mode: vertical-rl !important;
+        transform: rotate(180deg) !important;
+        text-orientation: mixed !important;
     }
     
     table, tr, td {
@@ -308,7 +311,10 @@ padding: 0 8px; /* Adds some spacing */
         width: 100% !important;
         page-break-inside: avoid !important;
     }
-    
+    .today-planning-header,.tomorrow-planning-header{
+        column-span: 2;
+        text-align: center;
+    }
     /* Prevent any text wrapping */
     th, td {
         white-space: nowrap !important;
@@ -379,6 +385,14 @@ padding: 0 8px; /* Adds some spacing */
         border-style: solid !important;
         border-width: 1px !important;
         font-size: 0.80em;
+    }
+    .daily-progress-report{
+        margin-left: 7px;
+        border-left: none;
+    }
+    .project-bottom{
+        margin-left: 17px;
+        border-top: 0px;
     }
     
     /* Remove any shadows or transforms */
