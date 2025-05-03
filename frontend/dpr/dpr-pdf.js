@@ -194,3 +194,14 @@ document.addEventListener("DOMContentLoaded", function() {
     window.addEventListener('resize', adjustLabourContainer);
     window.onbeforeprint = prepareForPrint;
 });
+// In your print button click handler
+document.getElementById('download-pdf').addEventListener('click', function() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @page { margin: 5mm 5mm 5mm 5mm !important; }
+        body { margin: 0 !important; }
+    `;
+    document.head.appendChild(style);
+    window.print();
+    setTimeout(() => style.remove(), 1000);
+});

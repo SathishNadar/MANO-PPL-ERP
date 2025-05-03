@@ -352,5 +352,7 @@ document.querySelectorAll(".remove-time-slot-button").forEach(button => {
       calculateGrandTotal(); // Recalculate totals
     }
   }
+
+  
   
     
