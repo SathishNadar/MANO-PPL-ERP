@@ -738,3 +738,61 @@ button[type="submit"]:hover {
       width: 100%;
   }
 }
+/* Timeslot Display Styles */
+.timeslots-display {
+  margin-top: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+  display: none;
+  background-color: #f8fafc;
+}
+
+.timeslot-item {
+  background: #ffffff;
+  padding: 8px 12px;
+  margin: 5px 0;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+}
+
+.timeslot-item span {
+  color: #333;
+}
+
+.timeslot-remove {
+  color: #c62828;
+  cursor: pointer;
+  margin-left: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  transition: color 0.2s;
+}
+
+.timeslot-remove:hover {
+  color: #b71c1c;
+}
+
+#timeslot-count {
+  background: #2e7d32;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 8px;
+  font-size: 12px;
+  margin-right: 8px;
+  font-weight: 500;
+}
+
+/* Modal Time Slot Headers */
+.time-slot h5 {
+  color: #333;
+  font-weight: 500;
+  margin: 0 0 5px 0;
+  font-size: 14px;
+}
