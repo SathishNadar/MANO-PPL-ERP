@@ -401,7 +401,7 @@ padding: 0 8px; /* Adds some spacing */
         transform: none !important;
     }
     .commulative{
-        font-size: 0.9em;
+        font-size: 5.5pt !important;
     }
 }
     
