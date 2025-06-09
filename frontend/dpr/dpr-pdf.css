@@ -4,30 +4,38 @@
     box-sizing: border-box;
     font-family: "Poppins", sans-serif;
 }
+
 body {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
+
 #pdf-container {
     width: 100%;
 }
+
 .dpr-pdf-container {
     height: auto;
     width: 97%;
     border: 1px solid black;
     border-bottom: none;
+    display: grid;
+    justify-content: center;
 }
+
 .header {
     display: grid;
     grid-template-areas: "logo daily-progress";
     grid-template-columns: 1fr 1fr;
 }
+
 .logo {
     grid-area: logo;
     height: 50px;
     width: 150px;
 }
+
 .daily-progress-report {
     grid-area: daily-progress;
     text-align: center;
@@ -39,136 +47,157 @@ body {
     grid-template-columns: 1fr 1fr;
     border-left: 1px solid black;
 }
-.daily-progress-report > .daily{
+
+.daily-progress-report > .daily {
     border-right: 1px solid black;
     border-bottom: 1px solid black;
 }
-.daily-progress-report > .dynamic-date{
+
+.daily-progress-report > .dynamic-date {
     border-right: 1px solid black;
 }
-.daily-progress-report > .report{
+
+.daily-progress-report > .report {
     border-bottom: 1px solid black;
 }
+
 .daily, .report, .dynamic-date {
-    
-    font-size: 16px; /* Normal size for desktop */
+    font-size: 16px;
 }
+
 .project-label {
-    font-size: 16px; /* Normal size for desktop */
+    font-size: 16px;
     writing-mode: vertical-rl;
     width: 30px;
     transform: rotate(180deg);
 }
+
 .project-left {
     display: flex;
 }
+
 table, tr, td {
     border: 1px solid black;
     border-collapse: collapse;
-    font-size: 14px; /* Normal size for desktop */
+    font-size: 14px;
     line-height: 20px;
 }
+
 .project-table {
     table-layout: fixed;
     width: 100%;
 }
+
 .project-table td:first-child,
 .project-table th:first-child {
-    width: var(--first-col-width, auto); /* Will be set by JS */
+    width: var(--first-col-width, auto);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-#displayTable{
+
+#displayTable {
     table-layout: fixed;
     width: 100%;
 }
+
 #displayTable th, 
 #displayTable td {
-padding: 4px;
-text-align: center;
-word-wrap: break-word;
+    padding: 4px;
+    text-align: center;
+    word-wrap: break-word;
 }
-.labour-table-container{
+
+.labour-table-container {
     width: 100%;
     display: flex;
     flex-direction: row;
 }
-.inside-labour-table-cotainer{
+
+.inside-labour-table-cotainer {
     width: 100%;
 }
+
 .project-bottom {
     display: flex;
     margin-left: 1.9%;
 }
+
 .project-bottom > div {
     border-bottom: 1px solid black;
     border-left: 1px solid black;
-    font-size: 14px; /* Normal size for desktop */
+    font-size: 14px;
 }
+
 .site {
     display: flex;
-    margin-top: 5px; 
+    margin-top: 0; 
     width: 100%;
     gap: 0px;
 }
-.site-label {
+
+.site-label,
+.labour-table-lable {
     width: auto;
-    font-size: 16px; /* Normal size for desktop */
+    font-size: 16px;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    width: auto;
 }
-.labour-table-lable{
-    width: auto;
-    font-size: 16px; /* Normal size for desktop */
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    width: auto;
+
+.labour-table-lable {
     border-top: 1px solid black;
     border-bottom: 1px solid black;
     border-left: 1px solid black;
 }
+
 .site-condition {
     border: 1px solid black;
     display: flex;
     justify-content: space-evenly;
     padding: 5px;
-    font-size: 14px; /* Normal size for desktop */
+    font-size: 14px;
     width: 30%;
     gap: 25px;
 }
+
 .from-to {
     border: 1px solid black;
-    font-size: 14px; /* Normal size for desktop */
+    font-size: 14px;
     width: 40%;
 }
+
 .slushy-dry {
     display: flex;
     justify-content: space-between;
     border: 1px solid black;
     padding: 5px;
-    font-size: 14px; /* Normal size for desktop */
+    font-size: 14px;
     width: 30%;
 }
-button {
-    width: auto;
-    height: 50px;
-}
-.normal-day,.rainy-day,.slushy-day,.dry-day{
+
+.normal-day,
+.rainy-day,
+.slushy-day,
+.dry-day {
     display: flex;
     flex-direction: row;
     gap: 5px;
 }
-.normal-day-checkbox,.rainy-day-checkbox,.slushy-day-checkbox,.dry-day-checkbox{
+
+.normal-day-checkbox,
+.rainy-day-checkbox,
+.slushy-day-checkbox,
+.dry-day-checkbox {
     width: 20px;
     height: 20px;
     border: 0.5px solid black;
 }
-img{
+
+img {
     width: 150px;
     height: 50px;
 }
+
 .button-container {
     display: flex;
     justify-content: center;
@@ -176,125 +205,148 @@ img{
     margin-top: 20px;
     width: 100%;
 }
+
 button {
-background-color: #007BFF;
-color: white;
-border: none;
-padding: 12px 20px;
-font-size: 16px;
-font-weight: bold;
-border-radius: 8px;
-cursor: pointer;
-transition: all 0.3s ease-in-out;
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: auto;
+    height: 50px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
-background-color: #0056b3;
-transform: translateY(-2px);
+    background-color: #0056b3;
+    transform: translateY(-2px);
 }
 
 button:active {
-transform: scale(0.95);
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-/* Add these styles to your existing CSS */
-#labourTable {
-table-layout: fixed;
-width: 100%;
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+#labourTable,
 .bottom-of-labour-table {
-table-layout: fixed;
-width: 100%;
+    table-layout: fixed;
+    width: 100%;
 }
 
-/* Specific column widths for main table */
-#displayTable th:nth-child(1), /* Agency Name */
+#today-table, 
+#tomorrow-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+#today-table td:first-child,
+#tomorrow-table td:first-child {
+    width: 70%;
+    word-break: break-word;
+    white-space: normal !important;
+}
+
+#today-table td:last-child,
+#tomorrow-table td:last-child {
+    width: 30%;
+}
+
+#displayTable th:nth-child(1),
 #displayTable td:nth-child(1) {
-width: 15%;
-min-width: 15%;
-}
-#displayTable th:nth-child(12), /* Remarks */
-#displayTable td:nth-child(12) {
-width: 15%;
-min-width: 15%;
+    width: 15%;
+    min-width: 15%;
 }
 
-/* Middle columns (2nd to 11th) - Auto-width based on "Electrical" */
+#displayTable th:nth-child(12),
+#displayTable td:nth-child(12) {
+    width: 15%;
+    min-width: 15%;
+}
+
 #displayTable th:nth-child(n+2):nth-child(-n+11),
 #displayTable td:nth-child(n+2):nth-child(-n+11) {
-white-space: nowrap; /* Prevents text wrapping */
-padding: 0 8px; /* Adds some spacing */
+    white-space: nowrap;
+    padding: 0 8px;
 }
 
+.bottom-of-labour-table td:nth-child(1) { width: 22%; }
+.bottom-of-labour-table td:nth-child(2) { width: 14%; }
+.bottom-of-labour-table td:nth-child(3) { width: 35%; }
+.bottom-of-labour-table td:nth-child(4) { width: 14%; }
+.bottom-of-labour-table td:nth-child(5) { width: 15%; }
 
-.bottom-of-labour-table td:nth-child(1) { width: 22%; } /* Agency (15%) + Mason (7%) */
-.bottom-of-labour-table td:nth-child(2) { width: 14%; } /* Carp + Fitter */
-.bottom-of-labour-table td:nth-child(3) { width: 35%; } /* Elec through Helper */
-.bottom-of-labour-table td:nth-child(4) { width: 14%; } /* Staff + Total */
-.bottom-of-labour-table td:nth-child(5) { width: 15%; } /* Remarks */
-
-/* Media Query for Mobile */
 @media(max-width: 600px) {
-    .daily, .report, .dynamic-date, .project-label, .site-label {
-        font-size: 10px; /* Smaller for mobile */
+    .daily, .report, .dynamic-date, 
+    .project-label, .site-label {
+        font-size: 10px;
     }
-    table, tr, td {
-        font-size: 9px; /* Smaller for mobile */
-    }
+    
+    table, tr, td,
     .project-bottom > div,
     .site-condition,
     .from-to,
     .slushy-dry {
-        font-size: 9px; /* Smaller for mobile */
+        font-size: 9px;
     }
-    .normal-day,.rainy-day,.slushy-day,.dry-day{
+    
+    .normal-day,
+    .rainy-day,
+    .slushy-day,
+    .dry-day {
         font-size: 0.7em;
     }
-    .normal-day-checkbox,.rainy-day-checkbox,.slushy-day-checkbox,.dry-day-checkbox{
+    
+    .normal-day-checkbox,
+    .rainy-day-checkbox,
+    .slushy-day-checkbox,
+    .dry-day-checkbox {
         height: 1em;
         width: 1em;
     }
-    span{
+    
+    span {
         font-size: 0.8em;
     }
 }
+
 @media print {
-    /* Hide non-essential elements */
     button {
         display: none !important;
     }
     
-    /* A4 base setup */
     body {
-        width: 21cm !important;
         height: 29.7cm !important;
-        margin: 0 !important;
-        padding: 0.5cm !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
-        zoom: 90%; /* Slightly scale down everything */
-    }
-    
-    /* Main container adjustments */
-    .dpr-pdf-container {
+        zoom: 90%;
         width: 100% !important;
-        max-width: 19.5cm !important;
-        margin: 0 auto !important;
-        border:2px solid black;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+        font-size: 9pt !important;
     }
     
-    /* Font size hierarchy */
-    body {
-        font-size: 9pt !important;
+    .dpr-pdf-container {
+        width: 95% !important;
+        max-width: 190mm !important;
+        margin: 0 auto !important;
+        border: 1px solid black !important;
+        position: relative;
+        left: 0;
+        right: 0;
     }
     
     .daily, .report, .dynamic-date {
         font-size: 10pt !important;
     }
     
-    .project-label, .site-label, .labour-table-lable {
+    .project-label, 
+    .site-label, 
+    .labour-table-lable {
         font-size: 9pt !important;
         writing-mode: vertical-rl !important;
         transform: rotate(180deg) !important;
@@ -305,17 +357,18 @@ padding: 0 8px; /* Adds some spacing */
         font-size: 8pt !important;
     }
     
-    /* Tables - force exact layout */
     table {
         table-layout: fixed !important;
         width: 100% !important;
         page-break-inside: avoid !important;
     }
-    .today-planning-header,.tomorrow-planning-header{
+    
+    .today-planning-header,
+    .tomorrow-planning-header {
         column-span: 2;
         text-align: center;
     }
-    /* Prevent any text wrapping */
+    
     th, td {
         white-space: nowrap !important;
         overflow: visible !important;
@@ -323,16 +376,12 @@ padding: 0 8px; /* Adds some spacing */
         line-height: 1 !important;
     }
     
-    /* Specific column adjustments */
     .project-table td:first-child,
-    .project-table th:first-child {
-        width: 120px;/* Match "Dur. in Days" width */
-    }
-    .durr{
+    .project-table th:first-child,
+    .durr {
         width: 120px;
     }
     
-    /* Labour table columns */
     #displayTable th:nth-child(1),
     #displayTable td:nth-child(1) {
         width: 15% !important;
@@ -343,7 +392,6 @@ padding: 0 8px; /* Adds some spacing */
         width: 15% !important;
     }
     
-    /* Middle columns - ultra compact */
     #displayTable th:nth-child(n+2):nth-child(-n+11),
     #displayTable td:nth-child(n+2):nth-child(-n+11) {
         font-size: 7pt !important;
@@ -351,21 +399,18 @@ padding: 0 8px; /* Adds some spacing */
         letter-spacing: -0.05em !important;
     }
     
-    /* Electrical column special treatment */
     #displayTable th:nth-child(5),
     #displayTable td:nth-child(5) {
         font-size: 6.5pt !important;
         letter-spacing: -0.1em !important;
     }
     
-    /* Bottom labour table */
     .bottom-of-labour-table td:nth-child(1) { width: 22% !important; }
     .bottom-of-labour-table td:nth-child(2) { width: 14% !important; }
     .bottom-of-labour-table td:nth-child(3) { width: 35% !important; }
     .bottom-of-labour-table td:nth-child(4) { width: 14% !important; }
     .bottom-of-labour-table td:nth-child(5) { width: 15% !important; }
     
-    /* Checkbox adjustments */
     .normal-day-checkbox,
     .rainy-day-checkbox,
     .slushy-day-checkbox,
@@ -374,7 +419,6 @@ padding: 0 8px; /* Adds some spacing */
         height: 12px !important;
     }
     
-    /* Force all borders to print */
     table, tr, td, th,
     .daily-progress-report > div,
     .project-bottom > div,
@@ -386,22 +430,72 @@ padding: 0 8px; /* Adds some spacing */
         border-width: 1px !important;
         font-size: 0.80em;
     }
-    .daily-progress-report{
+    
+    #today-table td,
+    #tomorrow-table td {
+        white-space: normal !important;
+        height: auto !important;
+        min-height: 20px !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    .daily-progress-report {
         margin-left: 7px;
         border-left: none;
     }
-    .project-bottom{
-        margin-left: 17px;
+    
+    .today-tomorrow-table-container {
+        display: flex !important;
+        width: 100% !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        gap: 0 !important;
+    }
+    
+    #today-table, 
+    #tomorrow-table {
+        width: 50% !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-collapse: collapse;
+        height: auto !important;
+        max-height: none !important;
+        display: table !important;
+        visibility: visible !important;
+        overflow: visible !important;
+    }
+    
+    #today-table {
+        border-right: none !important;
+    }
+    
+    #tomorrow-table {
+        border-left: none !important;
+    }
+    
+    #today-table td, 
+    #tomorrow-table td {
+        padding: 1px 3px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .project-bottom {
+        margin-left: 19px;
         border-top: 0px;
     }
     
-    /* Remove any shadows or transforms */
     * {
         box-shadow: none !important;
         transform: none !important;
+        box-sizing: border-box !important;
     }
-    .commulative{
+    
+    .commulative {
         font-size: 5.5pt !important;
     }
 }
-    

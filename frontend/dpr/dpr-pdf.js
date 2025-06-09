@@ -24,29 +24,46 @@ function populateTables() {
     }
 
     // Today's Progress Table
-    if (todaytableData.length > 0) {
+       if (todaytableData.length > 0) {
         todaytableData.forEach(row => {
             const tr = document.createElement('tr');
-            styleTableRow(tr);
-            row.forEach(cell => {
+            row.forEach((cell, index) => {
                 const td = document.createElement('td');
                 td.textContent = cell;
-                styleTableCell(td);
+                
+                // Special handling for Task column (first column)
+                if (index === 0) {
+                    td.style.wordBreak = 'break-word';
+                    td.style.whiteSpace = 'normal';
+                    td.style.overflow = 'visible';
+                } else {
+                    // Quantity column
+                    td.style.textAlign = 'center';
+                }
+                
                 tr.appendChild(td);
             });
             todaydisplayTable.appendChild(tr);
         });
     }
 
+
     // Tomorrow's Planning Table
-    if (tomorrowtableData.length > 0) {
+ if (tomorrowtableData.length > 0) {
         tomorrowtableData.forEach(row => {
             const tr = document.createElement('tr');
-            styleTableRow(tr);
-            row.forEach(cell => {
+            row.forEach((cell, index) => {
                 const td = document.createElement('td');
                 td.textContent = cell;
-                styleTableCell(td);
+                
+                if (index === 0) {
+                    td.style.wordBreak = 'break-word';
+                    td.style.whiteSpace = 'normal';
+                    td.style.overflow = 'visible';
+                } else {
+                    td.style.textAlign = 'center';
+                }
+                
                 tr.appendChild(td);
             });
             tomorrowdisplayTable.appendChild(tr);
@@ -69,10 +86,18 @@ function styleTableCell(cell) {
     cell.style.border = "1px solid #000";
     cell.style.overflow = "hidden";
     cell.style.boxSizing = "border-box";
+    cell.style.wordWrap = "break-word";
+    cell.style.whiteSpace = "normal";
     
     if (!cell.textContent || cell.textContent.trim() === "") {
         cell.innerHTML = "&nbsp;";
     }
+}
+function styleProgressTableCell(cell) {
+    styleTableCell(cell); // Keep all base styles
+    cell.style.whiteSpace = "normal";
+    cell.style.wordBreak = "break-word";
+    cell.style.maxWidth = "150px"; // Adjust as needed for your layout
 }
 
 // ====================== HEIGHT ADJUSTMENT ======================
@@ -100,10 +125,20 @@ function prepareForPrint() {
     document.querySelectorAll('tr, th, td').forEach(el => {
         el.style.height = "20px !important";
         el.style.minHeight = "20px !important";
-        el.style.maxHeight = "20px !important";
+        el.style.maxHeight = "none !important"; // Changed to none to allow expansion
         el.style.lineHeight = "20px !important";
+        el.style.whiteSpace = "normal !important";
+        el.style.wordWrap = "break-word !important";
     });
-
+    document.querySelectorAll('#today-table td:first-child, #tomorrow-table td:first-child').forEach(td => {
+        td.style.whiteSpace = 'normal !important';
+        td.style.wordBreak = 'break-word !important';
+        td.style.height = 'auto !important';
+    });
+    
+    document.querySelectorAll('#today-table, #tomorrow-table').forEach(table => {
+        table.style.tableLayout = 'fixed !important';
+    });
     // Ensure borders are visible
     document.querySelectorAll('table, th, td').forEach(el => {
         el.style.border = "1px solid #000 !important";
