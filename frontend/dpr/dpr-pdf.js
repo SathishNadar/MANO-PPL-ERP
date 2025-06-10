@@ -72,17 +72,17 @@ function populateTables() {
 }
 
 function styleTableRow(row) {
-    row.style.height = "20px";
-    row.style.minHeight = "20px";
-    row.style.maxHeight = "20px";
-    row.style.lineHeight = "20px";
+    // row.style.height = "20px";
+    // row.style.minHeight = "20px";
+    // row.style.maxHeight = "20px";
+    // row.style.lineHeight = "20px";
 }
 
 function styleTableCell(cell) {
-    cell.style.height = "20px";
-    cell.style.minHeight = "20px";
-    cell.style.padding = "0 4px";
-    cell.style.lineHeight = "20px";
+    // cell.style.height = "20px";
+    // cell.style.minHeight = "20px";
+    // cell.style.lineHeight = "20px";
+    cell.style.padding = "0.5 2px";
     cell.style.border = "1px solid #000";
     cell.style.overflow = "hidden";
     cell.style.boxSizing = "border-box";
@@ -123,12 +123,11 @@ function adjustLabourContainer() {
 function prepareForPrint() {
     // Enforce 20px height for all rows and cells
     document.querySelectorAll('tr, th, td').forEach(el => {
-        el.style.height = "20px !important";
-        el.style.minHeight = "20px !important";
-        el.style.maxHeight = "none !important"; // Changed to none to allow expansion
-        el.style.lineHeight = "20px !important";
-        el.style.whiteSpace = "normal !important";
-        el.style.wordWrap = "break-word !important";
+        el.style.height = "auto !important";
+el.style.minHeight = "0 !important";
+el.style.maxHeight = "none !important";
+el.style.lineHeight = "1.2 !important";
+
     });
     document.querySelectorAll('#today-table td:first-child, #tomorrow-table td:first-child').forEach(td => {
         td.style.whiteSpace = 'normal !important';
@@ -149,6 +148,8 @@ function prepareForPrint() {
     document.querySelectorAll('[id$="-checkbox"]').forEach(checkbox => {
         checkbox.style.border = "1px solid #000 !important";
     });
+
+    
 }
 
 // ====================== FORM DATA HANDLING ======================
@@ -213,18 +214,18 @@ document.addEventListener("DOMContentLoaded", function() {
     adjustLabourContainer();
 
     // Add CSS class for print media
-    const style = document.createElement('style');
-    style.textContent = `
-        @media print {
-            tr, th, td {
-                height: 20px !important;
-                min-height: 20px !important;
-                max-height: 20px !important;
-                line-height: 20px !important;
-            }
-        }
-    `;
-    document.head.appendChild(style);
+    // const style = document.createElement('style');
+    // style.textContent = `
+    //     @media print {
+    //         tr, th, td {
+    //             height: 20px !important;
+    //             min-height: 20px !important;
+    //             max-height: 20px !important;
+    //             line-height: 20px !important;
+    //         }
+    //     }
+    // `;
+    // document.head.appendChild(style);
 
     window.addEventListener('resize', adjustLabourContainer);
     window.onbeforeprint = prepareForPrint;

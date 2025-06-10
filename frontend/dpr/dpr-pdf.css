@@ -370,10 +370,13 @@ button:active {
     }
     
     th, td {
-        white-space: nowrap !important;
+        white-space: normal !important;
         overflow: visible !important;
-        padding: 1px 3px !important;
-        line-height: 1 !important;
+        padding: 0.5px 2px !important;
+        line-height: 1.2 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
     }
     
     .project-table td:first-child,
@@ -434,9 +437,9 @@ button:active {
     #today-table td,
     #tomorrow-table td {
         white-space: normal !important;
-        height: auto !important;
-        min-height: 20px !important;
-        max-height: none !important;
+        /* height: auto !important; */
+        min-height: 10px !important;
+        max-height: 10px !important;
         overflow: visible !important;
     }
     
@@ -481,7 +484,7 @@ button:active {
     #today-table td, 
     #tomorrow-table td {
         padding: 1px 3px !important;
-        line-height: 1.2 !important;
+        line-height: 1 !important;
     }
     
     .project-bottom {
