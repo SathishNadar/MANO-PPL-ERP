@@ -483,56 +483,6 @@ sessionStorage.setItem("tomorrowTableData", JSON.stringify(tomorrowtableData));
 // Add Time Slot Button Functionality
 let timeSlotCount = 1; // Counter for time slots
 
-document.getElementById("addTimeSlotBtn").addEventListener("click", () => {
-    // Dynamically calculate the next time slot number based on existing slots
-    const existingSlots = document.querySelectorAll("#timeSlotsContainer .time-slot").length;
-    timeSlotCount = existingSlots + 1; // Set the counter to the correct number
-
-    // Create a new time slot container
-    const newTimeSlot = document.createElement("div");
-    newTimeSlot.className = "time-slot";
-
-    // Add a header for the time slot
-    const timeslotHeader = document.createElement("h5");
-    timeslotHeader.textContent = `TIME SLOT ${timeSlotCount}`;
-    timeslotHeader.style.marginBottom = "10px"; // Add some spacing below the header
-    timeslotHeader.style.color = "black";
-
-    // Add "From Time" input
-    const fromTimeInput = document.createElement("input");
-    fromTimeInput.type = "time";
-    fromTimeInput.id = `fromTime${timeSlotCount}`;
-    fromTimeInput.name = `fromTime${timeSlotCount}`;
-    fromTimeInput.required = true;
-
-    // Add "To Time" input
-    const toTimeInput = document.createElement("input");
-    toTimeInput.type = "time";
-    toTimeInput.id = `toTime${timeSlotCount}`;
-    toTimeInput.name = `toTime${timeSlotCount}`;
-    toTimeInput.required = true;
-
-    // Add "Remove" button
-    const removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.textContent = "Remove";
-    removeButton.className = "remove-time-slot-button";
-
-    // Attach event listener to remove button
-    removeButton.addEventListener("click", (event) => {
-        event.target.closest(".time-slot").remove(); // Remove this time slot
-        updateTimeSlotHeaders(); // Update headers after removal
-    });
-
-    // Append header, inputs, and button to the new time slot container
-    newTimeSlot.appendChild(timeslotHeader);
-    newTimeSlot.appendChild(fromTimeInput);
-    newTimeSlot.appendChild(toTimeInput);
-    newTimeSlot.appendChild(removeButton);
-
-    // Append the new time slot to the container
-    document.getElementById("timeSlotsContainer").appendChild(newTimeSlot);
-});
 
 // Function to update time slot headers after a slot is removed
 function updateTimeSlotHeaders() {
