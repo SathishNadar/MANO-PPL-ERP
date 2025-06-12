@@ -279,6 +279,57 @@ button:active {
 .bottom-of-labour-table td:nth-child(4) { width: 14%; }
 .bottom-of-labour-table td:nth-child(5) { width: 15%; }
 
+.additional-remarks-container{
+  display: flex;
+  flex-direction: column;
+}
+.events-remarks{
+  display: flex;
+  flex-direction: row;
+  border: 2px solid black;
+}
+.remarks-content-container{
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+    flex: 6;
+    
+}
+.remarks{
+    display: flex;
+    flex-direction: row;
+}
+.remarks-label{ 
+  border: 1px solid black;
+  flex: 0.1;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.remarks-content{
+    border: 1px solid black;
+}
+.distribution,.prepared-by,.signature{
+    flex: 1;
+    border: 1px solid black;
+}
+
+.events-label{
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    border: 1px solid black;
+    border-right: 0;
+    flex: 0.1;
+}
+.events-contents{
+    flex: 9.9;
+}
+
+.events-field{
+    border: 1px solid black;
+    display: flex;
+    justify-content: center;
+}
+
 @media(max-width: 600px) {
     .daily, .report, .dynamic-date, 
     .project-label, .site-label {

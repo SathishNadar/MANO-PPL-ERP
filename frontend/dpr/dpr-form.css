@@ -103,7 +103,7 @@ table {
   font-size: 0.9em;
   background-color: #f8fafc;
   color: #333;
-  border: 1px solid #e0e0e0;
+  border:1px solid black;
   border-radius: 6px;
 }
 
@@ -116,7 +116,7 @@ table tbody tr:last-child td {
 }
 
 #labourTable > thead > tr > th {
-  background-color: #f1f5f9;
+  background-color: #FFEDF3;
   color: #333;
   font-weight: 500;
 }
@@ -133,7 +133,7 @@ table td:has(input[type="text"]) {
 table th {
   background: var(--table-header-bg);
   font-weight: 500;
-  background-color: #f1f5f9;
+  background-color: #FFEDF3;
 }
 
 td, th {
@@ -154,7 +154,9 @@ td:first-child, th:first-child {
 .first-table tr:hover {
   background-color: #f0f7ff;
 }
-
+.first-table{
+  border:1px solid black;
+}
 table tr {
   border: 0.5px solid transparent;
 }
