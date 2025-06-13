@@ -211,21 +211,8 @@ document.addEventListener("DOMContentLoaded", function() {
     populateTables();
     handleFormData();
     handleTimeSlots();
+    // handleRemarks();
     adjustLabourContainer();
-
-    // Add CSS class for print media
-    // const style = document.createElement('style');
-    // style.textContent = `
-    //     @media print {
-    //         tr, th, td {
-    //             height: 20px !important;
-    //             min-height: 20px !important;
-    //             max-height: 20px !important;
-    //             line-height: 20px !important;
-    //         }
-    //     }
-    // `;
-    // document.head.appendChild(style);
 
     window.addEventListener('resize', adjustLabourContainer);
     window.onbeforeprint = prepareForPrint;
