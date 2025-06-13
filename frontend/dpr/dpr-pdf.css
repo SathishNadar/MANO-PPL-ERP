@@ -320,7 +320,7 @@ button:active {
     border-right: 0;
     flex: 0.1;
 }
-.events-contents{
+.events-container{
     flex: 9.9;
 }
 
@@ -329,6 +329,34 @@ button:active {
     display: flex;
     justify-content: center;
 }
+
+
+.remarks-content-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.remarks-content {
+    border: 1px solid #e0e0e0;
+    border: 1px solid black;
+    background-color: #f9f9f9;
+}   
+ 
+
+.events-container {
+    display: flex;
+    flex-direction: column;
+    margin:0;
+}
+
+.events-content {
+    border: 1px solid black;
+    background-color: #f9f9f9;
+    padding: 0px;
+    margin-bottom: 0px;
+    min-height: 20px;
+}
+
 
 @media(max-width: 600px) {
     .daily, .report, .dynamic-date, 

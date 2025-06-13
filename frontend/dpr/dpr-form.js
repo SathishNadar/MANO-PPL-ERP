@@ -188,18 +188,26 @@ function displaydata() {
         });
     });
 
-    // Collect remarks/events data
-    const remarksInputs = document.querySelectorAll('#dynamicInputsContainer input');
-    const remarksData = Array.from(remarksInputs)
-        .map(input => input.value.trim())
-        .filter(remark => remark !== "");
 
+    // Collect events data (6 inputs minimum)
+const eventsInputs = document.querySelectorAll('#dynamicInputsContainer input');
+const eventsData = Array.from(eventsInputs)
+    .map(input => input.value.trim())
+    .filter(event => event !== "");
+
+
+
+   const remarksInputs = document.querySelectorAll('.dynamicInputsContainer input');
+const remarksData = Array.from(remarksInputs)
+    .map(input => input.value.trim())
+    .filter(remark => remark !== "");
     // Save all data to sessionStorage
     sessionStorage.setItem("todayTableData", JSON.stringify(todaytableData));
     sessionStorage.setItem("tomorrowTableData", JSON.stringify(tomorrowtableData));
     sessionStorage.setItem("form-values", JSON.stringify(input_array));
     sessionStorage.setItem("timeslots", JSON.stringify(timeSlots));
-    sessionStorage.setItem("remarksData", JSON.stringify(remarksData));
+    sessionStorage.setItem("eventsData", JSON.stringify(eventsData)); // For events section
+    sessionStorage.setItem("remarksData", JSON.stringify(remarksData)); // For remarks section
 
     // Redirect to the next page
     window.location.href = "dpr-pdf.html";
@@ -401,4 +409,80 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   updateTimeslotDisplay();
   updateTimeslotCount();
+});
+// Wait for DOM to load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the section with 3 default inputs
+    const sectionContainer = document.querySelector('.dynamicInputsContainer');
+    const addBtn = document.querySelector('.addInputBtn');
+    const removeBtn = document.querySelector('.removeInputBtn');
+    const storageKey = 'events-remarks-storage'; // Key for sessionStorage
+    
+    // Load saved data or initialize with empty inputs
+    let inputsData = JSON.parse(sessionStorage.getItem(storageKey)) || Array(3).fill('');
+    
+    // Function to render inputs
+    function renderInputs() {
+        sectionContainer.innerHTML = '';
+        inputsData.forEach((value, index) => {
+            createInputElement(value, index);
+        });
+        updateRemoveButtonState();
+    }
+    
+    // Function to create a single input element
+    function createInputElement(value, index) {
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'input-group';
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = value;
+        input.placeholder = `Input ${index + 1}`;
+        
+        // Add event listener to save on change
+        input.addEventListener('input', function() {
+            inputsData[index] = this.value;
+            saveToSessionStorage();
+        });
+        
+        inputGroup.appendChild(input);
+        sectionContainer.appendChild(inputGroup);
+    }
+    
+    // Function to add a new input
+    function addInput() {
+        inputsData.push('');
+        renderInputs();
+        saveToSessionStorage();
+    }
+    
+    // Function to remove last input (but keep minimum 3)
+    function removeInput() {
+        if (inputsData.length > 3) {
+            inputsData.pop();
+            renderInputs();
+            saveToSessionStorage();
+        }
+    }
+    
+    // Function to update remove button state
+    function updateRemoveButtonState() {
+        removeBtn.disabled = inputsData.length <= 3;
+    }
+    
+    // Function to save data to sessionStorage
+    function saveToSessionStorage() {
+        sessionStorage.setItem(storageKey, JSON.stringify(inputsData));
+    }
+    
+    // Event listeners
+    addBtn.addEventListener('click', addInput);
+    removeBtn.addEventListener('click', removeInput);
+    
+    // Initial render
+    renderInputs();
+    
+    // Also save when page is about to unload
+    window.addEventListener('beforeunload', saveToSessionStorage);
 });
