@@ -1,12 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
   const username = getSession();
 
-  if (!username) {
-    alert("Session expired or user not logged in. Please log in again.");
-    window.location.href = "../login/index.html";
-  } else {
-    document.querySelector(".user-info span").textContent = username;
-  }
+  // if (!username) {
+  //   alert("Session expired or user not logged in. Please log in again.");
+  //   window.location.href = "../login/index.html";
+  // } else {
+  //   document.querySelector(".user-info span").textContent = username;
+  // }
 });
 
 function getSession() {
@@ -52,6 +52,8 @@ function setActivePage(page) {
     loadContractorList();
   } else if (page === "vendor-suppliers") {
     loadSupplierList();
+  } else if (page === "client-list") {
+    loadclientlist();
   } else if (selectedItem) {
     mainContent.innerHTML = `<h2>${selectedItem.dataset.text}</h2>`;
   } else {
@@ -107,7 +109,6 @@ function setMainContent(listname) {
     <div class="vendor-header">
   <h2>${listname}</h2>
   <div class="options">
-    <!-- From Uiverse.io by Li-Deheng -->
     <div class="search">
       <div class="search-box">
         <div class="search-field">
@@ -177,7 +178,6 @@ function loadVendorList() {
   const mainContent = document.querySelector(".main-content");
   mainContent.innerHTML = setMainContent("Vendor List");
 
-
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
     script.src = "../javaScripts/vendor-list.js";
@@ -197,8 +197,6 @@ function loadVendorList() {
 function loadConsultantList() {
   const mainContent = document.querySelector(".main-content");
   mainContent.innerHTML = setMainContent("Consultant List");
-
-  
 
   if (!window.vendorScriptLoaded) {
     const script = document.createElement("script");
@@ -232,7 +230,77 @@ function loadContractorList() {
   }
 }
 
+function loadclientlist() {
+  const SetClientMainClient = () => {
+    return `
+    <div class="client-header">
+      <h2>Client List</h2>
+      <div class="options">
+        <input
+          class="client-search-input"
+          placeholder="Search..."
+          onkeypress="handleSearch(event)"
+        />
+        <button class="client-search-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <path
+              d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"
+              fill="white"
+            ></path>
+          </svg>
+        </button>
+        <button class="filters" onclick="openFilterDialog()">Filter</button>
+      </div>
+    </div>
 
+    <div class="client-table-wrapper">
+      <table class="client-table">
+        <thead>
+          <tr>
+            <th>Company Name</th>
+            <th>Nature of Job</th>
+            <th>Category</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Location</th>
+            <th>Website</th>
+            <th>Emailed On</th>
+            <th>WhatsApp Texted On</th>
+            <th>Called On</th>
+            <th>Visited On</th>
+            <th>Self Remark</th>
+            <th>Other Remark</th>
+            <th>Ref</th>
+            <th>Responsibility</th>
+            <th>Remark Dec</th>
+            <th>Month</th>
+            <th>Remark May</th>
+          </tr>
+        </thead>
+        <tbody id="client-data"></tbody>
+      </table>
+    </div>
+
+    <div id="client-pagination"></div>
+
+  `;
+  };
+
+  const mainContent = document.querySelector(".main-content");
+  mainContent.innerHTML = SetClientMainClient();
+
+  if (!window.clientScriptLoaded) {
+    const script = document.createElement("script");
+    script.src = "../javaScripts/client-list.js";
+    script.onload = () => {
+      window.clientScriptLoaded = true;
+      renderClientList(clients);
+    };
+    document.head.appendChild(script);
+  } else {
+    renderClientList(clients);
+  }
+}
 
 function loadSupplierList() {
   const mainContent = document.querySelector(".main-content");
@@ -257,7 +325,8 @@ function toggleUserMenu() {
 
   if (userdiv) {
     // If dropdown already exists, toggle visibility
-    userdiv.style.display = userdiv.style.display === "block" ? "none" : "block";
+    userdiv.style.display =
+      userdiv.style.display === "block" ? "none" : "block";
     return;
   }
 

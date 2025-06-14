@@ -4,9 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
     <link rel="stylesheet" href="../styleSheets/homepage.css" />
     <link rel="stylesheet" href="../styleSheets/vendor.css" />
+    <link rel="stylesheet" href="../styleSheets/client-list.css">
     <!-- <link rel="stylesheet" href="../css/projects.css" /> -->
   </head>
   <body>
@@ -21,7 +25,6 @@
         />
       </div>
     </div>
-    <input type="text" name="" id="" />
     <div class="dashboard">
       <div class="sidebar">
         <ul>
@@ -128,6 +131,28 @@
             </svg>
             <span>Suppliers</span>
           </li>
+          <li data-page="client-list" data-text="hallo-man">
+            <svg
+              data-encore-id="icon"
+              xmlns="http://www.w3.org/2000/svg"
+              role="img"
+              aria-hidden="true"
+              viewBox="-3 0 24 24"
+              class="Svg-sc-ytk21e-0 bneLcE"
+            >
+              <!-- User circle -->
+              <circle cx="5" cy="6" r="2" fill="#FFFFFF" />
+              <circle cx="5" cy="12" r="2" fill="#FFFFFF" />
+              <circle cx="5" cy="18" r="2" fill="#FFFFFF" />
+
+              <!-- Text lines -->
+              <rect x="9" y="5" width="10" height="2" fill="#FFFFFF" rx="1" />
+              <rect x="9" y="11" width="10" height="2" fill="#FFFFFF" rx="1" />
+              <rect x="9" y="17" width="10" height="2" fill="#FFFFFF" rx="1" />
+            </svg>
+
+            <span>Client-List</span>
+          </li>
         </ul>
       </div>
 
@@ -138,5 +163,3 @@
   <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </html>
-
-
