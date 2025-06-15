@@ -1,0 +1,113 @@
+.client-header {
+  display: flex;
+  justify-content: space-between;
+  width: 98.4%;
+  align-items: center;
+  padding: 10px;
+  background-color: #1a1a1a;
+  color: white;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+/* Options Area */
+.client-header .options {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Search Input */
+.client-search-input {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background-color: white;
+  color: black;
+  font-size: 14px;
+  width: 250px;
+  outline: none;
+}
+
+/* Search Button (SVG) */
+.client-search-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.client-search-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: white;
+}
+
+/* Filter Button */
+.filters {
+  background-color: transparent;
+  color: white;
+  padding: 10px 20px;
+  border: 2px solid white;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.filters:hover {
+  background-color: white;
+  color: #1a1a1a;
+}
+
+.client-table-wrapper {
+  overflow-x: auto;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.client-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 14px;
+  color: white;
+  background-color: #121212;
+}
+
+.client-table th,
+.client-table td {
+  padding: 12px 15px;
+  border: 1px solid #333;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.client-table th {
+  background-color: #222;
+  color: white;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.client-table tr:nth-child(even) {
+  background-color: #1e1e1e;
+}
+
+.client-table tr:hover {
+  background-color: #2a2a2a;
+}
+
+.website-link {
+  text-decoration: none;
+  color: #00afff;
+}
