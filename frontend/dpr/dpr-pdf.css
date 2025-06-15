@@ -310,7 +310,10 @@ button:active {
 }
 .distribution,.prepared-by,.signature{
     flex: 1;
-    border: 1px solid black;
+    border-left: 1px solid black;
+    border-right: 0px;
+    border-bottom: 1px solid black;
+    border-top: 0px;
 }
 
 .events-label{
@@ -322,6 +325,8 @@ button:active {
 }
 .events-container{
     flex: 9.9;
+    border-left: 0px;
+    border-top: 0px;
 }
 
 .events-field{
@@ -346,7 +351,7 @@ button:active {
 .events-container {
     display: flex;
     flex-direction: column;
-    margin:0;
+    margin: 0;
 }
 
 .events-content {

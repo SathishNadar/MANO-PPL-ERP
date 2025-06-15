@@ -111,7 +111,17 @@ document.getElementById("addTimeSlotBtn").addEventListener("click", (e) => {
 
   document.getElementById("timeSlotsContainer").appendChild(newTimeSlot);
 });
-
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners to existing inputs
+    const existingInputs = document.querySelectorAll(".cell-input");
+    existingInputs.forEach(input => {
+        input.addEventListener("input", calculateTotals);
+    });
+    
+    // Initialize other components...
+    updateTimeslotDisplay();
+    updateTimeslotCount();
+});
 //=============EVERYTHING RELATED TO FORM INPUT============================//
 function displaydata() {
     const input_array = [];
@@ -235,11 +245,10 @@ function addRow() {
     `;
     tableBody.insertBefore(newRow, tableBody.lastElementChild);
   
-    const newInputs = newRow.querySelectorAll(".cell-input");
-    newInputs.forEach((input) => {
-      input.addEventListener("input", (event) => {
-        validateAndCalculate(event.target);
-      });
+    // Add event listeners to all new inputs
+    const inputs = newRow.querySelectorAll(".cell-input");
+    inputs.forEach(input => {
+        input.addEventListener("input", calculateTotals);
     });
 }
 
@@ -332,8 +341,8 @@ function calculateTotals() {
 function deleteRow() {
     const rows = document.querySelectorAll(".data-row");
     if (rows.length > 1) {
-      rows[rows.length - 1].remove();
-      calculateTotals();
+        rows[rows.length - 1].remove();
+        calculateTotals(); // Recalculate after deletion
     }
 }
 
@@ -486,3 +495,69 @@ document.addEventListener('DOMContentLoaded', function() {
     // Also save when page is about to unload
     window.addEventListener('beforeunload', saveToSessionStorage);
 });
+
+// ===================== REMARKS SECTION (3+ inputs) ===================== //
+document.addEventListener('DOMContentLoaded', function() {
+  const remarksContainer = document.getElementById('remarksContainer');
+  const addRemarkBtn = document.getElementById('addRemarkBtn');
+  const removeRemarkBtn = document.getElementById('removeRemarkBtn');
+  const MIN_INPUTS = 3; // Minimum required remarks
+
+  // Initialize with 3 inputs
+  function initializeRemarks() {
+    remarksContainer.innerHTML = '';
+    for (let i = 0; i < MIN_INPUTS; i++) {
+      addRemarkField();
+    }
+    updateRemoveButton();
+  }
+
+  // Add new remark field
+  function addRemarkField() {
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'remark-input';
+    input.placeholder = `Remark ${remarksContainer.children.length + 1}`;
+    
+    inputGroup.appendChild(input);
+    remarksContainer.appendChild(inputGroup);
+  }
+
+  // Update remove button state
+  function updateRemoveButton() {
+    removeRemarkBtn.disabled = remarksContainer.children.length <= MIN_INPUTS;
+  }
+
+  // Event listeners
+  addRemarkBtn.addEventListener('click', function() {
+    addRemarkField();
+    updateRemoveButton();
+  });
+
+  removeRemarkBtn.addEventListener('click', function() {
+    if (remarksContainer.children.length > MIN_INPUTS) {
+      remarksContainer.removeChild(remarksContainer.lastElementChild);
+      updateRemoveButton();
+    }
+  });
+
+  // Initialize on load
+  initializeRemarks();
+});
+
+// In your displaydata() function, keep this for data collection:
+const remarksInputs = document.querySelectorAll('#remarksContainer .remark-input');
+const remarksData = Array.from(remarksInputs)
+    .map(input => input.value.trim())
+    .filter(remark => remark !== "");
+
+
+
+  function clearTableKeepRows() {
+    const inputs = document.querySelectorAll('#labourTable td input');
+    inputs.forEach(input => input.value = '');
+    if (typeof calculateTotals === 'function') calculateTotals();
+}
