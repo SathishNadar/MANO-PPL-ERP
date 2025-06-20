@@ -1,43 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login/Signup</title>
-    <link rel="stylesheet" href="login-signup.css">
-</head>
-<body>
+    <link rel="stylesheet" href="login-signup.css" />
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <div id="header-cont" class="header-cont">
-            USER LOGIN 
-        </div>
-        </div>
-        <div id="form_slider" class="form-slider">
-        <div class="login-form" >
-            <form onsubmit="loginUser(event)">
-                <input type="text" placeholder="Username" id="login_username" value="Sathish Nadar" required>
-                <input type="password" placeholder="Password" id="login_password" value="1234" required>
-                <input type="submit" value="login">
-            </form>
-            
+      <div class="header">
+        <div id="header-cont" class="header-cont">USER LOGIN</div>
+      </div>
+      <div id="form_slider" class="form-slider">
+        <div class="login-form">
+          <form>
+            <input
+              type="text"
+              placeholder="Username"
+              id="login_username"
+              value="Sathish Nadar"
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              id="login_password"
+              value="1234"
+              required
+            />
+            <input type="submit" value="login" />
+          </form>
         </div>
         <div class="signup-form">
-            <form>
-                <input type="text" id="Username" placeholder="Username" required>
-                <input type="text" id="email" placeholder="Email" required>
-                <input type="password" id="password" placeholder="Password" required>
-                <input type="text" id="phone_number" placeholder="Phone Number" required>
-                <input type="submit" value="sign in">
-            </form> 
+          <form>
+            <input type="text" id="Username" placeholder="Username" required />
+            <input type="text" id="email" placeholder="Email" required />
+            <input
+              type="password"
+              id="password"
+              placeholder="Password"
+              required
+            />
+            <input
+              type="text"
+              id="phone_number"
+              placeholder="Phone Number"
+              required
+            />
+            <input type="submit" value="sign in" />
+          </form>
         </div>
-        
-    </div>
-    <div class="bottom">
+      </div>
+      <div class="bottom">
         <button class="btn" id="btn">DON'T HAVE AN ACCOUNT?</button>
         <button class="btn" id="forgot">Forgot Password</button>
+      </div>
     </div>
-    </div>
-</body>
-<script src="script.js"></script>
+  </body>
+  <script type="module" src="script.js"></script>
 </html>

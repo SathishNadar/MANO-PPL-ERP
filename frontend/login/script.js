@@ -1,10 +1,13 @@
+import { ip_address } from "../ip.js";
+// console.log("scriptloaded")
+
 async function loginUser(event) {
   event.preventDefault();
-  console.log("isyuabd")
+  console.log("isyuabd");
   const username = document.getElementById("login_username").value;
   const password = document.getElementById("login_password").value;
 
-  const response = await fetch("http://35.154.101.129:3000/auth/login/", {
+  const response = await fetch(`http://${ip_address}:3000/auth/login/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -18,7 +21,7 @@ async function loginUser(event) {
   if (!response.ok) {
     throw new Error("Network error: " + response.status);
   }
-  
+
   const data = await response.json();
 
   if (data.message === "Login successful") {
@@ -63,7 +66,7 @@ async function handleSignup(event) {
   const phno = document.getElementById("phone_number").value;
 
   try {
-    const response = await fetch("http://35.154.101.129:3000/auth/signup/", {
+    const response = await fetch(`http://${ip_address}:3000/auth/signup/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -97,4 +100,8 @@ btn.addEventListener("click", () => {
     header_cont.textContent = "LOGIN HERE";
     btn.textContent = "DON'T HAVE AN ACCOUNT?";
   }
+  document.getElementById("login-form").addEventListener("submit", loginUser);
+  document
+    .getElementById("signup-form")
+    .addEventListener("submit", handleSignup);
 });
