@@ -30,7 +30,20 @@ function styleTableCell(cell, isTextCell = false) {
     cell.style.boxSizing = "border-box";
     cell.style.whiteSpace = "normal";
     cell.style.wordBreak = "break-word";
-    if (!isTextCell) {
+    
+    // For Today/Tomorrow tables
+    const table = cell.closest('table');
+    if (table && (table.id === 'today-table' || table.id === 'tomorrow-table')) {
+        if (cell.cellIndex === 0) { // Task column
+            cell.style.width = "70%";
+            cell.style.textAlign = "left";
+        } else if (cell.cellIndex === 1) { // Quantity column
+            cell.style.width = "30%";
+            cell.style.textAlign = "center";
+        }
+    } 
+    // For other tables
+    else if (!isTextCell) {
         cell.style.textAlign = "center";
     }
 }
@@ -145,6 +158,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener('resize', adjustLabourContainer);
     window.onbeforeprint = prepareForPrint;
+
+    
+
+
+
+
+const reportData = generateReportObject();
+  console.log("Generated Report Object:", reportData);
+
+
 });
 
 // ====================== PRINT HANDLER ======================
@@ -201,4 +224,36 @@ function handleRemarks() {
         styleRemarksCell(div);
         container.appendChild(div);
     }
+}
+
+
+
+
+
+//----------------------------FOR CREATING OBJECT FOR THE VALUES OF THE DPR----------------------------------//
+function generateReportObject() {
+  return {
+    project_id: parseInt(sessionStorage.getItem('projectId')) || 1,
+    report_date: new Date().toISOString().split('T')[0],
+    site_condition: {
+      ground_state: JSON.parse(sessionStorage.getItem('form-values'))?.[1] || "normal",
+      is_rainy: JSON.parse(sessionStorage.getItem('form-values'))?.[0] === "Rainy",
+      rain_timing: JSON.parse(sessionStorage.getItem('timeslots')) || []
+    },
+    labour_report: {
+      agency: tableData.map(row => row[0]), // From your existing tableData
+      mason: tableData.map(row => parseInt(row[1]) || 0),
+      carp: tableData.map(row => parseInt(row[2]) || 0),
+      // ... other labour fields ...
+      remarks: JSON.parse(sessionStorage.getItem('remarksData'))?.[0] || ""
+    },
+    today_prog: {
+      progress: todayData.map(row => row[0]), // From todayData
+      qty: todayData.map(row => row[1])
+    },
+    tomorrow_plan: {
+      plan: tomorrowData.map(row => row[0]), // From tomorrowData
+      qty: tomorrowData.map(row => row[1])
+    }
+  };
 }

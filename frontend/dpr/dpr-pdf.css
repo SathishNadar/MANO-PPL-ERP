@@ -108,6 +108,69 @@ table, tr, td {
     word-wrap: break-word;
 }
 
+/* Today/Tomorrow Planning Tables - Added Section */
+.today-tomorrow-table-container {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+    page-break-inside: avoid;
+}
+
+#today-table, 
+#tomorrow-table {
+    table-layout: fixed;
+    width: 50%;
+    border-collapse: collapse;
+}
+
+#today-table {
+    border-right: none;
+}
+
+#tomorrow-table {
+    border-left: none;
+}
+
+#today-table th, 
+#tomorrow-table th {
+    
+    font-weight: bold;
+    text-align: center;
+    padding: 4px;
+    border: 1px solid black;
+}
+
+#today-table td, 
+#tomorrow-table td {
+    padding: 4px;
+    border: 1px solid black;
+    vertical-align: top;
+}
+
+/* Task column (70% width) */
+#today-table th:nth-child(1),  
+#today-table td:nth-child(1),  
+#tomorrow-table th:nth-child(1),
+#tomorrow-table td:nth-child(1) {
+    width: 85% !important;
+    min-width: 85% !important;
+    max-width: 85% !important;
+    word-break: break-word;
+    white-space: normal;
+    text-align: left;
+}
+
+/* Quantity column (30% width) */
+#today-table th:nth-child(2),  
+#today-table td:nth-child(2),  
+#tomorrow-table th:nth-child(2),
+#tomorrow-table td:nth-child(2) {
+    width: 15% !important;
+    min-width: 15% !important;
+    max-width: 15% !important;
+    text-align: center;
+}
+
 .labour-table-container {
     width: 100%;
     display: flex;
@@ -237,24 +300,6 @@ button:active {
     width: 100%;
 }
 
-#today-table, 
-#tomorrow-table {
-    table-layout: fixed;
-    width: 100%;
-}
-
-#today-table td:first-child,
-#tomorrow-table td:first-child {
-    width: 70%;
-    word-break: break-word;
-    white-space: normal !important;
-}
-
-#today-table td:last-child,
-#tomorrow-table td:last-child {
-    width: 30%;
-}
-
 #displayTable th:nth-child(1),
 #displayTable td:nth-child(1) {
     width: 15%;
@@ -362,7 +407,6 @@ button:active {
     min-height: 20px;
 }
 
-
 @media(max-width: 600px) {
     .daily, .report, .dynamic-date, 
     .project-label, .site-label {
@@ -394,6 +438,16 @@ button:active {
     
     span {
         font-size: 0.8em;
+    }
+
+    /* Mobile adjustments for today/tomorrow tables */
+    .today-tomorrow-table-container {
+        flex-direction: column;
+    }
+    
+    #today-table, 
+    #tomorrow-table {
+        width: 100% !important;
     }
 }
 
@@ -521,7 +575,6 @@ button:active {
     #today-table td,
     #tomorrow-table td {
         white-space: normal !important;
-        /* height: auto !important; */
         min-height: 10px !important;
         max-height: 10px !important;
         overflow: visible !important;
@@ -584,5 +637,20 @@ button:active {
     
     .commulative {
         font-size: 5.5pt !important;
+    }
+
+    /* Print styles for today/tomorrow tables */
+    #today-table th:nth-child(1),  
+    #today-table td:nth-child(1),  
+    #tomorrow-table th:nth-child(1),
+    #tomorrow-table td:nth-child(1) {
+        width: 70% !important;
+    }
+    
+    #today-table th:nth-child(2),  
+    #today-table td:nth-child(2),  
+    #tomorrow-table th:nth-child(2),
+    #tomorrow-table td:nth-child(2) {
+        width: 30% !important;
     }
 }
