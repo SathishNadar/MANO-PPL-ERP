@@ -296,6 +296,80 @@ document.addEventListener('DOMContentLoaded', function() {
       addRowToTable(tomorrowTable);
     }
 
+    //-------------fetching the data and displaying it to the today progress rows from yesterdays tomorrow planning---------------//
+    // fetch("https://jsonplaceholder.typicode.com/posts")
+    // .then(res => res.json())
+    // .then(json => {
+    //   const rowCount = json.length;
+    //   console.log(rowCount)
+    //   for(let i = 0; i < rowCount; i++){
+    //   addRowToTable(todayTable);
+    //   addRowToTable(tomorrowTable);
+      
+    //   }
+    // });
+// === Inject dummy data into tomorrow planning table ===
+// You can change this URL to any valid API returning an array of objects
+fetch("https://dummyjson.com/products?limit=3")  // 🔁 replace with your API
+  .then(res => res.json())
+  .then(data => {
+    // Assuming API gives data like: { products: [ { title, price }, ... ] }
+    const apiData = data.products || [];
+
+    const mappedData = apiData.map(item => ({
+      task: item.title,
+      quantity: item.price
+    }));
+
+    const todayBody = todayTable.querySelector('tbody');
+    const tomorrowBody = tomorrowTable.querySelector('tbody');
+
+    if (mappedData.length > 0) {
+      // Clear default HTML row if needed
+      todayBody.innerHTML = '';
+      tomorrowBody.innerHTML = '';
+
+      // Add rows equal to API data length
+      for (let i = 0; i < mappedData.length; i++) {
+        addRowToTable(todayTable);
+        addRowToTable(tomorrowTable);
+      }
+
+      // Fill data into rows
+      const todayRows = todayTable.querySelectorAll('tbody tr');
+      mappedData.forEach((item, index) => {
+
+        // Today progress
+        const dRow = todayRows[index];
+        const dTaskInput = dRow.querySelector('.today-progress');
+        const dQtyInput = dRow.querySelector('.today-progress-quantity');
+        dTaskInput.value = item.task;
+        dQtyInput.value = item.quantity;
+      });
+
+    } else {
+      // If no API data, ensure at least one row exists
+      if (todayBody.querySelectorAll('tr').length === 0) {
+        addRowToTable(todayTable);
+      }
+      if (tomorrowBody.querySelectorAll('tr').length === 0) {
+        addRowToTable(tomorrowTable);
+      }
+    }
+  })
+  .catch(error => {
+    console.error("API fetch failed:", error);
+    // On error, fallback: at least one row
+    if (todayTable.querySelectorAll('tbody tr').length === 0) {
+      addRowToTable(todayTable);
+    }
+    if (tomorrowTable.querySelectorAll('tbody tr').length === 0) {
+      addRowToTable(tomorrowTable);
+    }
+  });
+
+
+
     // Function to handle synchronized row removal
     function handleRemoveRow() {
       removeRowFromTable(todayTable);
@@ -366,53 +440,7 @@ window.addEventListener("click", (event) => {
 });
 
 // =============================== REMARKS/EVENTS INPUT =============================== //
-document.addEventListener('DOMContentLoaded', function() {
-  const container = document.getElementById('dynamicInputsContainer');
-  const addBtn = document.getElementById('addInputBtn');
-  const removeBtn = document.getElementById('removeInputBtn');
-  const MIN_INPUTS = 6; // Minimum number of remark fields
-  
-  // Initialize with minimum inputs
-  function initializeInputs() {
-    container.innerHTML = ''; // Clear any existing inputs
-    for (let i = 0; i < MIN_INPUTS; i++) {
-      addInputField();
-    }
-    updateRemoveButton();
-  }
-  
-  // Add new input field (simplified without labels)
-  function addInputField() {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'remark-input';
-    input.placeholder = 'Enter remark/event...';
-    container.appendChild(input);
-  }
-  
-  // Update remove button state
-  function updateRemoveButton() {
-    const inputs = container.querySelectorAll('.remark-input');
-    removeBtn.disabled = inputs.length <= MIN_INPUTS;
-  }
-  
-  // Add event listeners
-  addBtn.addEventListener('click', function() {
-    addInputField();
-    updateRemoveButton();
-  });
-  
-  removeBtn.addEventListener('click', function() {
-    const inputs = container.querySelectorAll('.remark-input');
-    if (inputs.length > MIN_INPUTS) {
-      container.removeChild(inputs[inputs.length - 1]);
-      updateRemoveButton();
-    }
-  });
-  
-  // Initialize on page load
-  initializeInputs();
-});
+
 
 // Initialize timeslot display
 document.addEventListener('DOMContentLoaded', function() {
@@ -561,3 +589,6 @@ const remarksData = Array.from(remarksInputs)
     inputs.forEach(input => input.value = '');
     if (typeof calculateTotals === 'function') calculateTotals();
 }
+
+
+
