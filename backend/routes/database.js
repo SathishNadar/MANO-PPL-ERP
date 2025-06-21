@@ -22,11 +22,25 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE,
 }).promise();
 
-// ----------------------- USER FUNCTIONS ----------------------- //
+
+// ----------------------- HELPING FUNCTIONS ----------------------- //
+
+function safeParse(jsonField) {
+    if (!jsonField) return {};
+    if (typeof jsonField === "object") return jsonField;
+    try {
+        return JSON.parse(jsonField);
+    } catch (err) {
+        console.error("❌ Failed to parse JSON field:", jsonField);
+        return {};
+    }
+}
+
+// ----------------------------- USER ----------------------------- //
 
 // Function to fetch User by ID
 export async function r_fetchUserByID(user_id) {
-    const query = "SELECT * FROM Users WHERE user_id = ?";
+    const query = "SELECT * FROM users WHERE user_id = ?";
     try {
         const [row] = await pool.query(query, [user_id]);
         return row[0] || null;
@@ -39,7 +53,7 @@ export async function r_fetchUserByID(user_id) {
 // Function to fetch Multiple Users by ID
 export async function r_fetchUsersByID(user_ids) {
     const placeHolder = user_ids.map(() => "?").join(', ');
-    const query = `SELECT * FROM Users WHERE user_id IN (${placeHolder})`;
+    const query = `SELECT * FROM users WHERE user_id IN (${placeHolder})`;
 
     try {
         const [rows] = await pool.query(query, user_ids);
@@ -52,7 +66,7 @@ export async function r_fetchUsersByID(user_ids) {
 
 // Function to fetch user_name by ID
 export async function r_fetchUserNameByID(user_id) {
-    const query = "SELECT user_name FROM Users WHERE user_id = ?";
+    const query = "SELECT user_name FROM users WHERE user_id = ?";
     try {
         const [row] = await pool.query(query, [user_id]);
         return row[0].user_name || null;
@@ -64,7 +78,7 @@ export async function r_fetchUserNameByID(user_id) {
 
 // Function to fetch User by user_name
 export async function r_fetchUserByName(name) {
-    const query = "SELECT * FROM Users WHERE user_name = ?"
+    const query = "SELECT * FROM users WHERE user_name = ?"
     try {
         const [row] = await pool.query(query, [name]);
         return row[0] || null;
@@ -76,7 +90,7 @@ export async function r_fetchUserByName(name) {
 
 // Function to add user
 export async function r_addUser(user_data) {
-    const query = "INSERT INTO Users (user_name, user_password, email, phone_no) VALUES (?, ?, ?, ?);";
+    const query = "INSERT INTO users (user_name, user_password, email, phone_no) VALUES (?, ?, ?, ?);";
     
     try {
         const [result] = await pool.query(query, user_data);
@@ -89,7 +103,7 @@ export async function r_addUser(user_data) {
 
 // Function to check user_name exists
 export async function r_usernameExist(user_name) {
-    const query = "SELECT user_id FROM Users WHERE user_name = ?";
+    const query = "SELECT user_id FROM users WHERE user_name = ?";
     try {
         const [rows] = await pool.query(query, user_name);
         return rows[0]
@@ -101,7 +115,7 @@ export async function r_usernameExist(user_name) {
 
 // Function to check Email or PhoneNo. is Taken
 export async function r_isEmailOrPhoneTaken(email, phone) {
-    const query = "SELECT COUNT(*) AS count FROM Users WHERE email = ? OR phone_no = ?";
+    const query = "SELECT COUNT(*) AS count FROM users WHERE email = ? OR phone_no = ?";
     
     try {
         const [rows] = await pool.query(query, [email, phone]);
@@ -112,69 +126,143 @@ export async function r_isEmailOrPhoneTaken(email, phone) {
     }
 }
 
-// ---------------------- PROJECT FUNCTIONS ----------------------- //
+// ---------------------- PROJECT ----------------------- //
 
 // Function to fetch Project by ID
-export async function r_fetchProjectByID(project_id) {
-    const query = "SELECT * FROM Projects WHERE id = ?";
+export async function r_getProjectById(project_id) {
+    if (!project_id) throw new Error("Project ID is required");
+
+    const query = `SELECT * FROM projects WHERE project_id = ?`;
+
     try {
-        let [row] = await pool.query(query, [project_id]);
-        row[0].start_date = row[0].start_date.toISOString().split("T")[0]
-        row[0].end_date = row[0].end_date.toISOString().split("T")[0]
-        return row[0] || null;
+        const [rows] = await pool.query(query, [project_id]);
+        if (rows.length === 0) return null;
+
+        const row = rows[0];
+        return {
+            ...row,
+            user_roles: typeof row.user_roles === "string" ? JSON.parse(row.user_roles) : row.user_roles
+        };
     } catch (error) {
-        console.error("Error fetching Project by ID:", error);
+        console.error("❌ Error fetching project by ID:", error.message);
         throw error;
     }
 }
 
 // Function to insert Project
-export async function r_insertProject(projectData) {
+export async function r_insertProject(data) {
+    const {
+        project_name,
+        project_description = null,
+        start_date = null,
+        end_date = null,
+        location = null,
+        contract_no = null,
+        Employer = null,
+        user_roles = {}
+    } = data;
+
+    if (!project_name) {
+        throw new Error("Missing required fields: project_name");
+    }
+
     const query = `
-        INSERT INTO Projects 
-        (project_name, project_description, start_date, end_date, location, contract_no, approvers, employer, agency)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO projects (
+            user_roles, project_name, project_description,
+            start_date, end_date, location,
+            contract_no, Employer
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
-    const agencyString = Array.isArray(projectData.agency) ? projectData.agency.join("|") : projectData.agency || null;
-
     const values = [
-        projectData.project_name,
-        projectData.project_description || null,
-        projectData.start_date || null,
-        projectData.end_date || null,
-        projectData.location || null,
-        projectData.contract_no || null,
-        projectData.approvers || null,
-        projectData.employer || null,
-        agencyString
+        JSON.stringify(user_roles),
+        project_name,
+        project_description,
+        start_date,
+        end_date,
+        location,
+        contract_no,
+        Employer
     ];
 
     try {
         const [result] = await pool.query(query, values);
-        return { success: true, insertId: result.insertId };
+        return result.insertId;
     } catch (error) {
-        console.error("Error inserting new project:", error);
+        console.error("❌ Error inserting project:", error.message);
+        throw error;
+    }
+}
+
+// Function to update Project
+export async function r_updateProject(data) {
+    const {
+        project_id,
+        user_roles = {},
+        project_name,
+        project_description = null,
+        start_date = null,
+        end_date = null,
+        location = null,
+        contract_no = null,
+        Employer = null
+    } = data;
+
+    if (!project_id || !project_name) {
+        throw new Error("Missing required fields: project_id or project_name");
+    }
+
+    const query = `
+        UPDATE projects
+        SET 
+            user_roles = ?,
+            project_name = ?,
+            project_description = ?,
+            start_date = ?,
+            end_date = ?,
+            location = ?,
+            contract_no = ?,
+            Employer = ?
+        WHERE project_id = ?;
+    `;
+
+    const values = [
+        JSON.stringify(user_roles),
+        project_name,
+        project_description,
+        start_date,
+        end_date,
+        location,
+        contract_no,
+        Employer,
+        project_id
+    ];
+
+    try {
+        const [result] = await pool.query(query, values);
+        return result.affectedRows;
+    } catch (error) {
+        console.error("❌ Error updating project:", error.message);
         throw error;
     }
 }
 
 
-// ------------------------ DPR FUNCTIONS ------------------------- //
+// ------------------------ DPR ------------------------- //
 
 const dprFormat = {
     project_id: null,
-    reported_by: null,
     report_date: "",
 
     site_condition: {
-        ground_state: "",       // e.g., "dry", "slushy"
-        weather_state: "",      // e.g., "normal", "rainy"
-        timing: []              // e.g., ["11:00-12:00", "13:00-14:00"]
+        ground_state: "",         // e.g., "dry", "slushy"
+        is_rainy: false,          // true/false
+        rain_timing: []           // e.g., ["10:10-11:00", "01:05-02:00"]
     },
+
     labour_report: {
-        agency: [],             // List of agencies
-        mason: [],              // Numbers per agency
+        agency: [],               // List of agency names
+        mason: [],                // Count per agency
         carp: [],
         fitter: [],
         electrical: [],
@@ -183,69 +271,93 @@ const dprFormat = {
         plumber: [],
         helper: [],
         staff: [],
-        remarks: ""             // Any labour-specific remarks
+        remarks: ""               // Any remarks
     },
-    cumulative_manpower: null, // Total count
 
-    today_prog: [              // Array of task objects
-        {
-            task: "",
-            qty: ""
-        }
-    ],
-    tomorrow_plan: [
-        {
-            task: "",
-            qty: ""
-        }
-    ],
-    
-    events_visit: "",          // Notes on events or visits
-    distribute: "",            // Material/Info distribution notes
-    prepared_by: "",           // Name or role
-    approval: {}               // e.g., { "Name": true/false }
+    cumulative_manpower: null,   // Total manpower count (including today)
+
+    today_prog: {
+        progress: [],             // e.g., ["cement imported.", "water distributed."]
+        qty: []                   // e.g., ["1kg", "5L"]
+    },
+
+    tomorrow_plan: {
+        plan: [],                 // e.g., ["cement imported.", "water distributed."]
+        qty: []                   // e.g., ["1kg", "5L"]
+    },
+
+    user_roles: {
+        created_by: null,
+        approvals: {},            // e.g., { "1": true, "3": false }
+        viewers: [],              // user IDs
+        editors: []               // user IDs
+    },
+
+    report_footer: {
+        events_visit: [],         // e.g., [{ time: "10:00", note: "VIP visit" }] or just []
+        distribute: [],           // e.g., ["L&T", "MAPLANI"]
+        prepared_by: ""           // Name of preparer
+    },
+
+    created_at: ""               // e.g., "2025-01-19 12:00:00"
 };
 
+
 // Function to fetch DPR by ID
-export async function r_fetchDprByID(id) {
-    const query = "SELECT * FROM DPR WHERE dpr_id = ?";
+export async function r_getDPRById(dpr_id) {
+    if (!dpr_id) {
+        throw new Error("DPR ID is required");
+    }
+
+    const query = `SELECT * FROM dpr WHERE dpr_id = ?`;
+
     try {
-        const [row] = await pool.query(query, [id]);
-        return row[0] || null;
+        const [rows] = await pool.query(query, [dpr_id]);
+        if (rows.length === 0) return null;
+
+        const row = rows[0];
+
+        return {
+            ...row,
+            site_condition: safeParse(row.site_condition),
+            labour_report: safeParse(row.labour_report),
+            today_prog: safeParse(row.today_prog),
+            tomorrow_plan: safeParse(row.tomorrow_plan),
+            user_roles: safeParse(row.user_roles),
+            report_footer: safeParse(row.report_footer)
+        };
     } catch (error) {
-        console.error("❌ Error fetching DPR by ID:", error);
+        console.error("❌ Error fetching DPR by ID:", error.message);
         throw error;
     }
 }
 
 // Function to Insert DPR
 export async function r_insertDPR(dprData) {
-    if (!dprData.project_id || !dprData.reported_by || !dprData.report_date) {
-        throw new Error("Missing required fields: project_id, reported_by, or report_date");
+    if (!dprData.project_id || !dprData.report_date) {
+        throw new Error("Missing required fields: project_id or report_date");
     }
 
     const query = `
-    INSERT INTO DPR (
-        project_id, reported_by, report_date, site_condition, labour_report, cumulative_manpower, today_prog, tomorrow_plan, events_visit, remarks, distribute, prepared_by, approval
+    INSERT INTO dpr (
+        project_id, report_date, site_condition, labour_report,
+        cumulative_manpower, today_prog, tomorrow_plan,
+        user_roles, report_footer, created_at
     ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
-
 
     const values = [
         dprData.project_id,
-        dprData.reported_by,
         dprData.report_date,
         dprData.site_condition ? JSON.stringify(dprData.site_condition) : null,
         dprData.labour_report ? JSON.stringify(dprData.labour_report) : null,
         dprData.cumulative_manpower ?? 0,
         dprData.today_prog ? JSON.stringify(dprData.today_prog) : null,
         dprData.tomorrow_plan ? JSON.stringify(dprData.tomorrow_plan) : null,
-        dprData.events_visit || null,
-        dprData.remarks || null,
-        dprData.distribute || null,
-        dprData.prepared_by || null,
-        dprData.approval ? JSON.stringify(dprData.approval) : null
+        dprData.user_roles ? JSON.stringify(dprData.user_roles) : null,
+        dprData.report_footer ? JSON.stringify(dprData.report_footer) : null,
+        dprData.created_at ?? new Date()
     ];
 
     try {
@@ -259,72 +371,46 @@ export async function r_insertDPR(dprData) {
 
 // Function to Update DPR
 export async function r_updateDPR(dprData) {
-    if (!dprData.project_id || !dprData.reported_by || !dprData.report_date) {
-        throw new Error("Missing required fields: project_id, reported_by, or report_date");
+    if (!dprData.dpr_id || !dprData.project_id || !dprData.report_date) {
+        throw new Error("Missing required fields: dpr_id, project_id, or report_date");
     }
 
     const query = `
-    UPDATE DPR
+    UPDATE dpr
     SET
         project_id = ?,
-        reported_by = ?,
         report_date = ?,
         site_condition = ?,
-        agency = ?,
-        mason = ?,
-        carp = ?,
-        fitter = ?,
-        electrical = ?,
-        painter = ?,
-        gypsum = ?,
-        plumber = ?,
-        helper = ?,
-        staff = ?,
-        remarks = ?,
+        labour_report = ?,
         cumulative_manpower = ?,
         today_prog = ?,
         tomorrow_plan = ?,
-        events_visit = ?,
-        distribute = ?,
-        prepared_by = ?, 
-        approval = ?
+        user_roles = ?,
+        report_footer = ?,
+        created_at = ?
     WHERE
         dpr_id = ?;
-`;
-
-
+    `;
 
     const values = [
         dprData.project_id,
-        dprData.reported_by,
         dprData.report_date,
-        dprData.site_condition || null,
-        dprData.agency || null,
-        dprData.mason || null,
-        dprData.carp || null,
-        dprData.fitter || null,
-        dprData.electrical || null,
-        dprData.painter || null,
-        dprData.gypsum || null,
-        dprData.plumber || null,
-        dprData.helper || null,
-        dprData.staff || null,
-        dprData.remarks || null,
+        dprData.site_condition ? JSON.stringify(dprData.site_condition) : null,
+        dprData.labour_report ? JSON.stringify(dprData.labour_report) : null,
         dprData.cumulative_manpower ?? 0,
-        dprData.today_prog || null,
-        dprData.tomorrow_plan || null,
-        dprData.events_visit || null,
-        dprData.distribute || null,
-        dprData.prepared_by || null,
-        dprData.approval || null,
+        dprData.today_prog ? JSON.stringify(dprData.today_prog) : null,
+        dprData.tomorrow_plan ? JSON.stringify(dprData.tomorrow_plan) : null,
+        dprData.user_roles ? JSON.stringify(dprData.user_roles) : null,
+        dprData.report_footer ? JSON.stringify(dprData.report_footer) : null,
+        dprData.created_at || new Date().toISOString().slice(0, 19).replace("T", " "),
         dprData.dpr_id
     ];
 
     try {
         const [result] = await pool.query(query, values);
-        return result.insertId;
+        return result.affectedRows;
     } catch (error) {
-        console.error("❌ Error inserting DPR:", error.message, "\nData:", dprData);
+        console.error("❌ Error updating DPR:", error.message, "\nData:", dprData);
         throw error;
     }
 }
@@ -359,7 +445,7 @@ export async function DprInit(project_id, report_by) {
 }
 
 
-// ----------------------- VENDOR FUNCTIONS ----------------------- //
+// ----------------------- VENDOR ----------------------- //
 
 // Function to fetch vendors with pagination and filtering
 export async function r_fetchVendorsByTab({
@@ -373,7 +459,7 @@ export async function r_fetchVendorsByTab({
 
     const offset = (tab - 1) * limit;
     
-    let baseQuery = "FROM Vendors";
+    let baseQuery = "FROM vendors";
     const params = [];
 
     if (category !== 0) {
@@ -426,7 +512,7 @@ export async function r_fetchIdNamePairs(tableName) {
 
 // Function to fetch Count of vendors in table
 export async function r_fetchVendorsCount() {
-    const query = "SELECT COUNT(*) AS count FROM Vendors";
+    const query = "SELECT COUNT(*) AS count FROM vendors";
     try {
         const [[result]] = await pool.query(query);
         return result.count;
@@ -490,13 +576,6 @@ export async function r_searchVendors({
 }
 
 
-
-
-
-
-
-
-
 const dprData = {
     project_id: 1,
     reported_by: 5,
@@ -532,14 +611,10 @@ const dprData = {
     }
 };
 
-// const dpr_inserted = await r_insertDPR(dprData);
-// console.log(dpr_inserted);
 
-// const dpr = await r_fetchDprByID(9)
-// console.log(dpr);
 
-// console.log(dprData);
-// const project = await r_fetchProjectByID(2)
-// console.log(project)
+// const t = await r_fetchUserByID(2)
+// console.log(t)
+
 
 // pool.end()
