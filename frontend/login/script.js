@@ -1,6 +1,5 @@
 import { ip_address } from "../ip.js";
 // console.log("scriptloaded")
-
 async function loginUser(event) {
   event.preventDefault();
   console.log("isyuabd");
@@ -100,8 +99,9 @@ btn.addEventListener("click", () => {
     header_cont.textContent = "LOGIN HERE";
     btn.textContent = "DON'T HAVE AN ACCOUNT?";
   }
+});
+
+window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("login-form").addEventListener("submit", loginUser);
-  document
-    .getElementById("signup-form")
-    .addEventListener("submit", handleSignup);
+  document.getElementById("signup-form").addEventListener("submit", handleSignup);
 });
