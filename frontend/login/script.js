@@ -1,5 +1,5 @@
 import { ip_address } from "../ip.js";
-// console.log("scriptloaded")
+
 async function loginUser(event) {
   event.preventDefault();
   console.log("isyuabd");
