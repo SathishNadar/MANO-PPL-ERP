@@ -62,28 +62,6 @@ router.post("/search", async (req, res) => {
     }
 });
 
-// Get call to fetch All available Job Natures in Vendors List 
-router.get("/JobNatures", auth.authenticateJWT, async (req, res) =>{
-    try {
-        const JobNatures = await DB.r_fetchVendorsAllJobNatures();
-        res.json({ JobNatures});
-    } catch (error) {
-        console.error("Error fetching JobNatures:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-})
-
-// Get call to fetch All available Locations in Vendors List 
-router.get("/Locations", auth.authenticateJWT, async (req, res) =>{
-    try {
-        const Locations = await DB.r_fetchVendorsAllLocations();
-        res.json({ Locations});
-    } catch (error) {
-        console.error("Error fetching JobNatures:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-})
-
 // GET call to fetch all locations, job natures, and vendor count
 router.get("/metadata", async (req, res) => {
     try {

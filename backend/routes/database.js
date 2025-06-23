@@ -38,28 +38,23 @@ function safeParse(jsonField) {
 
 // ----------------------------- USER ----------------------------- //
 
-// Function to fetch User by ID
-export async function r_fetchUserByID(user_id) {
-    const query = "SELECT * FROM users WHERE user_id = ?";
+// Function to fetch Single or Multiple user by user_id
+export async function r_fetchUserByID(user_id_or_ids) {
     try {
-        const [row] = await pool.query(query, [user_id]);
-        return row[0] || null;
-    } catch (error) {
-        console.error("Error fetching DPR by ID:", error);
-        throw error;
-    }
-}
+        if (Array.isArray(user_id_or_ids)) {
+            if (user_id_or_ids.length === 0) return [];
 
-// Function to fetch Multiple Users by ID
-export async function r_fetchUsersByID(user_ids) {
-    const placeHolder = user_ids.map(() => "?").join(', ');
-    const query = `SELECT * FROM users WHERE user_id IN (${placeHolder})`;
-
-    try {
-        const [rows] = await pool.query(query, user_ids);
-        return rows || null;
+            const placeholders = user_id_or_ids.map(() => "?").join(", ");
+            const query = `SELECT * FROM users WHERE user_id IN (${placeholders})`;
+            const [rows] = await pool.query(query, user_id_or_ids);
+            return rows;
+        } else {
+            const query = "SELECT * FROM users WHERE user_id = ?";
+            const [row] = await pool.query(query, [user_id_or_ids]);
+            return row[0] || null;
+        }
     } catch (error) {
-        console.error("Error fetching DPR by ID:", error);
+        console.error("❌ Error fetching user(s) by ID:", error);
         throw error;
     }
 }
@@ -149,6 +144,13 @@ export async function r_getProjectById(project_id) {
     }
 }
 
+// Function to fetch all projects a user is involved
+export async function r_getUserProjectsByUserID(user_id){
+    if (!user_id) throw new Error("User ID is required");
+
+    const query = `SELECT projects`;
+}
+
 // Function to insert Project
 export async function r_insertProject(data) {
     const {
@@ -158,8 +160,7 @@ export async function r_insertProject(data) {
         end_date = null,
         location = null,
         contract_no = null,
-        Employer = null,
-        user_roles = {}
+        Employer = null
     } = data;
 
     if (!project_name) {
@@ -168,14 +169,13 @@ export async function r_insertProject(data) {
 
     const query = `
         INSERT INTO projects (
-            user_roles, project_name, project_description,
+            project_name, project_description,
             start_date, end_date, location,
             contract_no, Employer
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        ) VALUES (?, ?, ?, ?, ?, ?, ?);
     `;
 
     const values = [
-        JSON.stringify(user_roles),
         project_name,
         project_description,
         start_date,
@@ -198,7 +198,6 @@ export async function r_insertProject(data) {
 export async function r_updateProject(data) {
     const {
         project_id,
-        user_roles = {},
         project_name,
         project_description = null,
         start_date = null,
@@ -215,7 +214,6 @@ export async function r_updateProject(data) {
     const query = `
         UPDATE projects
         SET 
-            user_roles = ?,
             project_name = ?,
             project_description = ?,
             start_date = ?,
@@ -227,7 +225,6 @@ export async function r_updateProject(data) {
     `;
 
     const values = [
-        JSON.stringify(user_roles),
         project_name,
         project_description,
         start_date,
@@ -246,6 +243,7 @@ export async function r_updateProject(data) {
         throw error;
     }
 }
+
 
 
 // ------------------------ DPR ------------------------- //
@@ -524,12 +522,26 @@ export async function r_fetchVendorsCount() {
 
 // Function to fetch all Job Natures in table
 export async function r_fetchVendorsAllJobNatures() {
-    return await r_fetchIdNamePairs("JobNatures");
+    const query = `SELECT job_id, job_name FROM job_nature`;
+    try {
+        const [rows] = await pool.query(query);
+        return Object.fromEntries(rows.map(row => [row.job_name, row.job_id]));
+    } catch (error) {
+        console.error(`Error fetching data from job_nature:`, error);
+        throw error;
+    }
 }
 
 // Function to fetch all Locations in table
 export async function r_fetchVendorsAllLocations() {
-    return await r_fetchIdNamePairs("Locations");
+    const query = `SELECT loc_id, loc_name FROM locations`;
+    try {
+        const [rows] = await pool.query(query);
+        return Object.fromEntries(rows.map(row => [row.loc_name, row.loc_id]));
+    } catch (error) {
+        console.error(`Error fetching data from locations:`, error);
+        throw error;
+    }
 }
 
 // Function to fetch all Locations in table
@@ -613,8 +625,12 @@ const dprData = {
 
 
 
-// const t = await r_fetchUserByID(2)
+// const t = await r_fetchVendorsAllLocations()
 // console.log(t)
 
 
 // pool.end()
+
+
+
+

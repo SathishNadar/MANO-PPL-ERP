@@ -98,6 +98,4 @@ router.post("/updateProject", async (req, res) => {
     }
 });
 
-
 export default router;
-    
