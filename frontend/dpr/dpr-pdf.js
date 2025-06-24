@@ -7,6 +7,14 @@ const displayTable = document.getElementById('displayTable')?.getElementsByTagNa
 const todayTable = document.getElementById('today-table')?.getElementsByTagName('tbody')[0];
 const tomorrowTable = document.getElementById('tomorrow-table')?.getElementsByTagName('tbody')[0];
 
+//---------------------purely to format the timeslots in a formta approprate for posting in the backend------------------------//
+
+
+const timeSlotsInProperFormat = JSON.parse(sessionStorage.getItem("timeslots")) || [];
+const formattedSlots = timeSlotsInProperFormat.map(slot => `${slot.from}-${slot.to}`);
+
+
+
 // ====================== POPULATE TABLES ======================
 function populateTable(data, tbody, isProgress = false) {
     if (!data || !tbody) return;
@@ -248,12 +256,156 @@ function generateReportObject() {
       remarks: JSON.parse(sessionStorage.getItem('remarksData'))?.[0] || ""
     },
     today_prog: {
-      progress: todayData.map(row => row[0]), // From todayData
-      qty: todayData.map(row => row[1])
+      progress: todayData.map(row => row[0] || "--"),  // Task column
+      qty: todayData.map(row => row[1] || "--")       // Qty column
     },
     tomorrow_plan: {
-      plan: tomorrowData.map(row => row[0]), // From tomorrowData
-      qty: tomorrowData.map(row => row[1])
+      plan: tomorrowData.map(row => row[0] || "--"),
+      qty: tomorrowData.map(row => row[1] || "--")
     }
   };
+}
+
+
+//-------------------------------------------------fetching the data from backend directly into the PDF format----------------------------------//
+fetch('http://34.47.131.237:3000/project/getProject/1')
+  .then(response => {
+    if (!response.ok) {
+      document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
+      document.getElementById("project_name").classList.add = "error_state";
+
+      return Promise.reject(new Error('Project not found'));
+      
+    }
+    return response.json(); // Parse JSON response
+  })
+  .then(Apidata => {
+    sessionStorage.setItem('apiProjectData', JSON.stringify(Apidata.data));//to store the values to later on upload to backend//
+    document.getElementById("project_name").innerHTML = Apidata.data.project_name;
+    document.getElementById("Employer").innerHTML = Apidata.data.Employer;
+    document.getElementById("contract_no").innerHTML = Apidata.data.contract_no;
+    document.getElementById("location").innerHTML = Apidata.data.location;
+    document.getElementById("start_date").innerHTML = new Date(Apidata.data.start_date).toLocaleDateString('en-GB');
+
+    const completeReport = generateCompleteDPRObject();
+    console.log(JSON.stringify(completeReport, null, 2));
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
+
+
+  //-------------------------------TO format THESE DATA TO MATCH THE OBJECT ALREADY EXISTING IN BACKEND------------------------------------------//
+function generateCompleteDPRObject() {
+const apiData = JSON.parse(sessionStorage.getItem('apiProjectData')) || {};
+
+
+  // 1. Get all raw data
+  const tableData = JSON.parse(sessionStorage.getItem('userTableData')) || [];
+  const todayData = JSON.parse(sessionStorage.getItem('todayTableData')) || [];
+  const tomorrowData = JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [];
+  const formValues = JSON.parse(sessionStorage.getItem('form-values')) || [];
+  // const timeSlots = JSON.parse(sessionStorage.getItem('timeslots')) || [];
+  // const remarksData = JSON.parse(sessionStorage.getItem('remarksData')) || []; //-----THAT FINAL BOTTOM REGION REMARKS-----//
+  // 2. Process LABOR exactly as you need it
+  const labour_report = {
+    agency: tableData.map(row => row[0] || "--"),
+    mason: tableData.map(row => parseInt(row[1]) || 0),
+    carp: tableData.map(row => parseInt(row[2]) || 0),
+    fitter: tableData.map(row => parseInt(row[3]) || 0),
+    electrical: tableData.map(row => parseInt(row[4]) || 0),
+    painter: tableData.map(row => parseInt(row[5]) || 0),
+    gypsum: tableData.map(row => parseInt(row[6]) || 0),
+    plumber: tableData.map(row => parseInt(row[7]) || 0),
+    helper: tableData.map(row => parseInt(row[8]) || 0),
+    staff: tableData.map(row => parseInt(row[9]) || 0),
+    remarks: tableData.slice(0).map(row => row[11] || "--")
+    // Total_column_wise: tableData.map(row => parseInt(row[10]) || 0),  total column wise!!!!
+    // Bonus: Auto-calculated totals
+    // totals: {//---------------might need or not needed later on-----------------------//
+    //   mason: tableData.reduce((sum, row) => sum + (parseInt(row[1]) || 0), 0) /2,
+    //   carp: tableData.reduce((sum, row) => sum + (parseInt(row[2]) || 0), 0) /2,
+    //   // Add other trades if needed
+    // }
+  };
+
+  // 3. Build the COMPLETE DPR object
+  return {
+    project_id : 1,
+    report_date:"2004-10-10",
+
+    // A. Project Info (from API)
+    // project_info: {
+      
+    //   project_name: apiData.project_name || "N/A",
+    //   employer: apiData.Employer || "N/A",
+    //   contract_no: apiData.contract_no || "N/A",
+    //   location: apiData.location || "N/A",
+    //   start_date: apiData.start_date ? new Date(apiData.start_date).toLocaleDateString('en-GB') : "N/A",
+    // },
+
+    // B. Site Conditions
+    site_condition: {
+      is_rainy: formValues[0] ==="Rainy",
+      ground_state: formValues[1] || "Unknown",
+      rain_timing: formattedSlots || "No time slots available"
+    },
+
+    // C. Labor (your exact format!)
+    
+    labour_report: labour_report,
+
+    // D. Progress Data
+    today_prog: {
+      progress: todayData.map(row => row[0] || "--"),  // Task column
+      qty: todayData.map(row => row[1] || "--")       // Qty column
+    },
+    tomorrow_plan: {
+      plan: tomorrowData.map(row => row[0] || "--"),
+      qty: tomorrowData.map(row => row[1] || "--")
+    },
+
+  
+    user_roles: {
+    created_by: 1,
+    approvals: {
+      1: true,
+      3: false
+    },
+    viewers: [10, 11, 15],
+    editors: [1, 3, 4]
+  },
+  report_footer: {
+    events_visit: [], 
+    distribute: ["L&T", "MAPLANI"],
+    prepared_by: "Mano Project Pvt. Ltd."
+  },
+  created_at: "2025-01-19 12:00:00"
+}
+  };
+
+
+
+//---------------------------------TO UPLOAD THE DATA TO BACKEND UISING POST METHOD---------------------------//
+function postDPRToBackend() {
+  const dprData = generateCompleteDPRObject();
+
+  fetch('http://34.47.131.237:3000/report/insertDPR', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(dprData)
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Upload failed");
+    return response.json();
+  })
+  .then(result => {
+    console.log("Uploaded:", result);
+  })
+  .catch(err => {
+    console.error("Error:", err);
+  });
 }

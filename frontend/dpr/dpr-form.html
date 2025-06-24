@@ -34,31 +34,31 @@
                         <tbody>
                           <tr>
                             <td>Project Name</td>
-                            <td style="width: fit-content;text-align: center;">Sati Darshan, Malad</td>
+                            <td style="width: fit-content;text-align: center;" id="project_name"></td>
                           </tr>
                           <tr>
                             <td>Start Date:</td>
-                            <td style="width: fit-content;text-align: center;" id="startdate">02-05-2022</td>
+                            <td style="width: fit-content;text-align: center;" id="start_date"></td>
                           </tr>
                           <tr>
                           <tr>
                             <td>End Date:</td>
-                            <td style="width: fit-content;text-align: center;" id="enddate">16-05-2025</td>
+                            <td style="width: fit-content;text-align: center;" id="end_date"></td>
                           </tr>
                             <td>Employer:</td>
-                            <td style="width: fit-content;text-align: center;">M/s Goyal Sati Darshan LLP</td>
+                            <td style="width: fit-content;text-align: center;" id="Employer"></td>
                           </tr>
                             <tr>
                             <td>Project Description</td>
-                            <td style="width: fit-content;text-align: center;" id="TotalDays"></td>
+                            <td style="width: fit-content;text-align: center;" id="project_description"></td>
                           </tr>
                           <tr>
                             <td>Contract No.:</td>
-                            <td style="width: fit-content;text-align: center;">2223-57</td>
+                            <td style="width: fit-content;text-align: center;" id="contract_no"></td>
                           </tr>
                           <tr>
                             <td>Location:</td>
-                            <td style="width: fit-content;text-align: center;" >Malad(W), Mumbai</td>
+                            <td style="width: fit-content;text-align: center;" id="location"></td>
                           </tr>
                           <tr>
                             <td id="elapsedDays"></td>
@@ -274,19 +274,18 @@
                     </div>
                 </div>
                 <div class="remarks-events-input-container">
-  <div class="table-header fixed-header">
-    <h1>Events/Remarks</h1>
-  </div>
-  
-  <!-- Added controls and container -->
-  <div class="input-controls">
-    <button class="labourtable-button" id="addInputBtn">Add Input</button>
-    <button class="labourtable-button" id="removeInputBtn" disabled>Remove Last</button>
-  </div>
-  
-  <div id="dynamicInputsContainer">
-    <!-- Dynamic inputs will appear here -->
-  </div>
+<div class="table-header fixed-header">
+  <h1>Events</h1>
+</div>
+
+<div class="input-controls">
+  <button class="labourtable-button" id="addEventBtn">Add Event</button>
+  <button class="labourtable-button" id="removeEventBtn" disabled>Remove Event</button>
+</div>
+
+<div id="eventsContainer">
+  <!-- Events inputs will appear here -->
+</div>
   <div class="table-header fixed-header">
   <h1>Remarks</h1>
 </div>

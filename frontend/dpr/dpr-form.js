@@ -125,10 +125,18 @@ document.addEventListener('DOMContentLoaded', function() {
 //=============EVERYTHING RELATED TO FORM INPUT============================//
 function displaydata() {
     const input_array = [];
-    const today_progress = document.getElementById("today-progress").value;
-    const today_progress_quantity = document.getElementById("today-progress-quantity").value;
-    const tomorrows_planning = document.getElementById("tomorrows-planning").value;
-    const tomorrows_planning_quantity = document.getElementById("tomorrows-planning-quantity").value;
+    const today_progress_input = document.querySelector(".today-progress");
+const today_progress_quantity_input = document.querySelector(".today-progress-quantity");
+
+const today_progress = today_progress_input ? today_progress_input.value : "";
+const today_progress_quantity = today_progress_quantity_input ? today_progress_quantity_input.value : "";
+
+   const tomorrows_planning_input = document.querySelector(".tomorrows-planning");
+const tomorrows_planning_quantity_input = document.querySelector(".tomorrows-planning-quantity");
+
+const tomorrows_planning = tomorrows_planning_input ? tomorrows_planning_input.value : "";
+const tomorrows_planning_quantity = tomorrows_planning_quantity_input ? tomorrows_planning_quantity_input.value : "";
+
   
     let radio_buttons_value = "";
     let ground_ground_state_value = "";
@@ -200,7 +208,8 @@ function displaydata() {
 
 
     // Collect events data (6 inputs minimum)
-const eventsInputs = document.querySelectorAll('#dynamicInputsContainer input');
+// With this new version that works with the 6-field minimum setup:
+const eventsInputs = document.querySelectorAll('#eventsContainer .event-input');
 const eventsData = Array.from(eventsInputs)
     .map(input => input.value.trim())
     .filter(event => event !== "");
@@ -309,7 +318,11 @@ document.addEventListener('DOMContentLoaded', function() {
     //   }
     // });
 // === Inject dummy data into tomorrow planning table ===
+
+
 // You can change this URL to any valid API returning an array of objects
+
+
 fetch("https://dummyjson.com/products?limit=3")  // 🔁 replace with your API
   .then(res => res.json())
   .then(data => {
@@ -368,7 +381,37 @@ fetch("https://dummyjson.com/products?limit=3")  // 🔁 replace with your API
     }
   });
 
+//--------------------- for the static / constant detaisl to be displayed on the pdf form header--------------------------\\
 
+fetch('http://34.47.131.237:3000/project/getProject/1')
+  .then(response => {
+    if (!response.ok) {
+      document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
+      document.getElementById("project_name").classList.add = "error_state";
+
+      return Promise.reject(new Error('Project not found'));
+      
+    }
+    return response.json(); // Parse JSON response
+  })
+  .then(Apidata => {
+    console.log('Success:', Apidata);
+    document.getElementById("project_name").innerHTML = Apidata.data.project_name;
+    document.getElementById("start_date").innerHTML = new Date(Apidata.data.start_date).toLocaleDateString('en-GB');
+    document.getElementById("end_date").innerHTML = new Date(Apidata.data.end_date).toLocaleDateString('en-GB');
+    document.getElementById("Employer").innerHTML = Apidata.data.Employer;
+    document.getElementById("project_description").innerHTML = Apidata.data.project_description;
+    document.getElementById("contract_no").innerHTML = Apidata.data.contract_no;
+    document.getElementById("location").innerHTML = Apidata.data.location;
+
+    trial = "Rendered value:", document.getElementById("project_name").textContent
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
+
+  //-----------------------------------------------------------------------------------------------------------------------
 
     // Function to handle synchronized row removal
     function handleRemoveRow() {
@@ -440,90 +483,93 @@ window.addEventListener("click", (event) => {
 });
 
 // =============================== REMARKS/EVENTS INPUT =============================== //
-
-
-// Initialize timeslot display
+// ===================== EVENTS SECTION (6+ inputs) ===================== //
 document.addEventListener('DOMContentLoaded', function() {
-  updateTimeslotDisplay();
-  updateTimeslotCount();
-});
-// Wait for DOM to load
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the section with 3 default inputs
-    const sectionContainer = document.querySelector('.dynamicInputsContainer');
-    const addBtn = document.querySelector('.addInputBtn');
-    const removeBtn = document.querySelector('.removeInputBtn');
-    const storageKey = 'events-remarks-storage'; // Key for sessionStorage
+  const eventsContainer = document.getElementById('eventsContainer');
+  const addEventBtn = document.getElementById('addEventBtn');
+  const removeEventBtn = document.getElementById('removeEventBtn');
+  const MIN_EVENTS = 6; // Minimum 6 input fields
+  const STORAGE_KEY = 'events-data';
+
+  // Initialize with 6 empty fields or load saved data
+  function initializeEvents() {
+    const savedData = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
+    const initialData = savedData || Array(MIN_EVENTS).fill('');
     
-    // Load saved data or initialize with empty inputs
-    let inputsData = JSON.parse(sessionStorage.getItem(storageKey)) || Array(3).fill('');
+    // Clear container and recreate inputs
+    eventsContainer.innerHTML = '';
+    initialData.forEach((value, index) => {
+      createEventInput(value, index);
+    });
     
-    // Function to render inputs
-    function renderInputs() {
-        sectionContainer.innerHTML = '';
-        inputsData.forEach((value, index) => {
-            createInputElement(value, index);
-        });
-        updateRemoveButtonState();
+    updateRemoveButton();
+  }
+
+  // Create a single event input field
+  function createEventInput(value, index) {
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'event-input';
+    input.value = value;
+    input.placeholder = `Event ${index + 1}`;
+    
+    // Save on input change
+    input.addEventListener('input', function() {
+      saveEventsToStorage();
+    });
+    
+    inputGroup.appendChild(input);
+    eventsContainer.appendChild(inputGroup);
+  }
+
+  // Add new event field
+  function addEvent() {
+    createEventInput('', eventsContainer.children.length);
+    saveEventsToStorage();
+    updateRemoveButton();
+  }
+
+  // Remove last event field (if above minimum)
+  function removeEvent() {
+    if (eventsContainer.children.length > MIN_EVENTS) {
+      eventsContainer.removeChild(eventsContainer.lastElementChild);
+      saveEventsToStorage();
+      updateRemoveButton();
     }
-    
-    // Function to create a single input element
-    function createInputElement(value, index) {
-        const inputGroup = document.createElement('div');
-        inputGroup.className = 'input-group';
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = value;
-        input.placeholder = `Input ${index + 1}`;
-        
-        // Add event listener to save on change
-        input.addEventListener('input', function() {
-            inputsData[index] = this.value;
-            saveToSessionStorage();
-        });
-        
-        inputGroup.appendChild(input);
-        sectionContainer.appendChild(inputGroup);
-    }
-    
-    // Function to add a new input
-    function addInput() {
-        inputsData.push('');
-        renderInputs();
-        saveToSessionStorage();
-    }
-    
-    // Function to remove last input (but keep minimum 3)
-    function removeInput() {
-        if (inputsData.length > 3) {
-            inputsData.pop();
-            renderInputs();
-            saveToSessionStorage();
-        }
-    }
-    
-    // Function to update remove button state
-    function updateRemoveButtonState() {
-        removeBtn.disabled = inputsData.length <= 3;
-    }
-    
-    // Function to save data to sessionStorage
-    function saveToSessionStorage() {
-        sessionStorage.setItem(storageKey, JSON.stringify(inputsData));
-    }
-    
-    // Event listeners
-    addBtn.addEventListener('click', addInput);
-    removeBtn.addEventListener('click', removeInput);
-    
-    // Initial render
-    renderInputs();
-    
-    // Also save when page is about to unload
-    window.addEventListener('beforeunload', saveToSessionStorage);
+  }
+
+  // Update remove button state
+  function updateRemoveButton() {
+    removeEventBtn.disabled = eventsContainer.children.length <= MIN_EVENTS;
+  }
+
+  // Save all events data to sessionStorage
+  function saveEventsToStorage() {
+    const inputs = eventsContainer.querySelectorAll('.event-input');
+    const eventsData = Array.from(inputs).map(input => input.value.trim());
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(eventsData));
+  }
+
+  // Event listeners
+  addEventBtn.addEventListener('click', addEvent);
+  removeEventBtn.addEventListener('click', removeEvent);
+  
+  // Initialize on load
+  initializeEvents();
+  
+  // Save before page unload
+  window.addEventListener('beforeunload', saveEventsToStorage);
 });
 
+// In your displaydata() function, use this to collect events:
+function getEventsData() {
+  const inputs = document.querySelectorAll('#eventsContainer .event-input');
+  return Array.from(inputs).map(input => input.value.trim())
+                         .filter(event => event !== "");
+}
 // ===================== REMARKS SECTION (3+ inputs) ===================== //
 document.addEventListener('DOMContentLoaded', function() {
   const remarksContainer = document.getElementById('remarksContainer');
@@ -589,6 +635,3 @@ const remarksData = Array.from(remarksInputs)
     inputs.forEach(input => input.value = '');
     if (typeof calculateTotals === 'function') calculateTotals();
 }
-
-
-
