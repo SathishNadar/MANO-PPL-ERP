@@ -1,3 +1,4 @@
+import { ip_address } from "../ip.js";
 console.log("✅ vendor.js has loaded successfully!");
 
 // -----------------------------------------------------------Data storage--------------------------------------------------------------
@@ -46,11 +47,15 @@ const getValidURL = (url) => {
     : `https://${url}`;
 };
 
+function setCategory(id) {
+  categoryIds = id;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------------------------
 async function fetchMetadata() {
   try {
     const response = await fetch(
-      "http://35.154.101.129:3000/vendor_api/metadata/"
+      `http://${ip_address}:3000/vendor_api/metadata/`
     );
     if (!response.ok) throw new Error("Network response was not ok");
 
@@ -85,7 +90,7 @@ async function fetchVendorData(tab_no, orders) {
   }
 
   try {
-    const response = await fetch("http://35.154.101.129:3000/vendor_api/", {
+    const response = await fetch(`http://${ip_address}:3000/vendor_api/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -119,24 +124,20 @@ async function fetchVendorData(tab_no, orders) {
 async function search(tab_no, searchtext) {
   console.log(categoryIds);
   try {
-    let response = await fetch(
-      "http://35.154.101.129:3000/vendor_api/search/",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-
-        },
-        body: JSON.stringify({
-          queryString: `${searchtext}`,
-          tab: tab_no,
-          order: orders,
-          locationIds: appliedFilters.locationIds || [],
-          jobNatureIds: appliedFilters.jobNatureIds || [],
-          category: categoryIds,
-        }),
-      }
-    );
+    let response = await fetch(`http://${ip_address}:3000/vendor_api/search/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        queryString: `${searchtext}`,
+        tab: tab_no,
+        order: orders,
+        locationIds: appliedFilters.locationIds || [],
+        jobNatureIds: appliedFilters.jobNatureIds || [],
+        category: categoryIds,
+      }),
+    });
 
     if (!response.ok) throw new Error("Network response was not ok");
     let data = await response.json();
@@ -241,7 +242,9 @@ async function renderVendorList(page) {
                 timerProgressBar: "blue-progress-bar",
               },
               didOpen: (toast) => {
-                const progressBar = toast.querySelector(".swal2-timer-progress-bar");
+                const progressBar = toast.querySelector(
+                  ".swal2-timer-progress-bar"
+                );
                 if (progressBar) {
                   progressBar.classList.add("animate-progress-faster");
                 }
@@ -251,7 +254,6 @@ async function renderVendorList(page) {
           .catch((err) => console.error("Failed to copy:", err));
       });
     });
-    
 
     row.addEventListener("click", (event) => {
       if (!event.target.classList.contains("copy-text")) {
@@ -523,7 +525,7 @@ function openFilterDialog() {
   }
 
   overlay.classList.add("active");
-  existingDialog.classList.add("active");          
+  existingDialog.classList.add("active");
 }
 
 function copyToClipboard() {
@@ -625,7 +627,7 @@ function filterSearch(inputId, listId) {
 
 function clearFilters() {
   document.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
-    console.log(checkbox)
+    console.log(checkbox);
     checkbox.checked = false;
     sessionStorage.removeItem(checkbox.value);
   });
@@ -663,7 +665,7 @@ function handleSearch() {
 }
 
 function attachSearchListeners() {
-  console.log("yo");  
+  console.log("yo");
   const searchInput = document.querySelector(".search-field .input");
   const searchButton = document.querySelector(".search-box-icon");
 
@@ -679,3 +681,15 @@ function attachSearchListeners() {
     });
   }
 }
+
+export {
+  initializeVendorList,
+  attachSearchListeners,
+  setCategory,
+  changeorder,
+  clearFilters,
+  closeFilterDialog,
+  openFilterDialog,
+  toggleDropdown,
+  applyFilters
+};
