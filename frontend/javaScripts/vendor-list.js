@@ -691,5 +691,7 @@ export {
   closeFilterDialog,
   openFilterDialog,
   toggleDropdown,
-  applyFilters
+  applyFilters,
+  closePopup,
+  filterSearch
 };

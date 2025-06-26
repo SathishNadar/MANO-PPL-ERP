@@ -7,7 +7,9 @@ import {
   closeFilterDialog,
   openFilterDialog,
   toggleDropdown,
-  applyFilters
+  applyFilters,
+  closePopup,
+  filterSearch
 } from "./vendor-list.js";
 
 // Session check
@@ -323,3 +325,5 @@ window.logout = logout;
 window.clearFilters = clearFilters;
 window.toggleDropdown = toggleDropdown;
 window.applyFilters = applyFilters;
+window.closePopup = closePopup;
+window.filterSearch = filterSearch;
