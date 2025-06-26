@@ -98,4 +98,21 @@ router.post("/updateProject", async (req, res) => {
     }
 });
 
+// Get call to fetch all projects a user is involved using user_id
+router.get("/userProjects/:user_id", async (req, res) => {
+    try {
+        const user_id = parseInt(req.params.user_id);
+        if (isNaN(user_id)) return res.status(400).json({ message: "Invalid project ID" });
+
+        const projects = await DB.r_fetchProjectsByUser(user_id);
+        if (!projects) return res.status(404).json({ message: "Projects not found" });
+        console.log(projects)
+
+        res.json(projects);
+    } catch (error) {
+        console.error("❌ API error in getProject:", error.message);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 export default router;
