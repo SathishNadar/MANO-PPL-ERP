@@ -14,22 +14,31 @@
             <div class="header">
                 <div class="logo"><img src="images/Mano-Logo-.png"></div>
                 <div class="daily-progress-report">
-                    <div class="daily">DAILY PROGRESS REPORT</div>
-                    <div class="report">REPORT DATE</div>
-                    <div class="dynamic-date">DYNAMIC</div>
+                    <table class="daily-progress-report-table"> <!--the table at the top right corner of the PDF page-->
+                        <tr>
+                            <td colspan="2">DAILY PROGRESS REPORT</td>
+                        </tr>
+                        <tr>
+                            <td>REPORT DATE</td>
+                            <td>insert date here</td>
+                        </tr>
+                    </table>
+                    <!-- <div class="daily">DAILY PROGRESS REPORT</div>
+                    <div class="report" id="report_date">REPORT DATE</div>
+                    <div class="dynamic-date">DYNAMIC</div> -->
                 </div>
             </div>
             <div class="project-left">
                 <div class="project-label">Pro</div>
                 <table class="project-table">
-                    <tr><td style="padding-left: 5px;">NAME OF WORK</td><td style="padding-left: 5px; border-right: 0px;">Dynamic</td></tr>
-                    <tr><td style="padding-left: 5px;">EMPLOYER</td><td style="padding-left: 5px;">Dynamic</td></tr>
-                    <tr><td style="padding-left: 5px;">CONTACT NO</td><td style="padding-left: 5px;">Dynamic</td></tr>
-                    <tr><td style="padding-left: 5px;">LOCATION</td><td style="padding-left: 5px;">Dynamic</td></tr>
+                    <tr><td style="padding-left: 5px;">NAME OF WORK</td><td style="padding-left: 5px; border-right: 0px;" id="project_name">Dynamic</td></tr>
+                    <tr><td style="padding-left: 5px;">EMPLOYER</td><td style="padding-left: 5px;" id="Employer"></td></tr>
+                    <tr><td style="padding-left: 5px;">CONTRACT NO</td><td style="padding-left: 5px;" id="contract_no"></td></tr>
+                    <tr><td style="padding-left: 5px;">LOCATION</td><td style="padding-left: 5px;"id="location"></td></tr>
                 </table>
                 <table style="width: 25%; border-right: 0px; border-left: 0px;">
-                    <tr><td style="padding-left: 5px; border: 0px;">PROJECT START DATE</td><td style="padding-left: 5px; border-right: 0px;">Dynamic</td></tr>
-                    <tr><td style="padding-left: 5px;">PROJECT COMPLETION</td><td style="padding-left: 5px;">Dynamic</td></tr>
+                    <tr><td style="padding-left: 5px; border: 0px;">PROJECT START DATE</td><td style="padding-left: 5px; border-right: 0px;" id="start_date"></td></tr>
+                    <tr><td style="padding-left: 5px;">PROJECT COMPLETION</td><td style="padding-left: 5px;" id="completion_date">Dynamic</td></tr>
                 </table>
             </div>
             <div class="project-bottom">
@@ -145,6 +154,7 @@
         <div class="button-container">
             <button id="download-pdf">SEE PDF PREVIEW</button>
             <button onclick="window.history.back()">MAKE CHANGES</button>
+            <BUtton onclick="postDPRToBackend()">UPLOAD THE DPR</BUtton>
         </div>
     <script src="dpr-pdf.js"></script>
 </body>

@@ -580,7 +580,10 @@ button[type="submit"]:hover {
   align-items: center;
   padding: 30px 0;
 }
-
+.error_state{
+  color: red;
+  font-style: bold;
+}
 @media print {
   /* Reset all margins and padding for printing */
   body, .main-content {
