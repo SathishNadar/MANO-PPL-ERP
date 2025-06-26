@@ -87,90 +87,92 @@ const LoginSignup = () => {
   };
 
   return (
-    <div className="container">
-      <div className="header">
-        <div className="header-cont">
-          {isSignup ? "USER SIGN IN" : "USER LOGIN"}
-        </div>
-      </div>
-
-      <div className={`form-slider ${isSignup ? "move" : ""}`}>
-        {/* Login Form */}
-        <div className="login-form">
-          <form onSubmit={handleLogin}>
-            <input
-              type="text"
-              placeholder="Username"
-              value={loginData.username}
-              onChange={(e) =>
-                setLoginData({ ...loginData, username: e.target.value })
-              }
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={loginData.password}
-              onChange={(e) =>
-                setLoginData({ ...loginData, password: e.target.value })
-              }
-              required
-            />
-            <input type="submit" value="login" />
-          </form>
+    <div className="login-page-wrapper">
+      <div className="container">
+        <div className="header">
+          <div className="header-cont">
+            {isSignup ? "USER SIGN IN" : "USER LOGIN"}
+          </div>
         </div>
 
-        {/* Signup Form */}
-        <div className="signup-form">
-          <form onSubmit={handleSignup}>
-            <input
-              type="text"
-              placeholder="Username"
-              value={signupData.username}
-              onChange={(e) =>
-                setSignupData({ ...signupData, username: e.target.value })
-              }
-              required
-            />
-            <input
-              type="text"
-              placeholder="Email"
-              value={signupData.email}
-              onChange={(e) =>
-                setSignupData({ ...signupData, email: e.target.value })
-              }
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={signupData.password}
-              onChange={(e) =>
-                setSignupData({ ...signupData, password: e.target.value })
-              }
-              required
-            />
-            <input
-              type="text"
-              placeholder="Phone Number"
-              value={signupData.phone}
-              onChange={(e) =>
-                setSignupData({ ...signupData, phone: e.target.value })
-              }
-              required
-            />
-            <input type="submit" value="sign in" />
-          </form>
-        </div>
-      </div>
+        <div className={`form-slider ${isSignup ? "move" : ""}`}>
+          {/* Login Form */}
+          <div className="login-form">
+            <form onSubmit={handleLogin}>
+              <input
+                type="text"
+                placeholder="Username"
+                value={loginData.username}
+                onChange={(e) =>
+                  setLoginData({ ...loginData, username: e.target.value })
+                }
+                required
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={loginData.password}
+                onChange={(e) =>
+                  setLoginData({ ...loginData, password: e.target.value })
+                }
+                required
+              />
+              <input type="submit" value="login" />
+            </form>
+          </div>
 
-      <div className="bottom">
-        <button className="btn" onClick={() => setIsSignup(!isSignup)}>
-          {isSignup ? "ALREADY HAVE AN ACCOUNT?" : "DON'T HAVE AN ACCOUNT?"}
-        </button>
-        <button className="btn" id="forgot">
-          Forgot Password
-        </button>
+          {/* Signup Form */}
+          <div className="signup-form">
+            <form onSubmit={handleSignup}>
+              <input
+                type="text"
+                placeholder="Username"
+                value={signupData.username}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, username: e.target.value })
+                }
+                required
+              />
+              <input
+                type="text"
+                placeholder="Email"
+                value={signupData.email}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, email: e.target.value })
+                }
+                required
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={signupData.password}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, password: e.target.value })
+                }
+                required
+              />
+              <input
+                type="text"
+                placeholder="Phone Number"
+                value={signupData.phone}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, phone: e.target.value })
+                }
+                required
+              />
+              <input type="submit" value="sign in" />
+            </form>
+          </div>
+        </div>
+
+        <div className="bottom">
+          <button className="btn" onClick={() => setIsSignup(!isSignup)}>
+            {isSignup ? "ALREADY HAVE AN ACCOUNT?" : "DON'T HAVE AN ACCOUNT?"}
+          </button>
+          <button className="btn" id="forgot">
+            Forgot Password
+          </button>
+        </div>
       </div>
     </div>
   );

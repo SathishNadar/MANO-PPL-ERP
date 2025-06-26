@@ -8,12 +8,21 @@ body {
     /* display: flex; */
     justify-content: center;
     align-items: center;
-    background-repeat: no-repeat;
-    background-size: cover;
     height: 100vh;
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    box-shadow: 50px 50px 50px black;
+    /* box-shadow: 50px 50px 50px black; */
+}
+
+.login-page-wrapper {
+    background-image: url('/building.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .container {
