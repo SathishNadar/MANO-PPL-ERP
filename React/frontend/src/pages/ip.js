@@ -1,0 +1,1 @@
+export const API_URI= "34.47.131.237";

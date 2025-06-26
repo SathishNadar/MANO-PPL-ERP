@@ -13,7 +13,8 @@ function App() {
   return (
     <div>
       <Routes>
-        <Route exact path="/" element={<Dashboard />} /> // badlna hai baadme 
+        <Route exact path="/" element={<Login />} /> // default route set to login
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dpr" element={<Dpr />} />
       </Routes>
