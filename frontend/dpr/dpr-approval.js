@@ -1,3 +1,31 @@
+const todayTable = document.getElementById('today-table');
+const tomorrowTable = document.getElementById('tomorrow-table');
+
+// Function to add a row to a specific table
+function addRowToTable(table) {
+  const tbody = table.querySelector('tbody') || table.createTBody();
+  const newRow = tbody.insertRow();
+
+  if (table.id === 'today-table') {
+    newRow.innerHTML = `
+      <td><input type="text" class="today-progress"></td>
+      <td><input type="number" class="today-progress-quantity"></td>
+    `;
+  } else {
+    newRow.innerHTML = `
+      <td><input type="text" class="tomorrows-planning"></td>
+      <td><input type="number" class="tomorrows-planning-quantity"></td>
+    `;
+  }
+}
+
+
+
+
+
+
+
+
 // =============================== TIME SLOTS IMPROVED UX ========================================= //
 let timeSlots = []; // Global variable to store time slots
 
@@ -305,74 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
       addRowToTable(tomorrowTable);
     }
 
-    //-------------fetching the data and displaying it to the today progress rows from yesterdays tomorrow planning---------------//
-    // fetch("https://jsonplaceholder.typicode.com/posts")
-    // .then(res => res.json())
-    // .then(json => {
-    //   const rowCount = json.length;
-    //   console.log(rowCount)
-    //   for(let i = 0; i < rowCount; i++){
-    //   addRowToTable(todayTable);
-    //   addRowToTable(tomorrowTable);
-      
-    //   }
-    // });
-// === Inject dummy data into tomorrow planning table ===
-
-
-// You can change this URL to any valid API returning an array of objects
-
-
-const CURRENT_DPR_ID = 19; // 🔁 replace this dynamically or keep fixed if hardcoded
-const PREVIOUS_DPR_ID = CURRENT_DPR_ID - 1;
-
-fetch(`http://34.47.131.237:3000/report/getDPR/${PREVIOUS_DPR_ID}`)
-  .then(res => res.ok ? res.json() : Promise.reject("Previous DPR not found"))
-  .then(prev => {
-    const prevPlan = prev?.data?.tomorrow_plan;
-    const progressList = prevPlan?.plan || [];
-    const qtyList = prevPlan?.qty || [];
-
-    const todayTable = document.getElementById('today-table');
-    const todayBody = todayTable.querySelector('tbody');
-    todayBody.innerHTML = '';
-
-    const tomorrowTable = document.getElementById('tomorrow-table');
-    const tomorrowBody = tomorrowTable.querySelector('tbody');
-    tomorrowBody.innerHTML = '';
-
-    for (let i = 0; i < progressList.length; i++) {
-      const todayRow = todayBody.insertRow();
-      todayRow.innerHTML = `
-        <td><input type="text" class="today-progress" value="${progressList[i]}" /></td>
-        <td><input type="text" class="today-progress-quantity" value="${qtyList[i] || ''}" /></td>
-      `;
-
-      const tomorrowRow = tomorrowBody.insertRow();
-      tomorrowRow.innerHTML = `
-        <td><input type="text" class="tomorrows-planning" /></td>
-        <td><input type="number" class="tomorrows-planning-quantity" /></td>
-      `;
-    }
-
-    // Ensure minimum row if nothing exists
-    if (progressList.length === 0) {
-      const todayRow = todayBody.insertRow();
-      todayRow.innerHTML = `
-        <td><input type="text" class="today-progress" /></td>
-        <td><input type="text" class="today-progress-quantity" /></td>
-      `;
-
-      const tomorrowRow = tomorrowBody.insertRow();
-      tomorrowRow.innerHTML = `
-        <td><input type="text" class="tomorrows-planning" /></td>
-        <td><input type="number" class="tomorrows-planning-quantity" /></td>
-      `;
-    }
-  })
-
-
-//------------  --------- for the static / constant detaisl to be displayed on the pdf form header--------------------------\\
+//--------------------- for the static / constant detaisl to be displayed on the pdf form header--------------------------\\
 
 fetch('http://34.47.131.237:3000/project/getProject/1')
   .then(response => {
@@ -625,4 +586,205 @@ const remarksData = Array.from(remarksInputs)
     const inputs = document.querySelectorAll('#labourTable td input');
     inputs.forEach(input => input.value = '');
     if (typeof calculateTotals === 'function') calculateTotals();
+}
+
+// Replace the last part of your dpr-approval.js with this:
+
+
+fetch("http://34.47.131.237:3000/report/getDPR/17")
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(apiResponse => {
+    console.log("API Response:", apiResponse);
+
+    if (!apiResponse.success || !apiResponse.data) {
+      throw new Error("Invalid API response structure");
+    }
+
+    const apiData = apiResponse.data;
+
+    const normalizedData = {
+      dpr_id: apiData.dpr_id || 0,
+      project_id: apiData.project_id || 0,
+      report_date: apiData.report_date ? apiData.report_date.split('T')[0] : "",
+      site_condition: {
+        ground_state: apiData.site_condition?.ground_state || "",
+        is_rainy: apiData.site_condition?.is_rainy || false,
+        rain_timing: apiData.site_condition?.rain_timing || []
+      },
+      labour_report: {
+        agency: apiData.labour_report?.agency || [],
+        mason: apiData.labour_report?.mason || [],
+        carp: apiData.labour_report?.carp || [],
+        fitter: apiData.labour_report?.fitter || [],
+        electrical: apiData.labour_report?.electrical || [],
+        painter: apiData.labour_report?.painter || [],
+        gypsum: apiData.labour_report?.gypsum || [],
+        plumber: apiData.labour_report?.plumber || [],
+        helper: apiData.labour_report?.helper || [],
+        staff: apiData.labour_report?.staff || [],
+        remarks: apiData.labour_report?.remarks || ""
+      },
+      today_prog: {
+        progress: apiData.today_prog?.progress || [],
+        qty: apiData.today_prog?.qty || []
+      },
+      tomorrow_plan: {
+        plan: apiData.tomorrow_plan?.plan || [],
+        qty: apiData.tomorrow_plan?.qty || []
+      },
+      report_footer: {
+        distribute: apiData.report_footer?.events_visit || [],
+        prepared_by: apiData.report_footer?.prepared_by || "",
+        events_visit: apiData.report_footer?.events_visit || []
+      },
+      cumulative_manpower: apiData.cumulative_manpower || 0,
+      user_roles: apiData.user_roles || null,
+      created_at: apiData.created_at || null
+    };
+
+    populateDPRForm(normalizedData);
+  })
+  .catch(apiError => {
+    console.error("API Error:", apiError);
+
+    const sampleData = {
+      dpr_id: 6,
+      project_id: 1,
+      report_date: "2025-01-15",
+      site_condition: {
+        ground_state: "dry",
+        is_rainy: false,
+        rain_timing: ["10:10-11:00", "01:05-02:00"]
+      },
+      labour_report: {
+        agency: ["MAPLANI", "L&T", "AMAZON", "NVIDIA"],
+        mason: [0, 0, 1, 0],
+        carp: [1, 0, 3, 5],
+        fitter: [2, 1, 0, 4],
+        electrical: [0, 2, 1, 3],
+        painter: [1, 1, 0, 0],
+        gypsum: [3, 0, 2, 1],
+        plumber: [0, 0, 0, 2],
+        helper: [5, 2, 3, 1],
+        staff: [2, 1, 1, 0],
+        remarks: "test remarks"
+      },
+      today_prog: {
+        progress: ["cement imported.", "water distributed."],
+        qty: ["1kg", "5L"]
+      },
+      tomorrow_plan: {
+        plan: ["cement imported.", "water distributed."],
+        qty: ["1kg", "5L"]
+      },
+      report_footer: {
+        distribute: ["L&T", "MAPLANI"],
+        prepared_by: "Mano Project Pvt. Ltd.",
+        events_visit: []
+      },
+      cumulative_manpower: 0,
+      user_roles: null,
+      created_at: null
+    };
+
+    console.log("Using sample data instead");
+    populateDPRForm(sampleData);
+  });
+
+// Combined form population logic
+function populateDPRForm(data) {
+  // 1. Site Condition
+  if (data.site_condition) {
+    document.getElementById(data.site_condition.is_rainy ? 'rainy' : 'sunny').checked = true;
+    document.getElementById(data.site_condition.ground_state || 'dry').checked = true;
+
+    if (data.site_condition.rain_timing) {
+      timeSlots = data.site_condition.rain_timing.map(slot => {
+        const [from, to] = slot.split('-');
+        return { from, to };
+      });
+      updateTimeslotDisplay();
+      updateTimeslotCount();
+    }
+  }
+
+  // 2. Labour Report
+  if (data.labour_report) {
+    const tbody = document.querySelector('#labourTable tbody');
+    document.querySelectorAll('#labourTable tr.data-row').forEach(row => row.remove());
+
+    data.labour_report.agency.forEach((agency, i) => {
+      const row = document.createElement('tr');
+      row.className = 'data-row';
+      row.innerHTML = `
+        <td><input type="text" value="${agency}" /></td>
+        <td><input type="number" class="cell-input" value="${data.labour_report.mason[i] || 0}" /></td>
+        <td><input type="number" class="cell-input" value="${data.labour_report.carp[i] || 0}" /></td>
+        <td><input type="number" class="cell-input" value="${data.labour_report.fitter[i] || 0}" /></td>
+        <td><input type="number" class="cell-input" value="${data.labour_report.electrical[i] || 0}" /></td>
+        <td><input type="number" class="cell-input" value="${data.labour_report.painter[i] || 0}" /></td>
+        <td><input type="number" class="cell-input" value="${data.labour_report.gypsum[i] || 0}" /></td>
+        <td><input type="number" class="cell-input" value="${data.labour_report.plumber[i] || 0}" /></td>
+        <td><input type="number" class="cell-input" value="${data.labour_report.helper[i] || 0}" /></td>
+        <td><input type="number" class="cell-input" value="${data.labour_report.staff[i] || 0}" /></td>
+        <td><input type="number" class="row-total" disabled /></td>
+        <td><input type="text" value="${data.labour_report.remarks || ''}" /></td>
+      `;
+      tbody.insertBefore(row, tbody.lastElementChild);
+    });
+
+    if (typeof calculateTotals === 'function') {
+      calculateTotals();
+    }
+  }
+
+  // 3. Today's Progress
+  const todayBody = document.querySelector('#today-table tbody');
+  todayBody.innerHTML = '';
+  const todayProg = data.today_prog || { progress: [], qty: [] };
+  for (let i = 0; i < todayProg.progress.length; i++) {
+    addRowToTable(todayTable);
+  }
+  const todayRows = todayTable.querySelectorAll('tbody tr');
+  todayProg.progress.forEach((task, index) => {
+    const row = todayRows[index];
+    const taskInput = row.querySelector('.today-progress');
+    const qtyInput = row.querySelector('.today-progress-quantity');
+    taskInput.value = task;
+    qtyInput.value = todayProg.qty[index] || '';
+  });
+
+  // 4. Tomorrow's Plan
+  const tomorrowBody = document.querySelector('#tomorrow-table tbody');
+  tomorrowBody.innerHTML = '';
+  const tomorrowPlan = data.tomorrow_plan || { plan: [], qty: [] };
+  for (let i = 0; i < tomorrowPlan.plan.length; i++) {
+    addRowToTable(tomorrowTable);
+  }
+  const tomorrowRows = tomorrowTable.querySelectorAll('tbody tr');
+  tomorrowPlan.plan.forEach((task, index) => {
+    const row = tomorrowRows[index];
+    const taskInput = row.querySelector('.tomorrows-planning');
+    const qtyInput = row.querySelector('.tomorrows-planning-quantity');
+    taskInput.value = task;
+    qtyInput.value = tomorrowPlan.qty[index] || '';
+  });
+
+  // 5. Footer
+  if (data.report_footer) {
+    const remarksInputs = document.querySelectorAll('#remarksContainer input');
+    if (remarksInputs[0]) remarksInputs[0].value = data.report_footer.prepared_by || '';
+
+    const eventInputs = document.querySelectorAll('#eventsContainer input');
+    data.report_footer.distribute.forEach((item, i) => {
+      if (eventInputs[i]) {
+        eventInputs[i].value = item;
+      }
+    });
+  }
 }
