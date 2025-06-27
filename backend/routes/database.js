@@ -86,7 +86,7 @@ export async function r_fetchUserByName(name) {
 // Function to add user
 export async function r_addUser(user_data) {
     const query = "INSERT INTO users (user_name, user_password, email, phone_no) VALUES (?, ?, ?, ?);";
-    
+
     try {
         const [result] = await pool.query(query, user_data);
         return result[0];
@@ -111,7 +111,7 @@ export async function r_usernameExist(user_name) {
 // Function to check Email or PhoneNo. is Taken
 export async function r_isEmailOrPhoneTaken(email, phone) {
     const query = "SELECT COUNT(*) AS count FROM users WHERE email = ? OR phone_no = ?";
-    
+
     try {
         const [rows] = await pool.query(query, [email, phone]);
         return rows[0].count > 0;
@@ -146,7 +146,7 @@ export async function r_getProjectById(project_id) {
 
 // Function to fetch all projects a user is involved
 export async function r_fetchProjectsByUser(user_id) {
-  const query = `
+    const query = `
     SELECT 
       p.project_id,
       p.project_name,
@@ -158,15 +158,14 @@ export async function r_fetchProjectsByUser(user_id) {
     WHERE pur.user_id = ?;
   `;
 
-  try {
-    const [rows] = await pool.query(query, [user_id]);
-    return rows || [];
-  } catch (error) {
-    console.error("❌ Error fetching projects for user:", error);
-    throw error;
-  }
+    try {
+        const [rows] = await pool.query(query, [user_id]);
+        return rows || [];
+    } catch (error) {
+        console.error("❌ Error fetching projects for user:", error);
+        throw error;
+    }
 }
-
 
 // Function to insert Project
 export async function r_insertProject(data) {
@@ -445,6 +444,54 @@ export async function r_fetchLastDPR(project_id) {
     }
 }
 
+// Function to fetch all DPR under a specific Project
+export async function r_fetchDPRsByProject(project_id, limit = 20) {
+    const query = `
+    SELECT 
+      dpr_id,
+      report_date,
+      user_roles
+    FROM dpr
+    WHERE project_id = ?
+    ORDER BY report_date DESC
+    LIMIT ?;
+  `;
+
+    try {
+        const [rows] = await pool.query(query, [project_id, Number(limit)]);
+
+        const results = rows.map(row => {
+            let userRoles = row.user_roles;
+
+            if (typeof userRoles === "string") {
+                try {
+                    userRoles = JSON.parse(userRoles);
+                } catch (e) {
+                    console.warn("⚠️ Failed to parse user_roles:", e);
+                    userRoles = {};
+                }
+            }
+
+            const approvals = userRoles.approvals || {};
+
+
+            const approverValues = Object.values(approvals);
+            console.log(approvals);
+            const approved = approverValues.length === 0 || approverValues.every(v => v === true || v === "true");
+
+            return {
+                dpr_id: row.dpr_id,
+                report_date: row.report_date,
+                approval_status: approved
+            };
+        });
+
+        return results;
+    } catch (error) {
+        console.error("❌ Error fetching DPRs for project:", error);
+        throw error;
+    }
+}
 
 
 // ----------------------- VENDOR ----------------------- //
@@ -460,7 +507,7 @@ export async function r_fetchVendorsByTab({
 } = {}) {
 
     const offset = (tab - 1) * limit;
-    
+
     let baseQuery = "FROM vendors";
     const params = [];
 
@@ -470,20 +517,20 @@ export async function r_fetchVendorsByTab({
     } else {
         baseQuery += " WHERE 1";
     }
-    
+
     if (locationIds.length > 0) {
         baseQuery += ` AND location_id IN (${locationIds.map(() => '?').join(',')})`;
         params.push(...locationIds);
     }
-    
+
     if (jobNatureIds.length > 0) {
         baseQuery += ` AND job_nature_id IN (${jobNatureIds.map(() => '?').join(',')})`;
         params.push(...jobNatureIds);
     }
-    
+
     let query = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`;
     params.push(limit, offset);
-    
+
     let countQuery = `SELECT COUNT(*) AS total ${baseQuery}`;
 
     try {
@@ -560,7 +607,7 @@ export async function r_searchVendors({
     const { vendors } = await r_fetchVendorsByTab({
         category,
         tabNumber: 1,
-        limit: 10000, 
+        limit: 10000,
         locationIds,
         jobNatureIds,
     });
@@ -598,7 +645,7 @@ const dprData = {
     report_date: "2024-03-18",
     site_condition: {
         ground_state: "slushy",
-        weather_state: "rainy", 
+        weather_state: "rainy",
         timing: ["11:00-12:00", "13:00-14:25"]
     },
     labour_report: {
@@ -628,7 +675,7 @@ const dprData = {
 };
 
 
-// const t = await r_fetchProjectsByUser(6)
+// const t = await r_fetchDPRsByProject(1, 50)
 // console.log(t)
 
 
