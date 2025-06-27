@@ -14,9 +14,9 @@ async function loadProjects(userId) {
 
     projects.forEach((project) => {
       const progressPercent = Math.floor(Math.random() * 100) + 1;
-
       const card = document.createElement("div");
       card.className = "project-card";
+      card.id = "project-" + project.project_id;
       card.style.setProperty("--progress-percent", `${progressPercent}%`);
 
       card.innerHTML = `
@@ -39,25 +39,16 @@ async function loadProjects(userId) {
           <div class="progress-text">${progressPercent}%</div>
         </div>
       `;
-
       container.appendChild(card);
+
+      card.addEventListener("click", () => {
+        localStorage.setItem("selected_project_id", project.project_id);
+        window.location.href = "./Project-desc.html";
+      });XMLDocument
     });
   } catch (err) {
     console.error("Error loading projects:", err);
   }
 }
-
-// document.addEventListener("DOMContentLoaded", () => {
-//   const container = document.getElementById("projects-container");
-//   if (!container) {
-//     console.warn("⚠️ projects-container not found in DOM.");
-//     return;
-//   }
-
-//   const session = JSON.parse(localStorage.getItem("session"));
-//   if (session?.user_id) {
-//     loadProjects(session.user_id);
-//   }
-// });
 
 export { loadProjects };
