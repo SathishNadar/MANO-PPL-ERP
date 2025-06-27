@@ -9,12 +9,14 @@ import {
   toggleDropdown,
   applyFilters,
   closePopup,
-  filterSearch
+  filterSearch,
 } from "./vendor-list.js";
+
+import { loadProjects } from "./projects.js";
 
 // Session check
 document.addEventListener("DOMContentLoaded", () => {
-  const username = getSession();
+  const {username,_,__} = getSession();
 
   if (!username) {
     alert("Session expired or user not logged in. Please log in again.");
@@ -28,21 +30,14 @@ function getSession() {
   const sessionData = JSON.parse(localStorage.getItem("session"));
   if (!sessionData) return null;
 
-  const { username, expiry } = sessionData;
+  const { username, expiry, user_id } = sessionData;
 
   if (Date.now() > expiry) {
     localStorage.removeItem("session");
     return null;
   }
 
-  setSession(username);
-  return username;
-}
-
-function setSession(username) {
-  const expiryTime = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
-  const sessionData = { username, expiry: expiryTime };
-  localStorage.setItem("session", JSON.stringify(sessionData));
+  return sessionData;
 }
 
 function setActivePage(page) {
@@ -51,15 +46,30 @@ function setActivePage(page) {
   localStorage.setItem("activePage", page);
 
   menuItems.forEach((item) => item.classList.remove("active-menu"));
-  const selectedItem = [...menuItems].find((item) => item.dataset.page === page);
+  const selectedItem = [...menuItems].find(
+    (item) => item.dataset.page === page
+  );
   if (selectedItem) selectedItem.classList.add("active-menu");
 
   switch (page) {
-    case "vendor": loadVendorList(); break;
-    case "vendor-consultants": loadConsultantList(); break;
-    case "vendor-contractors": loadContractorList(); break;
-    case "vendor-suppliers": loadSupplierList(); break;
-    case "client-list": loadclientlist(); break;
+    case "vendor":
+      loadVendorList();
+      break;
+    case "vendor-consultants":
+      loadConsultantList();
+      break;
+    case "vendor-contractors":
+      loadContractorList();
+      break;
+    case "vendor-suppliers":
+      loadSupplierList();
+      break;
+    case "client-list":
+      loadclientlist();
+      break;
+    case "Projects":
+      loadProjectList();
+      break;
     default:
       mainContent.innerHTML = selectedItem
         ? `<h2>${selectedItem.dataset.text}</h2>`
@@ -88,8 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
   vendorToggle.addEventListener("click", () => {
     const isExpanded = vendorMenu.classList.contains("expanded");
     vendorMenu.classList.toggle("expanded");
-    vendorSubItems.forEach((item) =>
-      (item.style.display = isExpanded ? "none" : "block")
+    vendorSubItems.forEach(
+      (item) => (item.style.display = isExpanded ? "none" : "block")
     );
   });
 
@@ -230,10 +240,39 @@ function loadSupplierList() {
   }
 }
 
+function loadProjectList() {
+  const mainContent = document.querySelector(".main-content");
+  mainContent.innerHTML = `
+    <h2 class="section-header">Project List</h2>
+    <div id="projects-container" class="project-list-wrapper"></div>
+  `;
+
+  const session = JSON.parse(localStorage.getItem("session"));
+  if (!window.projectScriptLoaded) {
+    const script = document.createElement("script");
+    script.src = "../javaScripts/projects.js";
+    script.type = "module";
+    script.onload = () => {
+      window.projectScriptLoaded = true;
+      if (session?.user_id) {
+        // ✅ Now it's safe to call after script is loaded
+        loadProjects(session.user_id);
+      }
+    };
+    document.head.appendChild(script);
+  } else {
+    const session = JSON.parse(localStorage.getItem("session"));
+    if (session?.user_id) {
+      loadProjects(session.user_id);
+    }
+  }
+}
+
 function toggleUserMenu() {
   let userdiv = document.querySelector(".user-dropdown");
   if (userdiv) {
-    userdiv.style.display = userdiv.style.display === "block" ? "none" : "block";
+    userdiv.style.display =
+      userdiv.style.display === "block" ? "none" : "block";
     return;
   }
 
