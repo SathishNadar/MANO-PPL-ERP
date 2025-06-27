@@ -134,6 +134,28 @@ router.get("/initDPR/:proj_id", async (req, res) => {
   }
 });
 
+// Get call to fetch all DPR under a project
+router.get("/allDPR/:proj_id", async (req, res) => {
+  try {
+    const proj_id = parseInt(req.params.proj_id, 10);
+    const limit = req.query.limit ?? 50;
+
+    if (isNaN(proj_id)) {
+      return res.status(400).json({ message: "Invalid Project ID" });
+    }
+
+    const projects = await DB.r_fetchDPRsByProject(proj_id, limit);
+    if (!projects) {
+      return res.status(404).json({ message: "Projects not found" });
+    }
+
+    res.json(projects);
+  } catch (error) {
+    console.error("❌ API error in getDPR:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 export default router;
 
