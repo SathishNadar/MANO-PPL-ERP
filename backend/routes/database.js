@@ -145,11 +145,28 @@ export async function r_getProjectById(project_id) {
 }
 
 // Function to fetch all projects a user is involved
-export async function r_getUserProjectsByUserID(user_id){
-    if (!user_id) throw new Error("User ID is required");
+export async function r_fetchProjectsByUser(user_id) {
+  const query = `
+    SELECT 
+      p.project_id,
+      p.project_name,
+      p.project_description,
+      p.start_date,
+      p.end_date
+    FROM projects p
+    JOIN project_user_roles pur ON p.project_id = pur.project_id
+    WHERE pur.user_id = ?;
+  `;
 
-    const query = `SELECT projects`;
+  try {
+    const [rows] = await pool.query(query, [user_id]);
+    return rows || [];
+  } catch (error) {
+    console.error("❌ Error fetching projects for user:", error);
+    throw error;
+  }
 }
+
 
 // Function to insert Project
 export async function r_insertProject(data) {
@@ -244,8 +261,6 @@ export async function r_updateProject(data) {
     }
 }
 
-
-
 // ------------------------ DPR ------------------------- //
 
 const dprFormat = {
@@ -299,7 +314,6 @@ const dprFormat = {
 
     created_at: ""               // e.g., "2025-01-19 12:00:00"
 };
-
 
 // Function to fetch DPR by ID
 export async function r_getDPRById(dpr_id) {
@@ -413,34 +427,24 @@ export async function r_updateDPR(dprData) {
     }
 }
 
-// Function to fetch last DPR cummulative manpower
-export async function r_fetchLastManPower(project_id) {
-    const query = "SELECT cumulative_manpower FROM DPR WHERE project_id = ? ORDER BY report_date DESC LIMIT 1;";
+// Function to fetch the last DPR of a project
+export async function r_fetchLastDPR(project_id) {
+    const query = `
+        SELECT * FROM dpr
+        WHERE project_id = ?
+        ORDER BY report_date DESC
+        LIMIT 1;
+    `;
+
     try {
-        const [data] = await pool.query(query, [project_id]);
-        return data.length > 0 ? data[0].cumulative_manpower : 0;
+        const [rows] = await pool.query(query, [project_id]);
+        return rows[0] || null;
     } catch (error) {
-        console.error("❌ Error fetching last DPR cumulative manpower:", error);
+        console.error("❌ Error fetching last DPR:", error);
         throw error;
     }
 }
 
-// Function to structure raw DPR into formatted object
-export async function DprInit(project_id, report_by) {
-
-    const project_data = r_fetchProjectByID(project_id);
-    let dpr = dprFormat;
-
-    dpr.project_id = project_id;
-    dpr.reported_by = report_by;
-    dpr.report_date = new Date().toISOString().split("T")[0];
-    dpr.cumulative_manpower = await r_fetchLastManPower(project_id);
-    dpr.labour_report.agency = project_data.agency.split(",");
-    dpr.project_name = project_data.project_name;
-    dpr.employer = project_data.employer;
-
-    return dpr;   
-}
 
 
 // ----------------------- VENDOR ----------------------- //
@@ -624,8 +628,7 @@ const dprData = {
 };
 
 
-
-// const t = await r_fetchVendorsAllLocations()
+// const t = await r_fetchProjectsByUser(6)
 // console.log(t)
 
 
