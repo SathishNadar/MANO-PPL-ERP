@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectedProjectId = localStorage.getItem("selected_project_id");
 
   if (!selectedProjectId) {
-    alert("No project selected. Please go back and choose a project.");
+    console.warn("No project selected. Please go back and choose a project.");
     return;
   }
 
@@ -23,35 +23,29 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!data.success) throw new Error("Project fetch failed");
 
       const project = data.data;
-      document.querySelector(
-        ".project-title"
-      ).innerHTML = `${project.project_name}`;
+      document.querySelector(".project-title").innerHTML = `${project.project_name}`;
       document.querySelector(".profile-description").innerHTML = `
         <p><strong>Project:</strong> ${project.project_name}</p>
         <p><strong>Client:</strong> ${project.Employer}</p>
         <p><strong>Location:</strong> ${project.location}</p>
         <p><strong>Contract No:</strong> ${project.contract_no}</p>
-        <p><strong>Start:</strong> ${new Date(
-          project.start_date
-        ).toLocaleDateString()}</p>
-        <p><strong>End:</strong> ${new Date(
-          project.end_date
-        ).toLocaleDateString()}</p>
+        <p><strong>Start:</strong> ${new Date(project.start_date).toLocaleDateString()}</p>
+        <p><strong>End:</strong> ${new Date(project.end_date).toLocaleDateString()}</p>
       `;
     })
     .catch((err) => {
       console.error("Error loading project details:", err);
-      alert("Failed to load project details.");
+      console.warn("Failed to load project details.");
     });
 
-    loadDPRList(selectedProjectId);
+  loadDPRList(selectedProjectId);
 });
 
 function getSession() {
   const sessionData = JSON.parse(localStorage.getItem("session"));
   if (!sessionData) return null;
 
-  const { username, expiry, user_id } = sessionData;
+  const { username, expiry } = sessionData;
 
   if (Date.now() > expiry) {
     localStorage.removeItem("session");
@@ -64,8 +58,7 @@ function getSession() {
 function toggleUserMenu() {
   let userdiv = document.querySelector(".user-dropdown");
   if (userdiv) {
-    userdiv.style.display =
-      userdiv.style.display === "block" ? "none" : "block";
+    userdiv.style.display = userdiv.style.display === "block" ? "none" : "block";
     return;
   }
 
@@ -114,7 +107,7 @@ async function loadDPRList(projectId) {
     recentDprs.sort((a, b) => new Date(b.report_date) - new Date(a.report_date));
 
     const entryList = document.querySelector(".entry-list");
-    entryList.innerHTML = ""; 
+    entryList.innerHTML = "";
 
     if (recentDprs.length === 0) {
       entryList.innerHTML = `<p>No DPRs in the last 10 days.</p>`;
@@ -132,8 +125,8 @@ async function loadDPRList(projectId) {
 
       const entry = document.createElement("a");
       entry.className = "entry";
-      entry.href = `/dpr/${date.toISOString().split("T")[0]}`;
-
+      entry.href = `../dpr/dpr-fetch-viewer.html?dpr_id=${dpr.dpr_id}`;
+      entry.target = "blank";
       entry.innerHTML = `
         <span class="task-title">DPR - ${dateStr}</span>
         <span class="task-meta">🕒 ${daysAgo} day${daysAgo !== 1 ? "s" : ""} ago</span>
@@ -142,8 +135,10 @@ async function loadDPRList(projectId) {
     });
   } catch (err) {
     console.error("Error loading DPR list:", err);
+    alert("Failed to fetch DPR data.");
   }
 }
+
 window.logout = logout;
 window.toggleUserMenu = toggleUserMenu;
-window.goHome = goHome
+window.goHome = goHome;
