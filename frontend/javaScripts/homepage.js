@@ -9,14 +9,14 @@ import {
   toggleDropdown,
   applyFilters,
   closePopup,
-  filterSearch
+  filterSearch,
 } from "./vendor-list.js";
 
-import { loadProjects } from "./projects.js";
+import { loadProjects,openNewProjectPopup } from "./projects.js";
 
 // Session check
 document.addEventListener("DOMContentLoaded", () => {
-  const {username,_,__} = getSession();
+  const { username, _, __ } = getSession();
 
   if (!username) {
     alert("Session expired or user not logged in. Please log in again.");
@@ -245,6 +245,13 @@ function loadProjectList() {
   mainContent.innerHTML = `
     <h2 class="section-header">Project List</h2>
     <div id="projects-container" class="project-list-wrapper"></div>
+    <div id="new-project-btn">
+      <button class="icon-btn add-btn">
+        <div class="add-icon"></div>
+        <div class="btn-txt">Add Project</div>
+      </button>
+    </div>
+  
   `;
 
   const session = JSON.parse(localStorage.getItem("session"));
@@ -258,6 +265,7 @@ function loadProjectList() {
         // ✅ Now it's safe to call after script is loaded
         loadProjects(session.user_id);
       }
+      document.querySelector(".icon-btn").addEventListener("click", openNewProjectPopup(session.user_id));
     };
     document.head.appendChild(script);
   } else {
@@ -265,6 +273,7 @@ function loadProjectList() {
     if (session?.user_id) {
       loadProjects(session.user_id);
     }
+    document.querySelector(".icon-btn").addEventListener("click", openNewProjectPopup(session.user_id));
   }
 }
 
@@ -367,3 +376,4 @@ window.applyFilters = applyFilters;
 window.closePopup = closePopup;
 window.filterSearch = filterSearch;
 window.loadProjects = loadProjects;
+window.openNewProjectPopup = openNewProjectPopup;
