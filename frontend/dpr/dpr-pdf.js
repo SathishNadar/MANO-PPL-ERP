@@ -683,3 +683,6 @@ function postDPRToBackend() {
 
 // Make postDPRToBackend available globally
 window.postDPRToBackend = postDPRToBackend;
+
+
+console.log("single file");
