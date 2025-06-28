@@ -167,10 +167,11 @@ export async function r_fetchProjectsByUser(user_id) {
     }
 }
 
-// Function to insert Project
+// Function to insert Project  ###### Hardcoded 
 export async function r_insertProject(data) {
     const {
         project_name,
+        user_id = null,
         project_description = null,
         start_date = null,
         end_date = null,
@@ -183,12 +184,18 @@ export async function r_insertProject(data) {
         throw new Error("Missing required fields: project_name");
     }
 
-    const query = `
+    const projQuery = `
         INSERT INTO projects (
             project_name, project_description,
             start_date, end_date, location,
             contract_no, Employer
         ) VALUES (?, ?, ?, ?, ?, ?, ?);
+    `;
+
+    const roleQuery = `
+        INSERT INTO project_user_roles (
+            project_id, user_id, role_id
+        ) VALUES (?, ?, ?);
     `;
 
     const values = [
@@ -202,8 +209,9 @@ export async function r_insertProject(data) {
     ];
 
     try {
-        const [result] = await pool.query(query, values);
-        return result.insertId;
+        const [projResult] = await pool.query(projQuery, values);
+        await pool.query(roleQuery, [projResult.insertId, user_id, 1]);
+        return projResult.insertId;
     } catch (error) {
         console.error("❌ Error inserting project:", error.message);
         throw error;

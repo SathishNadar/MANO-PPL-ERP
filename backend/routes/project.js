@@ -24,6 +24,7 @@ router.post("/insertProject", async (req, res) => {
     try {
         const {
             user_roles = {},
+            user_id,
             project_name,
             project_description = null,
             start_date,
@@ -39,6 +40,7 @@ router.post("/insertProject", async (req, res) => {
 
         const insertId = await DB.r_insertProject({
             user_roles,
+            user_id,
             project_name,
             project_description,
             start_date,
