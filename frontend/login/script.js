@@ -22,39 +22,27 @@ async function loginUser(event) {
   }
 
   const data = await response.json();
-
+  const userid = data["user_data"]["user_id"];
   if (data.message === "Login successful") {
-    setSession(username);
-
+    setSession(username, userid);
+    console.log(data);
     // Redirect to DPR page
     window.location.href = `../dahboard/homepage.html`;
+    // console.log("Setting session:", sessionData);
+
   } else {
     alert(data.message);
   }
 }
 
-function setSession(username) {
+
+function setSession(username, userid) {
   const expiryTime = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-  const sessionData = { username, expiry: expiryTime };
+  const sessionData = { username, expiry: expiryTime, user_id:userid };
   localStorage.setItem("session", JSON.stringify(sessionData));
 }
 
-function getSession() {
-  const sessionData = JSON.parse(localStorage.getItem("session"));
-  if (!sessionData) return null;
 
-  const { username, expiry } = sessionData;
-
-  if (Date.now() > expiry) {
-    // Session expired
-    localStorage.removeItem("session");
-    return null;
-  }
-
-  // Extend session expiration
-  setSession(username);
-  return username;
-}
 
 async function handleSignup(event) {
   event.preventDefault();
