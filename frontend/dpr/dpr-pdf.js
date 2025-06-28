@@ -409,3 +409,277 @@ function postDPRToBackend() {
     console.error("Error:", err);
   });
 }
+
+
+
+
+// dpr-pdf.js - Complete File
+
+document.addEventListener("DOMContentLoaded", () => {
+const pdfData = JSON.parse(sessionStorage.getItem('pdfPreviewData'));
+    
+    if (pdfData) {
+        // Project Information
+        document.getElementById("project_name").textContent = pdfData.project_name || "--";
+        document.getElementById("Employer").textContent = pdfData.Employer || "--";
+        document.getElementById("contract_no").textContent = pdfData.contract_no || "--";
+        document.getElementById("location").textContent = pdfData.location || "--";
+        document.getElementById("start_date").textContent = pdfData.start_date || "--";
+        document.getElementById("completion_date").textContent = pdfData.completion_date || "--";
+        
+        // Duration and Days Remaining
+        if (document.querySelector(".total-value")) {
+            document.querySelector(".total-value").textContent = pdfData.total_days || "--";
+        }
+        if (document.querySelector(".balance-right")) {
+            document.querySelector(".balance-right").textContent = pdfData.days_remaining || "--";
+        }
+        if (document.querySelector(".daily-progress-report-table tr:nth-child(2) td:nth-child(2)")) {
+            document.querySelector(".daily-progress-report-table tr:nth-child(2) td:nth-child(2)").textContent = 
+                pdfData.report_date || "--";
+        }
+
+        // Site Conditions
+        if (pdfData.site_conditions) {
+            const setCheckboxState = (id, isActive) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.backgroundColor = isActive ? "green" : "";
+                    element.textContent = isActive ? "✓" : "";
+                }
+            };
+            
+            setCheckboxState("normal-day-checkbox", pdfData.site_conditions.normal_day);
+            setCheckboxState("rainy-day-checkbox", pdfData.site_conditions.rainy_day);
+            setCheckboxState("slushy-day-checkbox", pdfData.site_conditions.slushy_day);
+            setCheckboxState("dry-day-checkbox", pdfData.site_conditions.dry_day);
+
+            // Time Slots
+            const timeSlotsContainer = document.querySelector(".from-to");
+            if (timeSlotsContainer && pdfData.site_conditions.time_slots) {
+                timeSlotsContainer.innerHTML = pdfData.site_conditions.time_slots
+                    .map(slot => {
+                        const [from, to] = slot.split('-');
+                        return `
+                            <tr>
+                                <td>From: <span>${from || "--"}</span></td>
+                                <td>To: <span>${to || "--"}</span></td>
+                            </tr>
+                        `;
+                    })
+                    .join('');
+            }
+        }
+        // Labour Report
+        const labourTable = document.getElementById('displayTable');
+        if (labourTable && pdfData.labour_data && pdfData.labour_data.table_data) {
+            const tbody = labourTable.querySelector('tbody') || labourTable.createTBody();
+            tbody.innerHTML = pdfData.labour_data.table_data
+                .map(row => `<tr>${row.map(cell => `<td>${cell || "--"}</td>`).join('')}</tr>`)
+                .join('');
+            
+            // Cumulative Manpower
+            if (pdfData.labour_data.cumulative_manpower) {
+                const cumulativeElement = document.querySelector('.commulative');
+                if (cumulativeElement) {
+                    cumulativeElement.textContent = `Cumulative man power upto last date: ${pdfData.labour_data.cumulative_manpower}`;
+                }
+            }
+        }
+
+        // Progress Tables
+        populateTableFromData('#today-table', pdfData.today_progress);
+        populateTableFromData('#tomorrow-table', pdfData.tomorrow_planning);
+
+        // Remarks Sections
+        if (pdfData.events_remarks) {
+            populateRemarksSection('.events-container', pdfData.events_remarks, 'events-content');
+        }
+        if (pdfData.general_remarks) {
+            populateRemarksSection('.remarks-content-container', pdfData.general_remarks, 'remarks-content');
+        }
+
+        // Signatures
+        const preparedByElement = document.getElementById('prepared-by');
+        const distributionElement = document.getElementById('distribution');
+        
+        if (preparedByElement) preparedByElement.textContent = pdfData.prepared_by || "MANO PCPL";
+        if (distributionElement) distributionElement.textContent = pdfData.approved_by || "GOYAL";
+    } else {
+        // Fall back to API fetch if no preview data exists
+        fetchProjectData();
+    }
+
+    // Initialize print button
+    document.getElementById('download-pdf')?.addEventListener('click', handlePrint);
+});
+
+// Helper Functions
+function populateTableFromData(selector, data) {
+    const table = document.querySelector(selector);
+    if (!table || !data) return;
+
+    const tbody = table.querySelector('tbody') || table.createTBody();
+    tbody.innerHTML = data.map(row => {
+        if (!row || row.length === 0) return '';
+        return `<tr>${row.map(cell => `<td>${cell || "--"}</td>`).join('')}</tr>`;
+    }).join('');
+}
+
+function populateRemarksSection(selector, items, className) {
+    const container = document.querySelector(selector);
+    if (!container || !items) return;
+
+    container.innerHTML = items
+        .filter(item => item && item.trim() !== '')
+        .map(item => `<div class="${className}">${item}</div>`)
+        .join('');
+
+    // Ensure minimum number of items
+    const minItems = selector.includes('events') ? 6 : 3;
+    while (container.children.length < minItems) {
+        const div = document.createElement('div');
+        div.className = className;
+        div.textContent = "--";
+        container.appendChild(div);
+    }
+}
+
+function fetchProjectData() {
+    fetch('http://34.47.131.237:3000/project/getProject/1')
+        .then(response => {
+            if (!response.ok) {
+                document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
+                throw new Error('Project not found');
+            }
+            return response.json();
+        })
+        .then(apiData => {
+            if (apiData.data) {
+                document.getElementById("project_name").textContent = apiData.data.project_name || "--";
+                document.getElementById("Employer").textContent = apiData.data.Employer || "--";
+                document.getElementById("contract_no").textContent = apiData.data.contract_no || "--";
+                document.getElementById("location").textContent = apiData.data.location || "--";
+                
+                if (apiData.data.start_date) {
+                    document.getElementById("start_date").textContent = 
+                        new Date(apiData.data.start_date).toLocaleDateString('en-GB');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function handlePrint() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @page { 
+            margin: 5mm !important; 
+            size: A4 portrait;
+        }
+        body { 
+            margin: 0 !important; 
+            padding: 10px !important;
+        }
+        .remarks-content, .events-content {
+            border: 1px solid #000 !important;
+            page-break-inside: avoid !important;
+        }
+        table {
+            page-break-inside: auto !important;
+        }
+        tr {
+            page-break-inside: avoid !important;
+        }
+    `;
+    document.head.appendChild(style);
+    window.print();
+    setTimeout(() => style.remove(), 1000);
+}
+
+// Generate complete DPR object (for backend submission)
+function generateCompleteDPRObject() {
+    const pdfData = JSON.parse(sessionStorage.getItem('pdfPreviewData')) || {};
+    const apiData = JSON.parse(sessionStorage.getItem('apiProjectData')) || {};
+
+    return {
+        project_id: parseInt(sessionStorage.getItem('projectId')) || 1,
+        report_date: pdfData.report_date || new Date().toISOString().split('T')[0],
+        
+        site_condition: {
+            ground_state: pdfData.site_conditions?.slushy_day ? "slushy" : 
+                         pdfData.site_conditions?.dry_day ? "dry" : "normal",
+            is_rainy: pdfData.site_conditions?.rainy_day || false,
+            rain_timing: pdfData.site_conditions?.time_slots || []
+        },
+        
+        labour_report: {
+            agency: pdfData.labour_data?.table_data?.map(row => row[0]) || [],
+            mason: pdfData.labour_data?.table_data?.map(row => parseInt(row[1]) || 0) || [],
+            carp: pdfData.labour_data?.table_data?.map(row => parseInt(row[2]) || 0) || [],
+            fitter: pdfData.labour_data?.table_data?.map(row => parseInt(row[3]) || 0) || [],
+            electrical: pdfData.labour_data?.table_data?.map(row => parseInt(row[4]) || 0) || [],
+            painter: pdfData.labour_data?.table_data?.map(row => parseInt(row[5]) || 0) || [],
+            gypsum: pdfData.labour_data?.table_data?.map(row => parseInt(row[6]) || 0) || [],
+            plumber: pdfData.labour_data?.table_data?.map(row => parseInt(row[7]) || 0) || [],
+            helper: pdfData.labour_data?.table_data?.map(row => parseInt(row[8]) || 0) || [],
+            staff: pdfData.labour_data?.table_data?.map(row => parseInt(row[9]) || 0) || [],
+            remarks: pdfData.labour_data?.table_data?.map(row => row[11] || "") || []
+        },
+        
+        today_prog: {
+            progress: pdfData.today_progress?.map(row => row[0]) || [],
+            qty: pdfData.today_progress?.map(row => row[1]) || []
+        },
+        
+        tomorrow_plan: {
+            plan: pdfData.tomorrow_planning?.map(row => row[0]) || [],
+            qty: pdfData.tomorrow_planning?.map(row => row[1]) || []
+        },
+        
+        user_roles: {
+            created_by: 1,
+            approvals: { 1: true, 3: false },
+            viewers: [10, 11, 15],
+            editors: [1, 3, 4]
+        },
+        
+        report_footer: {
+            events_visit: pdfData.events_remarks || [],
+            distribute: ["L&T", "MAPLANI"],
+            prepared_by: pdfData.prepared_by || "Mano Project Pvt. Ltd."
+        },
+        
+        created_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+    };
+}
+
+// Post DPR to backend
+function postDPRToBackend() {
+    const dprData = generateCompleteDPRObject();
+
+    fetch('http://34.47.131.237:3000/report/insertDPR', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dprData)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Upload failed");
+        return response.json();
+    })
+    .then(result => {
+        console.log("Upload successful:", result);
+        alert("DPR uploaded successfully!");
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        alert("Failed to upload DPR. Please try again.");
+    });
+}
+
+// Make postDPRToBackend available globally
+window.postDPRToBackend = postDPRToBackend;
