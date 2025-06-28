@@ -9,7 +9,7 @@ import {
   toggleDropdown,
   applyFilters,
   closePopup,
-  filterSearch,
+  filterSearch
 } from "./vendor-list.js";
 
 import { loadProjects } from "./projects.js";
@@ -366,3 +366,4 @@ window.toggleDropdown = toggleDropdown;
 window.applyFilters = applyFilters;
 window.closePopup = closePopup;
 window.filterSearch = filterSearch;
+window.loadProjects = loadProjects;
