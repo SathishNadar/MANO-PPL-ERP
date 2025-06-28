@@ -137,3 +137,7 @@ backend/data/*.json
 *test.js
 .qodo
 .vscode
+
+*new-project.html
+*projects.html
+
