@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPR-PDF</title>
+    <link rel="stylesheet" href="dpr-pdf.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+</head>
+<body>
+        <div class="dpr-pdf-container">
+            <div class="header">
+                <div class="logo"><img src="images/Mano-Logo-.png"></div>
+                <div class="daily-progress-report">
+                    <table class="daily-progress-report-table"> <!--the table at the top right corner of the PDF page-->
+                        <tr>
+                            <td colspan="2">DAILY PROGRESS REPORT</td>
+                        </tr>
+                        <tr>
+                            <td>REPORT DATE</td>
+                            <td>insert date here</td>
+                        </tr>
+                    </table>
+                    <!-- <div class="daily">DAILY PROGRESS REPORT</div>
+                    <div class="report" id="report_date">REPORT DATE</div>
+                    <div class="dynamic-date">DYNAMIC</div> -->
+                </div>
+            </div>
+            <div class="project-left">
+                <div class="project-label">Pro</div>
+                <table class="project-table">
+                    <tr><td style="padding-left: 5px;">NAME OF WORK</td><td style="padding-left: 5px; border-right: 0px;" id="project_name">Dynamic</td></tr>
+                    <tr><td style="padding-left: 5px;">EMPLOYER</td><td style="padding-left: 5px;" id="Employer"></td></tr>
+                    <tr><td style="padding-left: 5px;">CONTRACT NO</td><td style="padding-left: 5px;" id="contract_no"></td></tr>
+                    <tr><td style="padding-left: 5px;">LOCATION</td><td style="padding-left: 5px;"id="location"></td></tr>
+                </table>
+                <table style="width: 25%; border-right: 0px; border-left: 0px;">
+                    <tr><td style="padding-left: 5px; border: 0px;">PROJECT START DATE</td><td style="padding-left: 5px; border-right: 0px;" id="start_date"></td></tr>
+                    <tr><td style="padding-left: 5px;">PROJECT COMPLETION</td><td style="padding-left: 5px;" id="completion_date">Dynamic</td></tr>
+                </table>
+            </div>
+            <div class="project-bottom">
+                <div class="durr" style="width: 15%; padding-left: 5px; border-bottom: 0px;">Dur. in Days</div>
+                <div class="total" style="width: 10%; padding-left: 5px; border-bottom: 0px;">Total</div>
+                <div class="total-value" style="width: 15%; padding-left: 5px;">Dy</div>
+                <div class="blank" style="width: 30%; padding-left: 5px;"></div>
+                <div class="balance-left" style="width: 10%; padding-left: 5px;">Dy</div>
+                <div class="balance" style="width: 10%; padding-left: 5px;">Balance</div>
+                <div class="balance-right" style="width: 10%; padding-left: 5px;">Dyn</div>
+            </div>
+            <div class="site">
+                <div class="site-label">Site</div>
+                <div class="site-condition">
+                    <div id="normal-day" class="normal-day"><div id="normal-day-checkbox" class="normal-day-checkbox"></div>NORMAL DAY</div>
+                    <div id="rainy-day" class="rainy-day"><div id="rainy-day-checkbox" class="rainy-day-checkbox"></div>RAINY DAY</div>
+                </div>
+                <div id="from-to-container" class="from-to">
+                        <!-- Time slots will be inserted here by JavaScript -->
+                </div>
+                <div class="slushy-dry">
+                    <span>SITE CONDITION</span>
+                    <div id="slushy-day" class="slushy-day"><div id="slushy-day-checkbox" class="slushy-day-checkbox"></div>SLUSHY</div>
+                    <div id="dry-day" class="dry-day"><div id="dry-day-checkbox" class="dry-day-checkbox"></div>DRY</div>
+                </div>
+            </div>
+            <div class="labour-table-container">
+                <div class="labour-table-lable">LABOUR REPORT</div>
+                <div class="inside-labour-table-cotainer">
+                <table id="displayTable">
+                    <tbody>
+                        <tr>
+                            <th>Agency Name</th>
+                            <th>Mason</th>
+                            <th>Carp</th>
+                            <th>Fitter</th>
+                            <th>Electrical</th>
+                            <th>Painter</th>
+                            <th>Gypsum</th>
+                            <th>Plumber</th>
+                            <th>Helper</th>
+                            <th>Staff</th>
+                            <th>Total</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="bottom-of-labour-table">
+                    <tr>
+                        <td class="commulative" style="text-align: left;">commulative man power upto last date</td>
+                        <td style="text-align: center;">2</td>
+                        <td style="text-align: center;">3</td>
+                        <td style="text-align: center;">4</td>
+                        <td style="text-align: center;">5</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+            <div style="width: 100%; display: flex; flex-direction: row; border-top: 0px; border-left: 0px; border-right: 0px;" class="today-tomorrow-table-container">
+                <table id="today-table">
+                    <tbody>
+                        <tr><th class="today-planning-header" style="text-align: center;">TODAY'S PROGRESS</th></tr>
+                        <tr><th style="text-align: center;">Task</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </tbody>
+                </table>
+                <table id="tomorrow-table">
+                    <tbody style="border-left: none; border-right: none;">
+                        <tr><th class="tomorrow-planning-header" style="text-align: center; ">TOMORROW'S PLANNING</th></tr>
+                        <tr><th style="text-align: center;">Task</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="additional-remarks-container">
+                <div style="border-right: 0px; border-top: 0px; border-bottom: 0px; border-left: 0px;" class="events-remarks">
+                    <div style="border-left: 0px; border-right: 0px;" class="events-label">
+                        EVENTS/REMARKS
+                    </div>
+                    <div class="events-container" id="events-container">
+                    <div class="events-content">--</div>
+                    <div class="events-content">--</div>
+                    <div class="events-content">--</div>
+                    <div class="events-content">--</div>
+                    <div class="events-content">--</div>
+                    <div class="events-content">--</div>
+                    </div>
+                </div>
+                <div style="border-left: 0px; border-right: 0px;" class="remarks">
+                    <div style="border-left: 0px; border-right: 0px;" class="remarks-label">
+                        REMARKS
+                    </div>
+                    <div class="remarks-content-container">
+                    <div class="remarks-content">--</div>
+                    <div class="remarks-content">--</div>
+                    <div class="remarks-content">--</div>
+                    </div>
+                    <div id="distribution" class="distribution">
+                        GOYAL
+                    </div>
+                    <div id="prepared-by" class="prepared-by">
+                        MANO PCPL
+                    </div>
+                    <div class="signature">
+                        MANO
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="button-container">
+            <button id="download-pdf">PRINT / SAVE <i class="fa-light fa-print"></i></button>
+        </div>
+    <script>
+// ====================== MAIN DATA LOADER ======================
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        // Check for DPR ID in URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const dprId = urlParams.get('id');
+        
+        if (dprId) {
+            // If ID exists, fetch from API
+            await fetchAndPopulateFromAPI(dprId);
+        } else {
+            // Otherwise, try session storage
+            const pdfDataString = sessionStorage.getItem('pdfPreviewData');
+            if (pdfDataString) {
+                const pdfData = JSON.parse(pdfDataString);
+                populateAllData(pdfData);
+            } else {
+                // Fallback to empty state
+                showErrorState("No data available");
+            }
+        }
+        
+        // Initialize print button
+        setupPrintButton();
+    } catch (error) {
+        console.error("Error loading data:", error);
+        showErrorState("Failed to load data");
+    }
+});
+
+// ====================== API DATA FETCHING ======================
+async function fetchAndPopulateFromAPI(dprId) {
+    try {
+        const response = await fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
+        if (!response.ok) throw new Error('Failed to fetch DPR data');
+        
+        const apiData = await response.json();
+        if (!apiData.success) throw new Error('API returned unsuccessful response');
+        
+        // Transform API data to match our expected structure
+        const transformedData = transformApiData(apiData.data);
+        populateAllData(transformedData);
+        
+    } catch (error) {
+        console.error("Error loading data from API:", error);
+        showErrorState("Failed to load from API");
+        
+        // Fallback to session data if available
+        const pdfDataString = sessionStorage.getItem('pdfPreviewData');
+        if (pdfDataString) {
+            const pdfData = JSON.parse(pdfDataString);
+            populateAllData(pdfData);
+        }
+    }
+}
+
+function transformApiData(apiData) {
+    // Convert API data structure to match what our HTML expects
+    return {
+        // Project Information
+        project_name: apiData.project_name || "--",
+        Employer: apiData.Employer || "--",
+        contract_no: apiData.contract_no || "--",
+        location: apiData.location || "--",
+        start_date: apiData.start_date ? new Date(apiData.start_date).toLocaleDateString('en-GB') : "--",
+        completion_date: apiData.completion_date ? new Date(apiData.completion_date).toLocaleDateString('en-GB') : "--",
+        total_days: calculateTotalDays(apiData.start_date, apiData.completion_date),
+        days_remaining: calculateDaysRemaining(apiData.completion_date),
+        report_date: apiData.report_date ? new Date(apiData.report_date).toLocaleDateString('en-GB') : "--",
+        
+        // Site Conditions
+        site_conditions: {
+            normal_day: !apiData.site_condition?.is_rainy,
+            rainy_day: apiData.site_condition?.is_rainy || false,
+            slushy_day: apiData.site_condition?.ground_state === "slushy",
+            dry_day: apiData.site_condition?.ground_state === "dry",
+            time_slots: apiData.site_condition?.rain_timing || []
+        },
+        
+        // Labour Report
+        labour_data: {
+            table_data: formatLabourData(apiData.labour_report),
+            cumulative_manpower: apiData.cumulative_manpower || 0
+        },
+        
+        // Progress Data
+        today_progress: formatProgressData(apiData.today_prog),
+        tomorrow_planning: formatProgressData(apiData.tomorrow_plan),
+        
+        // Events and Remarks
+        events_remarks: apiData.report_footer?.events_visit || [],
+        general_remarks: [apiData.labour_report?.remarks || "--"],
+        
+        // Signatures
+        prepared_by: apiData.report_footer?.prepared_by || "MANO PCPL",
+        approved_by: apiData.report_footer?.distribute?.join(", ") || "GOYAL"
+    };
+}
+
+// ====================== DATA FORMATTING HELPERS ======================
+function formatLabourData(labourReport) {
+    if (!labourReport) return [];
+    
+    const tableData = [];
+    const maxLength = Math.max(
+        labourReport.agency?.length || 0,
+        labourReport.mason?.length || 0,
+        labourReport.carp?.length || 0,
+        labourReport.fitter?.length || 0,
+        labourReport.electrical?.length || 0,
+        labourReport.painter?.length || 0,
+        labourReport.gypsum?.length || 0,
+        labourReport.plumber?.length || 0,
+        labourReport.helper?.length || 0,
+        labourReport.staff?.length || 0
+    );
+    
+    for (let i = 0; i < maxLength; i++) {
+        const mason = parseInt(labourReport.mason?.[i]) || 0;
+        const carp = parseInt(labourReport.carp?.[i]) || 0;
+        const fitter = parseInt(labourReport.fitter?.[i]) || 0;
+        const electrical = parseInt(labourReport.electrical?.[i]) || 0;
+        const painter = parseInt(labourReport.painter?.[i]) || 0;
+        const gypsum = parseInt(labourReport.gypsum?.[i]) || 0;
+        const plumber = parseInt(labourReport.plumber?.[i]) || 0;
+        const helper = parseInt(labourReport.helper?.[i]) || 0;
+        const staff = parseInt(labourReport.staff?.[i]) || 0;
+        const total = mason + carp + fitter + electrical + painter + gypsum + plumber + helper + staff;
+        
+        tableData.push([
+            labourReport.agency?.[i] || "--",
+            mason.toString(),
+            carp.toString(),
+            fitter.toString(),
+            electrical.toString(),
+            painter.toString(),
+            gypsum.toString(),
+            plumber.toString(),
+            helper.toString(),
+            staff.toString(),
+            total.toString(),
+            labourReport.remarks || "--"
+        ]);
+    }
+    
+    return tableData;
+}
+
+function formatProgressData(progressData) {
+    if (!progressData) return [["--", "--"]];
+    
+    const result = [];
+    const maxLength = Math.max(
+        progressData.progress?.length || 0,
+        progressData.plan?.length || 0,
+        progressData.qty?.length || 0
+    );
+    
+    for (let i = 0; i < maxLength; i++) {
+        const task = progressData.progress?.[i] || progressData.plan?.[i] || "--";
+        const qty = progressData.qty?.[i] || "--";
+        result.push([task, qty]);
+    }
+    
+    return result.length > 0 ? result : [["--", "--"]];
+}
+
+function calculateTotalDays(startDate, endDate) {
+    if (!startDate || !endDate) return "--";
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return Math.round((end - start) / (1000 * 60 * 60 * 24));
+}
+
+function calculateDaysRemaining(endDate) {
+    if (!endDate) return "--";
+    const end = new Date(endDate);
+    const today = new Date();
+    const diff = Math.round((end - today) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+}
+
+// ====================== DATA POPULATION ======================
+function populateAllData(data) {
+    // 1. Populate Project Information
+    populateProjectInfo(data);
+    
+    // 2. Populate Site Conditions
+    if (data.site_conditions) {
+        populateSiteConditions(data.site_conditions);
+    }
+    
+    // 3. Populate Labour Report
+    if (data.labour_data) {
+        populateLabourReport(data.labour_data);
+    }
+    
+    // 4. Populate Progress Tables
+    populateProgressTables(data);
+    
+    // 5. Populate Remarks and Events
+    populateRemarksAndEvents(data);
+}
+
+function populateProjectInfo(data) {
+    // Basic project info
+    document.getElementById("project_name").textContent = data.project_name || "--";
+    document.getElementById("Employer").textContent = data.Employer || "--";
+    document.getElementById("contract_no").textContent = data.contract_no || "--";
+    document.getElementById("location").textContent = data.location || "--";
+    document.getElementById("start_date").textContent = data.start_date || "--";
+    document.getElementById("completion_date").textContent = data.completion_date || "--";
+    
+    // Report date in header
+    const reportDateElement = document.querySelector(".daily-progress-report-table tr:nth-child(2) td:nth-child(2)");
+    if (reportDateElement) {
+        reportDateElement.textContent = data.report_date || "--";
+    }
+    
+    // Duration info
+    const totalDaysElement = document.querySelector(".total-value");
+    if (totalDaysElement) {
+        totalDaysElement.textContent = data.total_days || "--";
+    }
+    
+    const daysRemainingElement = document.querySelector(".balance-right");
+    if (daysRemainingElement) {
+        daysRemainingElement.textContent = data.days_remaining || "--";
+    }
+}
+
+function populateSiteConditions(conditions) {
+    if (!conditions) return;
+    
+    // Weather conditions
+    setCheckboxState("normal-day-checkbox", conditions.normal_day);
+    setCheckboxState("rainy-day-checkbox", conditions.rainy_day);
+    
+    // Ground conditions
+    setCheckboxState("slushy-day-checkbox", conditions.slushy_day);
+    setCheckboxState("dry-day-checkbox", conditions.dry_day);
+    
+    // Time slots
+    const timeSlotsContainer = document.querySelector(".from-to");
+    if (timeSlotsContainer && conditions.time_slots) {
+        timeSlotsContainer.innerHTML = conditions.time_slots
+            .map(slot => {
+                const [from, to] = slot.split('-');
+                return `
+                    <div class="time-slot">
+                        <span>From: ${from || "--"}</span>
+                        <span>To: ${to || "--"}</span>
+                    </div>
+                `;
+            })
+            .join('');
+    }
+}
+
+function populateLabourReport(labourData) {
+    if (!labourData || !labourData.table_data) return;
+    
+    const table = document.getElementById('displayTable');
+    if (!table) return;
+    
+    const tbody = table.querySelector('tbody') || table.createTBody();
+    tbody.innerHTML = '';
+    
+    // Add header row if not present
+    if (tbody.rows.length === 0) {
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th>Agency Name</th>
+            <th>Mason</th>
+            <th>Carp</th>
+            <th>Fitter</th>
+            <th>Electrical</th>
+            <th>Painter</th>
+            <th>Gypsum</th>
+            <th>Plumber</th>
+            <th>Helper</th>
+            <th>Staff</th>
+            <th>Total</th>
+            <th>Remarks</th>
+        `;
+        tbody.appendChild(headerRow);
+    }
+    
+    // Add data rows
+    labourData.table_data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = row.map(cell => `<td>${cell || "--"}</td>`).join('');
+        tbody.appendChild(tr);
+    });
+    
+    // Add cumulative manpower if available
+    if (labourData.cumulative_manpower) {
+        const cumulativeRow = document.createElement('tr');
+        cumulativeRow.innerHTML = `
+            <td colspan="8" style="text-align: left;">Cumulative man power upto last date</td>
+            <td>${labourData.cumulative_manpower || "--"}</td>
+            <td colspan="3"></td>
+        `;
+        tbody.appendChild(cumulativeRow);
+    }
+}
+
+function populateProgressTables(data) {
+    // Today's Progress
+    const todayTable = document.getElementById('today-table');
+    if (todayTable && data.today_progress) {
+        const tbody = todayTable.querySelector('tbody') || todayTable.createTBody();
+        tbody.innerHTML = '';
+        
+        // Add header
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th style="text-align: center;">Task</th>
+            <th>Quantity</th>
+        `;
+        tbody.appendChild(headerRow);
+        
+        // Add data rows
+        data.today_progress.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align: left;">${row[0] || "--"}</td>
+                <td style="text-align: center;">${row[1] || "--"}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    
+    // Tomorrow's Planning
+    const tomorrowTable = document.getElementById('tomorrow-table');
+    if (tomorrowTable && data.tomorrow_planning) {
+        const tbody = tomorrowTable.querySelector('tbody') || tomorrowTable.createTBody();
+        tbody.innerHTML = '';
+        
+        // Add header
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th style="text-align: center;">Task</th>
+            <th>Quantity</th>
+        `;
+        tbody.appendChild(headerRow);
+        
+        // Add data rows
+        data.tomorrow_planning.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align: left;">${row[0] || "--"}</td>
+                <td style="text-align: center;">${row[1] || "--"}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+}
+
+function populateRemarksAndEvents(data) {
+    // Events
+    const eventsContainer = document.querySelector('.events-container');
+    if (eventsContainer) {
+        eventsContainer.innerHTML = '';
+        
+        const events = data.events_remarks || [];
+        const minEvents = 6; // Minimum 6 event slots
+        
+        for (let i = 0; i < Math.max(events.length, minEvents); i++) {
+            const div = document.createElement('div');
+            div.className = 'events-content';
+            div.textContent = events[i] || "--";
+            eventsContainer.appendChild(div);
+        }
+    }
+    
+    // Remarks
+    const remarksContainer = document.querySelector('.remarks-content-container');
+    if (remarksContainer) {
+        remarksContainer.innerHTML = '';
+        
+        const remarks = data.general_remarks || [];
+        const minRemarks = 3; // Minimum 3 remark slots
+        
+        for (let i = 0; i < Math.max(remarks.length, minRemarks); i++) {
+            const div = document.createElement('div');
+            div.className = 'remarks-content';
+            div.textContent = remarks[i] || "--";
+            remarksContainer.appendChild(div);
+        }
+    }
+    
+    // Signatures
+    if (data.prepared_by) {
+        document.getElementById('prepared-by').textContent = data.prepared_by;
+    }
+    if (data.approved_by) {
+        document.getElementById('distribution').textContent = data.approved_by;
+    }
+}
+
+// ====================== HELPER FUNCTIONS ======================
+function setCheckboxState(elementId, isActive) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        if (isActive) {
+            element.style.backgroundColor = "green";
+            element.textContent = "✓";
+            element.style.color = "white";
+        } else {
+            element.style.backgroundColor = "";
+            element.textContent = "";
+        }
+    }
+}
+
+function setupPrintButton() {
+    const printButton = document.getElementById('download-pdf');
+    if (printButton) {
+        printButton.addEventListener('click', () => {
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @page {
+                    size: A4;
+                    margin: 10mm;
+                }
+                body {
+                    margin: 0;
+                    padding: 0;
+                }
+                table {
+                    page-break-inside: auto;
+                }
+                tr {
+                    page-break-inside: avoid;
+                    page-break-after: auto;
+                }
+                .remarks-content, .events-content {
+                    page-break-inside: avoid;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            window.print();
+            
+            setTimeout(() => {
+                document.head.removeChild(style);
+            }, 1000);
+        });
+    }
+}
+
+function showErrorState(message = "Failed to load report data") {
+    // Mark all fields as unavailable
+    document.querySelectorAll('.info-value, td').forEach(el => {
+        if (el.textContent.trim() === "") {
+            el.textContent = "UNAVAILABLE";
+            el.style.color = "red";
+        }
+    });
+    
+    
+    // Show error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    errorDiv.style.color = 'red';
+    errorDiv.style.padding = '10px';
+    errorDiv.style.margin = '10px 0';
+    errorDiv.style.border = '1px solid red';
+    errorDiv.style.textAlign = 'center';
+    
+    document.body.insertBefore(errorDiv, document.body.firstChild);
+}
+    </script>
+</body>
+</html>
