@@ -12,7 +12,7 @@ import {
   filterSearch,
 } from "./vendor-list.js";
 
-import { loadProjects,openNewProjectPopup } from "./projects.js";
+import { loadProjects, openNewProjectPopup } from "./projects.js";
 
 // Session check
 document.addEventListener("DOMContentLoaded", () => {
@@ -265,7 +265,9 @@ function loadProjectList() {
         // ✅ Now it's safe to call after script is loaded
         loadProjects(session.user_id);
       }
-      document.querySelector(".icon-btn").addEventListener("click", openNewProjectPopup(session.user_id));
+      document.querySelector(".icon-btn").addEventListener("click", () => {
+        openNewProjectPopup(session.user_id);
+      });
     };
     document.head.appendChild(script);
   } else {
@@ -273,7 +275,9 @@ function loadProjectList() {
     if (session?.user_id) {
       loadProjects(session.user_id);
     }
-    document.querySelector(".icon-btn").addEventListener("click", openNewProjectPopup(session.user_id));
+    document
+      .querySelector(".icon-btn")
+      .addEventListener("click", openNewProjectPopup(session.user_id));
   }
 }
 

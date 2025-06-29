@@ -248,7 +248,105 @@
       .logout-btn:hover {
         background: #ffe6e6;
       }
-      
+
+      #new-dpr-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 999;
+      }
+
+      .icon-btn {
+        width: 50px;
+        height: 50px;
+        border: 1px solid #cdcdcd;
+        background: #007bff;
+        border-radius: 25px;
+        overflow: hidden;
+        position: relative;
+        transition: width 0.2s ease-in-out;
+        color: white;
+        font-weight: 500;
+        font-family: inherit;
+      }
+
+      .add-btn:hover {
+        width: 120px;
+        cursor: pointer;
+      }
+
+      .add-btn::before,
+      .add-btn::after {
+        transition: width 0.2s ease-in-out, border-radius 0.2s ease-in-out;
+        content: "";
+        position: absolute;
+        height: 4px;
+        width: 10px;
+        top: calc(50% - 2px);
+        background: white;
+      }
+
+      .add-btn::after {
+        right: 14px;
+        border-top-right-radius: 2px;
+        border-bottom-right-radius: 2px;
+      }
+
+      .add-btn::before {
+        left: 14px;
+        border-top-left-radius: 2px;
+        border-bottom-left-radius: 2px;
+      }
+
+      .icon-btn:focus {
+        outline: none;
+      }
+
+      .btn-txt {
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .add-btn:hover::before,
+      .add-btn:hover::after {
+        width: 4px;
+        border-radius: 2px;
+      }
+
+      .add-btn:hover .btn-txt {
+        opacity: 1;
+      }
+
+      .add-icon::after,
+      .add-icon::before {
+        transition: all 0.2s ease-in-out;
+        content: "";
+        position: absolute;
+        height: 20px;
+        width: 2px;
+        top: calc(50% - 10px);
+        background: white;
+      }
+
+      .add-icon::before {
+        left: 22px;
+      }
+
+      .add-icon::after {
+        right: 22px;
+      }
+
+      .add-btn:hover .add-icon::before {
+        left: 15px;
+        height: 4px;
+        top: calc(50% - 2px);
+      }
+
+      .add-btn:hover .add-icon::after {
+        right: 15px;
+        height: 4px;
+        top: calc(50% - 2px);
+      }
     </style>
   </head>
 
@@ -301,11 +399,16 @@
 
       <div class="table-card">
         <h3>Daily Progress Reports</h3>
-        <div class="entry-list">
-        </div>
+        <div class="entry-list"></div>
       </div>
     </div>
     <div class="break"></div>
+    <div id="new-dpr-btn">
+      <button class="icon-btn add-btn">
+        <div class="add-icon"></div>
+        <div class="btn-txt">New DPR</div>
+      </button>
+    </div>
 
     <script type="module" src="../javaScripts/projectdesc.js"></script>
   </body>
