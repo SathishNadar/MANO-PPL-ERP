@@ -306,70 +306,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     //-------------fetching the data and displaying it to the today progress rows from yesterdays tomorrow planning---------------//
-    // fetch("https://jsonplaceholder.typicode.com/posts")
-    // .then(res => res.json())
-    // .then(json => {
-    //   const rowCount = json.length;
-    //   console.log(rowCount)
-    //   for(let i = 0; i < rowCount; i++){
-    //   addRowToTable(todayTable);
-    //   addRowToTable(tomorrowTable);
-      
-    //   }
-    // });
 // === Inject dummy data into tomorrow planning table ===
 
 
 // You can change this URL to any valid API returning an array of objects
+async function getLatestDprId() {
+  try {
+    const response = await fetch('http://34.47.131.237:3000/report/Alldpr/1?limit=10');
+    const dprArray = await response.json();
 
+    const latestDPR = dprArray.reduce((latest, current) => {
+      return new Date(current.report_date) > new Date(latest.report_date) ? current : latest;
+    });
 
-const CURRENT_DPR_ID = 19; // 🔁 replace this dynamically or keep fixed if hardcoded
-const PREVIOUS_DPR_ID = CURRENT_DPR_ID - 1;
+    const latestDprId = latestDPR.dpr_id;
 
-fetch(`http://34.47.131.237:3000/report/getDPR/${PREVIOUS_DPR_ID}`)
-  .then(res => res.ok ? res.json() : Promise.reject("Previous DPR not found"))
-  .then(prev => {
-    const prevPlan = prev?.data?.tomorrow_plan;
-    const progressList = prevPlan?.plan || [];
-    const qtyList = prevPlan?.qty || [];
+    // ✅ Move the second fetch here so it waits for the ID
+    fetch(`http://34.47.131.237:3000/report/getDPR/${latestDprId}`)
+      .then(res => res.ok ? res.json() : Promise.reject("Previous DPR not found"))
+      .then(prev => {
+        const prevPlan = prev?.data?.tomorrow_plan;
+        const progressList = prevPlan?.plan || [];
+        const qtyList = prevPlan?.qty || [];
 
-    const todayTable = document.getElementById('today-table');
-    const todayBody = todayTable.querySelector('tbody');
-    todayBody.innerHTML = '';
+        const todayTable = document.getElementById('today-table');
+        const todayBody = todayTable.querySelector('tbody');
+        todayBody.innerHTML = '';
 
-    const tomorrowTable = document.getElementById('tomorrow-table');
-    const tomorrowBody = tomorrowTable.querySelector('tbody');
-    tomorrowBody.innerHTML = '';
+        const tomorrowTable = document.getElementById('tomorrow-table');
+        const tomorrowBody = tomorrowTable.querySelector('tbody');
+        tomorrowBody.innerHTML = '';
 
-    for (let i = 0; i < progressList.length; i++) {
-      const todayRow = todayBody.insertRow();
-      todayRow.innerHTML = `
-        <td><input type="text" class="today-progress" value="${progressList[i]}" /></td>
-        <td><input type="text" class="today-progress-quantity" value="${qtyList[i] || ''}" /></td>
-      `;
+        for (let i = 0; i < progressList.length; i++) {
+          const todayRow = todayBody.insertRow();
+          todayRow.innerHTML = `
+            <td><input type="text" class="today-progress" value="${progressList[i]}" /></td>
+            <td><input type="text" class="today-progress-quantity" value="${qtyList[i] || ''}" /></td>
+          `;
 
-      const tomorrowRow = tomorrowBody.insertRow();
-      tomorrowRow.innerHTML = `
-        <td><input type="text" class="tomorrows-planning" /></td>
-        <td><input type="number" class="tomorrows-planning-quantity" /></td>
-      `;
-    }
+          const tomorrowRow = tomorrowBody.insertRow();
+          tomorrowRow.innerHTML = `
+            <td><input type="text" class="tomorrows-planning" /></td>
+            <td><input type="number" class="tomorrows-planning-quantity" /></td>
+          `;
+        }
 
-    // Ensure minimum row if nothing exists
-    if (progressList.length === 0) {
-      const todayRow = todayBody.insertRow();
-      todayRow.innerHTML = `
-        <td><input type="text" class="today-progress" /></td>
-        <td><input type="text" class="today-progress-quantity" /></td>
-      `;
+        if (progressList.length === 0) {
+          todayBody.innerHTML = `
+            <tr>
+              <td><input type="text" class="today-progress" /></td>
+              <td><input type="text" class="today-progress-quantity" /></td>
+            </tr>
+          `;
 
-      const tomorrowRow = tomorrowBody.insertRow();
-      tomorrowRow.innerHTML = `
-        <td><input type="text" class="tomorrows-planning" /></td>
-        <td><input type="number" class="tomorrows-planning-quantity" /></td>
-      `;
-    }
-  })
+          tomorrowBody.innerHTML = `
+            <tr>
+              <td><input type="text" class="tomorrows-planning" /></td>
+              <td><input type="number" class="tomorrows-planning-quantity" /></td>
+            </tr>
+          `;
+        }
+      })
+      .catch(err => console.error("Error fetching previous DPR:", err));
+
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+}
+getLatestDprId();
 
 
 //------------  --------- for the static / constant detaisl to be displayed on the pdf form header--------------------------\\
@@ -386,7 +390,7 @@ fetch('http://34.47.131.237:3000/project/getProject/1')
     return response.json(); // Parse JSON response
   })
   .then(Apidata => {
-    console.log('Success:', Apidata);
+    console.log("NEW DPR! NEW DAY !!")
     document.getElementById("project_name").innerHTML = Apidata.data.project_name;
     document.getElementById("start_date").innerHTML = new Date(Apidata.data.start_date).toLocaleDateString('en-GB');
     document.getElementById("end_date").innerHTML = new Date(Apidata.data.end_date).toLocaleDateString('en-GB');
