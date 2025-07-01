@@ -39,19 +39,19 @@
                     </div>
                     <div class="info-item">
                         <div class="info-label">Start Date</div>
-                        <div class="info-value" id="start_date">Loading...</div>
+                        <div class="info-value" id="start_date">---</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Completion Date</div>
-                        <div class="info-value" id="completion_date">Loading...</div>
+                        <div class="info-value" id="end_date">---</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Duration (Days)</div>
-                        <div class="info-value" id="total">Loading...</div>
+                        <div class="info-value" id="total_days">---</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Days Remaining</div>
-                        <div class="info-value" id="balance-left">Loading...</div>
+                        <div class="info-value" id="days_remaining">---</div>
                     </div>
                 </div>
             </div>
@@ -61,24 +61,7 @@
                 <div class="card-header">
                     <div class="card-title">Site Conditions</div>
                 </div>
-                <div class="site-conditions">
-                    <div class="condition-item">
-                        <div class="condition-checkbox" id="normal-day-checkbox"></div>
-                        <div class="condition-label">Normal Day</div>
-                    </div>
-                    <div class="condition-item">
-                        <div class="condition-checkbox" id="rainy-day-checkbox"></div>
-                        <div class="condition-label">Rainy Day</div>
-                    </div>
-                    <div class="condition-item">
-                        <div class="condition-checkbox" id="slushy-day-checkbox"></div>
-                        <div class="condition-label">Slushy</div>
-                    </div>
-                    <div class="condition-item">
-                        <div class="condition-checkbox" id="dry-day-checkbox"></div>
-                        <div class="condition-label">Dry</div>
-                    </div>
-                </div>
+                <div id="site-condition-display"></div>
                 
                 <div style="margin-top: 20px;">
                     <div class="info-label">Work Hours</div>
@@ -116,8 +99,8 @@
                 </tbody>
             </table>
             <div style="margin-top: 15px; font-size: 13px;">
-                <div class="info-label">Cumulative Manpower (until yesterday)</div>
-                <div class="info-value">Loading...</div>
+                <div class="info-label">Cumulative Manpower</div>
+                <div class="info-value" id="cumulativeManpowerValue">---</div>
             </div>
         </div>
         
