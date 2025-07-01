@@ -118,23 +118,41 @@ function handleFormData() {
   const data = JSON.parse(sessionStorage.getItem("form-values"));
   if (!Array.isArray(data)) return;
 
-  if (data[0] === "Rainy") {
-    document.getElementById("rainy-day-checkbox").classList.add("active");
-    document.getElementById("rainy-day-checkbox").textContent = "✓";
+  // Extract values safely
+  const weather = data[0]; // "Rainy" or "Sunny"
+  const groundState = data[1]; // "slushy" or "dry"
+
+  // Reset all checkboxes first (optional if toggling state)
+  const rainy = document.getElementById("rainy-day-checkbox");
+  const normal = document.getElementById("normal-day-checkbox");
+  const slushy = document.getElementById("slushy-day-checkbox");
+  const dry = document.getElementById("dry-day-checkbox");
+
+  // WEATHER SECTION
+  if (weather === "Rainy" && rainy && normal) {
+    rainy.classList.add("active");
+    rainy.textContent = "✓";
+    normal.style.display = "none"; // hide sunny checkbox
   }
-  if (data[0] === "Sunny") {
-    document.getElementById("normal-day-checkbox").classList.add("active");
-    document.getElementById("normal-day-checkbox").textContent = "✓";
+
+  if (weather === "Sunny" && normal) {
+    normal.classList.add("active");
+    normal.textContent = "✓";
+    normal.style.display = "inline-block"; // just in case it's hidden
   }
-  if (data[1] === "slushy") {
-    document.getElementById("slushy-day-checkbox").classList.add("active");
-    document.getElementById("slushy-day-checkbox").textContent = "✓";
+
+  // GROUND STATE SECTION
+  if (groundState === "slushy" && slushy) {
+    slushy.classList.add("active");
+    slushy.textContent = "✓";
   }
-  if (data[1] === "dry") {
-    document.getElementById("dry-day-checkbox").classList.add("active");
-    document.getElementById("dry-day-checkbox").textContent = "✓";
+
+  if (groundState === "dry" && dry) {
+    dry.classList.add("active");
+    dry.textContent = "✓";
   }
 }
+
 
 function handleTimeSlots() {
   try {
@@ -218,109 +236,6 @@ function handleRemarks() {
 }
 
 // ====================== API DATA FETCHING ======================
-// async function fetchAndDisplayDPR(dprId = 17) {  
-//   // Default ID is 17
-//   try {
-//     const response = await fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
-//     const { data } = await response.json();
-//     // Cumulative Manpower
-// const cumulativeManpower = data.cumulative_manpower || 0;
-// const cumulativeElement = document.getElementById("cumulative-manpower");
-// if (cumulativeElement) {
-//   cumulativeElement.textContent = cumulativeManpower;
-// }
-//     // Site Condition
-//     const { site_condition } = data;
-//     document.getElementById("rainy-day-checkbox").classList.toggle("active", site_condition.is_rainy);
-//     document.getElementById("normal-day-checkbox").classList.toggle("active", !site_condition.is_rainy);
-//     if (site_condition.ground_state === "slushy") {
-//       document.getElementById("slushy-day-checkbox").classList.add("active");
-//     } 
-//     if (site_condition.ground_state === "dry") {
-//       document.getElementById("dry-day-checkbox").classList.add("active");
-//     }
-
-//     // Rain Timings
-//     const timingContainer = document.getElementById("from-to-container");
-//     timingContainer.innerHTML = "";
-//     (site_condition.rain_timing || []).forEach(t => {
-//       const [from, to] = t.split("-");
-//       const div = document.createElement("div");
-//       div.innerHTML = `
-//         <div class="info-label">From</div><div class="info-value">${from}</div>
-//         <div class="info-label">To</div><div class="info-value">${to}</div>
-//       `;
-//       timingContainer.appendChild(div);
-//     });
-
-//     // Labour Report
-
-
-
-//     const labour = data.labour_report;
-//     const tbody = document.getElementById("displayTable").getElementsByTagName("tbody")[0];
-//     tbody.innerHTML = "";
-//     for (let i = 0; i < labour.agency.length; i++) {
-//       const tr = document.createElement("tr");
-//       tr.innerHTML = `
-//         <td>${labour.agency[i]}</td>
-//         <td>${labour.mason[i]}</td>
-//         <td>${labour.carp[i]}</td>
-//         <td>${labour.fitter[i]}</td>
-//         <td>${labour.electrical[i]}</td>
-//         <td>${labour.painter[i]}</td>
-//         <td>${labour.gypsum[i]}</td>
-//         <td>${labour.plumber[i]}</td>
-//         <td>${labour.helper[i]}</td>
-//         <td>${labour.staff[i]}</td>
-//         <td>${
-//           labour.helper[i] + labour.staff[i] + labour.mason[i] + 
-//           labour.carp[i] + labour.fitter[i] + labour.electrical[i] + 
-//           labour.painter[i] + labour.gypsum[i] + labour.plumber[i]
-//         }</td>
-//         <td>${labour.remarks || "--"}</td>
-//       `;
-//       tbody.appendChild(tr);
-//     }
-
-//     // Progress Data
-//     populateTable(
-//       data.today_prog.progress.map((p, i) => [p, data.today_prog.qty[i]]),
-//       todayTable,
-//       true
-//     );
-//     populateTable(
-//       data.tomorrow_plan.plan.map((p, i) => [p, data.tomorrow_plan.qty[i]]),
-//       tomorrowTable,
-//       true
-//     );
-
-//     // Events
-//     const eventsContainer = document.getElementById("events-container");
-//     eventsContainer.innerHTML = "";
-//     (data.report_footer.events_visit || []).forEach(event => {
-//       const div = document.createElement("div");
-//       div.className = "remarks-item";
-//       div.textContent = event;
-//       eventsContainer.appendChild(div);
-//     });
-
-//     // Remarks
-//     document.getElementById("remarks-content-container").innerHTML = `
-//       <div class="remarks-item">${labour.remarks || "--"}</div>
-//     `;
-
-//     // Footer
-//     document.getElementById("prepared-by").textContent = data.report_footer.prepared_by;
-//     document.getElementById("distribution").textContent = data.report_footer.distribute.join(", ");
-
-//     // Date
-//     document.getElementById("report_date").textContent = new Date(data.report_date).toLocaleDateString("en-GB");
-
-//   } catch (err) {
-//     console.error("Error fetching DPR:", err);
-//   }
-// }
 function updateProjectUI(projectData) {
   document.getElementById("project_name").textContent = projectData.project_name || "--";
   document.getElementById("Employer").textContent = projectData.Employer || "--";
