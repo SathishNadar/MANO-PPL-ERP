@@ -139,6 +139,19 @@ async function loadDPRList(projectId) {
   }
 }
 
+document.getElementById("new-dpr-btn").addEventListener("click", () => {
+  const selectedProjectId = localStorage.getItem("selected_project_id");
+
+  if (!selectedProjectId) {
+    alert("No project selected.");
+    return;
+  }
+
+  sessionStorage.setItem("new_dpr_project_id", selectedProjectId);
+  window.location.href = "../dpr/dpr-form.html";
+});
+
+
 window.logout = logout;
 window.toggleUserMenu = toggleUserMenu;
 window.goHome = goHome;
