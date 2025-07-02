@@ -181,7 +181,7 @@ async function generateCompleteDPRObject() {
     const todayData = JSON.parse(sessionStorage.getItem('todayTableData')) || [];
     const tomorrowData = JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [];
     const formValues = JSON.parse(sessionStorage.getItem('form-values')) || [];
-    const remarksData = JSON.parse(sessionStorage.getItem('remarksData')) || [];
+     const bottomRemarksData = JSON.parse(sessionStorage.getItem('remarksData')) || [];
     const eventsData = JSON.parse(sessionStorage.getItem('eventsData')) || [];
 
     const filteredData = tableData.slice(0, -1);
@@ -230,7 +230,8 @@ async function generateCompleteDPRObject() {
         report_footer: {
             events_visit: eventsData || [],
             distribute: ["L&T", "MAPLANI"],
-            prepared_by: "Mano Project Pvt. Ltd."
+            prepared_by: "Mano Project Pvt. Ltd.",
+            bottom_remarks:bottomRemarksData
         }
     };
 }
