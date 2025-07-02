@@ -336,8 +336,6 @@ document.addEventListener("DOMContentLoaded", function () {
     addRowToTable(tomorrowTable);
   }
 
-  //--------------------- for the static / constant detaisl to be displayed on the pdf form header--------------------------\\
-
   const projectId = sessionStorage.getItem("new_dpr_project_id");
 
   if (!projectId) {
@@ -373,6 +371,103 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error:", error);
       });
   }
+
+// You can change this URL to any valid API returning an array of objects
+async function getLatestDprId() {
+  try {
+    const response = await fetch('http://34.47.131.237:3000/report/Alldpr/1?limit=10');
+    const dprArray = await response.json();
+
+    const latestDPR = dprArray.reduce((latest, current) => {
+      return new Date(current.report_date) > new Date(latest.report_date) ? current : latest;
+    });
+
+    const latestDprId = latestDPR.dpr_id;
+
+    // ✅ Move the second fetch here so it waits for the ID
+    fetch(`http://34.47.131.237:3000/report/getDPR/${latestDprId}`)
+      .then(res => res.ok ? res.json() : Promise.reject("Previous DPR not found"))
+      .then(prev => {
+        const prevPlan = prev?.data?.tomorrow_plan;
+        const progressList = prevPlan?.plan || [];
+        const qtyList = prevPlan?.qty || [];
+
+        const todayTable = document.getElementById('today-table');
+        const todayBody = todayTable.querySelector('tbody');
+        todayBody.innerHTML = '';
+
+        const tomorrowTable = document.getElementById('tomorrow-table');
+        const tomorrowBody = tomorrowTable.querySelector('tbody');
+        tomorrowBody.innerHTML = '';
+
+        for (let i = 0; i < progressList.length; i++) {
+          const todayRow = todayBody.insertRow();
+          todayRow.innerHTML = `
+            <td><input type="text" class="today-progress" value="${progressList[i]}" /></td>
+            <td><input type="text" class="today-progress-quantity" value="${qtyList[i] || ''}" /></td>
+          `;
+
+          const tomorrowRow = tomorrowBody.insertRow();
+          tomorrowRow.innerHTML = `
+            <td><input type="text" class="tomorrows-planning" /></td>
+            <td><input type="number" class="tomorrows-planning-quantity" /></td>
+          `;
+        }
+
+        if (progressList.length === 0) {
+          todayBody.innerHTML = `
+            <tr>
+              <td><input type="text" class="today-progress" /></td>
+              <td><input type="text" class="today-progress-quantity" /></td>
+            </tr>
+          `;
+
+          tomorrowBody.innerHTML = `
+            <tr>
+              <td><input type="text" class="tomorrows-planning" /></td>
+              <td><input type="number" class="tomorrows-planning-quantity" /></td>
+            </tr>
+          `;
+        }
+      })
+      .catch(err => console.error("Error fetching previous DPR:", err));
+
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+}
+getLatestDprId();
+
+
+//------------  --------- for the static / constant detaisl to be displayed on the pdf form header--------------------------\\
+
+fetch('http://34.47.131.237:3000/project/getProject/1')
+  .then(response => {
+    if (!response.ok) {
+      document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
+      document.getElementById("project_name").classList.add = "error_state";
+
+      return Promise.reject(new Error('Project not found'));
+      
+    }
+    return response.json(); // Parse JSON response
+  })
+  .then(Apidata => {
+    console.log("NEW DPR! NEW DAY !!")
+    document.getElementById("project_name").innerHTML = Apidata.data.project_name;
+    document.getElementById("start_date").innerHTML = new Date(Apidata.data.start_date).toLocaleDateString('en-GB');
+    document.getElementById("end_date").innerHTML = new Date(Apidata.data.end_date).toLocaleDateString('en-GB');
+    document.getElementById("Employer").innerHTML = Apidata.data.Employer;
+    document.getElementById("project_description").innerHTML = Apidata.data.project_description;
+    document.getElementById("contract_no").innerHTML = Apidata.data.contract_no;
+    document.getElementById("location").innerHTML = Apidata.data.location;
+
+    trial = "Rendered value:", document.getElementById("project_name").textContent
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
 
   //-----------------------------------------------------------------------------------------------------------------------
 
