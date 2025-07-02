@@ -256,7 +256,7 @@ function displaydata() {
   sessionStorage.setItem("remarksData", JSON.stringify(remarksData)); // For remarks section
 
   // Redirect to the next page
-  window.location.href = "dpr-pdf.html";
+  window.location.href = "dpr-viewer.html";
 }
 
 //---------------------------------------------------- EVERYTHING RELATED TO ADD AND DELETE ROW ----------------------------------------//
@@ -336,7 +336,7 @@ document.addEventListener("DOMContentLoaded", function () {
     addRowToTable(tomorrowTable);
   }
 
-  const projectId = sessionStorage.getItem("new_dpr_project_id");
+  const projectId = localStorage.getItem("selected_project_id");
 
   if (!projectId) {
     alert("No project selected. Please go back and choose a project.");
@@ -375,7 +375,7 @@ document.addEventListener("DOMContentLoaded", function () {
 // You can change this URL to any valid API returning an array of objects
 async function getLatestDprId() {
   try {
-    const response = await fetch('http://34.47.131.237:3000/report/Alldpr/1?limit=10');
+    const response = await fetch(`http://34.47.131.237:3000/report/Alldpr/${projectId}?limit=10`);
     const dprArray = await response.json();
 
     const latestDPR = dprArray.reduce((latest, current) => {
@@ -437,36 +437,6 @@ async function getLatestDprId() {
   }
 }
 getLatestDprId();
-
-
-//------------  --------- for the static / constant detaisl to be displayed on the pdf form header--------------------------\\
-
-fetch('http://34.47.131.237:3000/project/getProject/1')
-  .then(response => {
-    if (!response.ok) {
-      document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
-      document.getElementById("project_name").classList.add = "error_state";
-
-      return Promise.reject(new Error('Project not found'));
-      
-    }
-    return response.json(); // Parse JSON response
-  })
-  .then(Apidata => {
-    console.log("NEW DPR! NEW DAY !!")
-    document.getElementById("project_name").innerHTML = Apidata.data.project_name;
-    document.getElementById("start_date").innerHTML = new Date(Apidata.data.start_date).toLocaleDateString('en-GB');
-    document.getElementById("end_date").innerHTML = new Date(Apidata.data.end_date).toLocaleDateString('en-GB');
-    document.getElementById("Employer").innerHTML = Apidata.data.Employer;
-    document.getElementById("project_description").innerHTML = Apidata.data.project_description;
-    document.getElementById("contract_no").innerHTML = Apidata.data.contract_no;
-    document.getElementById("location").innerHTML = Apidata.data.location;
-
-    trial = "Rendered value:", document.getElementById("project_name").textContent
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
 
 
   //-----------------------------------------------------------------------------------------------------------------------
