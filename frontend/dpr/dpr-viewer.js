@@ -1,4 +1,3 @@
-
 // ====================== DATA FETCH ======================
 const todayData = JSON.parse(sessionStorage.getItem('todayTableData')) || [];
 const tomorrowData = JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [];
@@ -41,17 +40,31 @@ function populateLabourReportTable() {
     thead.innerHTML = "";
     tbody.innerHTML = "";
 
+    // Add "Total" column to the header
     const headerRow = document.createElement("tr");
     headerRow.innerHTML = `<th>Agency Name</th>`;
     keys.forEach(k => headerRow.innerHTML += `<th>${k}</th>`);
-    headerRow.innerHTML += `<th>Remarks</th>`;
+    headerRow.innerHTML += `<th>Total</th><th>Remarks</th>`; // Added Total column
     thead.appendChild(headerRow);
 
     for (let i = 0; i < agencies.length; i++) {
         const row = document.createElement("tr");
         row.innerHTML = `<td>${agencies[i]}</td>`;
-        keys.forEach(k => row.innerHTML += `<td>${labourData[k]?.[i] ?? "--"}</td>`);
-        row.innerHTML += `<td>${remarks[i] || "--"}</td>`;
+        
+        let rowTotal = 0; // Calculate sum for each row
+        
+        keys.forEach(k => {
+            const value = labourData[k]?.[i] ?? "--";
+            row.innerHTML += `<td>${value}</td>`;
+            
+            // Add to total if it's a number
+            if (!isNaN(parseInt(value))) {
+                rowTotal += parseInt(value);
+            }
+        });
+        
+        // Append Total and Remarks
+        row.innerHTML += `<td>${rowTotal}</td><td>${remarks[i] || "--"}</td>`;
         tbody.appendChild(row);
     }
 }
@@ -122,22 +135,50 @@ function handleRemarks() {
 }
 
 // ====================== CUMULATIVE MANPOWER ======================
-async function updateCumulativeField() {
+async function fetchLatestDPRId() {
     try {
         const response = await fetch('http://34.47.131.237:3000/report/Alldpr/1?limit=10');
         const dprArray = await response.json();
-        const latestDPR = dprArray.reduce((latest, current) =>
-            new Date(current.report_date) > new Date(latest.report_date) ? current : latest);
-        const latestDprId = latestDPR.dpr_id;
-        const fullResp = await fetch(`http://34.47.131.237:3000/report/getDPR/${latestDprId}`);
-        const fullData = await fullResp.json();
-        const previous = fullData?.data?.cumulative_manpower || 0;
+
+        if (!Array.isArray(dprArray)) {
+            console.warn("Invalid DPR data received");
+            return null;
+        }
+
+        if (dprArray.length === 0) {
+            console.warn("No previous DPR found - starting fresh");
+            return null;
+        }
+
+        const latestDPR = dprArray.reduce((latest, current) => 
+            new Date(current.report_date) > new Date(latest.report_date) ? current : latest
+        );
+
+        return latestDPR.dpr_id;
+    } catch (err) {
+        console.error("Error fetching latest DPR ID:", err);
+        return null;
+    }
+}
+
+async function updateCumulativeField() {
+    try {
+        const latestDprId = await fetchLatestDPRId();
+        let previous = 0;
+
+        if (latestDprId) {
+            const fullResp = await fetch(`http://34.47.131.237:3000/report/getDPR/${latestDprId}`);
+            const fullData = await fullResp.json();
+            previous = fullData?.data?.cumulative_manpower || 0;
+        }
 
         const labour = JSON.parse(sessionStorage.getItem("labourReport")) || {};
         const keys = Object.keys(labour).filter(k => k !== "agency" && k !== "remarks");
+
         let total = 0;
         keys.forEach(role => {
-            total += labour[role].reduce((sum, num) => sum + (parseInt(num) || 0), 0);
+            const roleData = labour[role] || [];
+            total += roleData.reduce((sum, val) => sum + (parseInt(val) || 0), 0);
         });
 
         return previous + total;
@@ -146,6 +187,7 @@ async function updateCumulativeField() {
         return 0;
     }
 }
+
 // ====================== PROJECT DETAILS FETCH ======================
 async function fetchAndDisplayProjectDetails() {
     try {
@@ -181,7 +223,6 @@ async function fetchAndDisplayProjectDetails() {
         console.error("Project details fetch error:", err);
     }
 }
-
 
 // ====================== GENERATE DPR OBJECT ======================
 async function generateCompleteDPRObject() {
@@ -227,7 +268,6 @@ async function generateCompleteDPRObject() {
     };
 }
 
-// ====================== UPLOAD ======================
 // ====================== UPLOAD DPR ======================
 async function postDPRToBackend() {
     try {
@@ -250,9 +290,9 @@ async function postDPRToBackend() {
     }
 }
 
-
-// ====================== INIT ======================
-document.addEventListener("DOMContentLoaded", async () => {
+// ====================== INITIALIZATION ======================
+async function initializeDashboard() {
+    // First load all static data
     populateLabourReportTable();
     populateTable(todayData, todayTable, true);
     populateTable(tomorrowData, tomorrowTable, true);
@@ -260,11 +300,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     handleTimeSlots();
     handleEvents();
     handleRemarks();
-
-    const total = await updateCumulativeField();
-    const manpowerEl = document.getElementById("cumulativeManpowerValue");
-    if (manpowerEl) manpowerEl.textContent = total;
-
+    
+    // Then fetch project details
     await fetchAndDisplayProjectDetails();
     
-});
+    // Finally calculate and display cumulative manpower with slight delay
+    setTimeout(async () => {
+        const total = await updateCumulativeField();
+        const manpowerEl = document.getElementById("cumulativeManpowerValue");
+        if (manpowerEl) manpowerEl.textContent = total;
+    }, 150);
+}
+
+// Start everything when DOM is ready
+document.addEventListener("DOMContentLoaded", initializeDashboard);
