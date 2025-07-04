@@ -1,5 +1,5 @@
+
 // ====================== DATA FETCH ======================
-const tableData = JSON.parse(sessionStorage.getItem('userTableData')) || [];
 const todayData = JSON.parse(sessionStorage.getItem('todayTableData')) || [];
 const tomorrowData = JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [];
 
@@ -14,47 +14,69 @@ const formattedSlots = timeSlotsInProperFormat.map(slot => `${slot.from}-${slot.
 // ====================== HELPER FUNCTIONS ======================
 function populateTable(data, tbody, isProgress = false) {
     if (!data || !tbody) return;
-
-    tbody.innerHTML = ''; // Clear existing rows
-
+    tbody.innerHTML = '';
     data.forEach(row => {
         const tr = document.createElement('tr');
         row.forEach((cell, index) => {
             const td = document.createElement('td');
             td.textContent = cell || "--";
-            if (index === 0 || isProgress) {
-                td.style.textAlign = "left";
-            } else {
-                td.style.textAlign = "center";
-            }
+            td.style.textAlign = index === 0 || isProgress ? "left" : "center";
             tr.appendChild(td);
         });
         tbody.appendChild(tr);
     });
 }
 
-function handleFormData() {
-    const data = JSON.parse(sessionStorage.getItem('form-values'));
-    if (!Array.isArray(data)) return;
+function populateLabourReportTable() {
+    const labourData = JSON.parse(sessionStorage.getItem("labourReport"));
+    const table = document.getElementById("displayTable");
+    const thead = table.querySelector("thead");
+    const tbody = table.querySelector("tbody");
+    if (!labourData || !table) return;
 
-    const conditionContainer = document.getElementById('site-condition-display');
+    const keys = Object.keys(labourData).filter(k => k !== "agency" && k !== "remarks");
+    const agencies = labourData.agency || [];
+    const remarks = labourData.remarks || [];
+
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+
+    const headerRow = document.createElement("tr");
+    headerRow.innerHTML = `<th>Agency Name</th>`;
+    keys.forEach(k => headerRow.innerHTML += `<th>${k}</th>`);
+    headerRow.innerHTML += `<th>Remarks</th>`;
+    thead.appendChild(headerRow);
+
+    for (let i = 0; i < agencies.length; i++) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${agencies[i]}</td>`;
+        keys.forEach(k => row.innerHTML += `<td>${labourData[k]?.[i] ?? "--"}</td>`);
+        row.innerHTML += `<td>${remarks[i] || "--"}</td>`;
+        tbody.appendChild(row);
+    }
+}
+
+function handleFormData() {
+    const data = JSON.parse(sessionStorage.getItem('form-values')) || [];
+    const container = document.getElementById('site-condition-display');
     
-    // Hide all checkbox elements if they exist
-    document.querySelectorAll('.condition-checkbox').forEach(el => el.style.display = 'none');
+    if (!container) return;
     
-    // Show only the active condition
+    // Clear existing content
+    container.innerHTML = '';
+    
+    // Weather condition
     if (data[0] === "Rainy") {
-        conditionContainer.innerHTML = '<div class="active-condition rainy">Rainy Day</div>';
-    } 
-    else if (data[0] === "Sunny") {
-        conditionContainer.innerHTML = '<div class="active-condition sunny">Normal Day</div>';
+        container.innerHTML += '<div class="active-condition rainy">Rainy Day</div>';
+    } else if (data[0] === "Sunny") {
+        container.innerHTML += '<div class="active-condition sunny">Normal Day</div>';
     }
     
+    // Ground state
     if (data[1] === "slushy") {
-        conditionContainer.innerHTML += '<div class="active-condition slushy">Slushy Ground</div>';
-    } 
-    else if (data[1] === "dry") {
-        conditionContainer.innerHTML += '<div class="active-condition dry">Dry Ground</div>';
+        container.innerHTML += '<div class="active-condition slushy">Slushy Ground</div>';
+    } else if (data[1] === "dry") {
+        container.innerHTML += '<div class="active-condition dry">Dry Ground</div>';
     }
 }
 
@@ -62,30 +84,20 @@ function handleTimeSlots() {
     const timeSlots = JSON.parse(sessionStorage.getItem("timeslots")) || [];
     const container = document.getElementById("from-to-container");
     if (!container) return;
-
     container.innerHTML = '';
-    
     timeSlots.forEach(slot => {
-        const timeSlotDiv = document.createElement('div');
-        const fromDiv = document.createElement('div');
-        const toDiv = document.createElement('div');
-        
-        fromDiv.innerHTML = `<div class="info-label">From</div><div class="info-value">${slot.from}</div>`;
-        toDiv.innerHTML = `<div class="info-label">To</div><div class="info-value">${slot.to}</div>`;
-        
-        timeSlotDiv.appendChild(fromDiv);
-        timeSlotDiv.appendChild(toDiv);
-        container.appendChild(timeSlotDiv);
+        const div = document.createElement('div');
+        div.innerHTML = `<div class="info-label">From</div><div class="info-value">${slot.from}</div>
+                         <div class="info-label">To</div><div class="info-value">${slot.to}</div>`;
+        container.appendChild(div);
     });
 }
 
 function handleEvents() {
     const container = document.getElementById('events-container');
     if (!container) return;
-
     const data = JSON.parse(sessionStorage.getItem('eventsData')) || [];
     container.innerHTML = '';
-
     const count = Math.max(data.length, 6);
     for (let i = 0; i < count; i++) {
         const div = document.createElement('div');
@@ -98,10 +110,8 @@ function handleEvents() {
 function handleRemarks() {
     const container = document.getElementById('remarks-content-container');
     if (!container) return;
-
     const data = JSON.parse(sessionStorage.getItem('remarksData')) || [];
     container.innerHTML = '';
-
     const count = Math.max(data.length, 3);
     for (let i = 0; i < count; i++) {
         const div = document.createElement('div');
@@ -111,219 +121,150 @@ function handleRemarks() {
     }
 }
 
-// ====================== MANPOWER CALCULATION ======================
-
-//-------------------------------to get the latest ID using latest date of the dpr-----------------------//
+// ====================== CUMULATIVE MANPOWER ======================
 async function updateCumulativeField() {
-    console.log("🔥 updateCumulativeField started...");
+    try {
+        const response = await fetch('http://34.47.131.237:3000/report/Alldpr/1?limit=10');
+        const dprArray = await response.json();
+        const latestDPR = dprArray.reduce((latest, current) =>
+            new Date(current.report_date) > new Date(latest.report_date) ? current : latest);
+        const latestDprId = latestDPR.dpr_id;
+        const fullResp = await fetch(`http://34.47.131.237:3000/report/getDPR/${latestDprId}`);
+        const fullData = await fullResp.json();
+        const previous = fullData?.data?.cumulative_manpower || 0;
 
-  console.log("🛠 Starting cumulative manpower calculation...");
-  try {
-    // 1. Fetch previous cumulative manpower
-    const response = await fetch('http://34.47.131.237:3000/report/Alldpr/1?limit=10');
-    const dprArray = await response.json();
+        const labour = JSON.parse(sessionStorage.getItem("labourReport")) || {};
+        const keys = Object.keys(labour).filter(k => k !== "agency" && k !== "remarks");
+        let total = 0;
+        keys.forEach(role => {
+            total += labour[role].reduce((sum, num) => sum + (parseInt(num) || 0), 0);
+        });
 
-    const latestDPR = dprArray.reduce((latest, current) =>
-      new Date(current.report_date) > new Date(latest.report_date) ? current : latest
-    );
-    const latestDprId = latestDPR.dpr_id;
-
-    const fullDprResponse = await fetch(`http://34.47.131.237:3000/report/getDPR/${latestDprId}`);
-    const fullDprData = await fullDprResponse.json();
-
-    const previousCumulative = fullDprData?.data?.cumulative_manpower || 0;
-    console.log("🟡 Previous Cumulative Manpower:", previousCumulative);
-
-    // 2. Calculate today's manpower from sessionStorage (userTableData)
-    const tableData = JSON.parse(sessionStorage.getItem('userTableData')) || [];
-    const filteredData = tableData.slice(0, -1); // remove TOTAL row
-
-    let todaysManpower = 0;
-
-    filteredData.forEach((row, rowIndex) => {
-      for (let i = 1; i <= 9; i++) {
-        const value = parseInt(row[i]);
-        if (!isNaN(value)) {
-          todaysManpower += value;
-          console.log(`Row ${rowIndex + 1}, Col ${i} → +${value}`);
+        return previous + total;
+    } catch (err) {
+        console.error("Cumulative manpower error:", err);
+        return 0;
+    }
+}
+// ====================== PROJECT DETAILS FETCH ======================
+async function fetchAndDisplayProjectDetails() {
+    try {
+        const response = await fetch('http://34.47.131.237:3000/project/getProject/1');
+        if (!response.ok) {
+            document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
+            throw new Error('Project not found');
         }
-      }
-    });
 
-    console.log("🔵 Today's Manpower:", todaysManpower);
+        const data = await response.json();
+        sessionStorage.setItem('apiProjectData', JSON.stringify(data.data));
 
-    const total = previousCumulative + todaysManpower;
-    console.log("🟢 New Cumulative Manpower:", total);
+        document.getElementById("project_name").textContent = data.data.project_name;
+        document.getElementById("Employer").textContent = data.data.Employer;
+        document.getElementById("contract_no").textContent = data.data.contract_no;
+        document.getElementById("location").textContent = data.data.location;
+        document.getElementById("start_date").textContent = new Date(data.data.start_date).toLocaleDateString('en-GB');
 
+        if (data.data.start_date && data.data.end_date) {
+            const start = new Date(data.data.start_date);
+            const end = new Date(data.data.end_date);
+            const today = new Date();
 
+            const totalDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
+            const daysPassed = Math.round((today - start) / (1000 * 60 * 60 * 24));
+            const daysRemaining = Math.max(totalDays - daysPassed, 0);
 
-    return total;
-
-  } catch (err) {
-    console.error("❌ Failed to update cumulative manpower:", err);
-    return 0;
-  }
+            document.getElementById("end_date").textContent = end.toLocaleDateString('en-GB');
+            document.getElementById("total_days").textContent = totalDays;
+            document.getElementById("days_remaining").textContent = daysRemaining;
+        }
+    } catch (err) {
+        console.error("Project details fetch error:", err);
+    }
 }
 
 
-//---------------------for calculation of cumulative man power upto today using previous data------------------\\
-
-
-
-
-
-
-
-// ====================== DPR OBJECT GENERATION ======================
+// ====================== GENERATE DPR OBJECT ======================
 async function generateCompleteDPRObject() {
-    const apiData = JSON.parse(sessionStorage.getItem('apiProjectData')) || {};
-    const tableData = JSON.parse(sessionStorage.getItem('userTableData')) || [];
+    const formValues = JSON.parse(sessionStorage.getItem('form-values')) || [];
     const todayData = JSON.parse(sessionStorage.getItem('todayTableData')) || [];
     const tomorrowData = JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [];
-    const formValues = JSON.parse(sessionStorage.getItem('form-values')) || [];
-     const bottomRemarksData = JSON.parse(sessionStorage.getItem('remarksData')) || [];
+    const bottomRemarksData = JSON.parse(sessionStorage.getItem('remarksData')) || [];
     const eventsData = JSON.parse(sessionStorage.getItem('eventsData')) || [];
-
-    const filteredData = tableData.slice(0, -1);
-    const transformedData = {
-        agency: filteredData.map(row => row[0] || "--"),
-        mason: filteredData.map(row => parseInt(row[1]) || 0),
-        carp: filteredData.map(row => parseInt(row[2]) || 0),
-        fitter: filteredData.map(row => parseInt(row[3]) || 0),
-        electrical: filteredData.map(row => parseInt(row[4]) || 0),
-        painter: filteredData.map(row => parseInt(row[5]) || 0),
-        gypsum: filteredData.map(row => parseInt(row[6]) || 0),
-        plumber: filteredData.map(row => parseInt(row[7]) || 0),
-        helper: filteredData.map(row => parseInt(row[8]) || 0),
-        staff: filteredData.map(row => parseInt(row[9]) || 0),
-        remarks: filteredData.map(row => row[11] || "--")
-    };
+    const labourData = JSON.parse(sessionStorage.getItem('labourReport')) || {};
 
     const cumulativeManpower = await updateCumulativeField();
+
     return {
         project_id: 1,
         report_date: new Date().toISOString().split('T')[0],
         site_condition: {
             is_rainy: formValues[0] === "Rainy",
             ground_state: formValues[1] || "Unknown",
-            rain_timing: formattedSlots || "No time slots available"
-        },  
-        labour_report: transformedData,
+            rain_timing: formattedSlots || []
+        },
+        labour_report: labourData,
         cumulative_manpower: cumulativeManpower,
         today_prog: {
-            progress: todayData.map(row => row[0] || "--"),
-            qty: todayData.map(row => row[1] || "--")
+            progress: todayData.map(r => r[0] || "--"),
+            qty: todayData.map(r => r[1] || "--")
         },
         tomorrow_plan: {
-            plan: tomorrowData.map(row => row[0] || "--"),
-            qty: tomorrowData.map(row => row[1] || "--")
+            plan: tomorrowData.map(r => r[0] || "--"),
+            qty: tomorrowData.map(r => r[1] || "--")
         },
         user_roles: {
             created_by: 1,
-            approvals: {
-                1: true,
-                3: false
-            },
+            approvals: { 1: true, 3: false },
             viewers: [10, 11, 15],
             editors: [1, 3, 4]
         },
         report_footer: {
-            events_visit: eventsData || [],
+            events_visit: [],
             distribute: ["L&T", "MAPLANI"],
             prepared_by: "Mano Project Pvt. Ltd.",
-            bottom_remarks:bottomRemarksData
+            bottom_remarks: bottomRemarksData
         }
     };
 }
 
-// ====================== API COMMUNICATION ======================
+// ====================== UPLOAD ======================
+// ====================== UPLOAD DPR ======================
 async function postDPRToBackend() {
     try {
         const dprData = await generateCompleteDPRObject();
-        console.log("DPR Data:", JSON.stringify(dprData, null, 2));
+        console.log("📦 DPR Data Being Sent:", JSON.stringify(dprData, null, 2));
 
         const response = await fetch('http://34.47.131.237:3000/report/insertDPR', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dprData)
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Upload failed: ${errorText}`);
-        }
-
+        if (!response.ok) throw new Error("Upload failed");
         const result = await response.json();
-        console.log("Uploaded:", result);
         alert("DPR uploaded successfully!");
         return result;
     } catch (err) {
-        console.error("Error:", err);
         alert("Error uploading DPR: " + err.message);
-        throw err;
+        console.error(err);
     }
 }
 
-// ====================== INITIALIZATION ======================
+
+// ====================== INIT ======================
 document.addEventListener("DOMContentLoaded", async () => {
-    // Populate tables
-    populateTable(tableData, displayTable);
+    populateLabourReportTable();
     populateTable(todayData, todayTable, true);
     populateTable(tomorrowData, tomorrowTable, true);
-    
-    // Handle form data
     handleFormData();
     handleTimeSlots();
     handleEvents();
     handleRemarks();
-    
-    //to display the cumulative manpower on screen
+
     const total = await updateCumulativeField();
-    const cumulativeManpower_display_field = document.getElementById("cumulativeManpowerValue");
-    if (cumulativeManpower_display_field) {
-        cumulativeManpower_display_field.textContent = total;
-    }
+    const manpowerEl = document.getElementById("cumulativeManpowerValue");
+    if (manpowerEl) manpowerEl.textContent = total;
 
-    // Fetch project data
-    try {
-        const response = await fetch('http://34.47.131.237:3000/project/getProject/1');
-        if (!response.ok) {
-            document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
-            document.getElementById("project_name").classList.add("error_state");
-            throw new Error('Project not found');
-        }
-
-        const Apidata = await response.json();
-        sessionStorage.setItem('apiProjectData', JSON.stringify(Apidata.data));
-        
-        // Update project info
-        document.getElementById("project_name").textContent = Apidata.data.project_name;
-        document.getElementById("Employer").textContent = Apidata.data.Employer;
-        document.getElementById("contract_no").textContent = Apidata.data.contract_no;
-        document.getElementById("location").textContent = Apidata.data.location;
-        document.getElementById("start_date").textContent = new Date(Apidata.data.start_date).toLocaleDateString('en-GB');
-        
-        // Calculate and display duration
-        if (Apidata.data.start_date && Apidata.data.end_date) {
-            const startDate = new Date(Apidata.data.start_date);
-            const end_date = new Date(Apidata.data.end_date);
-            const today = new Date();
-            
-            const totalDays = Math.round((end_date - startDate) / (1000 * 60 * 60 * 24));
-            const daysPassed = Math.round((today - startDate) / (1000 * 60 * 60 * 24));
-            const daysRemaining = totalDays - daysPassed;
-            
-            document.getElementById("end_date").textContent = end_date.toLocaleDateString('en-GB');
-            document.getElementById("total_days").textContent = totalDays;
-            document.getElementById("days_remaining").textContent = daysRemaining > 0 ? daysRemaining : 0;
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-
-    // Set current date
-    const today = new Date();
-    document.getElementById("report_date").textContent = today.toLocaleDateString('en-GB');
+    await fetchAndDisplayProjectDetails();
+    
 });
