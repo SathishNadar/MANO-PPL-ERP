@@ -184,54 +184,36 @@ function populateLabourReport(labourData) {
     
     // Add header row
     const headerRow = document.createElement('tr');
-    headerRow.innerHTML = `
-        <th>Agency Name</th>
-        <th>Mason</th>
-        <th>Carp</th>
-        <th>Fitter</th>
-        <th>Electrical</th>
-        <th>Painter</th>
-        <th>Gypsum</th>
-        <th>Plumber</th>
-        <th>Helper</th>
-        <th>Staff</th>
-        <th>Total</th>
-        <th>Remarks</th>
-    `;
-    tbody.appendChild(headerRow);
+const categories = Object.keys(labourData).filter(k => k !== "agency" && k !== "remarks");
+
+let headerHTML = `<th>Agency Name</th>`;
+categories.forEach(cat => {
+  headerHTML += `<th>${cat}</th>`;
+});
+headerHTML += `<th>Total</th><th>Remarks</th>`;
+headerRow.innerHTML = headerHTML;
+tbody.appendChild(headerRow);
+
 
     // Single loop to both create rows AND calculate total
     for (let i = 0; i < labourData.agency.length; i++) {
-        const mason = parseInt(labourData.mason[i]) || 0;
-        const carp = parseInt(labourData.carp[i]) || 0;
-        const fitter = parseInt(labourData.fitter[i]) || 0;
-        const electrical = parseInt(labourData.electrical[i]) || 0;
-        const painter = parseInt(labourData.painter[i]) || 0;
-        const gypsum = parseInt(labourData.gypsum[i]) || 0;
-        const plumber = parseInt(labourData.plumber[i]) || 0;
-        const helper = parseInt(labourData.helper[i]) || 0;
-        const staff = parseInt(labourData.staff[i]) || 0;
-        const rowTotal = mason + carp + fitter + electrical + painter + gypsum + plumber + helper + staff;
-        
-        todaysTotal += rowTotal; // Add to grand total
+  let rowHTML = `<td>${labourData.agency[i] || "--"}</td>`;
+  let rowTotal = 0;
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${labourData.agency[i] || "--"}</td>
-            <td>${mason}</td>
-            <td>${carp}</td>
-            <td>${fitter}</td>
-            <td>${electrical}</td>
-            <td>${painter}</td>
-            <td>${gypsum}</td>
-            <td>${plumber}</td>
-            <td>${helper}</td>
-            <td>${staff}</td>
-            <td>${rowTotal}</td>
-            <td>${labourData.remarks[i] || "--"}</td>
-        `;
-        tbody.appendChild(tr);
-    }
+  categories.forEach(cat => {
+    const val = parseInt(labourData[cat][i]) || 0;
+    rowHTML += `<td>${val}</td>`;
+    rowTotal += val;
+  });
+
+  rowHTML += `<td>${rowTotal}</td><td>${labourData.remarks[i] || "--"}</td>`;
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = rowHTML;
+  tbody.appendChild(tr);
+
+  todaysTotal += rowTotal;
+}
 
     console.log("CORRECT Today's Total:", todaysTotal); // Verify correct total
     return todaysTotal;

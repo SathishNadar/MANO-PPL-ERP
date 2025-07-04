@@ -118,41 +118,23 @@ function handleFormData() {
   const data = JSON.parse(sessionStorage.getItem("form-values"));
   if (!Array.isArray(data)) return;
 
-  // Extract values safely
-  const weather = data[0]; // "Rainy" or "Sunny"
-  const groundState = data[1]; // "slushy" or "dry"
-
-  // Reset all checkboxes first (optional if toggling state)
-  const rainy = document.getElementById("rainy-day-checkbox");
-  const normal = document.getElementById("normal-day-checkbox");
-  const slushy = document.getElementById("slushy-day-checkbox");
-  const dry = document.getElementById("dry-day-checkbox");
-
-  // WEATHER SECTION
-  if (weather === "Rainy" && rainy && normal) {
-    rainy.classList.add("active");
-    rainy.textContent = "✓";
-    normal.style.display = "none"; // hide sunny checkbox
+  if (data[0] === "Rainy") {
+    document.getElementById("rainy-day-checkbox").classList.add("active");
+    document.getElementById("rainy-day-checkbox").textContent = "✓";
   }
-
-  if (weather === "Sunny" && normal) {
-    normal.classList.add("active");
-    normal.textContent = "✓";
-    normal.style.display = "inline-block"; // just in case it's hidden
+  if (data[0] === "Sunny") {
+    document.getElementById("normal-day-checkbox").classList.add("active");
+    document.getElementById("normal-day-checkbox").textContent = "✓";
   }
-
-  // GROUND STATE SECTION
-  if (groundState === "slushy" && slushy) {
-    slushy.classList.add("active");
-    slushy.textContent = "✓";
+  if (data[1] === "slushy") {
+    document.getElementById("slushy-day-checkbox").classList.add("active");
+    document.getElementById("slushy-day-checkbox").textContent = "✓";
   }
-
-  if (groundState === "dry" && dry) {
-    dry.classList.add("active");
-    dry.textContent = "✓";
+  if (data[1] === "dry") {
+    document.getElementById("dry-day-checkbox").classList.add("active");
+    document.getElementById("dry-day-checkbox").textContent = "✓";
   }
 }
-
 
 function handleTimeSlots() {
   try {
@@ -223,29 +205,122 @@ function handleRemarks() {
   const container = document.getElementById("remarks-content-container");
   if (!container) return;
 
-  // Get remarks from session storage (fallback to empty array)
-  const bottomRemarks = JSON.parse(sessionStorage.getItem('bottomRemarksData')) || [];
-  const regularRemarks = JSON.parse(sessionStorage.getItem("remarksData")) || [];
-
-  // Store in sessionStorage for other functions to use (OPTIONAL: this line might be unnecessary now)
-  sessionStorage.setItem('bottomRemarksData', JSON.stringify(bottomRemarks));
-
-  const remarksToDisplay = bottomRemarks.length ? bottomRemarks : regularRemarks;
-
+  const data = JSON.parse(sessionStorage.getItem("remarksData")) || [];
   container.innerHTML = "";
 
-  // Always show at least 3 items
-  const count = Math.max(remarksToDisplay.length, 3);
+  const count = Math.max(data.length, 3);
   for (let i = 0; i < count; i++) {
     const div = document.createElement("div");
     div.className = "remarks-item";
-    div.textContent = remarksToDisplay[i] || "--";
+    div.textContent = data[i] || "--";
     container.appendChild(div);
   }
 }
 
-
 // ====================== API DATA FETCHING ======================
+// async function fetchAndDisplayDPR(dprId = 17) {  
+//   // Default ID is 17
+//   try {
+//     const response = await fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
+//     const { data } = await response.json();
+//     // Cumulative Manpower
+// const cumulativeManpower = data.cumulative_manpower || 0;
+// const cumulativeElement = document.getElementById("cumulative-manpower");
+// if (cumulativeElement) {
+//   cumulativeElement.textContent = cumulativeManpower;
+// }
+//     // Site Condition
+//     const { site_condition } = data;
+//     document.getElementById("rainy-day-checkbox").classList.toggle("active", site_condition.is_rainy);
+//     document.getElementById("normal-day-checkbox").classList.toggle("active", !site_condition.is_rainy);
+//     if (site_condition.ground_state === "slushy") {
+//       document.getElementById("slushy-day-checkbox").classList.add("active");
+//     } 
+//     if (site_condition.ground_state === "dry") {
+//       document.getElementById("dry-day-checkbox").classList.add("active");
+//     }
+
+//     // Rain Timings
+//     const timingContainer = document.getElementById("from-to-container");
+//     timingContainer.innerHTML = "";
+//     (site_condition.rain_timing || []).forEach(t => {
+//       const [from, to] = t.split("-");
+//       const div = document.createElement("div");
+//       div.innerHTML = `
+//         <div class="info-label">From</div><div class="info-value">${from}</div>
+//         <div class="info-label">To</div><div class="info-value">${to}</div>
+//       `;
+//       timingContainer.appendChild(div);
+//     });
+
+//     // Labour Report
+
+
+
+//     const labour = data.labour_report;
+//     const tbody = document.getElementById("displayTable").getElementsByTagName("tbody")[0];
+//     tbody.innerHTML = "";
+//     for (let i = 0; i < labour.agency.length; i++) {
+//       const tr = document.createElement("tr");
+//       tr.innerHTML = `
+//         <td>${labour.agency[i]}</td>
+//         <td>${labour.mason[i]}</td>
+//         <td>${labour.carp[i]}</td>
+//         <td>${labour.fitter[i]}</td>
+//         <td>${labour.electrical[i]}</td>
+//         <td>${labour.painter[i]}</td>
+//         <td>${labour.gypsum[i]}</td>
+//         <td>${labour.plumber[i]}</td>
+//         <td>${labour.helper[i]}</td>
+//         <td>${labour.staff[i]}</td>
+//         <td>${
+//           labour.helper[i] + labour.staff[i] + labour.mason[i] + 
+//           labour.carp[i] + labour.fitter[i] + labour.electrical[i] + 
+//           labour.painter[i] + labour.gypsum[i] + labour.plumber[i]
+//         }</td>
+//         <td>${labour.remarks || "--"}</td>
+//       `;
+//       tbody.appendChild(tr);
+//     }
+
+//     // Progress Data
+//     populateTable(
+//       data.today_prog.progress.map((p, i) => [p, data.today_prog.qty[i]]),
+//       todayTable,
+//       true
+//     );
+//     populateTable(
+//       data.tomorrow_plan.plan.map((p, i) => [p, data.tomorrow_plan.qty[i]]),
+//       tomorrowTable,
+//       true
+//     );
+
+//     // Events
+//     const eventsContainer = document.getElementById("events-container");
+//     eventsContainer.innerHTML = "";
+//     (data.report_footer.events_visit || []).forEach(event => {
+//       const div = document.createElement("div");
+//       div.className = "remarks-item";
+//       div.textContent = event;
+//       eventsContainer.appendChild(div);
+//     });
+
+//     // Remarks
+//     document.getElementById("remarks-content-container").innerHTML = `
+//       <div class="remarks-item">${labour.remarks || "--"}</div>
+//     `;
+
+//     // Footer
+//     document.getElementById("prepared-by").textContent = data.report_footer.prepared_by;
+//     document.getElementById("distribution").textContent = data.report_footer.distribute.join(", ");
+
+//     // Date
+//     document.getElementById("report_date").textContent = new Date(data.report_date).toLocaleDateString("en-GB");
+
+//   } catch (err) {
+//     console.error("Error fetching DPR:", err);
+//   }
+// }
 function updateProjectUI(projectData) {
   document.getElementById("project_name").textContent = projectData.project_name || "--";
   document.getElementById("Employer").textContent = projectData.Employer || "--";
@@ -300,59 +375,44 @@ if (projectData.start_date) {
 }
 
 
-// async function fetchAndDisplayCumulativeManpower() {
-//   try {
-//     // Fetch project data (using your existing endpoint)
-//     const response = await fetch('http://34.47.131.237:3000/project/getProject/1');
-//     const { data } = await response.json();
+async function fetchAndDisplayCumulativeManpower() {
+  try {
+    // Fetch project data (using your existing endpoint)
+    const response = await fetch('http://34.47.131.237:3000/project/getProject/1');
+    const { data } = await response.json();
     
-//     // Get cumulative manpower (with fallback to 0 if undefined)
-//     const cumulativeManpower = data.cumulative_manpower || 10;
+    // Get cumulative manpower (with fallback to 0 if undefined)
+    const cumulativeManpower = data.cumulative_manpower || 0;
     
-//     // Display it - ensure you have an element with this ID in your HTML
-//     const displayElement = document.getElementById('cumulative-manpower');
-//     if (displayElement) {
-//       displayElement.textContent = cumulativeManpower;
-//     } else {
-//       console.error('Element with ID "cumulative-manpower" not found');
-//     }
+    // Display it - ensure you have an element with this ID in your HTML
+    const displayElement = document.getElementById('cumulative-manpower');
+    if (displayElement) {
+      displayElement.textContent = cumulativeManpower;
+    } else {
+      console.error('Element with ID "cumulative-manpower" not found');
+    }
     
-//     return cumulativeManpower; // Optional: return the value if needed elsewhere
+    return cumulativeManpower; // Optional: return the value if needed elsewhere
     
-//   } catch (error) {
-//     console.error('Failed to fetch cumulative manpower:', error);
-//     // Fallback display if API fails
-//     document.getElementById('cumulative-manpower').textContent = 'N/A';
-//     return 0;
-//   }
-// }
+  } catch (error) {
+    console.error('Failed to fetch cumulative manpower:', error);
+    // Fallback display if API fails
+    document.getElementById('cumulative-manpower').textContent = 'N/A';
+    return 0;
+  }
+}
 
 // Usage (call when needed, e.g., on page load):
-// fetchAndDisplayCumulativeManpower();
+fetchAndDisplayCumulativeManpower();
 
-//-----------------------------to fetch and display the cummulative man power---------------------//
-const dprId = getCurrentDPRId() || 45;
-fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`)
-  .then(response => response.json())
-  .then(data => {
-    // Get the value using the key
-    const value = data.data?.cumulative_manpower;
-    // Update the HTML element
-    document.getElementById("cumulative-manpower").textContent = value ?? 'Value not found';
-  })
-  .catch(error => {
-    console.error('Error fetching data:', error);
-    document.getElementById("cumulative-manpower").textContent = 'Failed to load data';
-  });
 
-async function fetchAndDisplayDPR() {
+
+async function fetchAndDisplayDPR(dprId = 17) {
   try {
-
-    const dprId = getCurrentDPRId() || 45; // Fallback to 45 if no ID is found
-    const response = await fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
-    const { data } = await response.json(); 
     
-    // Site Condition - Updated checkbox handling
+    const { data } = await fetchWithRetry(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
+    
+        // Site Condition - Updated checkbox handling
     const { site_condition } = data;
     
     // Clear all checkboxes first
@@ -385,7 +445,6 @@ async function fetchAndDisplayDPR() {
       checkbox.textContent = "";
       checkbox.style.color = "white";
     }
-
     // Rain Timings
     const timingContainer = document.getElementById("from-to-container");
     timingContainer.innerHTML = "";
@@ -428,7 +487,7 @@ async function fetchAndDisplayDPR() {
           labour.gypsum[i] +
           labour.plumber[i]
         }</td>
-        <td>${labour.remarks[i] || "--"}</td>
+        <td>${labour.remarks || "--"}</td>
       `;
       tbody.appendChild(tr);
     }
@@ -451,27 +510,18 @@ async function fetchAndDisplayDPR() {
     eventsContainer.innerHTML = "";
     (data.report_footer.events_visit || []).forEach((event) => {
       const div = document.createElement("div");
-
       div.className = "remarks-item";
       div.textContent = event;
       eventsContainer.appendChild(div);
     });
 
-    // Bottom Remarks (NEW)
-     const remarksContainer = document.getElementById("remarks-content-container");
+    // Remarks
+    const remarksContainer = document.getElementById("remarks-content-container");
     remarksContainer.innerHTML = "";
-    
-    // Use bottom_remarks if available, otherwise use empty array
-    const bottomRemarks = data.report_footer?.bottom_remarks || (data.labour_report?.remarks ? [data.labour_report.remarks] : []);
-    
-    // Always show at least 3 items
-    const count = Math.max(bottomRemarks.length, 3);
-    for (let i = 0; i < count; i++) {
-      const div = document.createElement("div");
-      div.className = "remarks-item";
-      div.textContent = bottomRemarks[i] || "--";
-      remarksContainer.appendChild(div);
-    }
+    const remarkDiv = document.createElement("div");
+    remarkDiv.className = "remarks-item";
+    remarkDiv.textContent = labour.remarks || "--";
+    remarksContainer.appendChild(remarkDiv);
 
     // Footer
     document.getElementById("prepared-by").textContent =
@@ -488,78 +538,135 @@ async function fetchAndDisplayDPR() {
     console.error("Error fetching DPR:", err);
     showErrorToUser("Failed to load DPR data. Please try again.");
   }
+
+  
 }
+
 // ====================== PDF PREVIEW ======================
 // ====================== PDF PREVIEW ======================
 function prepareForPDFPreview() {
   try {
-    // Get all data with fallbacks
-    const apiData = JSON.parse(sessionStorage.getItem('apiProjectData')) || {};
-    const formValues = JSON.parse(sessionStorage.getItem('form-values')) || [];
-    const timeSlots = JSON.parse(sessionStorage.getItem('timeslots')) || [];
-    const tableData = JSON.parse(sessionStorage.getItem('userTableData')) || [];
-    const todayData = JSON.parse(sessionStorage.getItem('todayTableData')) || [];
-    const tomorrowData = JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [];
-    const eventsData = JSON.parse(sessionStorage.getItem('eventsData')) || [];
-    const remarksData = JSON.parse(sessionStorage.getItem('remarksData')) || [];
-    const bottomRemarksData = JSON.parse(sessionStorage.getItem('bottomRemarksData')) || [];
+    // Safe data getter with multiple fallbacks
+    const getData = () => {
+      return {
+        // Get from API data or use empty object
+        apiData: JSON.parse(sessionStorage.getItem('apiProjectData')) || {},
+        // Get form values or empty array
+        formValues: JSON.parse(sessionStorage.getItem('form-values')) || [],
+        // Get timeslots or empty array 
+        timeSlots: JSON.parse(sessionStorage.getItem('timeslots')) || [],
+        // Get table data or empty arrays
+        tableData: JSON.parse(sessionStorage.getItem('userTableData')) || [],
+        todayData: JSON.parse(sessionStorage.getItem('todayTableData')) || [],
+        tomorrowData: JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [],
+        eventsData: JSON.parse(sessionStorage.getItem('eventsData')) || [],
+        remarksData: JSON.parse(sessionStorage.getItem('remarksData')) || []
+      };
+    };
 
-    // Prepare project data
-    const projectData = {
-      project_name: apiData.project_name || "--",
-      Employer: apiData.Employer || "--",
-      contract_no: apiData.contract_no || "--",
-      location: apiData.location || "--",
-      start_date: apiData.start_date || "--",
-      end_date: apiData.end_date || "--",
-      total_days: document.getElementById("total_days")?.textContent || "--",
-      days_remaining: document.getElementById("days_left")?.textContent || "--",
-      report_date: document.getElementById("report_date")?.textContent || new Date().toLocaleDateString('en-GB'),
-      
-      site_condition: {
-        is_rainy: formValues[0] === "Rainy",
-        ground_state: formValues[1] || "dry",
-        rain_timing: timeSlots.map(slot => `${slot.from}-${slot.to}`)
-      },
+    const {
+      apiData,
+      formValues,
+      timeSlots,
+      tableData,
+      todayData,
+      tomorrowData,
+      eventsData,
+      remarksData
+    } = getData();
 
-      labour_report: {
-        agency: tableData.map(row => row[0] || "--"),
-        mason: tableData.map(row => parseInt(row[1]) || 0),
-        carp: tableData.map(row => parseInt(row[2]) || 0),
-        fitter: tableData.map(row => parseInt(row[3]) || 0),
-        electrical: tableData.map(row => parseInt(row[4]) || 0),
-        painter: tableData.map(row => parseInt(row[5]) || 0),
-        gypsum: tableData.map(row => parseInt(row[6]) || 0),
-        plumber: tableData.map(row => parseInt(row[7]) || 0),
-        helper: tableData.map(row => parseInt(row[8]) || 0),
-        staff: tableData.map(row => parseInt(row[9]) || 0),
-        remarks: tableData.map(row => row[11] || "--")
-      },
-
-      today_prog: {
-        progress: todayData.map(row => row[0] || "--"),
-        qty: todayData.map(row => row[1] || "--")
-      },
-
-      tomorrow_plan: {
-        plan: tomorrowData.map(row => row[0] || "--"),
-        qty: tomorrowData.map(row => row[1] || "--")
-      },
-
-      report_footer: {
-        events_visit: eventsData,
-        distribute: ["L&T", "MAPLANI"],
-        prepared_by: "Mano Project Pvt. Ltd.",
-        bottom_remarks: bottomRemarksData.length ? bottomRemarksData : remarksData
+    // Safe element text getter
+    const getTextSafe = (id, fallback = "--") => {
+      try {
+        const el = document.getElementById(id);
+        return el?.textContent?.trim() || fallback;
+      } catch {
+        return fallback;
       }
     };
 
+    // Format timeslots safely
+    const formattedTimeSlots = timeSlots.map(slot => {
+      if (!slot) return "--:--";
+      if (typeof slot === 'string') return slot;
+      if (slot.from && slot.to) return `${slot.from}-${slot.to}`;
+      return "--:--";
+    });
+
+    // Prepare project data with EVERY field having a fallback
+    const projectData = {
+      project_name: apiData.project_name || "Project Name",
+      Employer: apiData.Employer || "Employer",
+      contract_no: apiData.contract_no || "Contract #",
+      location: apiData.location || "Location",
+      start_date: apiData.start_date ? 
+        new Date(apiData.start_date).toLocaleDateString('en-GB') : "--",
+      completion_date: apiData.completion_date ? new Date(apiData.completion_date).toLocaleDateString('en-GB') : "--",
+      total_days: getTextSafe('total', "0"),
+      days_remaining: getTextSafe('balance-left', "0"),
+      report_date: getTextSafe('report_date', new Date().toLocaleDateString('en-GB')),
+      
+      site_conditions: {
+        normal_day: formValues[0] === "Sunny",
+        rainy_day: formValues[0] === "Rainy",
+        slushy_day: formValues[1] === "slushy",
+        dry_day: formValues[1] === "dry",
+        time_slots: formattedTimeSlots.length ? formattedTimeSlots : ["--:--"]
+      },
+
+      labour_data: {
+        table_data: tableData.length ? tableData : [["--", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "--"]],
+        cumulative_manpower: apiData.cumulative_manpower || "0"
+      },
+
+      today_progress: todayData.length ? todayData : [["--", "--"]],
+      tomorrow_planning: tomorrowData.length ? tomorrowData : [["--", "--"]],
+      events_remarks: eventsData.length ? eventsData : ["--"],
+      general_remarks: remarksData.length ? remarksData : ["--"],
+
+      prepared_by: getTextSafe('prepared-by', "User"),
+      approved_by: getTextSafe('distribution', "Approver"),
+      dpr_id: getCurrentDPRId() || 17
+    };
+
     sessionStorage.setItem('pdfPreviewData', JSON.stringify(projectData));
-    window.location.href = `dpr1-pdf.html?id=${projectData.dpr_id || 1}`;
+    window.location.href = `dpr1-pdf.html?id=${projectData.dpr_id}`;
     
   } catch (error) {
     console.error("PDF Preview Error:", error);
-    alert("Error preparing PDF preview. Please try again.");
+    // Ultimate fallback - create minimal valid data
+    const fallbackData = {
+      project_name: "Project",
+      Employer: "Employer",
+      contract_no: "--",
+      location: "--",
+      start_date: "--",
+      completion_date: "--",
+      total_days: "0",
+      days_remaining: "0",
+      report_date: new Date().toLocaleDateString('en-GB'),
+      site_conditions: {
+        normal_day: false,
+        rainy_day: false,
+        slushy_day: false,
+        dry_day: false,
+        time_slots: ["--:--"]
+      },
+      labour_data: {
+        table_data: [["--", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "--"]],
+        cumulative_manpower: "0"
+      },
+      today_progress: [["--", "--"]],
+      tomorrow_planning: [["--", "--"]],
+      events_remarks: ["--"],
+      general_remarks: ["--"],
+      prepared_by: "User",
+      approved_by: "Approver",
+      dpr_id: 17
+    };
+    
+    sessionStorage.setItem('pdfPreviewData', JSON.stringify(fallbackData));
+    window.location.href = `dpr1-pdf.html?id=17`;
   }
 }
 // Helper function to get current DPR ID
@@ -580,15 +687,25 @@ function getCurrentDPRId() {
   return null; // Return null if no ID found
 }
 
-
+// Helper function to calculate cumulative manpower
+// function calculateCumulativeManpower(tableData) {
+//   try {
+//     return tableData.reduce((total, row) => {
+//       const rowTotal = parseInt(row[10]) || 0;
+//       return total + rowTotal;
+//     }, 0);
+//   } catch (error) {
+//     console.error("Error calculating cumulative manpower:", error);
+//     return 0;
+//   }
+// }
 // ====================== INITIALIZATION ======================
 // Update the initialization to properly handle API data
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     // First try to load from API
     await fetchProjectData();
-     const dprId = getCurrentDPRId() || 45;
-    await fetchAndDisplayDPR(dprId);
+    await fetchAndDisplayDPR();
     
     // Then fall back to session data if API fails
     if (!sessionStorage.getItem('apiProjectData')) {
@@ -599,6 +716,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       handleTimeSlots();
     }
     
+    handleEvents();
+    handleRemarks();
   } catch (error) {
     console.error("Initialization error:", error);
     // Fallback to session data

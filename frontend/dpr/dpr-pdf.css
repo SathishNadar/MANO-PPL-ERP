@@ -499,21 +499,7 @@ button:active {
         width: 100% !important;
         page-break-inside: avoid !important;
     }
-    .time-slots-table {
-    width: 100%;
-    border-collapse: collapse;
     
-}
-
-.time-slots-table th {
-    text-align: left;
-    padding: 4px;
-    font-weight: normal;
-}
-
-.time-slots-table td {
-    padding: 4px;
-}
     .today-planning-header,
     .tomorrow-planning-header {
         column-span: 2;

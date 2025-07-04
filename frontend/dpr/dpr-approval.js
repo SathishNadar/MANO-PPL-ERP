@@ -591,7 +591,7 @@ const remarksData = Array.from(remarksInputs)
 // Replace the last part of your dpr-approval.js with this:
 
 
-fetch("http://34.47.131.237:3000/report/getDPR/17")
+fetch("http://34.47.131.237:3000/report/getDPR/30")
   .then(response => {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

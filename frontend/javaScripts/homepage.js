@@ -251,33 +251,34 @@ function loadProjectList() {
         <div class="btn-txt">Add Project</div>
       </button>
     </div>
-  
   `;
 
   const session = JSON.parse(localStorage.getItem("session"));
+
+  const loadAndAttach = () => {
+    if (session?.user_id) {
+      loadProjects(session.user_id);
+    }
+
+    const addBtn = document.querySelector(".icon-btn");
+    if (addBtn) {
+      addBtn.addEventListener("click", () => {
+        openNewProjectPopup(session.user_id);
+      });
+    }
+  };
+
   if (!window.projectScriptLoaded) {
     const script = document.createElement("script");
     script.src = "../javaScripts/projects.js";
     script.type = "module";
     script.onload = () => {
       window.projectScriptLoaded = true;
-      if (session?.user_id) {
-        // ✅ Now it's safe to call after script is loaded
-        loadProjects(session.user_id);
-      }
-      document.querySelector(".icon-btn").addEventListener("click", () => {
-        openNewProjectPopup(session.user_id);
-      });
+      loadAndAttach();
     };
     document.head.appendChild(script);
   } else {
-    const session = JSON.parse(localStorage.getItem("session"));
-    if (session?.user_id) {
-      loadProjects(session.user_id);
-    }
-    document
-      .querySelector(".icon-btn")
-      .addEventListener("click", openNewProjectPopup(session.user_id));
+    loadAndAttach();
   }
 }
 

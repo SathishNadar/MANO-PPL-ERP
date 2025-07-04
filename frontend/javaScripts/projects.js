@@ -51,60 +51,62 @@ async function loadProjects(userId) {
   }
 }
 
-function openNewProjectPopup( userId) {
-  if (document.getElementById("popup-wrapper")) return;
+function openNewProjectPopup(userId) {
+  if (document.getElementById("new-project-popup-wrapper")) return;
 
   const popup = document.createElement("div");
-  popup.id = "popup-wrapper";
-  popup.className = "popup-wrapper";
+  popup.id = "new-project-popup-wrapper";
+  popup.className = "new-project-popup-wrapper";
   popup.innerHTML = `
-    <div class="project-form-card">
-      <button id="close-popup" class="popup-close">&times;</button>
+    <div class="new-project-form-card">
+      <button id="new-project-close" class="new-project-popup-close">&times;</button>
 
-      <form id="new-project-form">
-        <div class="form-group" style="grid-column: 1 / span 2">
+      <form id="new-project-form" class="new-project-form">
+        <div class="new-project-form-group" style="grid-column: 1 / span 2">
           <label for="project_name">Project Name</label>
           <input type="text" id="project_name" name="project_name" required />
         </div>
 
-        <div class="form-group" style="grid-column: 3 / span 2">
+        <div class="new-project-form-group" style="grid-column: 3 / span 2">
           <label for="project_code">Project Code</label>
           <input type="text" id="project_code" name="project_code" required />
         </div>
 
-        <div class="form-group" style="grid-column: 1 / span 2; grid-row: 2 / span 2">
+        <div class="new-project-form-group" style="grid-column: 1 / span 2; grid-row: 2 / span 2">
           <label for="project_description">Description</label>
-          <textarea id="project_description" name="project_description" class="beige tall-textarea" required></textarea>
+          <textarea id="project_description" name="project_description" class="new-project-tall-textarea" required></textarea>
         </div>
 
-        <div class="form-group" style="grid-column: 3 / span 2; grid-row: 2 / span 2">
+        <div class="new-project-form-group" style="grid-column: 3 / span 2; grid-row: 2 / span 2">
           <label for="location">Location</label>
-          <textarea id="location" name="location" class="beige tall-textarea" required></textarea>
+          <textarea id="location" name="location" class="new-project-tall-textarea" required></textarea>
         </div>
 
-        <div class="form-group" style="grid-column: 1 / span 2; grid-row: 4">
+        <div class="new-project-form-group" style="grid-column: 1 / span 2; grid-row: 4">
           <label for="Employer">Employer</label>
           <input type="text" id="Employer" name="Employer" required />
         </div>
 
-        <div class="form-group" style="grid-column: 3; grid-row: 4">
+        <div class="new-project-form-group" style="grid-column: 3; grid-row: 4">
           <label for="start_date">Start Date</label>
           <input type="text" id="start_date" name="start_date" class="date-input" required />
         </div>
 
-        <div class="form-group" style="grid-column: 4; grid-row: 4">
+        <div class="new-project-form-group" style="grid-column: 4; grid-row: 4">
           <label for="end_date">End Date</label>
           <input type="text" id="end_date" name="end_date" class="date-input" required />
         </div>
 
-        <input type="submit" value="Create Project" />
+        <div class="new-project-form-group" style="grid-column: span 4;">
+          <input type="submit" value="Create Project" />
+        </div>
       </form>
     </div>
   `;
 
   document.body.appendChild(popup);
 
-  document.getElementById("close-popup").addEventListener("click", () => {
+  document.getElementById("new-project-close").addEventListener("click", () => {
     popup.remove();
   });
 
@@ -175,7 +177,8 @@ function openNewProjectPopup( userId) {
         console.error(err);
       }
     });
-    loadProjects(userId);
+
+  loadProjects(userId);
 }
 
 export { loadProjects, openNewProjectPopup };

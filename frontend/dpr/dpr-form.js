@@ -1,428 +1,665 @@
 // =================== TIME SLOTS ===================
 let timeSlots = [];
 
+// Function to update timeslot display
 function updateTimeslotDisplay() {
-  const display = document.getElementById('timeslots-display');
-  if (!display) return;
-  
-  display.innerHTML = '';
+  const display = document.getElementById("timeslots-display");
+  display.innerHTML = "";
 
   if (timeSlots.length === 0) {
-    display.style.display = 'none';
+    display.style.display = "none";
     return;
   }
 
   timeSlots.forEach((slot, index) => {
-    const slotElement = document.createElement('div');
-    slotElement.className = 'timeslot-item';
-    slotElement.innerHTML = `<span>${slot.from} - ${slot.to}</span><span class="timeslot-remove" data-index="${index}">×</span>`;
+    const slotElement = document.createElement("div");
+    slotElement.className = "timeslot-item";
+    slotElement.innerHTML = `
+      <span>${slot.from} - ${slot.to}</span>
+      <span class="timeslot-remove" data-index="${index}">×</span>
+    `;
     display.appendChild(slotElement);
   });
 
-  document.querySelectorAll('.timeslot-remove').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const index = parseInt(e.target.getAttribute('data-index'));
+  // Add event listeners to remove buttons
+  document.querySelectorAll(".timeslot-remove").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const index = parseInt(e.target.getAttribute("data-index"));
       timeSlots.splice(index, 1);
       updateTimeslotDisplay();
       updateTimeslotCount();
     });
   });
 
-  display.style.display = 'block';
+  display.style.display = "block";
 }
 
 function updateTimeslotCount() {
-  const countElement = document.getElementById('timeslot-count');
-  if (!countElement) return;
-  
+  const countElement = document.getElementById("timeslot-count");
   countElement.textContent = timeSlots.length;
-  const popupBtn = document.getElementById('pop-up');
-  if (popupBtn) popupBtn.innerHTML = `<span id="timeslot-count">${timeSlots.length}</span> TIME SLOTS`;
+  document.getElementById(
+    "pop-up"
+  ).innerHTML = `<span id="timeslot-count">${timeSlots.length}</span> TIME SLOTS`;
 }
 
-// Store timeslots on submit
-const submitTimeBtn = document.getElementById("time-slot-submit-button");
-if (submitTimeBtn) {
-  submitTimeBtn.addEventListener("click", function (event) {
+// Store timeslots when form is submitted
+document
+  .getElementById("time-slot-submit-button")
+  .addEventListener("click", function (event) {
     event.preventDefault();
-    timeSlots = [];
-    document.querySelectorAll("#timeSlotsContainer .time-slot").forEach(slot => {
-      const fromInput = slot.querySelector("input[type='time']");
-      const toInput = slot.querySelectorAll("input[type='time']")[1];
-      if (fromInput && toInput && fromInput.value && toInput.value) {
-        timeSlots.push({ from: fromInput.value, to: toInput.value });
-      }
-    });
+
+    timeSlots = []; // Reset timeSlots
+
+    document
+      .querySelectorAll("#timeSlotsContainer .time-slot")
+      .forEach((slot) => {
+        let fromTime = slot.querySelector(
+          "input[type='time']:first-of-type"
+        ).value;
+        let toTime = slot.querySelector(
+          "input[type='time']:last-of-type"
+        ).value;
+
+        if (fromTime && toTime) {
+          timeSlots.push({ from: fromTime, to: toTime });
+        }
+      });
+
     updateTimeslotDisplay();
     updateTimeslotCount();
-    const modal = document.getElementById("myModal");
-    if (modal) modal.style.display = "none";
+    modal.style.display = "none";
+  });
+
+// Toggle timeslot display when button is clicked
+document.getElementById("pop-up").addEventListener("click", function (e) {
+  // Only toggle if not opening the modal
+  if (e.target !== this && e.target.className !== "timeslot-remove") return;
+
+  const display = document.getElementById("timeslots-display");
+  if (timeSlots.length > 0) {
+    display.style.display = display.style.display === "none" ? "block" : "none";
+  } else {
+    modal.style.display = "block";
+  }
+});
+
+// Add Time Slot Button Functionality
+document.getElementById("addTimeSlotBtn").addEventListener("click", (e) => {
+  e.preventDefault();
+  const existingSlots = document.querySelectorAll(
+    "#timeSlotsContainer .time-slot"
+  ).length;
+  const timeSlotCount = existingSlots + 1;
+
+  const newTimeSlot = document.createElement("div");
+  newTimeSlot.className = "time-slot";
+
+  const timeslotHeader = document.createElement("h5");
+  timeslotHeader.textContent = `TIME SLOT ${timeSlotCount}`;
+
+  const fromTimeInput = document.createElement("input");
+  fromTimeInput.type = "time";
+  fromTimeInput.className = "time-input";
+
+  const toTimeInput = document.createElement("input");
+  toTimeInput.type = "time";
+  toTimeInput.className = "time-input";
+
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.textContent = "Remove";
+  removeButton.className = "remove-time-slot-button";
+
+  removeButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.target.closest(".time-slot").remove();
+  });
+
+  newTimeSlot.appendChild(timeslotHeader);
+  newTimeSlot.appendChild(fromTimeInput);
+  newTimeSlot.appendChild(toTimeInput);
+  newTimeSlot.appendChild(removeButton);
+
+  document.getElementById("timeSlotsContainer").appendChild(newTimeSlot);
+});
+document.addEventListener("DOMContentLoaded", function () {
+  // Add event listeners to existing inputs
+  const existingInputs = document.querySelectorAll(".cell-input");
+  existingInputs.forEach((input) => {
+    input.addEventListener("input", calculateTotals);
+  });
+
+  // Initialize other components...
+  updateTimeslotDisplay();
+  updateTimeslotCount();
+});
+//=============EVERYTHING RELATED TO FORM INPUT============================//
+function displaydata() {
+  const input_array = [];
+  const today_progress_input = document.querySelector(".today-progress");
+  const today_progress_quantity_input = document.querySelector(
+    ".today-progress-quantity"
+  );
+
+  const today_progress = today_progress_input ? today_progress_input.value : "";
+  const today_progress_quantity = today_progress_quantity_input
+    ? today_progress_quantity_input.value
+    : "";
+
+  const tomorrows_planning_input = document.querySelector(
+    ".tomorrows-planning"
+  );
+  const tomorrows_planning_quantity_input = document.querySelector(
+    ".tomorrows-planning-quantity"
+  );
+
+  const tomorrows_planning = tomorrows_planning_input
+    ? tomorrows_planning_input.value
+    : "";
+  const tomorrows_planning_quantity = tomorrows_planning_quantity_input
+    ? tomorrows_planning_quantity_input.value
+    : "";
+
+  let radio_buttons_value = "";
+  let ground_ground_state_value = "";
+
+  var radio_buttons = document.getElementsByName("weather");
+  var ground_state_button = document.getElementsByName("ground-state");
+
+  for (let i = 0; i < radio_buttons.length; i++) {
+    if (radio_buttons[i].checked) {
+      radio_buttons_value = radio_buttons[i].value;
+    }
+  }
+
+  for (let j = 0; j < ground_state_button.length; j++) {
+    if (ground_state_button[j].checked) {
+      ground_ground_state_value = ground_state_button[j].value;
+    }
+  }
+
+  input_array.push(
+    radio_buttons_value,
+    ground_ground_state_value,
+    today_progress,
+    today_progress_quantity,
+    tomorrows_planning,
+    tomorrows_planning_quantity
+  );
+
+  const table = document.getElementById("labourTable");
+  const rows = Array.from(table.rows);
+
+  // Start from index 1 to skip the header row
+  const tableData = rows.slice(1).map((row) => {
+    const cells = Array.from(row.cells);
+    return cells.map((cell) => {
+      const input = cell.querySelector("input");
+      return input ? input.value : cell.textContent.trim();
+    });
+  });
+
+  // Save the table data to sessionStorage
+  sessionStorage.setItem("userTableData", JSON.stringify(tableData));
+
+  // For the "today-table"
+  const todaytable = document.getElementById("today-table");
+  const todayrows = Array.from(todaytable.rows);
+
+  const todaytableData = todayrows.slice(1).map((row) => {
+    const cells = Array.from(row.cells);
+    return cells.map((cell) => {
+      const input = cell.querySelector("input");
+      const value = input ? input.value.trim() : cell.textContent.trim();
+      return value === "" ? "--" : value;
+    });
+  });
+
+  // For the "tomorrow-table"
+  const tomorrowtable = document.getElementById("tomorrow-table");
+  const tomorrowrows = Array.from(tomorrowtable.rows);
+
+  const tomorrowtableData = tomorrowrows.slice(1).map((row) => {
+    const cells = Array.from(row.cells);
+    return cells.map((cell) => {
+      const input = cell.querySelector("input");
+      const value = input ? input.value.trim() : "";
+      return value === "" ? "--" : value;
+    });
+  });
+
+  // Collect events data (6 inputs minimum)
+  // With this new version that works with the 6-field minimum setup:
+  const eventsInputs = document.querySelectorAll(
+    "#eventsContainer .event-input"
+  );
+  const eventsData = Array.from(eventsInputs)
+    .map((input) => input.value.trim())
+    .filter((event) => event !== "");
+
+  const remarksInputs = document.querySelectorAll(
+    ".dynamicInputsContainer input"
+  );
+  const remarksData = Array.from(remarksInputs)
+    .map((input) => input.value.trim())
+    .filter((remark) => remark !== "");
+  // Save all data to sessionStorage
+  sessionStorage.setItem("todayTableData", JSON.stringify(todaytableData));
+  sessionStorage.setItem(
+    "tomorrowTableData",
+    JSON.stringify(tomorrowtableData)
+  );
+  sessionStorage.setItem("form-values", JSON.stringify(input_array));
+  sessionStorage.setItem("timeslots", JSON.stringify(timeSlots));
+  sessionStorage.setItem("eventsData", JSON.stringify(eventsData)); // For events section
+  sessionStorage.setItem("remarksData", JSON.stringify(remarksData)); // For remarks section
+
+  // Redirect to the next page
+  window.location.href = "dpr-viewer.html";
+}
+
+//---------------------------------------------------- EVERYTHING RELATED TO ADD AND DELETE ROW ----------------------------------------//
+
+function addRow() {
+  const tableBody = document.querySelector("#labourTable tbody");
+  const newRow = document.createElement("tr");
+  newRow.classList.add("data-row");
+  newRow.innerHTML = `
+      <td><input type="text" /></td>
+      <td><input type="number" class="cell-input" /></td>
+      <td><input type="number" class="cell-input" /></td>
+      <td><input type="number" class="cell-input" /></td>
+      <td><input type="number" class="cell-input" /></td>
+      <td><input type="number" class="cell-input" /></td>
+      <td><input type="number" class="cell-input" /></td>
+      <td><input type="number" class="cell-input" /></td>
+      <td><input type="number" class="cell-input" /></td>
+      <td><input type="number" class="cell-input" /></td>
+      <td><input type="number" class="row-total" disabled /></td>
+      <td><input type="text" /></td>
+    `;
+  tableBody.insertBefore(newRow, tableBody.lastElementChild);
+
+  // Add event listeners to all new inputs
+  const inputs = newRow.querySelectorAll(".cell-input");
+  inputs.forEach((input) => {
+    input.addEventListener("input", calculateTotals);
   });
 }
 
-// Modal handling
-const modal = document.getElementById("myModal");
-const openModalBtn = document.getElementById("pop-up");
-const closeModalBtn = document.querySelector(".close");
+//----------------------to add the rows of today planning-------------------------------------------//
+document.addEventListener("DOMContentLoaded", function () {
+  // Get all relevant elements
+  const todayTable = document.getElementById("today-table");
+  const tomorrowTable = document.getElementById("tomorrow-table");
+  const todayAddBtn = document.querySelector(
+    ".today-planning .todo-add-row-btn"
+  );
+  const tomorrowAddBtn = document.querySelector(
+    ".tomorrow-planning .tomo-add-row-btn"
+  );
+  const removeButtons = document.querySelectorAll(".remove-row-btn");
 
-if (openModalBtn) openModalBtn.addEventListener("click", () => {
-  if (modal) modal.style.display = "block";
+  // Function to add a row to a specific table
+  function addRowToTable(table) {
+    const tbody = table.querySelector("tbody") || table.createTBody();
+    const newRow = tbody.insertRow();
+
+    if (table.id === "today-table") {
+      newRow.innerHTML = `
+          <td><input type="text" class="today-progress"></td>
+          <td><input type="number" class="today-progress-quantity"></td>
+        `;
+    } else {
+      newRow.innerHTML = `
+          <td><input type="text" class="tomorrows-planning"></td>
+          <td><input type="number" class="tomorrows-planning-quantity"></td>
+        `;
+    }
+  }
+
+  // Function to remove row from a specific table
+  function removeRowFromTable(table) {
+    const rows = table.querySelectorAll("tbody tr");
+    if (rows.length > 1) {
+      rows[rows.length - 1].remove();
+    } else if (rows.length === 1) {
+      const inputs = rows[0].querySelectorAll("input");
+      inputs.forEach((input) => (input.value = ""));
+    }
+  }
+
+  // Function to handle synchronized row addition
+  function handleAddRow() {
+    addRowToTable(todayTable);
+    addRowToTable(tomorrowTable);
+  }
+
+  const projectId = localStorage.getItem("selected_project_id");
+
+  if (!projectId) {
+    alert("No project selected. Please go back and choose a project.");
+    window.location.href = "../home/projectdesc.html"; // Or fallback page
+  } else {
+    fetch(`http://34.47.131.237:3000/project/getProject/${projectId}`)
+      .then((response) => {
+        if (!response.ok) {
+          document.getElementById("project_name").textContent =
+            "DATA UNAVAILABLE";
+          return Promise.reject(new Error("Project not found"));
+        }
+        return response.json();
+      })
+      .then((Apidata) => {
+        document.getElementById("project_name").innerHTML =
+          Apidata.data.project_name;
+        document.getElementById("start_date").innerHTML = new Date(
+          Apidata.data.start_date
+        ).toLocaleDateString("en-GB");
+        document.getElementById("end_date").innerHTML = new Date(
+          Apidata.data.end_date
+        ).toLocaleDateString("en-GB");
+        document.getElementById("Employer").innerHTML = Apidata.data.Employer;
+        document.getElementById("project_description").innerHTML =
+          Apidata.data.project_description;
+        document.getElementById("contract_no").innerHTML =
+          Apidata.data.contract_no;
+        document.getElementById("location").innerHTML = Apidata.data.location;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+// You can change this URL to any valid API returning an array of objects
+async function getLatestDprId() {
+  try {
+    const response = await fetch(`http://34.47.131.237:3000/report/Alldpr/${projectId}?limit=10`);
+    const dprArray = await response.json();
+
+    const latestDPR = dprArray.reduce((latest, current) => {
+      return new Date(current.report_date) > new Date(latest.report_date) ? current : latest;
+    });
+
+    const latestDprId = latestDPR.dpr_id;
+
+    // ✅ Move the second fetch here so it waits for the ID
+    fetch(`http://34.47.131.237:3000/report/getDPR/${latestDprId}`)
+      .then(res => res.ok ? res.json() : Promise.reject("Previous DPR not found"))
+      .then(prev => {
+        const prevPlan = prev?.data?.tomorrow_plan;
+        const progressList = prevPlan?.plan || [];
+        const qtyList = prevPlan?.qty || [];
+
+        const todayTable = document.getElementById('today-table');
+        const todayBody = todayTable.querySelector('tbody');
+        todayBody.innerHTML = '';
+
+        const tomorrowTable = document.getElementById('tomorrow-table');
+        const tomorrowBody = tomorrowTable.querySelector('tbody');
+        tomorrowBody.innerHTML = '';
+
+        for (let i = 0; i < progressList.length; i++) {
+          const todayRow = todayBody.insertRow();
+          todayRow.innerHTML = `
+            <td><input type="text" class="today-progress" value="${progressList[i]}" /></td>
+            <td><input type="text" class="today-progress-quantity" value="${qtyList[i] || ''}" /></td>
+          `;
+
+          const tomorrowRow = tomorrowBody.insertRow();
+          tomorrowRow.innerHTML = `
+            <td><input type="text" class="tomorrows-planning" /></td>
+            <td><input type="number" class="tomorrows-planning-quantity" /></td>
+          `;
+        }
+
+        if (progressList.length === 0) {
+          todayBody.innerHTML = `
+            <tr>
+              <td><input type="text" class="today-progress" /></td>
+              <td><input type="text" class="today-progress-quantity" /></td>
+            </tr>
+          `;
+
+          tomorrowBody.innerHTML = `
+            <tr>
+              <td><input type="text" class="tomorrows-planning" /></td>
+              <td><input type="number" class="tomorrows-planning-quantity" /></td>
+            </tr>
+          `;
+        }
+      })
+      .catch(err => console.error("Error fetching previous DPR:", err));
+
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+}
+getLatestDprId();
+
+
+  //-----------------------------------------------------------------------------------------------------------------------
+
+  // Function to handle synchronized row removal
+  function handleRemoveRow() {
+    removeRowFromTable(todayTable);
+    removeRowFromTable(tomorrowTable);
+  }
+
+  // Event listeners
+  if (todayAddBtn) todayAddBtn.addEventListener("click", handleAddRow);
+  if (tomorrowAddBtn) tomorrowAddBtn.addEventListener("click", handleAddRow);
+
+  removeButtons.forEach((button) => {
+    button.addEventListener("click", handleRemoveRow);
+  });
 });
 
-if (closeModalBtn) closeModalBtn.addEventListener("click", () => {
-  if (modal) modal.style.display = "none";
-});
-
-window.addEventListener("click", (e) => { 
-  if (e.target === modal && modal) modal.style.display = "none"; 
-});
-
-// =================== LABOUR TABLE ===================
-let labourCategories = ["Mason", "Carp", "Fitter", "Electrical", "Painter", "Gypsum", "Plumber", "Helper", "Staff"];
-
+//--------------------------TO CALCULATE THE GRAND TOTAL OF THE VALUES----------------------------------//
 function calculateTotals() {
-  const dataRows = document.querySelectorAll('.data-row');
-  const columnTotals = new Array(labourCategories.length).fill(0);
+  const dataRows = document.querySelectorAll(".data-row");
+  const columnTotals = new Array(9).fill(0);
   let grandTotal = 0;
 
-  dataRows.forEach(row => {
+  dataRows.forEach((row) => {
     let rowTotal = 0;
-    const inputs = row.querySelectorAll('.cell-input');
-    inputs.forEach((input, idx) => {
-      const val = parseFloat(input.value) || 0;
-      rowTotal += val;
-      columnTotals[idx] += val;
+    const inputs = row.querySelectorAll(".cell-input");
+    inputs.forEach((input, index) => {
+      const value = parseFloat(input.value) || 0;
+      rowTotal += value;
+      columnTotals[index] += value;
     });
-    const rowTotalInput = row.querySelector('.row-total');
-    if (rowTotalInput) rowTotalInput.value = rowTotal;
+
+    const rowTotalInput = row.querySelector(".row-total");
+    rowTotalInput.value = rowTotal;
     grandTotal += rowTotal;
   });
 
-  columnTotals.forEach((total, i) => {
-    const totalField = document.getElementById(`${i + 1}_total`);
-    if (totalField) totalField.value = total;
-  });
+  for (let i = 0; i < columnTotals.length; i++) {
+    document.getElementById(`${i + 1}_total`).value = columnTotals[i];
+  }
 
-  const grandField = document.getElementById('grandtotal');
-  if (grandField) grandField.value = grandTotal;
-}
-
-function addRow() {
-  const tbody = document.querySelector("#labourTable tbody");
-  if (!tbody) return;
-  
-  const newRow = document.createElement("tr");
-  newRow.classList.add("data-row");
-  newRow.innerHTML = `<td><input type="text" /></td>` +
-    labourCategories.map(() => `<td><input type="number" class="cell-input" /></td>`).join('') +
-    `<td><input type="number" class="row-total" disabled /></td><td><input type="text" /></td>`;
-  
-  tbody.insertBefore(newRow, tbody.lastElementChild);
-  newRow.querySelectorAll('.cell-input').forEach(input => {
-    input.addEventListener('input', calculateTotals);
-  });
-  calculateTotals();
+  document.getElementById("grandtotal").value = grandTotal;
 }
 
 function deleteRow() {
   const rows = document.querySelectorAll(".data-row");
   if (rows.length > 1) {
     rows[rows.length - 1].remove();
-    calculateTotals();
+    calculateTotals(); // Recalculate after deletion
   }
 }
 
-function addColumn() {
-  const table = document.getElementById("labourTable");
-  if (!table) return;
-  
-  const newCategory = prompt("Enter new category:");
-  if (!newCategory) return;
+//---------------------------------POP UP------------------------------------------//
+const modal = document.getElementById("myModal");
+const openModalBtn = document.getElementById("pop-up");
+const closeModalBtn = document.querySelector(".close");
 
-  labourCategories.push(newCategory);
-  const th = document.createElement("th");
-  th.setAttribute("contenteditable", "true");
-  th.innerText = newCategory;
-  table.tHead.rows[0].insertBefore(th, table.tHead.rows[0].cells[table.tHead.rows[0].cells.length - 2]);
+openModalBtn.addEventListener("click", () => {
+  modal.style.display = "block";
+});
 
-  const rows = table.querySelectorAll("tbody .data-row");
-  rows.forEach(row => {
-    const td = document.createElement("td");
-    td.innerHTML = `<input type="number" class="cell-input" />`;
-    row.insertBefore(td, row.cells[row.cells.length - 2]);
-  });
+closeModalBtn.addEventListener("click", () => {
+  modal.style.display = "none";
+});
 
-  const totalRow = table.querySelector("tbody tr:last-child");
-  const tdTotal = document.createElement("td");
-  tdTotal.innerHTML = `<input type="number" disabled />`;
-  tdTotal.id = `${labourCategories.length}_total`;
-  totalRow.insertBefore(tdTotal, totalRow.cells[totalRow.cells.length - 2]);
+window.addEventListener("click", (event) => {
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+});
 
-  document.querySelectorAll('.cell-input').forEach(input => {
-    input.removeEventListener('input', calculateTotals);
-    input.addEventListener('input', calculateTotals);
-  });
-  calculateTotals();
-}
+// ===================== EVENTS SECTION (6+ inputs) ===================== //
+document.addEventListener("DOMContentLoaded", function () {
+  const eventsContainer = document.getElementById("eventsContainer");
+  const addEventBtn = document.getElementById("addEventBtn");
+  const removeEventBtn = document.getElementById("removeEventBtn");
+  const MIN_EVENTS = 6; // Minimum 6 input fields
+  const STORAGE_KEY = "events-data";
 
-function removeColumn() {
-  if (labourCategories.length <= 1) return alert("At least one category must remain.");
-  const table = document.getElementById("labourTable");
-  if (!table) return;
-  
-  const idx = labourCategories.length - 1;
-  table.tHead.rows[0].deleteCell(idx + 1);
-  table.querySelectorAll("tbody .data-row").forEach(row => row.deleteCell(idx + 1));
-  table.querySelector("tbody tr:last-child").deleteCell(idx + 1);
-  labourCategories.pop();
-  calculateTotals();
-}
+  // Initialize with 6 empty fields or load saved data
+  function initializeEvents() {
+    const savedData = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
+    const initialData = savedData || Array(MIN_EVENTS).fill("");
 
-function clearTableKeepRows() {
-  const inputs = document.querySelectorAll('#labourTable tbody tr input');
-  if (!inputs) return;
-  
-  inputs.forEach(input => input.value = '');
-  calculateTotals();
-}
+    // Clear container and recreate inputs
+    eventsContainer.innerHTML = "";
+    initialData.forEach((value, index) => {
+      createEventInput(value, index);
+    });
 
-// =================== EVENTS & REMARKS ===================
-function initializeEvents() {
-  const eventsContainer = document.getElementById('eventsContainer');
-  if (!eventsContainer) return;
-  
-  eventsContainer.innerHTML = '';
-  
-  // Create 6 empty event inputs by default
-  for (let i = 0; i < 6; i++) {
-    const inputGroup = document.createElement('div');
-    inputGroup.className = 'input-group';
-    inputGroup.innerHTML = `<input type="text" class="event-input" placeholder="Event ${i + 1}">`;
+    updateRemoveButton();
+  }
+
+  // Create a single event input field
+  function createEventInput(value, index) {
+    const inputGroup = document.createElement("div");
+    inputGroup.className = "input-group";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "event-input";
+    input.value = value;
+    input.placeholder = `Event ${index + 1}`;
+
+    // Save on input change
+    input.addEventListener("input", function () {
+      saveEventsToStorage();
+    });
+
+    inputGroup.appendChild(input);
     eventsContainer.appendChild(inputGroup);
   }
+
+  // Add new event field
+  function addEvent() {
+    createEventInput("", eventsContainer.children.length);
+    saveEventsToStorage();
+    updateRemoveButton();
+  }
+
+  // Remove last event field (if above minimum)
+  function removeEvent() {
+    if (eventsContainer.children.length > MIN_EVENTS) {
+      eventsContainer.removeChild(eventsContainer.lastElementChild);
+      saveEventsToStorage();
+      updateRemoveButton();
+    }
+  }
+
+  // Update remove button state
+  function updateRemoveButton() {
+    removeEventBtn.disabled = eventsContainer.children.length <= MIN_EVENTS;
+  }
+
+  // Save all events data to sessionStorage
+  function saveEventsToStorage() {
+    const inputs = eventsContainer.querySelectorAll(".event-input");
+    const eventsData = Array.from(inputs).map((input) => input.value.trim());
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(eventsData));
+  }
+
+  // Event listeners
+  addEventBtn.addEventListener("click", addEvent);
+  removeEventBtn.addEventListener("click", removeEvent);
+
+  // Initialize on load
+  initializeEvents();
+
+  // Save before page unload
+  window.addEventListener("beforeunload", saveEventsToStorage);
+});
+
+// In your displaydata() function, use this to collect events:
+function getEventsData() {
+  const inputs = document.querySelectorAll("#eventsContainer .event-input");
+  return Array.from(inputs)
+    .map((input) => input.value.trim())
+    .filter((event) => event !== "");
 }
 
-function initializeRemarks() {
-  const remarksContainer = document.getElementById('remarksContainer');
-  if (!remarksContainer) return;
-  
-  remarksContainer.innerHTML = '';
-  
-  // Create 3 empty remark inputs by default
-  for (let i = 0; i < 3; i++) {
-    const inputGroup = document.createElement('div');
-    inputGroup.className = 'input-group';
-    inputGroup.innerHTML = `<input type="text" class="remark-input" placeholder="Remark ${i + 1}">`;
+// ===================== REMARKS SECTION (3+ inputs) ===================== //
+document.addEventListener("DOMContentLoaded", function () {
+  const remarksContainer = document.getElementById("remarksContainer");
+  const addRemarkBtn = document.getElementById("addRemarkBtn");
+  const removeRemarkBtn = document.getElementById("removeRemarkBtn");
+  const MIN_INPUTS = 3; // Minimum required remarks
+
+  // Initialize with 3 inputs
+  function initializeRemarks() {
+    remarksContainer.innerHTML = "";
+    for (let i = 0; i < MIN_INPUTS; i++) {
+      addRemarkField();
+    }
+    updateRemoveButton();
+  }
+
+  // Add new remark field
+  function addRemarkField() {
+    const inputGroup = document.createElement("div");
+    inputGroup.className = "input-group";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "remark-input";
+    input.placeholder = `Remark ${remarksContainer.children.length + 1}`;
+
+    inputGroup.appendChild(input);
     remarksContainer.appendChild(inputGroup);
   }
-}
 
-// =================== PROJECT DATA FETCH ===================
-async function fetchProjectData() {
-  try {
-    const response = await fetch('http://34.47.131.237:3000/project/getProject/1');
-    if (!response.ok) throw new Error('Failed to fetch project data');
-    
-    const data = await response.json();
-    if (!data.data) throw new Error('No project data received');
-    
-    // Update project info fields
-    document.getElementById("project_name").textContent = data.data.project_name || "--";
-    document.getElementById("Employer").textContent = data.data.Employer || "--";
-    document.getElementById("contract_no").textContent = data.data.contract_no || "--";
-    document.getElementById("location").textContent = data.data.location || "--";
-    
-    if (data.data.start_date) {
-      const startDate = new Date(data.data.start_date);
-      document.getElementById("start_date").textContent = startDate.toLocaleDateString('en-GB');
-    }
-    
-    if (data.data.end_date) {
-      const endDate = new Date(data.data.end_date);
-      document.getElementById("end_date").textContent = endDate.toLocaleDateString('en-GB');
-    }
-    
-    // Store in sessionStorage for other pages
-    sessionStorage.setItem('apiProjectData', JSON.stringify(data.data));
-    
-  } catch (error) {
-    console.error("Error fetching project data:", error);
-    document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
-    document.getElementById("project_name").classList.add("error_state");
-  }
-}
-
-// =================== DISPLAY DATA ===================
-function displaydata() {
-  // Weather & ground state
-  const weather = document.querySelector('input[name="weather"]:checked')?.value || "";
-  const ground = document.querySelector('input[name="ground-state"]:checked')?.value || "";
-  sessionStorage.setItem('form-values', JSON.stringify([weather, ground]));
-  
-  // Time slots
-  sessionStorage.setItem('timeslots', JSON.stringify(timeSlots));
-
-  // Today's progress
-  const todayData = [];
-  const todayRows = document.querySelectorAll("#today-table tbody tr");
-  todayRows.forEach(row => {
-    const task = row.querySelector("td:first-child input")?.value.trim() || "--";
-    const qty = row.querySelector("td:last-child input")?.value.trim() || "--";
-    todayData.push([task, qty]);
-  });
-  sessionStorage.setItem('todayTableData', JSON.stringify(todayData));
-
-  // Tomorrow's planning
-  const tomorrowData = [];
-  const tomorrowRows = document.querySelectorAll("#tomorrow-table tbody tr");
-  tomorrowRows.forEach(row => {
-    const task = row.querySelector("td:first-child input")?.value.trim() || "--";
-    const qty = row.querySelector("td:last-child input")?.value.trim() || "--";
-    tomorrowData.push([task, qty]);
-  });
-  sessionStorage.setItem('tomorrowTableData', JSON.stringify(tomorrowData));
-
-  // Events
-  const events = [];
-  const eventInputs = document.querySelectorAll('#eventsContainer .event-input');
-  eventInputs.forEach(input => {
-    if (input.value.trim()) events.push(input.value.trim());
-  });
-  sessionStorage.setItem('eventsData', JSON.stringify(events));
-
-  // Remarks
-  const remarks = [];
-  const remarkInputs = document.querySelectorAll('#remarksContainer .remark-input');
-  remarkInputs.forEach(input => {
-    if (input.value.trim()) remarks.push(input.value.trim());
-  });
-  sessionStorage.setItem('remarksData', JSON.stringify(remarks));
-
-  // Labour report
-  const labourTable = document.getElementById("labourTable");
-  if (labourTable) {
-    const headers = Array.from(labourTable.tHead.rows[0].cells).map(th => th.innerText.trim());
-    const dataRows = labourTable.querySelectorAll("tbody .data-row");
-    const labourReport = {};
-
-    headers.forEach((h, i) => {
-      if (i === 0) labourReport["agency"] = [];
-      else if (i === headers.length - 1) labourReport["remarks"] = [];
-      else if (h.toLowerCase() !== "total") labourReport[h] = [];
-    });
-
-    dataRows.forEach(row => {
-      const cells = row.cells;
-      headers.forEach((h, i) => {
-        const input = cells[i]?.querySelector("input");
-        const val = input?.value.trim() || "";
-        if (i === 0) labourReport["agency"].push(val);
-        else if (i === headers.length - 1) labourReport["remarks"].push(val);
-        else if (h.toLowerCase() !== "total") labourReport[h].push(Number(val) || 0);
-      });
-    });
-
-    sessionStorage.setItem("labourReport", JSON.stringify(labourReport));
+  // Update remove button state
+  function updateRemoveButton() {
+    removeRemarkBtn.disabled = remarksContainer.children.length <= MIN_INPUTS;
   }
 
-  // Redirect to viewer
-  window.location.href = "dpr-viewer.html";
-}
+  // Event listeners
+  addRemarkBtn.addEventListener("click", function () {
+    addRemarkField();
+    updateRemoveButton();
+  });
 
-// =================== INITIALIZATION ===================
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialize components
-  updateTimeslotDisplay();
-  updateTimeslotCount();
-  initializeEvents();
+  removeRemarkBtn.addEventListener("click", function () {
+    if (remarksContainer.children.length > MIN_INPUTS) {
+      remarksContainer.removeChild(remarksContainer.lastElementChild);
+      updateRemoveButton();
+    }
+  });
+
+  // Initialize on load
   initializeRemarks();
-  fetchProjectData();
-  
-  // Set up event listeners
-  document.querySelectorAll('.cell-input').forEach(input => {
-    input.addEventListener('input', calculateTotals);
-  });
-  
-  // Add row buttons
-  const addRowBtn = document.querySelector('.todo-add-row-btn');
-  const addTomorrowRowBtn = document.querySelector('.tomo-add-row-btn');
-  
-  if (addRowBtn) addRowBtn.addEventListener('click', function() {
-    const todayTable = document.getElementById('today-table');
-    const tbody = todayTable.querySelector('tbody');
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
-      <td><input type="text" class="today-progress"></td>
-      <td><input type="number" class="today-progress-quantity"></td>
-    `;
-    tbody.appendChild(newRow);
-  });
-  
-  if (addTomorrowRowBtn) addTomorrowRowBtn.addEventListener('click', function() {
-    const tomorrowTable = document.getElementById('tomorrow-table');
-    const tbody = tomorrowTable.querySelector('tbody');
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
-      <td><input type="text" class="tomorrows-planning"></td>
-      <td><input type="number" class="tomorrows-planning-quantity"></td>
-    `;
-    tbody.appendChild(newRow);
-  });
-  
-  // Remove row buttons
-  document.querySelectorAll('.remove-row-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const table = this.closest('.today-planning, .tomorrow-planning');
-      const tbody = table.querySelector('tbody');
-      const rows = tbody.querySelectorAll('tr');
-      if (rows.length > 1) {
-        tbody.removeChild(rows[rows.length - 1]);
-      }
-    });
-  });
-  
-  // Add/remove event buttons
-  const addEventBtn = document.getElementById('addEventBtn');
-  const removeEventBtn = document.getElementById('removeEventBtn');
-  
-  if (addEventBtn) addEventBtn.addEventListener('click', function() {
-    const container = document.getElementById('eventsContainer');
-    const count = container.querySelectorAll('.input-group').length;
-    const newInput = document.createElement('div');
-    newInput.className = 'input-group';
-    newInput.innerHTML = `<input type="text" class="event-input" placeholder="Event ${count + 1}">`;
-    container.appendChild(newInput);
-  });
-  
-  if (removeEventBtn) removeEventBtn.addEventListener('click', function() {
-    const container = document.getElementById('eventsContainer');
-    const inputs = container.querySelectorAll('.input-group');
-    if (inputs.length > 6) {
-      container.removeChild(inputs[inputs.length - 1]);
-    }
-  });
-  
-  // Add/remove remark buttons
-  const addRemarkBtn = document.getElementById('addRemarkBtn');
-  const removeRemarkBtn = document.getElementById('removeRemarkBtn');
-  
-  if (addRemarkBtn) addRemarkBtn.addEventListener('click', function() {
-    const container = document.getElementById('remarksContainer');
-    const count = container.querySelectorAll('.input-group').length;
-    const newInput = document.createElement('div');
-    newInput.className = 'input-group';
-    newInput.innerHTML = `<input type="text" class="remark-input" placeholder="Remark ${count + 1}">`;
-    container.appendChild(newInput);
-  });
-  
-  if (removeRemarkBtn) removeRemarkBtn.addEventListener('click', function() {
-    const container = document.getElementById('remarksContainer');
-    const inputs = container.querySelectorAll('.input-group');
-    if (inputs.length > 3) {
-      container.removeChild(inputs[inputs.length - 1]);
-    }
-  });
-  
-  // Calculate initial totals
-  calculateTotals();
 });
+
+// In your displaydata() function, keep this for data collection:
+const remarksInputs = document.querySelectorAll(
+  "#remarksContainer .remark-input"
+);
+const remarksData = Array.from(remarksInputs)
+  .map((input) => input.value.trim())
+  .filter((remark) => remark !== "");
+
+function clearTableKeepRows() {
+  const inputs = document.querySelectorAll("#labourTable td input");
+  inputs.forEach((input) => (input.value = ""));
+  if (typeof calculateTotals === "function") calculateTotals();
+}

@@ -169,7 +169,7 @@
 }
 
 .add-icon::before {
-  left: 22px;
+  left: 23px;
   top: calc(50% - 10px);
   width: 2px;
   height: 20px;
@@ -177,7 +177,7 @@
 }
 
 .add-icon::after {
-  right: 22px;
+  right: 23px;
   top: calc(50% - 10px);
   width: 2px;
   height: 20px;
@@ -211,7 +211,9 @@
 }
 
 
-.popup-wrapper {
+/* new - project card  */
+
+.new-project-popup-wrapper {
   position: fixed;
   top: 0;
   left: 0;
@@ -224,7 +226,7 @@
   z-index: 1000;
 }
 
-.project-form-card {
+.new-project-form-card {
   background: #ffffff;
   padding: 40px;
   border-radius: 16px;
@@ -234,40 +236,43 @@
   position: relative;
 }
 
-form {
+.new-project-form {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
 
-.form-group {
+.new-project-form-group {
   display: flex;
   flex-direction: column;
 }
 
-label {
+.new-project-form-group label {
   font-weight: 600;
   margin-bottom: 8px;
   color: #333;
 }
 
-input[type="text"],
-input[type="submit"] {
+.new-project-form-group input[type="text"],
+.new-project-form-group textarea,
+.new-project-form-group input[type="submit"] {
   padding: 12px 16px;
   font-size: 15px;
   border: 1px solid #d0d0d0;
   border-radius: 10px;
   background-color: #f9f9f9;
+  font-family: inherit;
 }
 
-input[type="text"]:focus {
+.new-project-form-group input[type="text"]:focus,
+.new-project-form-group textarea:focus {
   border-color: #007bff;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
   outline: none;
   background-color: #fff;
 }
 
-input[type="submit"] {
+.new-project-form-group input[type="submit"] {
   background-color: #007bff;
   color: white;
   border: none;
@@ -278,17 +283,17 @@ input[type="submit"] {
   width: 100%;
 }
 
-input[type="submit"]:hover {
+.new-project-form-group input[type="submit"]:hover {
   background-color: #0056b3;
 }
 
-
-
-.tall-input {
+.new-project-tall-textarea {
   height: 80px;
+  resize: none;
+  line-height: 1.5;
 }
-
-.popup-close {
+  
+.new-project-popup-close {
   position: absolute;
   top: 16px;
   right: 20px;
@@ -297,13 +302,4 @@ input[type="submit"]:hover {
   font-size: 24px;
   color: #888;
   cursor: pointer;
-}
-
-.tall-textarea {
-  height: 80px;
-  resize: none;
-  padding: 10px;
-  font-size: 14px;
-  line-height: 1.5;
-  vertical-align: top;
 }

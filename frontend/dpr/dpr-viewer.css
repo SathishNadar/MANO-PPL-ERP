@@ -184,19 +184,7 @@
             font-size: 12px;
             color: var(--dark-gray);
         }
-        .active-condition {
-    padding: 8px 12px;
-    border-radius: 4px;
-    margin: 5px;
-    display: inline-block;
-    font-weight: bold;
-    color: white;
-}
-
-.rainy { background-color: #2196F3; }
-.sunny { background-color: #4CAF50; }
-.slushy { background-color: #9C27B0; }
-.dry { background-color: #FFC107; }
+        
         @media (max-width: 768px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
