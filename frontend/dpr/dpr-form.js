@@ -124,113 +124,74 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 //=============EVERYTHING RELATED TO FORM INPUT============================//
 function displaydata() {
-    const input_array = [];
-    const today_progress_input = document.querySelector(".today-progress");
-const today_progress_quantity_input = document.querySelector(".today-progress-quantity");
+  // Weather & site data
+  const weather = document.querySelector('input[name="weather"]:checked')?.value || "";
+  const groundState = document.querySelector('input[name="ground-state"]:checked')?.value || "";
 
-const today_progress = today_progress_input ? today_progress_input.value : "";
-const today_progress_quantity = today_progress_quantity_input ? today_progress_quantity_input.value : "";
+  // Store form values in an array
+  const formValues = [weather, groundState];
+  sessionStorage.setItem('form-values', JSON.stringify(formValues));
 
-   const tomorrows_planning_input = document.querySelector(".tomorrows-planning");
-const tomorrows_planning_quantity_input = document.querySelector(".tomorrows-planning-quantity");
+  // Store time slots
+  sessionStorage.setItem('timeslots', JSON.stringify(timeSlots));
 
-const tomorrows_planning = tomorrows_planning_input ? tomorrows_planning_input.value : "";
-const tomorrows_planning_quantity = tomorrows_planning_quantity_input ? tomorrows_planning_quantity_input.value : "";
+  // Today's progress
+  const todayProgress = Array.from(document.querySelectorAll("#today-table tbody tr")).map(row => {
+    const task = row.cells[0].querySelector("input")?.value.trim() || "--";
+    const qty = row.cells[1].querySelector("input")?.value.trim() || "--";
+    return [task, qty];
+  });
+  sessionStorage.setItem('todayTableData', JSON.stringify(todayProgress));
 
-  
-    let radio_buttons_value = "";
-    let ground_ground_state_value = "";
-  
-    var radio_buttons = document.getElementsByName("weather");
-    var ground_state_button = document.getElementsByName("ground-state");
-  
-    for (let i = 0; i < radio_buttons.length; i++) {
-      if (radio_buttons[i].checked) {
-        radio_buttons_value = radio_buttons[i].value;
-      }
-    }
-  
-    for (let j = 0; j < ground_state_button.length; j++) {
-      if (ground_state_button[j].checked) {
-        ground_ground_state_value = ground_state_button[j].value;
-      }
-    }
-  
-    input_array.push(
-      radio_buttons_value,
-      ground_ground_state_value,
-      today_progress,
-      today_progress_quantity,
-      tomorrows_planning,
-      tomorrows_planning_quantity
-    );
-  
-    const table = document.getElementById("labourTable");
-    const rows = Array.from(table.rows);
-    
-    // Start from index 1 to skip the header row
-    const tableData = rows.slice(1).map((row) => {
-        const cells = Array.from(row.cells);
-        return cells.map((cell) => {
-            const input = cell.querySelector("input");
-            return input ? input.value : cell.textContent.trim();
-        });
-    });
-  
-    // Save the table data to sessionStorage
-    sessionStorage.setItem("userTableData", JSON.stringify(tableData));
+  // Tomorrow's planning
+  const tomorrowPlan = Array.from(document.querySelectorAll("#tomorrow-table tbody tr")).map(row => {
+    const task = row.cells[0].querySelector("input")?.value.trim() || "--";
+    const qty = row.cells[1].querySelector("input")?.value.trim() || "--";
+    return [task, qty];
+  });
+  sessionStorage.setItem('tomorrowTableData', JSON.stringify(tomorrowPlan));
 
-    // For the "today-table"
-    const todaytable = document.getElementById("today-table");
-    const todayrows = Array.from(todaytable.rows);
-
-    const todaytableData = todayrows.slice(1).map((row) => {
-        const cells = Array.from(row.cells);
-        return cells.map((cell) => {
-            const input = cell.querySelector("input");
-            const value = input ? input.value.trim() : cell.textContent.trim();
-            return value === "" ? "--" : value;
-        });
-    });
-
-    // For the "tomorrow-table"
-    const tomorrowtable = document.getElementById("tomorrow-table");
-    const tomorrowrows = Array.from(tomorrowtable.rows);
-
-    const tomorrowtableData = tomorrowrows.slice(1).map((row) => {
-        const cells = Array.from(row.cells);
-        return cells.map((cell) => {
-            const input = cell.querySelector("input");
-            const value = input ? input.value.trim() : "";
-            return value === "" ? "--" : value;
-        });
-    });
-
-
-    // Collect events data (6 inputs minimum)
-// With this new version that works with the 6-field minimum setup:
-const eventsInputs = document.querySelectorAll('#eventsContainer .event-input');
-const eventsData = Array.from(eventsInputs)
+  // Events
+  const events = Array.from(document.querySelectorAll("#eventsContainer .event-input"))
     .map(input => input.value.trim())
-    .filter(event => event !== "");
+    .filter(Boolean);
+  sessionStorage.setItem('eventsData', JSON.stringify(events));
 
-
-
-   const remarksInputs = document.querySelectorAll('.dynamicInputsContainer input');
-const remarksData = Array.from(remarksInputs)
+  // Remarks
+  const bottomRemarks = Array.from(document.querySelectorAll("#remarksContainer .remark-input"))
     .map(input => input.value.trim())
-    .filter(remark => remark !== "");
-    // Save all data to sessionStorage
-    sessionStorage.setItem("todayTableData", JSON.stringify(todaytableData));
-    sessionStorage.setItem("tomorrowTableData", JSON.stringify(tomorrowtableData));
-    sessionStorage.setItem("form-values", JSON.stringify(input_array));
-    sessionStorage.setItem("timeslots", JSON.stringify(timeSlots));
-    sessionStorage.setItem("eventsData", JSON.stringify(eventsData)); // For events section
-    sessionStorage.setItem("remarksData", JSON.stringify(remarksData)); // For remarks section
+    .filter(Boolean);
+  sessionStorage.setItem('remarksData', JSON.stringify(bottomRemarks));
 
-    // Redirect to the next page
-    window.location.href = "dpr-viewer.html";
+  // LABOUR REPORT
+  const labourTable = document.getElementById("labourTable");
+  const headerCells = labourTable.tHead.rows[0].cells;
+  const headers = [...headerCells].map(th => th.innerText.trim());
+
+  const dataRows = labourTable.querySelectorAll("tbody .data-row");
+  const labourReport = {};
+  headers.forEach((h, i) => {
+    if (i === 0) labourReport["agency"] = [];
+    else if (i === headers.length - 1) labourReport["remarks"] = [];
+    else if (h.toLowerCase() !== "total") labourReport[h] = [];
+  });
+
+  dataRows.forEach(row => {
+    const cells = row.cells;
+    headers.forEach((h, i) => {
+      const val = cells[i].querySelector("input")?.value.trim() || "";
+      if (i === 0) labourReport["agency"].push(val);
+      else if (i === headers.length - 1) labourReport["remarks"].push(val);
+      else if (h.toLowerCase() !== "total") labourReport[h].push(Number(val) || 0);
+    });
+  });
+
+  sessionStorage.setItem("labourReport", JSON.stringify(labourReport));
+
+  // Redirect to viewer
+  window.location.href = "dpr-viewer.html";
 }
+
 
 //---------------------------------------------------- EVERYTHING RELATED TO ADD AND DELETE ROW ----------------------------------------//
   
@@ -630,3 +591,5 @@ const remarksData = Array.from(remarksInputs)
     inputs.forEach(input => input.value = '');
     if (typeof calculateTotals === 'function') calculateTotals();
 }
+
+
