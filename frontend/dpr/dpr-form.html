@@ -22,7 +22,7 @@
         <div class="below-header">
             <div class="inside-below-header">
                 <h1>DAILY PROGRESS REPORT</h1>
-                <p>REPORT DATE</p>
+                <p id="todays_date" style="color: white;">REPORT DATE</p>
             </div>
         </div>
         <div class="except-header">
@@ -155,11 +155,11 @@
                     <h1>LABOUR REPORT</h1>
                 </div>
                 <div class="action-buttons">
-                    <button class="labourtable-button" onclick="addRow()">Add Row</button>
+                    <!-- <button class="labourtable-button" onclick="addRow()">Add Row</button>
                     <button class="labourtable-button" onclick="deleteRow()">Delete Row</button>
                     <button class="labourtable-button" onclick="clearTableKeepRows()">Reset</button>
                     <button class="labourtable-button" onclick="addColumn()">Add Column</button>
-                    <button class="labourtable-button" onclick="removeColumn()">Remove Column</button>
+                    <button class="labourtable-button" onclick="removeColumn()">Remove Column</button> -->
 
                   </div>
                   <br>
@@ -281,29 +281,32 @@
                     </div>
                 </div>
                 <div class="remarks-events-input-container">
+<!-- Events Section -->
 <div class="table-header fixed-header">
-  <h1>Events</h1>
+    <h1>Events</h1>
 </div>
-
 <div class="input-controls">
-  <button class="labourtable-button" id="addEventBtn">Add Event</button>
-  <button class="labourtable-button" id="removeEventBtn" disabled>Remove Event</button>
+    <button class="labourtable-button" id="addEventBtn">+ Add Event</button>
 </div>
-
 <div id="eventsContainer">
-  <!-- Events inputs will appear here -->
-</div>
-  <div class="table-header fixed-header">
-  <h1>Remarks</h1>
+    <div class="event-input-container">
+        <input type="text" class="event-input">
+        <button class="remove-input-btn">−</button>
+    </div>
 </div>
 
+<!-- Remarks Section -->
+<div class="table-header fixed-header">
+    <h1>Remarks</h1>
+</div>
 <div class="input-controls">
-  <button class="labourtable-button" id="addRemarkBtn">Add Input</button>
-  <button class="labourtable-button" id="removeRemarkBtn" disabled>Remove Last</button>
+    <button class="labourtable-button" id="addRemarkBtn">+ Add Remark</button>
 </div>
-
-<div class="dynamicInputsContainer" id="remarksContainer">
-  <!-- Initial 3 inputs will be added by JavaScript -->
+<div id="remarksContainer">
+    <div class="remark-input-container">
+        <input type="text" class="remark-input">
+        <button class="remove-input-btn">−</button>
+    </div>
 </div>
                 <br>
                 <div class="submit-section">

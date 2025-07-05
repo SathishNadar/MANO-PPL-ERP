@@ -1,7 +1,6 @@
 // =================== TIME SLOTS ===================
 let timeSlots = [];
 
-// Function to update timeslot display
 function updateTimeslotDisplay() {
   const display = document.getElementById("timeslots-display");
   display.innerHTML = "";
@@ -21,7 +20,6 @@ function updateTimeslotDisplay() {
     display.appendChild(slotElement);
   });
 
-  // Add event listeners to remove buttons
   document.querySelectorAll(".timeslot-remove").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const index = parseInt(e.target.getAttribute("data-index"));
@@ -37,44 +35,26 @@ function updateTimeslotDisplay() {
 function updateTimeslotCount() {
   const countElement = document.getElementById("timeslot-count");
   countElement.textContent = timeSlots.length;
-  document.getElementById(
-    "pop-up"
-  ).innerHTML = `<span id="timeslot-count">${timeSlots.length}</span> TIME SLOTS`;
+  document.getElementById("pop-up").innerHTML = `<span id="timeslot-count">${timeSlots.length}</span> TIME SLOTS`;
 }
 
-// Store timeslots when form is submitted
-document
-  .getElementById("time-slot-submit-button")
-  .addEventListener("click", function (event) {
-    event.preventDefault();
+document.getElementById("time-slot-submit-button").addEventListener("click", function (event) {
+  event.preventDefault();
+  timeSlots = [];
 
-    timeSlots = []; // Reset timeSlots
-
-    document
-      .querySelectorAll("#timeSlotsContainer .time-slot")
-      .forEach((slot) => {
-        let fromTime = slot.querySelector(
-          "input[type='time']:first-of-type"
-        ).value;
-        let toTime = slot.querySelector(
-          "input[type='time']:last-of-type"
-        ).value;
-
-        if (fromTime && toTime) {
-          timeSlots.push({ from: fromTime, to: toTime });
-        }
-      });
-
-    updateTimeslotDisplay();
-    updateTimeslotCount();
-    modal.style.display = "none";
+  document.querySelectorAll("#timeSlotsContainer .time-slot").forEach((slot) => {
+    let fromTime = slot.querySelector("input[type='time']:first-of-type").value;
+    let toTime = slot.querySelector("input[type='time']:last-of-type").value;
+    if (fromTime && toTime) timeSlots.push({ from: fromTime, to: toTime });
   });
 
-// Toggle timeslot display when button is clicked
-document.getElementById("pop-up").addEventListener("click", function (e) {
-  // Only toggle if not opening the modal
-  if (e.target !== this && e.target.className !== "timeslot-remove") return;
+  updateTimeslotDisplay();
+  updateTimeslotCount();
+  modal.style.display = "none";
+});
 
+document.getElementById("pop-up").addEventListener("click", function (e) {
+  if (e.target !== this && e.target.className !== "timeslot-remove") return;
   const display = document.getElementById("timeslots-display");
   if (timeSlots.length > 0) {
     display.style.display = display.style.display === "none" ? "block" : "none";
@@ -83,100 +63,318 @@ document.getElementById("pop-up").addEventListener("click", function (e) {
   }
 });
 
-// Add Time Slot Button Functionality
 document.getElementById("addTimeSlotBtn").addEventListener("click", (e) => {
   e.preventDefault();
-  const existingSlots = document.querySelectorAll(
-    "#timeSlotsContainer .time-slot"
-  ).length;
-  const timeSlotCount = existingSlots + 1;
-
   const newTimeSlot = document.createElement("div");
   newTimeSlot.className = "time-slot";
-
-  const timeslotHeader = document.createElement("h5");
-  timeslotHeader.textContent = `TIME SLOT ${timeSlotCount}`;
-
-  const fromTimeInput = document.createElement("input");
-  fromTimeInput.type = "time";
-  fromTimeInput.className = "time-input";
-
-  const toTimeInput = document.createElement("input");
-  toTimeInput.type = "time";
-  toTimeInput.className = "time-input";
-
-  const removeButton = document.createElement("button");
-  removeButton.type = "button";
-  removeButton.textContent = "Remove";
-  removeButton.className = "remove-time-slot-button";
-
-  removeButton.addEventListener("click", (event) => {
+  newTimeSlot.innerHTML = `
+    <h5>TIME SLOT ${document.querySelectorAll("#timeSlotsContainer .time-slot").length + 1}</h5>
+    <input type="time" class="time-input">
+    <input type="time" class="time-input">
+    <button type="button" class="remove-time-slot-button">Remove</button>
+  `;
+  newTimeSlot.querySelector(".remove-time-slot-button").addEventListener("click", (event) => {
     event.preventDefault();
     event.target.closest(".time-slot").remove();
   });
-
-  newTimeSlot.appendChild(timeslotHeader);
-  newTimeSlot.appendChild(fromTimeInput);
-  newTimeSlot.appendChild(toTimeInput);
-  newTimeSlot.appendChild(removeButton);
-
   document.getElementById("timeSlotsContainer").appendChild(newTimeSlot);
 });
-document.addEventListener("DOMContentLoaded", function () {
-  // Add event listeners to existing inputs
-  const existingInputs = document.querySelectorAll(".cell-input");
-  existingInputs.forEach((input) => {
-    input.addEventListener("input", calculateTotals);
+
+    const today = new Date();
+    const dateString = today.toDateString();
+    document.getElementById("todays_date").textContent = dateString
+//----------------------project details adding-----------------------//
+// ===================== PROJECT DETAILS =====================
+async function fetchProjectDetails() {
+  try {
+    const response = await fetch('http://34.47.131.237:3000/project/getProject/1');
+    const projectData = await response.json();
+    
+    // Populate the project details in the table
+    document.getElementById('project_name').textContent = projectData.data.project_name || '--';
+    document.getElementById('start_date').textContent = formatDate(projectData.data.start_date) || '--';
+    document.getElementById('end_date').textContent = formatDate(projectData.data.end_date) || '--';
+    document.getElementById('Employer').textContent = projectData.data.Employer || '--';
+    document.getElementById('project_description').textContent = projectData.data.project_description || '--';
+    document.getElementById('contract_no').textContent = projectData.data.contract_no || '--';
+    document.getElementById('location').textContent = projectData.data.location || '--';
+    
+    // Calculate elapsed and remaining days
+    if (projectData.data.start_date && projectData.data.end_date) {
+      const { elapsedDays, remainingDays } = calculateProjectDays(
+        projectData.data.start_date, 
+        projectData.data.end_date
+      );
+      document.getElementById('elapsedDays').textContent = `Elapsed Days: ${elapsedDays}`;
+      document.getElementById('remainingDays').textContent = `Remaining Days: ${remainingDays}`;
+    }
+  } catch (error) {
+    console.error('Error fetching project details:', error);
+    // Set default values if API fails
+    document.getElementById('project_name').textContent = '--';
+    document.getElementById('start_date').textContent = '--';
+    document.getElementById('end_date').textContent = '--';
+    document.getElementById('Employer').textContent = '--';
+    document.getElementById('project_description').textContent = '--';
+    document.getElementById('contract_no').textContent = '--';
+    document.getElementById('location').textContent = '--';
+    document.getElementById('elapsedDays').textContent = 'Elapsed Days: --';
+    document.getElementById('remainingDays').textContent = 'Remaining Days: --';
+  }
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+// Helper function to calculate elapsed and remaining days
+function calculateProjectDays(startDate, endDate) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const today = new Date();
+  
+  // Calculate elapsed days
+  const elapsedTime = today - start;
+  const elapsedDays = Math.floor(elapsedTime / (1000 * 60 * 60 * 24));
+  
+  // Calculate remaining days
+  const remainingTime = end - today;
+  const remainingDays = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+  
+  return {
+    elapsedDays: elapsedDays >= 0 ? elapsedDays : 0,
+    remainingDays: remainingDays >= 0 ? remainingDays : 0
+  };
+}
+
+
+
+//-------------------dynamically adding the rows and columns to labour report------------------------//
+async function initializeLabourTable() {
+  const apiUrl = "https://dummyjson.com/products/2"; // Your actual API URL
+
+  try {
+    const response = await fetch(apiUrl);
+    const { columns, rows } = await response.json(); // columns & rows are arrays of strings
+
+    const table = document.getElementById("labourTable");
+    table.innerHTML = "";
+
+    const thead = document.createElement("thead");
+    const tbody = document.createElement("tbody");
+
+    // ===== HEADER ROW =====
+    const headerRow = document.createElement("tr");
+    headerRow.innerHTML = `<th>Agency</th>`;
+
+    columns.forEach(col => {
+      headerRow.innerHTML += `<th>${col}</th>`;
+    });
+
+    headerRow.innerHTML += `<th>Total</th><th>Remarks</th>`;
+    thead.appendChild(headerRow);
+
+    // ===== DATA ROWS =====
+    rows.forEach((agencyName, rowIndex) => {
+      const tr = document.createElement("tr");
+      tr.className = "data-row";
+
+      // First column: Agency Name
+      tr.innerHTML = `<td>${agencyName}</td>`;
+
+      // Dynamic labour inputs
+      columns.forEach((col, colIndex) => {
+        tr.innerHTML += `<td><input type="number" class="cell-input" data-row="${rowIndex}" data-col="${col}" value="" /></td>`;
+      });
+
+      // Row total (calculated)
+      tr.innerHTML += `<td><input type="number" class="row-total" disabled /></td>`;
+
+      // Remarks (editable but optional)
+      tr.innerHTML += `<td><input type="text" class="remarks-input" /></td>`;
+
+      tbody.appendChild(tr);
+    });
+
+    // ===== TOTAL ROW =====
+    const totalRow = document.createElement("tr");
+    totalRow.innerHTML = `<td><strong>TOTAL</strong></td>`;
+
+    columns.forEach((col, colIndex) => {
+      totalRow.innerHTML += `<td><input id="col-total-${col}" type="number" disabled /></td>`;
+    });
+
+    totalRow.innerHTML += `<td><input id="grandtotal" type="number" disabled /></td><td></td>`;
+    tbody.appendChild(totalRow);
+
+    // Append to table
+    table.appendChild(thead);
+    table.appendChild(tbody);
+
+    // Setup event listeners
+    document.querySelectorAll(".cell-input").forEach(input => {
+      input.addEventListener("input", calculateTotals);
+    });
+
+  } catch (error) {
+    console.error("Error loading table:", error);
+    labourTable.innerHTML = `
+      <thead>
+        <tr>
+          <th>Agency</th>
+          <th colspan="3">Error</th>
+          <th>Total</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="6">Unable to fetch labour data</td></tr>
+      </tbody>
+    `;
+  }
+}
+
+
+function calculateTotals() {
+  const dataRows = document.querySelectorAll(".data-row");
+  const columnTotals = {};
+  let grandTotal = 0;
+
+  dataRows.forEach(row => {
+    let rowTotal = 0;
+    const inputs = row.querySelectorAll(".cell-input");
+
+    inputs.forEach(input => {
+      const colId = input.getAttribute("data-col");
+      const value = parseFloat(input.value) || 0;
+
+      // Column-wise total
+      if (!columnTotals[colId]) columnTotals[colId] = 0;
+      columnTotals[colId] += value;
+
+      rowTotal += value;
+    });
+
+    // Update row total
+    row.querySelector(".row-total").value = rowTotal;
+    grandTotal += rowTotal;
   });
 
-  // Initialize other components...
-  updateTimeslotDisplay();
-  updateTimeslotCount();
-});
-//=============EVERYTHING RELATED TO FORM INPUT============================//
+  // Update column totals
+  for (let colId in columnTotals) {
+    const totalInput = document.getElementById(`col-total-${colId}`);
+    if (totalInput) totalInput.value = columnTotals[colId];
+  }
+
+  // Update grand total
+  document.getElementById("grandtotal").value = grandTotal;
+}
+
+
+// Calculation function (example)
+function calculateTotals() {
+  const dataRows = document.querySelectorAll(".data-row");
+  const columnTotals = {};
+  
+  // Initialize totals
+  document.querySelectorAll("thead th").forEach((th, index) => {
+    if (index > 0) columnTotals[index] = 0; // Skip first column (Brand)
+  });
+
+  // Calculate row totals and column totals
+  dataRows.forEach(row => {
+    let rowTotal = 0;
+    const cells = row.querySelectorAll("td");
+    
+    cells.forEach((cell, index) => {
+      if (index > 0 && index < cells.length - 1) { // Skip Brand and Total columns
+        const input = cell.querySelector("input");
+        const value = parseFloat(input?.value) || 0;
+        rowTotal += value;
+        columnTotals[index] += value;
+      }
+    });
+
+    // Update row total
+    const rowTotalInput = row.querySelector(".row-total");
+    if (rowTotalInput) rowTotalInput.value = rowTotal;
+  });
+
+  // Update column totals in footer
+  Object.entries(columnTotals).forEach(([index, total]) => {
+    const totalInput = document.getElementById(`${index}_total`);
+    if (totalInput) totalInput.value = total;
+  });
+
+  // Update grand total
+  const grandTotal = Object.values(columnTotals).reduce((sum, val) => sum + val, 0);
+  document.getElementById("grandtotal").value = grandTotal;
+}
+
+// ===================== CALCULATE TOTALS =====================
+function calculateTotals() {
+  const dataRows = document.querySelectorAll(".data-row");
+  const columnTotals = {};
+  let grandTotal = 0;
+
+  document.querySelectorAll("#labourTable thead th").forEach((th, index) => {
+    if (th.textContent !== "Total" && th.textContent !== "Remarks") {
+      columnTotals[index] = 0;
+    }
+  });
+
+  dataRows.forEach((row) => {
+    let rowTotal = 0;
+    const cells = row.cells;
+    
+    for (let i = 0; i < cells.length - 2; i++) {
+      const input = cells[i].querySelector("input");
+      if (input && input.type === "number") {
+        const value = parseFloat(input.value) || 0;
+        rowTotal += value;
+        columnTotals[i] += value;
+      }
+    }
+
+    const rowTotalInput = row.querySelector(".row-total");
+    if (rowTotalInput) rowTotalInput.value = rowTotal;
+    grandTotal += rowTotal;
+  });
+
+  Object.entries(columnTotals).forEach(([index, total]) => {
+    const totalInput = document.getElementById(`${index}_total`);
+    if (totalInput) totalInput.value = total;
+  });
+
+  const grandTotalInput = document.getElementById("grandtotal");
+  if (grandTotalInput) grandTotalInput.value = grandTotal;
+}
+
+// ===================== FORM DATA HANDLING =====================
 function displaydata() {
   const input_array = [];
-  const today_progress_input = document.querySelector(".today-progress");
-  const today_progress_quantity_input = document.querySelector(
-    ".today-progress-quantity"
-  );
-
-  const today_progress = today_progress_input ? today_progress_input.value : "";
-  const today_progress_quantity = today_progress_quantity_input
-    ? today_progress_quantity_input.value
-    : "";
-
-  const tomorrows_planning_input = document.querySelector(
-    ".tomorrows-planning"
-  );
-  const tomorrows_planning_quantity_input = document.querySelector(
-    ".tomorrows-planning-quantity"
-  );
-
-  const tomorrows_planning = tomorrows_planning_input
-    ? tomorrows_planning_input.value
-    : "";
-  const tomorrows_planning_quantity = tomorrows_planning_quantity_input
-    ? tomorrows_planning_quantity_input.value
-    : "";
+  const today_progress = document.querySelector(".today-progress")?.value || "";
+  const today_progress_quantity = document.querySelector(".today-progress-quantity")?.value || "";
+  const tomorrows_planning = document.querySelector(".tomorrows-planning")?.value || "";
+  const tomorrows_planning_quantity = document.querySelector(".tomorrows-planning-quantity")?.value || "";
 
   let radio_buttons_value = "";
   let ground_ground_state_value = "";
 
-  var radio_buttons = document.getElementsByName("weather");
-  var ground_state_button = document.getElementsByName("ground-state");
+  document.getElementsByName("weather").forEach(radio => {
+    if (radio.checked) radio_buttons_value = radio.value;
+  });
 
-  for (let i = 0; i < radio_buttons.length; i++) {
-    if (radio_buttons[i].checked) {
-      radio_buttons_value = radio_buttons[i].value;
-    }
-  }
-
-  for (let j = 0; j < ground_state_button.length; j++) {
-    if (ground_state_button[j].checked) {
-      ground_ground_state_value = ground_state_button[j].value;
-    }
-  }
+  document.getElementsByName("ground-state").forEach(radio => {
+    if (radio.checked) ground_ground_state_value = radio.value;
+  });
 
   input_array.push(
     radio_buttons_value,
@@ -187,310 +385,249 @@ function displaydata() {
     tomorrows_planning_quantity
   );
 
-  const table = document.getElementById("labourTable");
-  const rows = Array.from(table.rows);
-
-  // Start from index 1 to skip the header row
-  const tableData = rows.slice(1).map((row) => {
-    const cells = Array.from(row.cells);
-    return cells.map((cell) => {
+  // Save labour table data
+  const tableData = Array.from(document.getElementById("labourTable").rows)
+    .slice(1, -1)
+    .map(row => Array.from(row.cells).map(cell => {
       const input = cell.querySelector("input");
       return input ? input.value : cell.textContent.trim();
-    });
-  });
+    }));
 
-  // Save the table data to sessionStorage
-  sessionStorage.setItem("userTableData", JSON.stringify(tableData));
-
-  // For the "today-table"
-  const todaytable = document.getElementById("today-table");
-  const todayrows = Array.from(todaytable.rows);
-
-  const todaytableData = todayrows.slice(1).map((row) => {
-    const cells = Array.from(row.cells);
-    return cells.map((cell) => {
+  // Save today/tomorrow tables
+  const todaytableData = Array.from(document.getElementById("today-table").rows)
+    .slice(1)
+    .map(row => Array.from(row.cells).map(cell => {
       const input = cell.querySelector("input");
       const value = input ? input.value.trim() : cell.textContent.trim();
       return value === "" ? "--" : value;
-    });
-  });
+    }));
 
-  // For the "tomorrow-table"
-  const tomorrowtable = document.getElementById("tomorrow-table");
-  const tomorrowrows = Array.from(tomorrowtable.rows);
-
-  const tomorrowtableData = tomorrowrows.slice(1).map((row) => {
-    const cells = Array.from(row.cells);
-    return cells.map((cell) => {
+  const tomorrowtableData = Array.from(document.getElementById("tomorrow-table").rows)
+    .slice(1)
+    .map(row => Array.from(row.cells).map(cell => {
       const input = cell.querySelector("input");
       const value = input ? input.value.trim() : "";
       return value === "" ? "--" : value;
-    });
-  });
+    }));
 
-  // Collect events data (6 inputs minimum)
-  // With this new version that works with the 6-field minimum setup:
-  const eventsInputs = document.querySelectorAll(
-    "#eventsContainer .event-input"
-  );
-  const eventsData = Array.from(eventsInputs)
-    .map((input) => input.value.trim())
-    .filter((event) => event !== "");
+  // Save events and remarks
+  const eventsData = Array.from(document.querySelectorAll("#eventsContainer .event-input"))
+    .map(input => input.value.trim())
+    .filter(event => event !== "");
 
-  const remarksInputs = document.querySelectorAll(
-    ".dynamicInputsContainer input"
-  );
-  const remarksData = Array.from(remarksInputs)
-    .map((input) => input.value.trim())
-    .filter((remark) => remark !== "");
+  const remarksData = Array.from(document.querySelectorAll("#remarksContainer .remark-input"))
+    .map(input => input.value.trim())
+    .filter(remark => remark !== "");
+
   // Save all data to sessionStorage
+  sessionStorage.setItem("userTableData", JSON.stringify(tableData));
   sessionStorage.setItem("todayTableData", JSON.stringify(todaytableData));
-  sessionStorage.setItem(
-    "tomorrowTableData",
-    JSON.stringify(tomorrowtableData)
-  );
+  sessionStorage.setItem("tomorrowTableData", JSON.stringify(tomorrowtableData));
   sessionStorage.setItem("form-values", JSON.stringify(input_array));
   sessionStorage.setItem("timeslots", JSON.stringify(timeSlots));
-  sessionStorage.setItem("eventsData", JSON.stringify(eventsData)); // For events section
-  sessionStorage.setItem("remarksData", JSON.stringify(remarksData)); // For remarks section
+  sessionStorage.setItem("eventsData", JSON.stringify(eventsData));
+  sessionStorage.setItem("remarksData", JSON.stringify(remarksData));
 
-  // Redirect to the next page
   window.location.href = "dpr-viewer.html";
 }
 
-//---------------------------------------------------- EVERYTHING RELATED TO ADD AND DELETE ROW ----------------------------------------//
-
-function addRow() {
-  const tableBody = document.querySelector("#labourTable tbody");
-  const newRow = document.createElement("tr");
-  newRow.classList.add("data-row");
-  newRow.innerHTML = `
-      <td><input type="text" /></td>
-      <td><input type="number" class="cell-input" /></td>
-      <td><input type="number" class="cell-input" /></td>
-      <td><input type="number" class="cell-input" /></td>
-      <td><input type="number" class="cell-input" /></td>
-      <td><input type="number" class="cell-input" /></td>
-      <td><input type="number" class="cell-input" /></td>
-      <td><input type="number" class="cell-input" /></td>
-      <td><input type="number" class="cell-input" /></td>
-      <td><input type="number" class="cell-input" /></td>
-      <td><input type="number" class="row-total" disabled /></td>
-      <td><input type="text" /></td>
-    `;
-  tableBody.insertBefore(newRow, tableBody.lastElementChild);
-
-  // Add event listeners to all new inputs
-  const inputs = newRow.querySelectorAll(".cell-input");
-  inputs.forEach((input) => {
-    input.addEventListener("input", calculateTotals);
-  });
-}
-
-//----------------------to add the rows of today planning-------------------------------------------//
-document.addEventListener("DOMContentLoaded", function () {
-  // Get all relevant elements
-  const todayTable = document.getElementById("today-table");
-  const tomorrowTable = document.getElementById("tomorrow-table");
-  const todayAddBtn = document.querySelector(
-    ".today-planning .todo-add-row-btn"
-  );
-  const tomorrowAddBtn = document.querySelector(
-    ".tomorrow-planning .tomo-add-row-btn"
-  );
-  const removeButtons = document.querySelectorAll(".remove-row-btn");
-
-  // Function to add a row to a specific table
-  function addRowToTable(table) {
-    const tbody = table.querySelector("tbody") || table.createTBody();
-    const newRow = tbody.insertRow();
-
-    if (table.id === "today-table") {
-      newRow.innerHTML = `
-          <td><input type="text" class="today-progress"></td>
-          <td><input type="number" class="today-progress-quantity"></td>
-        `;
-    } else {
-      newRow.innerHTML = `
-          <td><input type="text" class="tomorrows-planning"></td>
-          <td><input type="number" class="tomorrows-planning-quantity"></td>
-        `;
-    }
-  }
-
-  // Function to remove row from a specific table
-  function removeRowFromTable(table) {
-    const rows = table.querySelectorAll("tbody tr");
-    if (rows.length > 1) {
-      rows[rows.length - 1].remove();
-    } else if (rows.length === 1) {
-      const inputs = rows[0].querySelectorAll("input");
-      inputs.forEach((input) => (input.value = ""));
-    }
-  }
-
-  // Function to handle synchronized row addition
-  function handleAddRow() {
-    addRowToTable(todayTable);
-    addRowToTable(tomorrowTable);
-  }
-
-  const projectId = localStorage.getItem("selected_project_id");
-
-  if (!projectId) {
-    alert("No project selected. Please go back and choose a project.");
-    window.location.href = "../home/projectdesc.html"; // Or fallback page
-  } else {
-    fetch(`http://34.47.131.237:3000/project/getProject/${projectId}`)
-      .then((response) => {
-        if (!response.ok) {
-          document.getElementById("project_name").textContent =
-            "DATA UNAVAILABLE";
-          return Promise.reject(new Error("Project not found"));
-        }
-        return response.json();
-      })
-      .then((Apidata) => {
-        document.getElementById("project_name").innerHTML =
-          Apidata.data.project_name;
-        document.getElementById("start_date").innerHTML = new Date(
-          Apidata.data.start_date
-        ).toLocaleDateString("en-GB");
-        document.getElementById("end_date").innerHTML = new Date(
-          Apidata.data.end_date
-        ).toLocaleDateString("en-GB");
-        document.getElementById("Employer").innerHTML = Apidata.data.Employer;
-        document.getElementById("project_description").innerHTML =
-          Apidata.data.project_description;
-        document.getElementById("contract_no").innerHTML =
-          Apidata.data.contract_no;
-        document.getElementById("location").innerHTML = Apidata.data.location;
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-  }
-
-// You can change this URL to any valid API returning an array of objects
-async function getLatestDprId() {
+// ===================== TODAY/TOMORROW TABLES =====================
+async function initializeTodayTomorrowTables() {
   try {
-    const response = await fetch(`http://34.47.131.237:3000/report/Alldpr/${projectId}?limit=10`);
+    // Get latest DPR for project ID 1
+    const response = await fetch(`http://34.47.131.237:3000/report/Alldpr/1?limit=10`);
     const dprArray = await response.json();
 
-    const latestDPR = dprArray.reduce((latest, current) => {
-      return new Date(current.report_date) > new Date(latest.report_date) ? current : latest;
-    });
+    if (dprArray.length > 0) {
+      const latestDPR = dprArray.reduce((latest, current) => 
+        new Date(current.report_date) > new Date(latest.report_date) ? current : latest
+      );
 
-    const latestDprId = latestDPR.dpr_id;
+      const dprDetails = await fetch(`http://34.47.131.237:3000/report/getDPR/${latestDPR.dpr_id}`);
+      const prevDPR = await dprDetails.json();
 
-    // ✅ Move the second fetch here so it waits for the ID
-    fetch(`http://34.47.131.237:3000/report/getDPR/${latestDprId}`)
-      .then(res => res.ok ? res.json() : Promise.reject("Previous DPR not found"))
-      .then(prev => {
-        const prevPlan = prev?.data?.tomorrow_plan;
-        const progressList = prevPlan?.plan || [];
-        const qtyList = prevPlan?.qty || [];
+      const prevPlan = prevDPR?.data?.tomorrow_plan;
+      const progressList = prevPlan?.plan || [];
+      const qtyList = prevPlan?.qty || [];
 
-        const todayTable = document.getElementById('today-table');
-        const todayBody = todayTable.querySelector('tbody');
-        todayBody.innerHTML = '';
+      const todayTable = document.getElementById('today-table');
+      const todayBody = todayTable.querySelector('tbody');
+      todayBody.innerHTML = '';
 
-        const tomorrowTable = document.getElementById('tomorrow-table');
-        const tomorrowBody = tomorrowTable.querySelector('tbody');
-        tomorrowBody.innerHTML = '';
+      const tomorrowTable = document.getElementById('tomorrow-table');
+      const tomorrowBody = tomorrowTable.querySelector('tbody');
+      tomorrowBody.innerHTML = '';
 
-        for (let i = 0; i < progressList.length; i++) {
-          const todayRow = todayBody.insertRow();
-          todayRow.innerHTML = `
-            <td><input type="text" class="today-progress" value="${progressList[i]}" /></td>
-            <td><input type="text" class="today-progress-quantity" value="${qtyList[i] || ''}" /></td>
-          `;
+      for (let i = 0; i < progressList.length; i++) {
+        const todayRow = todayBody.insertRow();
+        todayRow.innerHTML = `
+          <td><input type="text" class="today-progress" value="${progressList[i]}" /></td>
+          <td><input type="text" class="today-progress-quantity" value="${qtyList[i] || ''}" /></td>
+        `;
 
-          const tomorrowRow = tomorrowBody.insertRow();
-          tomorrowRow.innerHTML = `
+        const tomorrowRow = tomorrowBody.insertRow();
+        tomorrowRow.innerHTML = `
+          <td><input type="text" class="tomorrows-planning" /></td>
+          <td><input type="number" class="tomorrows-planning-quantity" /></td>
+        `;
+      }
+
+      if (progressList.length === 0) {
+        todayBody.innerHTML = `
+          <tr>
+            <td><input type="text" class="today-progress" /></td>
+            <td><input type="text" class="today-progress-quantity" /></td>
+          </tr>
+        `;
+
+        tomorrowBody.innerHTML = `
+          <tr>
             <td><input type="text" class="tomorrows-planning" /></td>
             <td><input type="number" class="tomorrows-planning-quantity" /></td>
-          `;
-        }
-
-        if (progressList.length === 0) {
-          todayBody.innerHTML = `
-            <tr>
-              <td><input type="text" class="today-progress" /></td>
-              <td><input type="text" class="today-progress-quantity" /></td>
-            </tr>
-          `;
-
-          tomorrowBody.innerHTML = `
-            <tr>
-              <td><input type="text" class="tomorrows-planning" /></td>
-              <td><input type="number" class="tomorrows-planning-quantity" /></td>
-            </tr>
-          `;
-        }
-      })
-      .catch(err => console.error("Error fetching previous DPR:", err));
-
+          </tr>
+        `;
+      }
+    }
   } catch (error) {
-    console.error("Fetch error:", error);
+    console.error("Error loading previous DPR:", error);
+    // Fallback to empty tables
+    document.getElementById('today-table').querySelector('tbody').innerHTML = `
+      <tr>
+        <td><input type="text" class="today-progress" /></td>
+        <td><input type="text" class="today-progress-quantity" /></td>
+      </tr>
+    `;
+    document.getElementById('tomorrow-table').querySelector('tbody').innerHTML = `
+      <tr>
+        <td><input type="text" class="tomorrows-planning" /></td>
+        <td><input type="number" class="tomorrows-planning-quantity" /></td>
+      </tr>
+    `;
   }
 }
-getLatestDprId();
 
+// ===================== INITIALIZATION =====================
+document.addEventListener("DOMContentLoaded", async function() {
+  // Initialize all components
+  await fetchProjectDetails(); 
+  initializeLabourTable();
+  await initializeTodayTomorrowTables();
+  updateTimeslotDisplay();
+  updateTimeslotCount();
 
-  //-----------------------------------------------------------------------------------------------------------------------
+  // Set up today/tomorrow table row management
+  const todayAddBtn = document.querySelector(".today-planning .todo-add-row-btn");
+  const tomorrowAddBtn = document.querySelector(".tomorrow-planning .tomo-add-row-btn");
+  const removeButtons = document.querySelectorAll(".remove-row-btn");
 
-  // Function to handle synchronized row removal
-  function handleRemoveRow() {
-    removeRowFromTable(todayTable);
-    removeRowFromTable(tomorrowTable);
+  function addRowToTable(table) {
+    const tbody = table.querySelector("tbody");
+    const newRow = tbody.insertRow();
+    if (table.id === "today-table") {
+      newRow.innerHTML = `
+        <td><input type="text" class="today-progress"></td>
+        <td><input type="number" class="today-progress-quantity"></td>
+      `;
+    } else {
+      newRow.innerHTML = `
+        <td><input type="text" class="tomorrows-planning"></td>
+        <td><input type="number" class="tomorrows-planning-quantity"></td>
+      `;
+    }
   }
 
-  // Event listeners
+  function handleAddRow() {
+    addRowToTable(document.getElementById("today-table"));
+    addRowToTable(document.getElementById("tomorrow-table"));
+  }
+
+  function handleRemoveRow() {
+    const todayRows = document.querySelectorAll("#today-table tbody tr");
+    const tomorrowRows = document.querySelectorAll("#tomorrow-table tbody tr");
+    
+    if (todayRows.length > 1) todayRows[todayRows.length-1].remove();
+    if (tomorrowRows.length > 1) tomorrowRows[tomorrowRows.length-1].remove();
+  }
+
   if (todayAddBtn) todayAddBtn.addEventListener("click", handleAddRow);
   if (tomorrowAddBtn) tomorrowAddBtn.addEventListener("click", handleAddRow);
-
-  removeButtons.forEach((button) => {
-    button.addEventListener("click", handleRemoveRow);
-  });
+  removeButtons.forEach(btn => btn.addEventListener("click", handleRemoveRow));
 });
 
-//--------------------------TO CALCULATE THE GRAND TOTAL OF THE VALUES----------------------------------//
-function calculateTotals() {
-  const dataRows = document.querySelectorAll(".data-row");
-  const columnTotals = new Array(9).fill(0);
-  let grandTotal = 0;
+// ===================== EVENTS SECTION =====================
+document.addEventListener("DOMContentLoaded", function() {
+  const eventsContainer = document.getElementById("eventsContainer");
+  const addEventBtn = document.getElementById("addEventBtn");
+  const removeEventBtn = document.getElementById("removeEventBtn");
+  const MIN_EVENTS = 6;
 
-  dataRows.forEach((row) => {
-    let rowTotal = 0;
-    const inputs = row.querySelectorAll(".cell-input");
-    inputs.forEach((input, index) => {
-      const value = parseFloat(input.value) || 0;
-      rowTotal += value;
-      columnTotals[index] += value;
+  function initializeEvents() {
+    const savedData = JSON.parse(sessionStorage.getItem("events-data")) || Array(MIN_EVENTS).fill("");
+    eventsContainer.innerHTML = '';
+    savedData.forEach((value, index) => {
+      const div = document.createElement("div");
+      div.className = "input-group";
+      div.innerHTML = `<input type="text" class="event-input" value="${value}" placeholder="Event ${index+1}">`;
+      eventsContainer.appendChild(div);
     });
+    removeEventBtn.disabled = eventsContainer.children.length <= MIN_EVENTS;
+  }
 
-    const rowTotalInput = row.querySelector(".row-total");
-    rowTotalInput.value = rowTotal;
-    grandTotal += rowTotal;
+  addEventBtn.addEventListener("click", () => {
+    const div = document.createElement("div");
+    div.className = "input-group";
+    div.innerHTML = `<input type="text" class="event-input" placeholder="Event ${eventsContainer.children.length+1}">`;
+    eventsContainer.appendChild(div);
+    removeEventBtn.disabled = eventsContainer.children.length <= MIN_EVENTS;
   });
 
-  for (let i = 0; i < columnTotals.length; i++) {
-    document.getElementById(`${i + 1}_total`).value = columnTotals[i];
+  removeEventBtn.addEventListener("click", () => {
+    if (eventsContainer.children.length > MIN_EVENTS) {
+      eventsContainer.removeChild(eventsContainer.lastElementChild);
+      removeEventBtn.disabled = eventsContainer.children.length <= MIN_EVENTS;
+    }
+  });
+
+  initializeEvents();
+});
+
+// ===================== REMARKS SECTION =====================
+document.addEventListener("DOMContentLoaded", function() {
+  const remarksContainer = document.getElementById("remarksContainer");
+  const addRemarkBtn = document.getElementById("addRemarkBtn");
+  const removeRemarkBtn = document.getElementById("removeRemarkBtn");
+  const MIN_INPUTS = 3;
+
+  function initializeRemarks() {
+    remarksContainer.innerHTML = '';
+    for (let i = 0; i < MIN_INPUTS; i++) {
+      const div = document.createElement("div");
+      div.className = "input-group";
+      div.innerHTML = `<input type="text" class="remark-input" placeholder="Remark ${i+1}">`;
+      remarksContainer.appendChild(div);
+    }
+    removeRemarkBtn.disabled = true;
   }
 
-  document.getElementById("grandtotal").value = grandTotal;
-}
+  addRemarkBtn.addEventListener("click", () => {
+    const div = document.createElement("div");
+    div.className = "input-group";
+    div.innerHTML = `<input type="text" class="remark-input" placeholder="Remark ${remarksContainer.children.length+1}">`;
+    remarksContainer.appendChild(div);
+    removeRemarkBtn.disabled = remarksContainer.children.length <= MIN_INPUTS;
+  });
 
-function deleteRow() {
-  const rows = document.querySelectorAll(".data-row");
-  if (rows.length > 1) {
-    rows[rows.length - 1].remove();
-    calculateTotals(); // Recalculate after deletion
-  }
-}
+  removeRemarkBtn.addEventListener("click", () => {
+    if (remarksContainer.children.length > MIN_INPUTS) {
+      remarksContainer.removeChild(remarksContainer.lastElementChild);
+      removeRemarkBtn.disabled = remarksContainer.children.length <= MIN_INPUTS;
+    }
+  });
 
-//---------------------------------POP UP------------------------------------------//
+  initializeRemarks();
+});
+
+// ===================== MODAL =====================
 const modal = document.getElementById("myModal");
 const openModalBtn = document.getElementById("pop-up");
 const closeModalBtn = document.querySelector(".close");
@@ -509,157 +646,3 @@ window.addEventListener("click", (event) => {
   }
 });
 
-// ===================== EVENTS SECTION (6+ inputs) ===================== //
-document.addEventListener("DOMContentLoaded", function () {
-  const eventsContainer = document.getElementById("eventsContainer");
-  const addEventBtn = document.getElementById("addEventBtn");
-  const removeEventBtn = document.getElementById("removeEventBtn");
-  const MIN_EVENTS = 6; // Minimum 6 input fields
-  const STORAGE_KEY = "events-data";
-
-  // Initialize with 6 empty fields or load saved data
-  function initializeEvents() {
-    const savedData = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
-    const initialData = savedData || Array(MIN_EVENTS).fill("");
-
-    // Clear container and recreate inputs
-    eventsContainer.innerHTML = "";
-    initialData.forEach((value, index) => {
-      createEventInput(value, index);
-    });
-
-    updateRemoveButton();
-  }
-
-  // Create a single event input field
-  function createEventInput(value, index) {
-    const inputGroup = document.createElement("div");
-    inputGroup.className = "input-group";
-
-    const input = document.createElement("input");
-    input.type = "text";
-    input.className = "event-input";
-    input.value = value;
-    input.placeholder = `Event ${index + 1}`;
-
-    // Save on input change
-    input.addEventListener("input", function () {
-      saveEventsToStorage();
-    });
-
-    inputGroup.appendChild(input);
-    eventsContainer.appendChild(inputGroup);
-  }
-
-  // Add new event field
-  function addEvent() {
-    createEventInput("", eventsContainer.children.length);
-    saveEventsToStorage();
-    updateRemoveButton();
-  }
-
-  // Remove last event field (if above minimum)
-  function removeEvent() {
-    if (eventsContainer.children.length > MIN_EVENTS) {
-      eventsContainer.removeChild(eventsContainer.lastElementChild);
-      saveEventsToStorage();
-      updateRemoveButton();
-    }
-  }
-
-  // Update remove button state
-  function updateRemoveButton() {
-    removeEventBtn.disabled = eventsContainer.children.length <= MIN_EVENTS;
-  }
-
-  // Save all events data to sessionStorage
-  function saveEventsToStorage() {
-    const inputs = eventsContainer.querySelectorAll(".event-input");
-    const eventsData = Array.from(inputs).map((input) => input.value.trim());
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(eventsData));
-  }
-
-  // Event listeners
-  addEventBtn.addEventListener("click", addEvent);
-  removeEventBtn.addEventListener("click", removeEvent);
-
-  // Initialize on load
-  initializeEvents();
-
-  // Save before page unload
-  window.addEventListener("beforeunload", saveEventsToStorage);
-});
-
-// In your displaydata() function, use this to collect events:
-function getEventsData() {
-  const inputs = document.querySelectorAll("#eventsContainer .event-input");
-  return Array.from(inputs)
-    .map((input) => input.value.trim())
-    .filter((event) => event !== "");
-}
-
-// ===================== REMARKS SECTION (3+ inputs) ===================== //
-document.addEventListener("DOMContentLoaded", function () {
-  const remarksContainer = document.getElementById("remarksContainer");
-  const addRemarkBtn = document.getElementById("addRemarkBtn");
-  const removeRemarkBtn = document.getElementById("removeRemarkBtn");
-  const MIN_INPUTS = 3; // Minimum required remarks
-
-  // Initialize with 3 inputs
-  function initializeRemarks() {
-    remarksContainer.innerHTML = "";
-    for (let i = 0; i < MIN_INPUTS; i++) {
-      addRemarkField();
-    }
-    updateRemoveButton();
-  }
-
-  // Add new remark field
-  function addRemarkField() {
-    const inputGroup = document.createElement("div");
-    inputGroup.className = "input-group";
-
-    const input = document.createElement("input");
-    input.type = "text";
-    input.className = "remark-input";
-    input.placeholder = `Remark ${remarksContainer.children.length + 1}`;
-
-    inputGroup.appendChild(input);
-    remarksContainer.appendChild(inputGroup);
-  }
-
-  // Update remove button state
-  function updateRemoveButton() {
-    removeRemarkBtn.disabled = remarksContainer.children.length <= MIN_INPUTS;
-  }
-
-  // Event listeners
-  addRemarkBtn.addEventListener("click", function () {
-    addRemarkField();
-    updateRemoveButton();
-  });
-
-  removeRemarkBtn.addEventListener("click", function () {
-    if (remarksContainer.children.length > MIN_INPUTS) {
-      remarksContainer.removeChild(remarksContainer.lastElementChild);
-      updateRemoveButton();
-    }
-  });
-
-  // Initialize on load
-  initializeRemarks();
-});
-
-// In your displaydata() function, keep this for data collection:
-const remarksInputs = document.querySelectorAll(
-  "#remarksContainer .remark-input"
-);
-const remarksData = Array.from(remarksInputs)
-  .map((input) => input.value.trim())
-  .filter((remark) => remark !== "");
-
-function clearTableKeepRows() {
-  const inputs = document.querySelectorAll("#labourTable td input");
-  inputs.forEach((input) => (input.value = ""));
-  if (typeof calculateTotals === "function") calculateTotals();
-}
