@@ -22,7 +22,7 @@ const LoginSignup = () => {
   useEffect(() => {
     const sessionData = localStorage.getItem("session");
     if (sessionData) {
-      const { expiry } = JSON.parse(sessionData);
+      const { expiry, username, user_id } = JSON.parse(sessionData);
       if (Date.now() < expiry) {
         navigate("/dashboard");
       } else {
@@ -31,9 +31,9 @@ const LoginSignup = () => {
     }
   }, []);
 
-  const setSession = (username) => {
+  const setSession = (username, userid) => {
     const expiryTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
-    const sessionData = { username, expiry: expiryTime };
+    const sessionData = { username, expiry: expiryTime, user_id:userid };
     localStorage.setItem("session", JSON.stringify(sessionData));
   };
 
@@ -53,7 +53,8 @@ const LoginSignup = () => {
       const data = await response.json();
 
       if (data.message === "Login successful") {
-        setSession(loginData.username);
+        const userid = data["user_data"]["user_id"]
+        setSession(loginData.username, userid);
         navigate("/dashboard");
       } else {
         alert(data.message);
