@@ -5,16 +5,53 @@ async function fetchProjectData() {
   updateProjectUI(apiData.data);
 }
 
+function getCurrentDPRId() {
+  // Check URL parameters first
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlId = urlParams.get('dpr_id') || urlParams.get('dprId') || urlParams.get('id');
+  
+  // Validate URL ID if found
+  if (urlId) {
+    const parsedId = parseInt(urlId);
+    if (!isNaN(parsedId)) return parsedId;
+  }
 
+  // Check session storage (pdfPreviewData)
+  try {
+    const storedData = JSON.parse(sessionStorage.getItem('pdfPreviewData'));
+    if (storedData?.dpr_id) {
+      const parsedId = parseInt(storedData.dpr_id);
+      if (!isNaN(parsedId)) return parsedId;
+    }
+  } catch (e) {
+    console.error('Error parsing session storage data:', e);
+  }
 
-// ====================== UTILITY FUNCTIONS ======================
+  // Check API data
+  try {
+    const apiData = JSON.parse(sessionStorage.getItem('apiProjectData'));
+    if (apiData?.dpr_id) {
+      const parsedId = parseInt(apiData.dpr_id);
+      if (!isNaN(parsedId)) return parsedId;
+    }
+  } catch (e) {
+    console.error('Error parsing API data:', e);
+  }
+
+  // Return default value
+  return 1;
+}
+
+const dprId = getCurrentDPRId();
+
+// Utility Functions
 function showLoadingIndicator() {
   const loadingDiv = document.createElement('div');
   loadingDiv.className = 'loading-indicator';
   loadingDiv.innerHTML = `
     <div style="display: flex; align-items: center; justify-content: center; padding: 20px;">
       <div class="spinner" style="margin-right: 10px;"></div>
-      <span>project data unavilable...</span>
+      <span>Loading project data...</span>
     </div>
   `;
   
@@ -82,16 +119,7 @@ async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
   }
 }
 
-// ====================== DATA FETCH ======================
-const tableData = JSON.parse(sessionStorage.getItem("userTableData")) || [];
-const todayData = JSON.parse(sessionStorage.getItem("todayTableData")) || [];
-const tomorrowData = JSON.parse(sessionStorage.getItem("tomorrowTableData")) || [];
-
-const displayTable = document.getElementById("displayTable")?.getElementsByTagName("tbody")[0];
-const todayTable = document.getElementById("today-table")?.getElementsByTagName("tbody")[0];
-const tomorrowTable = document.getElementById("tomorrow-table")?.getElementsByTagName("tbody")[0];
-
-// ====================== TABLE POPULATION ======================
+// Table Population
 function populateTable(data, tbody, isProgress = false) {
   if (!data || !tbody) return;
 
@@ -113,339 +141,80 @@ function populateTable(data, tbody, isProgress = false) {
   });
 }
 
-// ====================== FORM HANDLERS ======================
-function handleFormData() {
-  const data = JSON.parse(sessionStorage.getItem("form-values"));
-  if (!Array.isArray(data)) return;
-
-  if (data[0] === "Rainy") {
-    document.getElementById("rainy-day-checkbox").classList.add("active");
-    document.getElementById("rainy-day-checkbox").textContent = "✓";
-  }
-  if (data[0] === "Sunny") {
-    document.getElementById("normal-day-checkbox").classList.add("active");
-    document.getElementById("normal-day-checkbox").textContent = "✓";
-  }
-  if (data[1] === "slushy") {
-    document.getElementById("slushy-day-checkbox").classList.add("active");
-    document.getElementById("slushy-day-checkbox").textContent = "✓";
-  }
-  if (data[1] === "dry") {
-    document.getElementById("dry-day-checkbox").classList.add("active");
-    document.getElementById("dry-day-checkbox").textContent = "✓";
-  }
-}
-
-function handleTimeSlots() {
-  try {
-    const timingContainer = document.getElementById("from-to-container");
-    if (!timingContainer) return;
-
-    timingContainer.innerHTML = "";
-    
-    // Get timeslots from either API data or session storage
-    let timeSlots = [];
-    const apiData = JSON.parse(sessionStorage.getItem('apiProjectData'));
-    const sessionSlots = JSON.parse(sessionStorage.getItem('timeslots')) || [];
-    
-    if (apiData?.site_condition?.rain_timing) {
-      timeSlots = apiData.site_condition.rain_timing;
-    } else if (sessionSlots.length) {
-      timeSlots = sessionSlots;
-    }
-
-    timeSlots.forEach(t => {
-      let from, to;
-      if (typeof t === 'string') {
-        [from, to] = t.split('-');
-      } else if (t.from && t.to) {
-        from = t.from;
-        to = t.to;
-      } else {
-        from = to = "--";
-      }
-
-      const timeSlotDiv = document.createElement("div");
-      timeSlotDiv.style.display = "flex";
-      timeSlotDiv.style.justifyContent = "space-between";
-      timeSlotDiv.style.marginBottom = "5px";
-
-      const fromDiv = document.createElement("div");
-      fromDiv.innerHTML = `From: <span>${from || "--"}</span>`;
-      
-      const toDiv = document.createElement("div");
-      toDiv.innerHTML = `To: <span>${to || "--"}</span>`;
-
-      timeSlotDiv.appendChild(fromDiv);
-      timeSlotDiv.appendChild(toDiv);
-      timingContainer.appendChild(timeSlotDiv);
-    });
-  } catch (error) {
-    console.error("Error handling timeslots:", error);
-  }
-}
-
-function handleEvents() {
-  const container = document.getElementById("events-container");
-  if (!container) return;
-
-  const data = JSON.parse(sessionStorage.getItem("eventsData")) || [];
-  container.innerHTML = "";
-
-  const count = Math.max(data.length, 6);
-  for (let i = 0; i < count; i++) {
-    const div = document.createElement("div");
-    div.className = "remarks-item";
-    div.textContent = data[i] || "--";
-    container.appendChild(div);
-  }
-}
-
-function handleRemarks() {
-  const container = document.getElementById("remarks-content-container");
-  if (!container) return;
-
-  const data = JSON.parse(sessionStorage.getItem("remarksData")) || [];
-  container.innerHTML = "";
-
-  const count = Math.max(data.length, 3);
-  for (let i = 0; i < count; i++) {
-    const div = document.createElement("div");
-    div.className = "remarks-item";
-    div.textContent = data[i] || "--";
-    container.appendChild(div);
-  }
-}
-
-// ====================== API DATA FETCHING ======================
-// async function fetchAndDisplayDPR(dprId = 17) {  
-//   // Default ID is 17
-//   try {
-//     const response = await fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
-//     const { data } = await response.json();
-//     // Cumulative Manpower
-// const cumulativeManpower = data.cumulative_manpower || 0;
-// const cumulativeElement = document.getElementById("cumulative-manpower");
-// if (cumulativeElement) {
-//   cumulativeElement.textContent = cumulativeManpower;
-// }
-//     // Site Condition
-//     const { site_condition } = data;
-//     document.getElementById("rainy-day-checkbox").classList.toggle("active", site_condition.is_rainy);
-//     document.getElementById("normal-day-checkbox").classList.toggle("active", !site_condition.is_rainy);
-//     if (site_condition.ground_state === "slushy") {
-//       document.getElementById("slushy-day-checkbox").classList.add("active");
-//     } 
-//     if (site_condition.ground_state === "dry") {
-//       document.getElementById("dry-day-checkbox").classList.add("active");
-//     }
-
-//     // Rain Timings
-//     const timingContainer = document.getElementById("from-to-container");
-//     timingContainer.innerHTML = "";
-//     (site_condition.rain_timing || []).forEach(t => {
-//       const [from, to] = t.split("-");
-//       const div = document.createElement("div");
-//       div.innerHTML = `
-//         <div class="info-label">From</div><div class="info-value">${from}</div>
-//         <div class="info-label">To</div><div class="info-value">${to}</div>
-//       `;
-//       timingContainer.appendChild(div);
-//     });
-
-//     // Labour Report
-
-
-
-//     const labour = data.labour_report;
-//     const tbody = document.getElementById("displayTable").getElementsByTagName("tbody")[0];
-//     tbody.innerHTML = "";
-//     for (let i = 0; i < labour.agency.length; i++) {
-//       const tr = document.createElement("tr");
-//       tr.innerHTML = `
-//         <td>${labour.agency[i]}</td>
-//         <td>${labour.mason[i]}</td>
-//         <td>${labour.carp[i]}</td>
-//         <td>${labour.fitter[i]}</td>
-//         <td>${labour.electrical[i]}</td>
-//         <td>${labour.painter[i]}</td>
-//         <td>${labour.gypsum[i]}</td>
-//         <td>${labour.plumber[i]}</td>
-//         <td>${labour.helper[i]}</td>
-//         <td>${labour.staff[i]}</td>
-//         <td>${
-//           labour.helper[i] + labour.staff[i] + labour.mason[i] + 
-//           labour.carp[i] + labour.fitter[i] + labour.electrical[i] + 
-//           labour.painter[i] + labour.gypsum[i] + labour.plumber[i]
-//         }</td>
-//         <td>${labour.remarks || "--"}</td>
-//       `;
-//       tbody.appendChild(tr);
-//     }
-
-//     // Progress Data
-//     populateTable(
-//       data.today_prog.progress.map((p, i) => [p, data.today_prog.qty[i]]),
-//       todayTable,
-//       true
-//     );
-//     populateTable(
-//       data.tomorrow_plan.plan.map((p, i) => [p, data.tomorrow_plan.qty[i]]),
-//       tomorrowTable,
-//       true
-//     );
-
-//     // Events
-//     const eventsContainer = document.getElementById("events-container");
-//     eventsContainer.innerHTML = "";
-//     (data.report_footer.events_visit || []).forEach(event => {
-//       const div = document.createElement("div");
-//       div.className = "remarks-item";
-//       div.textContent = event;
-//       eventsContainer.appendChild(div);
-//     });
-
-//     // Remarks
-//     document.getElementById("remarks-content-container").innerHTML = `
-//       <div class="remarks-item">${labour.remarks || "--"}</div>
-//     `;
-
-//     // Footer
-//     document.getElementById("prepared-by").textContent = data.report_footer.prepared_by;
-//     document.getElementById("distribution").textContent = data.report_footer.distribute.join(", ");
-
-//     // Date
-//     document.getElementById("report_date").textContent = new Date(data.report_date).toLocaleDateString("en-GB");
-
-//   } catch (err) {
-//     console.error("Error fetching DPR:", err);
-//   }
-// }
+// Project UI Update
 function updateProjectUI(projectData) {
   document.getElementById("project_name").textContent = projectData.project_name || "--";
   document.getElementById("Employer").textContent = projectData.Employer || "--";
   document.getElementById("contract_no").textContent = projectData.contract_no || "--";
   document.getElementById("location").textContent = projectData.location || "--";
   
-if (projectData.start_date) {
-  const startDate = new Date(projectData.start_date);
-  document.getElementById("start_date").textContent = 
-    startDate.toLocaleDateString('en-GB');
-  
-  if (projectData.end_date) {
-    const endDate = new Date(projectData.end_date);
-    document.getElementById("end_date").textContent = 
-      endDate.toLocaleDateString('en-GB');
+  if (projectData.start_date) {
+    const startDate = new Date(projectData.start_date);
+    document.getElementById("start_date").textContent = startDate.toLocaleDateString('en-GB');
     
-    // Calculate duration in days
-    const timeDiff = endDate - startDate;
-    const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-    
-    // Display the calculated duration
-    document.getElementById("total_days").textContent = daysDiff;
-    
-    // Optional: Calculate working days (excluding weekends)
-    // const workingDays = calculateWorkingDays(startDate, endDate);
-    // document.getElementById("working_days").textContent = workingDays;
-
-  }
- if (projectData.start_date && projectData.end_date) {
-  const startDate = new Date(projectData.start_date);
-  const endDate = new Date(projectData.end_date);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Normalize to midnight
-
-  // Calculate total duration
-  const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-  
-  // Calculate days remaining (never more than total duration)
-  let daysRemaining;
-  if (today < startDate) {
-    daysRemaining = totalDays; // Project hasn't started yet
-  } else if (today > endDate) {
-    daysRemaining = 0; // Project completed
-  } else {
-    daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
-  }
-
-  document.getElementById("days_left").textContent = daysRemaining;
-  document.getElementById("total_days").textContent = totalDays;
-}
-}
-}
-
-
-async function fetchAndDisplayCumulativeManpower() {
-  try {
-    // Fetch project data (using your existing endpoint)
-    const response = await fetch('http://34.47.131.237:3000/project/getProject/1');
-    const { data } = await response.json();
-    
-    // Get cumulative manpower (with fallback to 0 if undefined)
-    const cumulativeManpower = data.cumulative_manpower || 0;
-    
-    // Display it - ensure you have an element with this ID in your HTML
-    const displayElement = document.getElementById('cumulative-manpower');
-    if (displayElement) {
-      displayElement.textContent = cumulativeManpower;
-    } else {
-      console.error('Element with ID "cumulative-manpower" not found');
+    if (projectData.end_date) {
+      const endDate = new Date(projectData.end_date);
+      document.getElementById("end_date").textContent = endDate.toLocaleDateString('en-GB');
+      
+      // Calculate duration in days
+      const timeDiff = endDate - startDate;
+      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      document.getElementById("total_days").textContent = daysDiff;
     }
+  }
+
+  if (projectData.start_date && projectData.end_date) {
+    const startDate = new Date(projectData.start_date);
+    const endDate = new Date(projectData.end_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    let daysRemaining;
     
-    return cumulativeManpower; // Optional: return the value if needed elsewhere
-    
-  } catch (error) {
-    console.error('Failed to fetch cumulative manpower:', error);
-    // Fallback display if API fails
-    document.getElementById('cumulative-manpower').textContent = 'N/A';
-    return 0;
+    if (today < startDate) {
+      daysRemaining = totalDays;
+    } else if (today > endDate) {
+      daysRemaining = 0;
+    } else {
+      daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+    }
+
+    document.getElementById("days_left").textContent = daysRemaining;
+    document.getElementById("total_days").textContent = totalDays;
   }
 }
 
-// Usage (call when needed, e.g., on page load):
-fetchAndDisplayCumulativeManpower();
-
-
-
-async function fetchAndDisplayDPR(dprId = 17) {
+// Main DPR Display Function
+async function fetchAndDisplayDPR(dprId) {
   try {
+    const response = await fetchWithRetry(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
+    const { data } = await response;
     
-    const { data } = await fetchWithRetry(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
-    
-        // Site Condition - Updated checkbox handling
+    // Site Conditions
     const { site_condition } = data;
-    
-    // Clear all checkboxes first
     document.querySelectorAll('.condition-checkbox').forEach(checkbox => {
       checkbox.style.backgroundColor = "";
       checkbox.textContent = "";
     });
 
-    // Set active checkboxes
     if (site_condition.is_rainy) {
       const checkbox = document.getElementById("rainy-day-checkbox");
       checkbox.style.backgroundColor = "green";
-      checkbox.textContent = "";
-      checkbox.style.color = "white";
     } else {
       const checkbox = document.getElementById("normal-day-checkbox");
       checkbox.style.backgroundColor = "green";
-      checkbox.textContent = "";
-      checkbox.style.color = "white";
     }
     
     if (site_condition.ground_state === "slushy") {
       const checkbox = document.getElementById("slushy-day-checkbox");
       checkbox.style.backgroundColor = "green";
-      checkbox.textContent = "";
-      checkbox.style.color = "white";
     } else if (site_condition.ground_state === "dry") {
       const checkbox = document.getElementById("dry-day-checkbox");
       checkbox.style.backgroundColor = "green";
-      checkbox.textContent = "";
-      checkbox.style.color = "white";
     }
-    // Rain Timings
+
+    // Time Slots
     const timingContainer = document.getElementById("from-to-container");
     timingContainer.innerHTML = "";
     (site_condition.rain_timing || []).forEach((t) => {
@@ -463,170 +232,162 @@ async function fetchAndDisplayDPR(dprId = 17) {
     const tbody = document.getElementById("displayTable").getElementsByTagName("tbody")[0];
     tbody.innerHTML = "";
 
-    for (let i = 0; i < labour.agency.length; i++) {
+    // Get all labour types (excluding permanent columns)
+    const permanentColumns = ['agency', 'remarks'];
+    const dynamicColumns = Object.keys(labour).filter(
+      key => !permanentColumns.includes(key) && 
+             !key.startsWith('_') && 
+             Array.isArray(labour[key])
+    );
+
+    // Create header row
+    const headerRow = document.createElement("tr");
+    
+    // Agency column
+    const agencyHeader = document.createElement("th");
+    agencyHeader.textContent = "Agency Name";
+    headerRow.appendChild(agencyHeader);
+
+    // Dynamic columns
+    dynamicColumns.sort().forEach(col => {
+      const th = document.createElement("th");
+      th.textContent = col.charAt(0).toUpperCase() + col.slice(1);
+      th.style.textAlign = "center";
+      headerRow.appendChild(th);
+    });
+
+    // Total column
+    const totalHeader = document.createElement("th");
+    totalHeader.textContent = "Total";
+    totalHeader.style.textAlign = "center";
+    headerRow.appendChild(totalHeader);
+
+    // Remarks column
+    const remarksHeader = document.createElement("th");
+    remarksHeader.textContent = "Remarks";
+    headerRow.appendChild(remarksHeader);
+
+    const thead = document.getElementById("displayTable").getElementsByTagName("thead")[0];
+    thead.innerHTML = "";
+    thead.appendChild(headerRow);
+
+    // Create data rows
+    const agencyCount = Math.max(
+      ...permanentColumns.map(col => labour[col]?.length || 0),
+      ...dynamicColumns.map(col => labour[col]?.length || 0)
+    );
+
+    for (let i = 0; i < agencyCount; i++) {
       const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${labour.agency[i]}</td>
-        <td>${labour.mason[i]}</td>
-        <td>${labour.carp[i]}</td>
-        <td>${labour.fitter[i]}</td>
-        <td>${labour.electrical[i]}</td>
-        <td>${labour.painter[i]}</td>
-        <td>${labour.gypsum[i]}</td>
-        <td>${labour.plumber[i]}</td>
-        <td>${labour.helper[i]}</td>
-        <td>${labour.staff[i]}</td>
-        <td>${
-          labour.helper[i] +
-          labour.staff[i] +
-          labour.mason[i] +
-          labour.carp[i] +
-          labour.fitter[i] +
-          labour.electrical[i] +
-          labour.painter[i] +
-          labour.gypsum[i] +
-          labour.plumber[i]
-        }</td>
-        <td>${labour.remarks || "--"}</td>
-      `;
+      
+      // Agency cell
+      const agencyCell = document.createElement("td");
+      agencyCell.textContent = labour.agency?.[i] || "--";
+      tr.appendChild(agencyCell);
+
+      // Dynamic columns data
+      let rowTotal = 0;
+      dynamicColumns.forEach(col => {
+        const cell = document.createElement("td");
+        const value = labour[col]?.[i] || 0;
+        cell.textContent = value;
+        cell.style.textAlign = "center";
+        tr.appendChild(cell);
+        rowTotal += parseInt(value) || 0;
+      });
+
+      // Total cell
+      const totalCell = document.createElement("td");
+      totalCell.textContent = rowTotal;
+      totalCell.style.textAlign = "center";
+      tr.appendChild(totalCell);
+
+      // Remarks cell
+      const remarksCell = document.createElement("td");
+      remarksCell.textContent = labour.remarks?.[i] || "--";
+      tr.appendChild(remarksCell);
+
       tbody.appendChild(tr);
     }
 
+    // Cumulative Manpower
+    document.getElementById("cumulative-manpower").textContent = data.cumulative_manpower || "0";
+
     // Progress Data
     populateTable(
-      data.today_prog.progress.map((p, i) => [p, data.today_prog.qty[i]]),
-      todayTable,
+      data.today_prog.progress?.map((p, i) => [p, data.today_prog.qty?.[i] || "--"]) || [["--", "--"]],
+      document.getElementById("today-table").getElementsByTagName("tbody")[0],
       true
     );
 
     populateTable(
-      data.tomorrow_plan.plan.map((p, i) => [p, data.tomorrow_plan.qty[i]]),
-      tomorrowTable,
+      data.tomorrow_plan.plan?.map((p, i) => [p, data.tomorrow_plan.qty?.[i] || "--"]) || [["--", "--"]],
+      document.getElementById("tomorrow-table").getElementsByTagName("tbody")[0],
       true
     );
 
     // Events
     const eventsContainer = document.getElementById("events-container");
     eventsContainer.innerHTML = "";
-    (data.report_footer.events_visit || []).forEach((event) => {
+    (data.report_footer?.events_visit || []).forEach(event => {
       const div = document.createElement("div");
       div.className = "remarks-item";
-      div.textContent = event;
+      div.textContent = event || "--";
       eventsContainer.appendChild(div);
     });
 
     // Remarks
     const remarksContainer = document.getElementById("remarks-content-container");
     remarksContainer.innerHTML = "";
-    const remarkDiv = document.createElement("div");
-    remarkDiv.className = "remarks-item";
-    remarkDiv.textContent = labour.remarks || "--";
-    remarksContainer.appendChild(remarkDiv);
+    (data.report_footer?.bottom_remarks || []).forEach(remark => {
+      const div = document.createElement("div");
+      div.className = "remarks-item";
+      div.textContent = remark || "--";
+      remarksContainer.appendChild(div);
+    });
 
     // Footer
-    document.getElementById("prepared-by").textContent =
-      data.report_footer.prepared_by;
-    document.getElementById("distribution").textContent =
-      data.report_footer.distribute.join(", ");
+    document.getElementById("prepared-by").textContent = data.report_footer?.prepared_by || "--";
+    document.getElementById("distribution").textContent = data.report_footer?.distribute?.join(", ") || "--";
 
     // Date
-    document.getElementById("report_date").textContent = new Date(
-      data.report_date
-    ).toLocaleDateString("en-GB");
+    document.getElementById("report_date").textContent = data.report_date
+      ? new Date(data.report_date).toLocaleDateString("en-GB")
+      : new Date().toLocaleDateString("en-GB");
 
   } catch (err) {
     console.error("Error fetching DPR:", err);
     showErrorToUser("Failed to load DPR data. Please try again.");
   }
-
-  
 }
 
-// ====================== PDF PREVIEW ======================
-// ====================== PDF PREVIEW ======================
+// PDF Preview
 function prepareForPDFPreview() {
   try {
-    // Safe data getter with multiple fallbacks
-    const getData = () => {
-      return {
-        // Get from API data or use empty object
-        apiData: JSON.parse(sessionStorage.getItem('apiProjectData')) || {},
-        // Get form values or empty array
-        formValues: JSON.parse(sessionStorage.getItem('form-values')) || [],
-        // Get timeslots or empty array 
-        timeSlots: JSON.parse(sessionStorage.getItem('timeslots')) || [],
-        // Get table data or empty arrays
-        tableData: JSON.parse(sessionStorage.getItem('userTableData')) || [],
-        todayData: JSON.parse(sessionStorage.getItem('todayTableData')) || [],
-        tomorrowData: JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [],
-        eventsData: JSON.parse(sessionStorage.getItem('eventsData')) || [],
-        remarksData: JSON.parse(sessionStorage.getItem('remarksData')) || []
-      };
-    };
-
-    const {
-      apiData,
-      formValues,
-      timeSlots,
-      tableData,
-      todayData,
-      tomorrowData,
-      eventsData,
-      remarksData
-    } = getData();
-
-    // Safe element text getter
-    const getTextSafe = (id, fallback = "--") => {
-      try {
-        const el = document.getElementById(id);
-        return el?.textContent?.trim() || fallback;
-      } catch {
-        return fallback;
-      }
-    };
-
-    // Format timeslots safely
-    const formattedTimeSlots = timeSlots.map(slot => {
-      if (!slot) return "--:--";
-      if (typeof slot === 'string') return slot;
-      if (slot.from && slot.to) return `${slot.from}-${slot.to}`;
-      return "--:--";
+    const getData = () => ({
+      apiData: JSON.parse(sessionStorage.getItem('apiProjectData')) || {},
+      formValues: JSON.parse(sessionStorage.getItem('form-values')) || [],
+      timeSlots: JSON.parse(sessionStorage.getItem('timeslots')) || [],
+      tableData: JSON.parse(sessionStorage.getItem('userTableData')) || [],
+      todayData: JSON.parse(sessionStorage.getItem('todayTableData')) || [],
+      tomorrowData: JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [],
+      eventsData: JSON.parse(sessionStorage.getItem('eventsData')) || [],
+      remarksData: JSON.parse(sessionStorage.getItem('remarksData')) || []
     });
 
-    // Prepare project data with EVERY field having a fallback
     const projectData = {
-      project_name: apiData.project_name || "Project Name",
-      Employer: apiData.Employer || "Employer",
-      contract_no: apiData.contract_no || "Contract #",
-      location: apiData.location || "Location",
-      start_date: apiData.start_date ? 
-        new Date(apiData.start_date).toLocaleDateString('en-GB') : "--",
-      completion_date: apiData.completion_date ? new Date(apiData.completion_date).toLocaleDateString('en-GB') : "--",
-      total_days: getTextSafe('total', "0"),
-      days_remaining: getTextSafe('balance-left', "0"),
-      report_date: getTextSafe('report_date', new Date().toLocaleDateString('en-GB')),
-      
-      site_conditions: {
-        normal_day: formValues[0] === "Sunny",
-        rainy_day: formValues[0] === "Rainy",
-        slushy_day: formValues[1] === "slushy",
-        dry_day: formValues[1] === "dry",
-        time_slots: formattedTimeSlots.length ? formattedTimeSlots : ["--:--"]
-      },
-
-      labour_data: {
-        table_data: tableData.length ? tableData : [["--", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "--"]],
-        cumulative_manpower: apiData.cumulative_manpower || "0"
-      },
-
-      today_progress: todayData.length ? todayData : [["--", "--"]],
-      tomorrow_planning: tomorrowData.length ? tomorrowData : [["--", "--"]],
-      events_remarks: eventsData.length ? eventsData : ["--"],
-      general_remarks: remarksData.length ? remarksData : ["--"],
-
-      prepared_by: getTextSafe('prepared-by', "User"),
-      approved_by: getTextSafe('distribution', "Approver"),
-      dpr_id: getCurrentDPRId() || 17
+      project_name: document.getElementById("project_name").textContent || "Project Name",
+      Employer: document.getElementById("Employer").textContent || "Employer",
+      contract_no: document.getElementById("contract_no").textContent || "--",
+      location: document.getElementById("location").textContent || "--",
+      start_date: document.getElementById("start_date").textContent || "--",
+      completion_date: document.getElementById("end_date").textContent || "--",
+      total_days: document.getElementById("total_days").textContent || "0",
+      days_remaining: document.getElementById("days_left").textContent || "0",
+      report_date: document.getElementById("report_date").textContent || new Date().toLocaleDateString('en-GB'),
+      prepared_by: document.getElementById("prepared-by").textContent || "User",
+      approved_by: document.getElementById("distribution").textContent || "Approver",
+      dpr_id: getCurrentDPRId() || 1
     };
 
     sessionStorage.setItem('pdfPreviewData', JSON.stringify(projectData));
@@ -634,101 +395,21 @@ function prepareForPDFPreview() {
     
   } catch (error) {
     console.error("PDF Preview Error:", error);
-    // Ultimate fallback - create minimal valid data
-    const fallbackData = {
-      project_name: "Project",
-      Employer: "Employer",
-      contract_no: "--",
-      location: "--",
-      start_date: "--",
-      completion_date: "--",
-      total_days: "0",
-      days_remaining: "0",
-      report_date: new Date().toLocaleDateString('en-GB'),
-      site_conditions: {
-        normal_day: false,
-        rainy_day: false,
-        slushy_day: false,
-        dry_day: false,
-        time_slots: ["--:--"]
-      },
-      labour_data: {
-        table_data: [["--", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "--"]],
-        cumulative_manpower: "0"
-      },
-      today_progress: [["--", "--"]],
-      tomorrow_planning: [["--", "--"]],
-      events_remarks: ["--"],
-      general_remarks: ["--"],
-      prepared_by: "User",
-      approved_by: "Approver",
-      dpr_id: 17
-    };
-    
-    sessionStorage.setItem('pdfPreviewData', JSON.stringify(fallbackData));
-    window.location.href = `dpr1-pdf.html?id=17`;
+    window.location.href = `dpr1-pdf.html?id=1`;
   }
-}
-// Helper function to get current DPR ID
-function getCurrentDPRId() {
-  // Try to get from URL first
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlId = urlParams.get('id');
-  if (urlId) return urlId;
-  
-  // Try to get from session storage
-  const storedData = JSON.parse(sessionStorage.getItem('pdfPreviewData'));
-  if (storedData?.dpr_id) return storedData.dpr_id;
-  
-  // Try to get from API data if available
-  const apiData = JSON.parse(sessionStorage.getItem('apiProjectData'));
-  if (apiData?.dpr_id) return apiData.dpr_id;
-  
-  return null; // Return null if no ID found
 }
 
-// Helper function to calculate cumulative manpower
-// function calculateCumulativeManpower(tableData) {
-//   try {
-//     return tableData.reduce((total, row) => {
-//       const rowTotal = parseInt(row[10]) || 0;
-//       return total + rowTotal;
-//     }, 0);
-//   } catch (error) {
-//     console.error("Error calculating cumulative manpower:", error);
-//     return 0;
-//   }
-// }
-// ====================== INITIALIZATION ======================
-// Update the initialization to properly handle API data
+// Initialize
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // First try to load from API
+    const loadingIndicator = showLoadingIndicator();
     await fetchProjectData();
-    await fetchAndDisplayDPR();
-    
-    // Then fall back to session data if API fails
-    if (!sessionStorage.getItem('apiProjectData')) {
-      populateTable(tableData, displayTable);
-      populateTable(todayData, todayTable, true);
-      populateTable(tomorrowData, tomorrowTable, true);
-      handleFormData();
-      handleTimeSlots();
-    }
-    
-    handleEvents();
-    handleRemarks();
+    await fetchAndDisplayDPR(dprId);
+    hideLoadingIndicator(loadingIndicator);
   } catch (error) {
     console.error("Initialization error:", error);
-    // Fallback to session data
-    populateTable(tableData, displayTable);
-    populateTable(todayData, todayTable, true);
-    populateTable(tomorrowData, tomorrowTable, true);
-    handleFormData();
-    handleTimeSlots();
-    handleEvents();
-    handleRemarks();
+    showErrorToUser("Failed to initialize. Using fallback data.");
   }
 });
-// Make functions available globally
+
 window.prepareForPDFPreview = prepareForPDFPreview;
