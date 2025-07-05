@@ -87,7 +87,8 @@ document.getElementById("addTimeSlotBtn").addEventListener("click", (e) => {
 // ===================== PROJECT DETAILS =====================
 async function fetchProjectDetails() {
   try {
-    const response = await fetch('http://34.47.131.237:3000/project/getProject/1');
+    const project_id = localStorage.getItem("selected_project_id") || "1";
+    const response = await fetch(`http://34.47.131.237:3000/project/getProject/${project_id}`);
     const projectData = await response.json();
     
     // Populate the project details in the table
