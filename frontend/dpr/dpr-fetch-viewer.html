@@ -43,15 +43,15 @@
                     </div>
                     <div class="info-item">
                         <div class="info-label">Completion Date</div>
-                        <div class="info-value" id="completion_date">---</div>
+                        <div class="info-value" id="end_date">---</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Duration (Days)</div>
-                        <div class="info-value" id="total">---</div>
+                        <div class="info-value" id="total_days">---</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Days Remaining</div>
-                        <div class="info-value" id="balance-left">---</div>
+                        <div class="info-value" id="days_left">---</div>
                     </div>
                 </div>
             </div>
@@ -94,22 +94,24 @@
             <div class="card-header">
                 <div class="card-title">Labour Report</div>
             </div>
-            <table id="displayTable">
+            <div class="table-container">
+  <table id="displayTable">
     <thead>
-        <tr id="labourHeaders">
-            <th>Agency Name</th>
-            <!-- Columns will be added dynamically here -->
-            <th>Total</th>
-            <th>Remarks</th>
-        </tr>
+      <tr id="labourHeaders">
+        <th>Agency Name</th>
+        <!-- Columns will be added dynamically here -->
+        <th>Total</th>
+        <th>Remarks</th>
+      </tr>
     </thead>
     <tbody>
-        <!-- Table data will be inserted here by JavaScript -->
+      <!-- Table data will be inserted here by JavaScript -->
     </tbody>
-</table>
+  </table>
+</div>
             <div style="margin-top: 15px; font-size: 13px;">
                 <div class="info-label">Cumulative Manpower (until yesterday)</div>
-                <div class="info-value">Loading...</div>
+                <div class="info-value" id="cumulative-manpower"></div>
             </div>
         </div>
         
