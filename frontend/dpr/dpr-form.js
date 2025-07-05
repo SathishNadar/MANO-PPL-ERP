@@ -159,46 +159,54 @@ function calculateProjectDays(startDate, endDate) {
 
 //-------------------dynamically adding the rows and columns to labour report------------------------//
 async function initializeLabourTable() {
-  const apiUrl = "https://dummyjson.com/products/2"; // Your actual API URL
-
   try {
-    const response = await fetch(apiUrl);
-    const { columns, rows } = await response.json(); // columns & rows are arrays of strings
+    // Fetch project data containing agency and labour types
+    const project_id = localStorage.getItem("selected_project_id") || "1";
+    const response = await fetch(`http://34.47.131.237:3000/project/getProject/${project_id}`);
+    const projectData = await response.json();
+    
+    // Extract agency names and labour types from metadata
+    const agencies = projectData.data.metadata.agency || [];
+    const labourTypes = projectData.data.metadata.labour_type || [];
 
     const table = document.getElementById("labourTable");
     table.innerHTML = "";
 
-    const thead = document.createElement("thead");
-    const tbody = document.createElement("tbody");
-
     // ===== HEADER ROW =====
+    const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
+    
+    // Agency column
     headerRow.innerHTML = `<th>Agency</th>`;
-
-    columns.forEach(col => {
-      headerRow.innerHTML += `<th>${col}</th>`;
+    
+    // Labour type columns
+    labourTypes.forEach(type => {
+      headerRow.innerHTML += `<th>${type.charAt(0).toUpperCase() + type.slice(1)}</th>`;
     });
-
+    
+    // Total and Remarks columns
     headerRow.innerHTML += `<th>Total</th><th>Remarks</th>`;
     thead.appendChild(headerRow);
 
     // ===== DATA ROWS =====
-    rows.forEach((agencyName, rowIndex) => {
+    const tbody = document.createElement("tbody");
+
+    agencies.forEach(agency => {
       const tr = document.createElement("tr");
       tr.className = "data-row";
 
-      // First column: Agency Name
-      tr.innerHTML = `<td>${agencyName}</td>`;
+      // Agency name (editable)
+      tr.innerHTML = `<td><input type="text" value="${agency}" /></td>`;
 
-      // Dynamic labour inputs
-      columns.forEach((col, colIndex) => {
-        tr.innerHTML += `<td><input type="number" class="cell-input" data-row="${rowIndex}" data-col="${col}" value="" /></td>`;
+      // Empty inputs for each labour type
+      labourTypes.forEach(type => {
+        tr.innerHTML += `<td><input type="number" class="cell-input" data-type="${type}" value="" /></td>`;
       });
 
-      // Row total (calculated)
+      // Total (auto-calculated, disabled)
       tr.innerHTML += `<td><input type="number" class="row-total" disabled /></td>`;
 
-      // Remarks (editable but optional)
+      // Remarks (editable)
       tr.innerHTML += `<td><input type="text" class="remarks-input" /></td>`;
 
       tbody.appendChild(tr);
@@ -208,10 +216,12 @@ async function initializeLabourTable() {
     const totalRow = document.createElement("tr");
     totalRow.innerHTML = `<td><strong>TOTAL</strong></td>`;
 
-    columns.forEach((col, colIndex) => {
-      totalRow.innerHTML += `<td><input id="col-total-${col}" type="number" disabled /></td>`;
+    // Column totals (auto-calculated, disabled)
+    labourTypes.forEach(type => {
+      totalRow.innerHTML += `<td><input id="total-${type}" type="number" disabled /></td>`;
     });
 
+    // Grand total (auto-calculated, disabled)
     totalRow.innerHTML += `<td><input id="grandtotal" type="number" disabled /></td><td></td>`;
     tbody.appendChild(totalRow);
 
@@ -219,24 +229,21 @@ async function initializeLabourTable() {
     table.appendChild(thead);
     table.appendChild(tbody);
 
-    // Setup event listeners
+    // Setup event listeners for auto-calculation
     document.querySelectorAll(".cell-input").forEach(input => {
       input.addEventListener("input", calculateTotals);
     });
 
   } catch (error) {
-    console.error("Error loading table:", error);
-    labourTable.innerHTML = `
+    console.error("Error loading labour structure:", error);
+    document.getElementById("labourTable").innerHTML = `
       <thead>
         <tr>
-          <th>Agency</th>
-          <th colspan="3">Error</th>
-          <th>Total</th>
-          <th>Remarks</th>
+          <th colspan="3">Error Loading Labour Data</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td colspan="6">Unable to fetch labour data</td></tr>
+        <tr><td colspan="3">${error.message}</td></tr>
       </tbody>
     `;
   }
@@ -244,23 +251,27 @@ async function initializeLabourTable() {
 
 
 function calculateTotals() {
-  const dataRows = document.querySelectorAll(".data-row");
+  const labourTypes = Array.from(new Set(
+    Array.from(document.querySelectorAll("[data-type]"))
+      .map(el => el.getAttribute("data-type"))
+  ));
+
+  // Initialize totals
   const columnTotals = {};
+  labourTypes.forEach(type => {
+    columnTotals[type] = 0;
+  });
   let grandTotal = 0;
 
-  dataRows.forEach(row => {
+  // Calculate row totals and column totals
+  document.querySelectorAll(".data-row").forEach(row => {
     let rowTotal = 0;
-    const inputs = row.querySelectorAll(".cell-input");
-
-    inputs.forEach(input => {
-      const colId = input.getAttribute("data-col");
+    
+    labourTypes.forEach(type => {
+      const input = row.querySelector(`[data-type="${type}"]`);
       const value = parseFloat(input.value) || 0;
-
-      // Column-wise total
-      if (!columnTotals[colId]) columnTotals[colId] = 0;
-      columnTotals[colId] += value;
-
       rowTotal += value;
+      columnTotals[type] += value;
     });
 
     // Update row total
@@ -269,54 +280,14 @@ function calculateTotals() {
   });
 
   // Update column totals
-  for (let colId in columnTotals) {
-    const totalInput = document.getElementById(`col-total-${colId}`);
-    if (totalInput) totalInput.value = columnTotals[colId];
-  }
-
-  // Update grand total
-  document.getElementById("grandtotal").value = grandTotal;
-}
-
-
-// Calculation function (example)
-function calculateTotals() {
-  const dataRows = document.querySelectorAll(".data-row");
-  const columnTotals = {};
-  
-  // Initialize totals
-  document.querySelectorAll("thead th").forEach((th, index) => {
-    if (index > 0) columnTotals[index] = 0; // Skip first column (Brand)
-  });
-
-  // Calculate row totals and column totals
-  dataRows.forEach(row => {
-    let rowTotal = 0;
-    const cells = row.querySelectorAll("td");
-    
-    cells.forEach((cell, index) => {
-      if (index > 0 && index < cells.length - 1) { // Skip Brand and Total columns
-        const input = cell.querySelector("input");
-        const value = parseFloat(input?.value) || 0;
-        rowTotal += value;
-        columnTotals[index] += value;
-      }
-    });
-
-    // Update row total
-    const rowTotalInput = row.querySelector(".row-total");
-    if (rowTotalInput) rowTotalInput.value = rowTotal;
-  });
-
-  // Update column totals in footer
-  Object.entries(columnTotals).forEach(([index, total]) => {
-    const totalInput = document.getElementById(`${index}_total`);
-    if (totalInput) totalInput.value = total;
+  labourTypes.forEach(type => {
+    const totalInput = document.getElementById(`total-${type}`);
+    if (totalInput) totalInput.value = columnTotals[type];
   });
 
   // Update grand total
-  const grandTotal = Object.values(columnTotals).reduce((sum, val) => sum + val, 0);
-  document.getElementById("grandtotal").value = grandTotal;
+  const grandTotalInput = document.getElementById("grandtotal");
+  if (grandTotalInput) grandTotalInput.value = grandTotal;
 }
 
 // ===================== CALCULATE TOTALS =====================
