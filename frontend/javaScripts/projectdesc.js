@@ -87,8 +87,16 @@ function goHome() {
 function daysAgoFromToday(dateString) {
   const today = new Date();
   const reportDate = new Date(dateString);
-  const diffTime = Math.abs(today - reportDate);
-  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  today.setHours(0, 0, 0, 0);
+  reportDate.setHours(0, 0, 0, 0);
+
+  const diffTime = today - reportDate;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return `${diffDays} days ago`;
 }
 
 async function loadDPRList(projectId) {
@@ -98,12 +106,15 @@ async function loadDPRList(projectId) {
 
     const dprs = await response.json();
 
-    const recentDprs = dprs.filter(dpr => {
-      const daysAgo = daysAgoFromToday(dpr.report_date);
-      return daysAgo <= 10 && daysAgo >= 0;
+    const recentDprs = dprs.filter((dpr) => {
+      const today = new Date();
+      const reportDate = new Date(dpr.report_date);
+      today.setHours(0, 0, 0, 0);
+      reportDate.setHours(0, 0, 0, 0);
+      const diffDays = Math.floor((today - reportDate) / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 10;
     });
 
-    // Sort descending by date
     recentDprs.sort((a, b) => new Date(b.report_date) - new Date(a.report_date));
 
     const entryList = document.querySelector(".entry-list");
@@ -121,7 +132,7 @@ async function loadDPRList(projectId) {
         month: "long",
         year: "numeric"
       });
-      const daysAgo = daysAgoFromToday(dpr.report_date);
+      const dayLabel = daysAgoFromToday(dpr.report_date);
 
       const entry = document.createElement("a");
       entry.className = "entry";
@@ -129,7 +140,7 @@ async function loadDPRList(projectId) {
       entry.target = "blank";
       entry.innerHTML = `
         <span class="task-title">DPR - ${dateStr}</span>
-        <span class="task-meta">🕒 ${daysAgo} day${daysAgo !== 1 ? "s" : ""} ago</span>
+        <span class="task-meta">🕒 ${dayLabel}</span>
       `;
       entryList.appendChild(entry);
     });
@@ -148,9 +159,8 @@ document.getElementById("new-dpr-btn").addEventListener("click", () => {
   }
 
   sessionStorage.setItem("new_dpr_project_id", selectedProjectId);
-  window.location.href = "../dpr/dpr-form.html";
+  window.open("../dpr/dpr-form.html", "_blank");
 });
-
 
 window.logout = logout;
 window.toggleUserMenu = toggleUserMenu;
