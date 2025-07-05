@@ -45,7 +45,41 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             font-weight: 500;
         }
-        
+        /* Table header fixes */
+#displayTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+#displayTable th {
+  background-color: #f2f2f2;
+  position: sticky;
+  top: 0;
+  padding: 8px 4px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid #ddd;
+}
+
+#displayTable td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+#displayTable tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Make the table container scrollable */
+.table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
