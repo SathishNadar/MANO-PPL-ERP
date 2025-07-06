@@ -89,6 +89,11 @@ function populateLabourTable() {
 
 // ====================== STYLING HELPERS ======================
 function styleTableCell(cell, isTextCell = false) {
+    const table = cell.closest('table');
+    const keys = table?.id === 'displayTable' 
+        ? Object.keys(JSON.parse(sessionStorage.getItem("labourReport")) || [])
+        : [];
+
     cell.style.border = "1px solid #000";
     cell.style.padding = "4px";
     cell.style.boxSizing = "border-box";
@@ -96,7 +101,6 @@ function styleTableCell(cell, isTextCell = false) {
     cell.style.wordBreak = "break-word";
     
     // For Today/Tomorrow tables
-    const table = cell.closest('table');
     if (table && (table.id === 'today-table' || table.id === 'tomorrow-table')) {
         if (cell.cellIndex === 0) { // Task column
             cell.style.width = "70%";
@@ -140,7 +144,6 @@ function handleRemarks() {
     const container = document.querySelector('.remarks-content-container');
     if (!container) return;
 
-    // Use the same key as in the form
     const data = JSON.parse(sessionStorage.getItem('remarksData')) || [];
     container.innerHTML = '';
 
@@ -216,7 +219,6 @@ function prepareForPrint() {
         table.style.borderCollapse = "collapse";
     });
 
-    // Style both events and remarks
     document.querySelectorAll('.events-content, .remarks-content').forEach(div => {
         div.style.border = "1px solid #000";
         div.style.padding = "0px";
@@ -224,49 +226,6 @@ function prepareForPrint() {
         div.style.backgroundColor = "#f9f9f9";
     });
 }
-
-// ====================== INITIALIZATION ======================
-document.addEventListener("DOMContentLoaded", () => {
-    populateTable(tableData, displayTable);
-    populateTable(todayData, todayTable, true);
-    populateTable(tomorrowData, tomorrowTable, true);
-    handleFormData();
-    handleTimeSlots();
-    handleEvents();
-    handleRemarks();
-    adjustLabourContainer();
-
-    window.addEventListener('resize', adjustLabourContainer);
-    window.onbeforeprint = prepareForPrint;
-
-    
-
-
-
-
-const reportData = generateReportObject();
-  console.log("Generated Report Object:", reportData);
-
-
-});
-
-// ====================== PRINT HANDLER ======================
-document.getElementById('download-pdf')?.addEventListener('click', () => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-        @page { margin: 5mm !important; }
-        body { margin: 0 !important; }
-        .remarks-content {
-            border: 1px solid #000 !important;
-            page-break-inside: avoid !important;
-        }
-    `;
-    document.head.appendChild(style);
-    prepareForPrint();
-    window.print();
-    setTimeout(() => style.remove(), 1000);
-});
-
 
 // ====================== HANDLE EVENTS ======================
 function handleEvents() {
@@ -287,301 +246,101 @@ function handleEvents() {
     }
 }
 
-// ====================== HANDLE REMARKS ======================
-function handleRemarks() {
-    const container = document.querySelector('.remarks-content-container');
-    if (!container) return;
-
-    const data = JSON.parse(sessionStorage.getItem('remarksData')) || [];
-    container.innerHTML = '';
-
-    const count = Math.max(data.length, 3);
-    for (let i = 0; i < count; i++) {
-        const div = document.createElement('div');
-        div.className = 'remarks-content';
-        div.textContent = data[i] || '--';
-        div.setAttribute('data-index', i);
-        styleRemarksCell(div);
-        container.appendChild(div);
-    }
-}
-
-
-
-
-
-//----------------------------FOR CREATING OBJECT FOR THE VALUES OF THE DPR----------------------------------//
-function generateReportObject() {
-  return {
-    project_id: parseInt(sessionStorage.getItem('projectId')) || 1,
-    report_date: new Date().toISOString().split('T')[0],
-    site_condition: {
-      ground_state: JSON.parse(sessionStorage.getItem('form-values'))?.[1] || "normal",
-      is_rainy: JSON.parse(sessionStorage.getItem('form-values'))?.[0] === "Rainy",
-      rain_timing: JSON.parse(sessionStorage.getItem('timeslots')) || []
-    },
-    labour_report: {
-      agency: tableData.map(row => row[0]), // From your existing tableData
-      mason: tableData.map(row => parseInt(row[1]) || 0),
-      carp: tableData.map(row => parseInt(row[2]) || 0),
-      // ... other labour fields ...
-      remarks: JSON.parse(sessionStorage.getItem('remarksData'))?.[0] || ""
-    },
-    today_prog: {
-      progress: todayData.map(row => row[0] || "--"),  // Task column
-      qty: todayData.map(row => row[1] || "--")       // Qty column
-    },
-    tomorrow_plan: {
-      plan: tomorrowData.map(row => row[0] || "--"),
-      qty: tomorrowData.map(row => row[1] || "--")
-    }
-  };
-}
-
-
-//-------------------------------------------------fetching the data from backend directly into the PDF format----------------------------------//
-fetch('http://34.47.131.237:3000/project/getProject/1')
-  .then(response => {
-    if (!response.ok) {
-      document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
-      document.getElementById("project_name").classList.add = "error_state";
-
-      return Promise.reject(new Error('Project not found'));
-      
-    }
-    return response.json(); // Parse JSON response
-  })
-  .then(Apidata => {
-    sessionStorage.setItem('apiProjectData', JSON.stringify(Apidata.data));//to store the values to later on upload to backend//
-    document.getElementById("project_name").innerHTML = Apidata.data.project_name;
-    document.getElementById("Employer").innerHTML = Apidata.data.Employer;
-    document.getElementById("contract_no").innerHTML = Apidata.data.contract_no;
-    document.getElementById("location").innerHTML = Apidata.data.location;
-    document.getElementById("start_date").innerHTML = new Date(Apidata.data.start_date).toLocaleDateString('en-GB');
-
-    const completeReport = generateCompleteDPRObject();
-    console.log(JSON.stringify(completeReport, null, 2));
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
-
-
-
-  //-------------------------------TO format THESE DATA TO MATCH THE OBJECT ALREADY EXISTING IN BACKEND------------------------------------------//
-function generateCompleteDPRObject() {
-const apiData = JSON.parse(sessionStorage.getItem('apiProjectData')) || {};
-
-
-  // 1. Get all raw data
-  const tableData = JSON.parse(sessionStorage.getItem('userTableData')) || [];
-  const todayData = JSON.parse(sessionStorage.getItem('todayTableData')) || [];
-  const tomorrowData = JSON.parse(sessionStorage.getItem('tomorrowTableData')) || [];
-  const formValues = JSON.parse(sessionStorage.getItem('form-values')) || [];
-  // const timeSlots = JSON.parse(sessionStorage.getItem('timeslots')) || [];
-  // const remarksData = JSON.parse(sessionStorage.getItem('remarksData')) || []; //-----THAT FINAL BOTTOM REGION REMARKS-----//
-  // 2. Process LABOR exactly as you need it
-  const labour_report = {
-    agency: tableData.map(row => row[0] || "--"),
-    mason: tableData.map(row => parseInt(row[1]) || 0),
-    carp: tableData.map(row => parseInt(row[2]) || 0),
-    fitter: tableData.map(row => parseInt(row[3]) || 0),
-    electrical: tableData.map(row => parseInt(row[4]) || 0),
-    painter: tableData.map(row => parseInt(row[5]) || 0),
-    gypsum: tableData.map(row => parseInt(row[6]) || 0),
-    plumber: tableData.map(row => parseInt(row[7]) || 0),
-    helper: tableData.map(row => parseInt(row[8]) || 0),
-    staff: tableData.map(row => parseInt(row[9]) || 0),
-    remarks: tableData.slice(0).map(row => row[11] || "--")
-    // Total_column_wise: tableData.map(row => parseInt(row[10]) || 0),  total column wise!!!!
-    // Bonus: Auto-calculated totals
-    // totals: {//---------------might need or not needed later on-----------------------//
-    //   mason: tableData.reduce((sum, row) => sum + (parseInt(row[1]) || 0), 0) /2,
-    //   carp: tableData.reduce((sum, row) => sum + (parseInt(row[2]) || 0), 0) /2,
-    //   // Add other trades if needed
-    // }
-  };
-
-  // 3. Build the COMPLETE DPR object
-  return {
-    project_id : 66,
-    report_date:"2004-10-10",
-
-    // A. Project Info (from API)
-    // project_info: {
-      
-    //   project_name: apiData.project_name || "N/A",
-    //   employer: apiData.Employer || "N/A",
-    //   contract_no: apiData.contract_no || "N/A",
-    //   location: apiData.location || "N/A",
-    //   start_date: apiData.start_date ? new Date(apiData.start_date).toLocaleDateString('en-GB') : "N/A",
-    // },
-
-    // B. Site Conditions
-    site_condition: {
-      is_rainy: formValues[0] ==="Rainy",
-      ground_state: formValues[1] || "Unknown",
-      rain_timing: formattedSlots || "No time slots available"
-    },
-
-    // C. Labor (your exact format!)
-    
-    labour_report: labour_report,
-
-    // D. Progress Data
-    today_prog: {
-      progress: todayData.map(row => row[0] || "--"),  // Task column
-      qty: todayData.map(row => row[1] || "--")       // Qty column
-    },
-    tomorrow_plan: {
-      plan: tomorrowData.map(row => row[0] || "--"),
-      qty: tomorrowData.map(row => row[1] || "--")
-    },
-
-  
-    user_roles: {
-    created_by: 1,
-    approvals: {
-      1: true,
-      3: false
-    },
-    viewers: [10, 11, 15],
-    editors: [1, 3, 4]
-  },
-  report_footer: {
-    events_visit: [], 
-    distribute: ["L&T", "MAPLANI"],
-    prepared_by: "Mano Project Pvt. Ltd."
-  },
-  created_at: "2025-01-19 12:00:00"
-}
-  };
-
-
-
-//---------------------------------TO UPLOAD THE DATA TO BACKEND UISING POST METHOD---------------------------//
-function postDPRToBackend() {
-  const dprData = generateCompleteDPRObject();
-
-  fetch('http://34.47.131.237:3000/report/insertDPR', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(dprData)
-  })
-  .then(response => {
-    if (!response.ok) throw new Error("Upload failed");
-    return response.json();
-  })
-  .then(result => {
-    console.log("Uploaded:", result);
-  })
-  .catch(err => {
-    console.error("Error:", err);
-  });
-}
-
-
-
-
-// dpr-pdf.js - Complete File
-
-document.addEventListener("DOMContentLoaded", () => {
-const pdfData = JSON.parse(sessionStorage.getItem('pdfPreviewData'));
-    
-    if (pdfData) {
-        // Project Information
-        document.getElementById("project_name").textContent = pdfData.project_name || "--";
-        document.getElementById("Employer").textContent = pdfData.Employer || "--";
-        document.getElementById("contract_no").textContent = pdfData.contract_no || "--";
-        document.getElementById("location").textContent = pdfData.location || "--";
-        document.getElementById("start_date").textContent = pdfData.start_date || "--";
-        document.getElementById("completion_date").textContent = pdfData.completion_date || "--";
+// ====================== FETCH PROJECT DATA ======================
+async function fetchProjectAndPopulate() {
+    try {
+        const response = await fetch('http://34.47.131.237:3000/project/getProject/1');
+        if (!response.ok) {
+            document.getElementById("project_name").textContent = "DATA UNAVAILABLE";
+            document.getElementById("project_name").classList.add("error_state");
+            throw new Error('Project not found');
+        }
         
-        // Duration and Days Remaining
-        if (document.querySelector(".total-value")) {
-            document.querySelector(".total-value").textContent = pdfData.total_days || "--";
-        }
-        if (document.querySelector(".balance-right")) {
-            document.querySelector(".balance-right").textContent = pdfData.days_remaining || "--";
-        }
-        if (document.querySelector(".daily-progress-report-table tr:nth-child(2) td:nth-child(2)")) {
-            document.querySelector(".daily-progress-report-table tr:nth-child(2) td:nth-child(2)").textContent = 
-                pdfData.report_date || "--";
-        }
+        const Apidata = await response.json();
+        sessionStorage.setItem('apiProjectData', JSON.stringify(Apidata.data));
+        document.getElementById("project_name").textContent = Apidata.data.project_name;
+        document.getElementById("Employer").textContent = Apidata.data.Employer;
+        document.getElementById("contract_no").textContent = Apidata.data.contract_no;
+        document.getElementById("location").textContent = Apidata.data.location;
+        document.getElementById("start_date").textContent = new Date(Apidata.data.start_date).toLocaleDateString('en-GB');
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
 
-        // Site Conditions
-        if (pdfData.site_conditions) {
-            const setCheckboxState = (id, isActive) => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.style.backgroundColor = isActive ? "green" : "";
-                    element.textContent = isActive ? "✓" : "";
-                }
-            };
-            
-            setCheckboxState("normal-day-checkbox", pdfData.site_conditions.normal_day);
-            setCheckboxState("rainy-day-checkbox", pdfData.site_conditions.rainy_day);
-            setCheckboxState("slushy-day-checkbox", pdfData.site_conditions.slushy_day);
-            setCheckboxState("dry-day-checkbox", pdfData.site_conditions.dry_day);
+// ====================== GENERATE COMPLETE DPR OBJECT ======================
+function generateCompleteDPRObject() {
+    const apiData = JSON.parse(sessionStorage.getItem('apiProjectData')) || {};
 
-            // Time Slots
-            const timeSlotsContainer = document.querySelector(".from-to");
-            if (timeSlotsContainer && pdfData.site_conditions.time_slots) {
-                timeSlotsContainer.innerHTML = pdfData.site_conditions.time_slots
-                    .map(slot => {
-                        const [from, to] = slot.split('-');
-                        return `
-                            <tr>
-                                <td>From: <span>${from || "--"}</span></td>
-                                <td>To: <span>${to || "--"}</span></td>
-                            </tr>
-                        `;
-                    })
-                    .join('');
-            }
-        }
-        // Labour Report
-        const labourTable = document.getElementById('displayTable');
-        if (labourTable && pdfData.labour_data && pdfData.labour_data.table_data) {
-            const tbody = labourTable.querySelector('tbody') || labourTable.createTBody();
-            tbody.innerHTML = pdfData.labour_data.table_data
-                .map(row => `<tr>${row.map(cell => `<td>${cell || "--"}</td>`).join('')}</tr>`)
-                .join('');
-            
-            // Cumulative Manpower
-            if (pdfData.labour_data.cumulative_manpower) {
-                const cumulativeElement = document.querySelector('.commulative');
-                if (cumulativeElement) {
-                    cumulativeElement.textContent = `Cumulative man power upto last date: ${pdfData.labour_data.cumulative_manpower}`;
-                }
-            }
-        }
+    return {
+        project_id: 66,
+        report_date: "2004-10-10",
+        site_condition: {
+            is_rainy: JSON.parse(sessionStorage.getItem('form-values'))?.[0] === "Rainy",
+            ground_state: JSON.parse(sessionStorage.getItem('form-values'))?.[1] || "normal",
+            rain_timing: formattedSlots || []
+        },
+        labour_report: {
+            agency: tableData.map(row => row[0] || "--"),
+            mason: tableData.map(row => parseInt(row[1]) || 0),
+            carp: tableData.map(row => parseInt(row[2]) || 0),
+            fitter: tableData.map(row => parseInt(row[3]) || 0),
+            electrical: tableData.map(row => parseInt(row[4]) || 0),
+            painter: tableData.map(row => parseInt(row[5]) || 0),
+            gypsum: tableData.map(row => parseInt(row[6]) || 0),
+            plumber: tableData.map(row => parseInt(row[7]) || 0),
+            helper: tableData.map(row => parseInt(row[8]) || 0),
+            staff: tableData.map(row => parseInt(row[9]) || 0),
+            remarks: tableData.map(row => row[11] || "--")
+        },
+        today_prog: {
+            progress: todayData.map(row => row[0] || "--"),
+            qty: todayData.map(row => row[1] || "--")
+        },
+        tomorrow_plan: {
+            plan: tomorrowData.map(row => row[0] || "--"),
+            qty: tomorrowData.map(row => row[1] || "--")
+        },
+        user_roles: {
+            created_by: 1,
+            approvals: { 1: true, 3: false },
+            viewers: [10, 11, 15],
+            editors: [1, 3, 4]
+        },
+        report_footer: {
+            events_visit: JSON.parse(sessionStorage.getItem('eventsData')) || [],
+            distribute: ["L&T", "MAPLANI"],
+            prepared_by: "Mano Project Pvt. Ltd."
+        },
+        created_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+    };
+}
 
-        // Progress Tables
-        populateTableFromData('#today-table', pdfData.today_progress);
-        populateTableFromData('#tomorrow-table', pdfData.tomorrow_planning);
+// ====================== POST DPR TO BACKEND ======================
+async function postDPRToBackend() {
+    try {
+        const dprData = generateCompleteDPRObject();
+        const response = await fetch('http://34.47.131.237:3000/report/insertDPR', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dprData)
+        });
 
-        // Remarks Sections
-        if (pdfData.events_remarks) {
-            populateRemarksSection('.events-container', pdfData.events_remarks, 'events-content');
-        }
-        if (pdfData.general_remarks) {
-            populateRemarksSection('.remarks-content-container', pdfData.general_remarks, 'remarks-content');
-        }
-
-        document.getElementById('cumulative-manpower-untill-yesterday').textContent = previousManpower;
-        document.getElementById('cumulative-manpower-for-today').textContent = previousManpower + currentTotal;
-
+        if (!response.ok) throw new Error("Upload failed");
+        const result = await response.json();
+        console.log("Upload successful:", result);
+        alert("DPR uploaded successfully!");
     } catch (err) {
-        console.error("Error calculating cumulative manpower:", err);
+        console.error("Error:", err);
+        alert("Failed to upload DPR. Please try again.");
     }
 }
 
 // ====================== INITIALIZATION ======================
-async function initializePDF() {
-    populateLabourTable(); // Now includes totals
+async function initialize() {
+    populateLabourTable();
     populateTable(todayData, todayTable, true);
     populateTable(tomorrowData, tomorrowTable, true);
     handleFormData();
@@ -590,11 +349,12 @@ async function initializePDF() {
     handleRemarks();
     adjustLabourContainer();
     await fetchProjectAndPopulate();
-    await fetchCumulativeManpower();
+    
+    // Make postDPRToBackend available globally
+    window.postDPRToBackend = postDPRToBackend;
 }
 
-// ====================== EVENT LISTENERS ======================
-document.addEventListener("DOMContentLoaded", initializePDF);
+document.addEventListener("DOMContentLoaded", initialize);
 
 document.getElementById('download-pdf')?.addEventListener('click', () => {
     const style = document.createElement('style');
@@ -610,92 +370,4 @@ document.getElementById('download-pdf')?.addEventListener('click', () => {
     prepareForPrint();
     window.print();
     setTimeout(() => style.remove(), 1000);
-}
-
-// Generate complete DPR object (for backend submission)
-function generateCompleteDPRObject() {
-    const pdfData = JSON.parse(sessionStorage.getItem('pdfPreviewData')) || {};
-    const apiData = JSON.parse(sessionStorage.getItem('apiProjectData')) || {};
-
-    return {
-        project_id: parseInt(sessionStorage.getItem('projectId')) || 1,
-        report_date: pdfData.report_date || new Date().toISOString().split('T')[0],
-        
-        site_condition: {
-            ground_state: pdfData.site_conditions?.slushy_day ? "slushy" : 
-                         pdfData.site_conditions?.dry_day ? "dry" : "normal",
-            is_rainy: pdfData.site_conditions?.rainy_day || false,
-            rain_timing: pdfData.site_conditions?.time_slots || []
-        },
-        
-        labour_report: {
-            agency: pdfData.labour_data?.table_data?.map(row => row[0]) || [],
-            mason: pdfData.labour_data?.table_data?.map(row => parseInt(row[1]) || 0) || [],
-            carp: pdfData.labour_data?.table_data?.map(row => parseInt(row[2]) || 0) || [],
-            fitter: pdfData.labour_data?.table_data?.map(row => parseInt(row[3]) || 0) || [],
-            electrical: pdfData.labour_data?.table_data?.map(row => parseInt(row[4]) || 0) || [],
-            painter: pdfData.labour_data?.table_data?.map(row => parseInt(row[5]) || 0) || [],
-            gypsum: pdfData.labour_data?.table_data?.map(row => parseInt(row[6]) || 0) || [],
-            plumber: pdfData.labour_data?.table_data?.map(row => parseInt(row[7]) || 0) || [],
-            helper: pdfData.labour_data?.table_data?.map(row => parseInt(row[8]) || 0) || [],
-            staff: pdfData.labour_data?.table_data?.map(row => parseInt(row[9]) || 0) || [],
-            remarks: pdfData.labour_data?.table_data?.map(row => row[11] || "") || []
-        },
-        
-        today_prog: {
-            progress: pdfData.today_progress?.map(row => row[0]) || [],
-            qty: pdfData.today_progress?.map(row => row[1]) || []
-        },
-        
-        tomorrow_plan: {
-            plan: pdfData.tomorrow_planning?.map(row => row[0]) || [],
-            qty: pdfData.tomorrow_planning?.map(row => row[1]) || []
-        },
-        
-        user_roles: {
-            created_by: 1,
-            approvals: { 1: true, 3: false },
-            viewers: [10, 11, 15],
-            editors: [1, 3, 4]
-        },
-        
-        report_footer: {
-            events_visit: pdfData.events_remarks || [],
-            distribute: ["L&T", "MAPLANI"],
-            prepared_by: pdfData.prepared_by || "Mano Project Pvt. Ltd."
-        },
-        
-        created_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
-    };
-}
-
-// Post DPR to backend
-function postDPRToBackend() {
-    const dprData = generateCompleteDPRObject();
-
-    fetch('http://34.47.131.237:3000/report/insertDPR', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(dprData)
-    })
-    .then(response => {
-        if (!response.ok) throw new Error("Upload failed");
-        return response.json();
-    })
-    .then(result => {
-        console.log("Upload successful:", result);
-        alert("DPR uploaded successfully!");
-    })
-    .catch(err => {
-        console.error("Error:", err);
-        alert("Failed to upload DPR. Please try again.");
-    });
-}
-
-// Make postDPRToBackend available globally
-window.postDPRToBackend = postDPRToBackend;
-
-
-console.log("single file");
+});

@@ -390,7 +390,12 @@ function displaydata() {
   const remarksData = Array.from(document.querySelectorAll("#remarksContainer .remark-input"))
     .map(input => input.value.trim())
     .filter(remark => remark !== "");
-
+  
+    // In displaydata() function:
+const labourTypes = Array.from(document.querySelectorAll("#labourTable thead th"))
+  .slice(1, -2) // Skip Agency and Total/Remarks columns
+  .map(th => th.textContent);
+sessionStorage.setItem("labourColumns", JSON.stringify(labourTypes));
   // Save all data to sessionStorage
   sessionStorage.setItem("userTableData", JSON.stringify(tableData));
   sessionStorage.setItem("todayTableData", JSON.stringify(todaytableData));
@@ -478,6 +483,7 @@ async function initializeTodayTomorrowTables() {
   }
 }
 
+
 // ===================== INITIALIZATION =====================
 document.addEventListener("DOMContentLoaded", async function() {
   // Initialize all components
@@ -527,78 +533,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 });
 
 // ===================== EVENTS SECTION =====================
-document.addEventListener("DOMContentLoaded", function() {
-  const eventsContainer = document.getElementById("eventsContainer");
-  const addEventBtn = document.getElementById("addEventBtn");
-  const removeEventBtn = document.getElementById("removeEventBtn");
-  const MIN_EVENTS = 6;
-
-  function initializeEvents() {
-    const savedData = JSON.parse(sessionStorage.getItem("events-data")) || Array(MIN_EVENTS).fill("");
-    eventsContainer.innerHTML = '';
-    savedData.forEach((value, index) => {
-      const div = document.createElement("div");
-      div.className = "input-group";
-      div.innerHTML = `<input type="text" class="event-input" value="${value}" placeholder="Event ${index+1}">`;
-      eventsContainer.appendChild(div);
-    });
-    removeEventBtn.disabled = eventsContainer.children.length <= MIN_EVENTS;
-  }
-
-  addEventBtn.addEventListener("click", () => {
-    const div = document.createElement("div");
-    div.className = "input-group";
-    div.innerHTML = `<input type="text" class="event-input" placeholder="Event ${eventsContainer.children.length+1}">`;
-    eventsContainer.appendChild(div);
-    removeEventBtn.disabled = eventsContainer.children.length <= MIN_EVENTS;
-  });
-
-  removeEventBtn.addEventListener("click", () => {
-    if (eventsContainer.children.length > MIN_EVENTS) {
-      eventsContainer.removeChild(eventsContainer.lastElementChild);
-      removeEventBtn.disabled = eventsContainer.children.length <= MIN_EVENTS;
-    }
-  });
-
-  initializeEvents();
-});
-
 // ===================== REMARKS SECTION =====================
-document.addEventListener("DOMContentLoaded", function() {
-  const remarksContainer = document.getElementById("remarksContainer");
-  const addRemarkBtn = document.getElementById("addRemarkBtn");
-  const removeRemarkBtn = document.getElementById("removeRemarkBtn");
-  const MIN_INPUTS = 3;
-
-  function initializeRemarks() {
-    remarksContainer.innerHTML = '';
-    for (let i = 0; i < MIN_INPUTS; i++) {
-      const div = document.createElement("div");
-      div.className = "input-group";
-      div.innerHTML = `<input type="text" class="remark-input" placeholder="Remark ${i+1}">`;
-      remarksContainer.appendChild(div);
-    }
-    removeRemarkBtn.disabled = true;
-  }
-
-  addRemarkBtn.addEventListener("click", () => {
-    const div = document.createElement("div");
-    div.className = "input-group";
-    div.innerHTML = `<input type="text" class="remark-input" placeholder="Remark ${remarksContainer.children.length+1}">`;
-    remarksContainer.appendChild(div);
-    removeRemarkBtn.disabled = remarksContainer.children.length <= MIN_INPUTS;
-  });
-
-  removeRemarkBtn.addEventListener("click", () => {
-    if (remarksContainer.children.length > MIN_INPUTS) {
-      remarksContainer.removeChild(remarksContainer.lastElementChild);
-      removeRemarkBtn.disabled = remarksContainer.children.length <= MIN_INPUTS;
-    }
-  });
-
-  initializeRemarks();
-});
-
 // ===================== MODAL =====================
 const modal = document.getElementById("myModal");
 const openModalBtn = document.getElementById("pop-up");
@@ -617,4 +552,57 @@ window.addEventListener("click", (event) => {
     modal.style.display = "none";
   }
 });
+function createEventInput(value = "") {
+  const container = document.createElement("div");
+  container.className = "event-input-container";
+  container.innerHTML = `
+    <input type="text" class="event-input" value="${value}">
+    <button class="remove-input-btn">−</button>
+  `;
+
+  container.querySelector(".remove-input-btn").addEventListener("click", () => {
+    container.remove();
+  });
+
+  return container;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const eventsContainer = document.getElementById("eventsContainer");
+  const addEventBtn = document.getElementById("addEventBtn");
+
+  addEventBtn.addEventListener("click", () => {
+    eventsContainer.appendChild(createEventInput());
+  });
+
+  // Add one by default
+  eventsContainer.appendChild(createEventInput());
+});
+function createRemarkInput(value = "") {
+  const container = document.createElement("div");
+  container.className = "remark-input-container";
+  container.innerHTML = `
+    <input type="text" class="remark-input" value="${value}">
+    <button class="remove-input-btn">−</button>
+  `;
+
+  container.querySelector(".remove-input-btn").addEventListener("click", () => {
+    container.remove();
+  });
+
+  return container;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const remarksContainer = document.getElementById("remarksContainer");
+  const addRemarkBtn = document.getElementById("addRemarkBtn");
+
+  addRemarkBtn.addEventListener("click", () => {
+    remarksContainer.appendChild(createRemarkInput());
+  });
+
+  // Add one by default
+  remarksContainer.appendChild(createRemarkInput());
+});
+
 
