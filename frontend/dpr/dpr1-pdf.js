@@ -33,7 +33,7 @@ async function fetchProjectData(projectId = 1) {
     }
 }
 
-    async function fetchDPRData(dprId = 45) {
+    async function fetchDPRData(dprId) {
         try {
             const response = await fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
             if (!response.ok) throw new Error('Failed to fetch DPR data');
@@ -478,7 +478,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Fetch both project and DPR data in parallel
         const [projectData, dprData] = await Promise.all([
             fetchProjectData(1),
-            fetchDPRData(45)
+            fetchDPRData(dprId)
         ]);
         
         // Populate all sections
