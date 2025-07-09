@@ -636,6 +636,7 @@ button[type="submit"]:hover {
 .labourtable-button:hover {
     background-color: #0d5bba;
 }
+
 @media print {
   /* Reset all margins and padding for printing */
   body, .main-content {
