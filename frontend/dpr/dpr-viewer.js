@@ -30,16 +30,16 @@ function populateLabourTable() {
   thead.appendChild(headerRow);
 
   // Data Rows
-  tableData.forEach((row, rowIndex) => {
+  tableData.forEach((row) => {
     const tr = document.createElement("tr");
     
-    // Agency Name
+    // Agency Name (first column)
     const agencyTd = document.createElement("td");
     agencyTd.textContent = row[0] || "--"; 
     agencyTd.style.textAlign = "left";
     tr.appendChild(agencyTd);
     
-    // Labour counts
+    // Labour counts (middle columns)
     for (let i = 1; i <= columns.length; i++) {
       const td = document.createElement("td");
       td.textContent = row[i] ?? "--";
@@ -47,15 +47,20 @@ function populateLabourTable() {
       tr.appendChild(td);
     }
     
-    // Total
+    // Total (second last column)
     const totalTd = document.createElement("td");
-    totalTd.textContent = row[row.length - 2] ?? "--";
+    // Calculate row total from labour counts (columns 1 to columns.length)
+    let rowTotal = 0;
+    for (let i = 1; i <= columns.length; i++) {
+      rowTotal += parseInt(row[i]) || 0;
+    }
+    totalTd.textContent = rowTotal;
     totalTd.style.textAlign = "center";
     tr.appendChild(totalTd);
     
-    // Remarks
+    // Remarks (last column)
     const remarksTd = document.createElement("td");
-    remarksTd.textContent = row[row.length - 1] ?? "--";
+    remarksTd.textContent = row[row.length - 1] ?? "--"; // Last item is remarks
     remarksTd.style.textAlign = "left";
     tr.appendChild(remarksTd);
     

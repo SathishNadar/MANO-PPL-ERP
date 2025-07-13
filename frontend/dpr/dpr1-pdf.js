@@ -34,29 +34,30 @@ async function fetchProjectData(projectId = 1) {
 }
 
     async function fetchDPRData(dprId) {
-        try {
-            const response = await fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
-            if (!response.ok) throw new Error('Failed to fetch DPR data');
-            
-            const apiData = await response.json();
-            const todaysTotal = populateLabourReport(apiData.data.labour_report);
-            const yesterdaysCumulative = apiData.data.cumulative_manpower - todaysTotal;
+    try {
+        const response = await fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
+        if (!response.ok) throw new Error('Failed to fetch DPR data');
+        
+        const apiData = await response.json();
+        const todaysTotal = populateLabourReport(apiData.data.labour_report);
+        const yesterdaysCumulative = apiData.data.cumulative_manpower - todaysTotal;
 
-        console.log("Yesterday's cumulative:", yesterdaysCumulative);
-        document.getElementById('cumulative-manpower-untill-yesterday').textContent = yesterdaysCumulative || '0';
-            // ADD THIS ONE LINE 
-        document.getElementById('cumulative-manpower-for-today').textContent = apiData.data.cumulative_manpower || '0';
-           
+        // Update the cumulative manpower values in the table
+        document.getElementById('cumulative-manpower-1').textContent = yesterdaysCumulative || '0';
+        document.getElementById('cumulative-manpower-2').textContent = todaysTotal || '0';
+        document.getElementById('cumulative-manpower-3').textContent = apiData.data.cumulative_manpower || '0';
+        document.getElementById('cumulative-manpower-4').textContent = ''; // Empty if not needed
+        
         const duration = getProjectDurationDays(apiData.data.start_date, apiData.data.end_date);
         document.getElementById("duration-in-days").textContent = duration;
         
         if (!apiData.success) throw new Error('API returned unsuccessful response');
-            return apiData.data;
-        } catch (error) {
-            console.error("Error loading DPR data:", error);
-            return null;
-        }
+        return apiData.data;
+    } catch (error) {
+        console.error("Error loading DPR data:", error);
+        return null;
     }
+}
 
 // ====================== DATA POPULATION ======================
 function populateProjectInfo(projectData) {
@@ -182,40 +183,45 @@ function populateLabourReport(labourData) {
     const tbody = table.querySelector('tbody') || table.createTBody();
     tbody.innerHTML = '';
     
+    // Define all possible categories (excluding agency and remarks)
+    const categories = [
+        'Mason', 'Carp', 'Fitter', 'Electrical', 'Painter', 
+        'Gypsum', 'Plumber', 'Helper', 'Staff', 'k', 'ok'
+    ].filter(cat => labourData[cat]); // Only include categories that exist in data
+    
     // Add header row
     const headerRow = document.createElement('tr');
-const categories = Object.keys(labourData).filter(k => k !== "agency" && k !== "remarks");
+    let headerHTML = `<th>Agency Name</th>`;
+    categories.forEach(cat => {
+        headerHTML += `<th>${cat}</th>`;
+    });
+    headerHTML += `<th>Total</th><th>Remarks</th>`;
+    headerRow.innerHTML = headerHTML;
+    tbody.appendChild(headerRow);
 
-let headerHTML = `<th>Agency Name</th>`;
-categories.forEach(cat => {
-  headerHTML += `<th>${cat}</th>`;
-});
-headerHTML += `<th>Total</th><th>Remarks</th>`;
-headerRow.innerHTML = headerHTML;
-tbody.appendChild(headerRow);
-
-
-    // Single loop to both create rows AND calculate total
+    // Add data rows with proper remarks
     for (let i = 0; i < labourData.agency.length; i++) {
-  let rowHTML = `<td>${labourData.agency[i] || "--"}</td>`;
-  let rowTotal = 0;
+        let rowHTML = `<td>${labourData.agency[i] || "--"}</td>`;
+        let rowTotal = 0;
 
-  categories.forEach(cat => {
-    const val = parseInt(labourData[cat][i]) || 0;
-    rowHTML += `<td>${val}</td>`;
-    rowTotal += val;
-  });
+        // Add all category values
+        categories.forEach(cat => {
+            const val = parseInt(labourData[cat][i]) || 0;
+            rowHTML += `<td>${val}</td>`;
+            rowTotal += val;
+        });
 
-  rowHTML += `<td>${rowTotal}</td><td>${labourData.remarks[i] || "--"}</td>`;
+        // Add total and the specific remark for this agency
+        const remark = labourData.remarks[i] || "--";
+        rowHTML += `<td>${rowTotal}</td><td>${remark}</td>`;
 
-  const tr = document.createElement('tr');
-  tr.innerHTML = rowHTML;
-  tbody.appendChild(tr);
+        const tr = document.createElement('tr');
+        tr.innerHTML = rowHTML;
+        tbody.appendChild(tr);
 
-  todaysTotal += rowTotal;
-}
+        todaysTotal += rowTotal;
+    }
 
-    console.log("CORRECT Today's Total:", todaysTotal); // Verify correct total
     return todaysTotal;
 }
 function populateProgressTables(dprData) {
