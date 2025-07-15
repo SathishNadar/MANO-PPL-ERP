@@ -5,43 +5,56 @@ const router = express.Router();
 
 // Post call to Insert DPR
 router.post("/insertDPR", async (req, res) => {
-  try {
-    const {
-      project_id,
-      report_date,
-      site_condition = null,
-      labour_report = null,
-      cumulative_manpower = 0,
-      today_prog = null,
-      tomorrow_plan = null,
-      user_roles = null,
-      report_footer = null,
-      created_at = new Date()
-    } = req.body || {};
+    try {
+        const {
+            project_id,
+            report_date,
+            site_condition = null,
+            labour_report = null,
+            cumulative_manpower = 0,
+            today_prog = null,
+            tomorrow_plan = null,
+            user_roles = null,
+            report_footer = null,
+            created_at = new Date()
+        } = req.body || {};
 
-    if (!project_id || !report_date) {
-      return res.status(400).json({ message: "Missing required fields" });
+        if (!project_id || !report_date) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields: project_id or report_date",
+                data: null
+            });
+        }
+
+        const result = await DB.r_insertDPR({
+            project_id,
+            report_date,
+            site_condition,
+            labour_report,
+            cumulative_manpower,
+            today_prog,
+            tomorrow_plan,
+            user_roles,
+            report_footer,
+            created_at
+        });
+
+        // Respond based on insert result
+        if (!result.success) {
+            return res.status(409).json(result); // Conflict
+        }
+
+        res.status(201).json(result); // Created
+
+    } catch (error) {
+        console.error("Error inserting DPR:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            data: null
+        });
     }
-
-    const insertId = await DB.r_insertDPR({
-      project_id,
-      report_date,
-      site_condition,
-      labour_report,
-      cumulative_manpower,
-      today_prog,
-      tomorrow_plan,
-      user_roles,
-      report_footer,
-      created_at
-    });
-
-    res.json({ success: true, insertId });
-
-  } catch (error) {
-    console.error("Error inserting DPR:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
 });
 
 // Get call to fetch DPR
@@ -158,6 +171,4 @@ router.get("/allDPR/:proj_id", async (req, res) => {
 
 
 export default router;
-
-
 

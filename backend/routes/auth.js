@@ -11,22 +11,25 @@ import * as DB from "./database.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const result = dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+
+if (result.error) {
+    console.error("Error loading .env file:", result.error);
+}
+
 const tokenExpirePeriod = 7 * 24 * 60 * 60; // Time in seconds 
 const router = express.Router();
 
-
-
+// Function to Authenticate JWT
 export async function authenticateJWT(req, res, next) {
   try {
-    let token;
-    const authHeader = req.headers['authorization'];
-    console.log(authHeader)
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      token = authHeader.split(" ")[1];
-    }
+    let token = req.cookies?.token;
 
     if (!token) {
-      token = req.cookies?.token;
+      const authHeader = req.headers['authorization'];
+      console.log("Authorization header:", authHeader);
+      if (authHeader?.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+      }
     }
 
     if (!token) {
@@ -54,7 +57,7 @@ export async function authenticateJWT(req, res, next) {
 }
 
 
-
+// Function to generate JWT
 export async function generateJWT(user_data) {
     return jwt.sign(user_data, process.env.JWT_SECRET, { expiresIn: tokenExpirePeriod});
 }
@@ -63,6 +66,7 @@ export async function generateJWT(user_data) {
 
 // Login route
 router.post("/login", async (req, res) => {
+  console.log("login api called");
   try {
     const { user_name, user_password } = req.body;
     if (!user_name || !user_password) {
@@ -86,6 +90,7 @@ router.post("/login", async (req, res) => {
     };
 
     const token = await generateJWT(response_data);
+    console.log(token);
 
     res.cookie('token', token, {
       httpOnly: true,
@@ -93,6 +98,8 @@ router.post("/login", async (req, res) => {
       sameSite: 'Strict',
       maxAge: tokenExpirePeriod * 1000
     });
+
+    console.log(token);
 
     res.status(200).json({ 
       message: "Login successful",
@@ -108,6 +115,7 @@ router.post("/login", async (req, res) => {
 
 // Signup route
 router.post("/signup", async (req, res) => {
+  console.log("signup api called");
   try {
     const { user_name, user_password, email, phone_no } = req.body;
     if (!user_name || !user_password || !email || !phone_no) {
@@ -134,4 +142,37 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+// Update Password route
+router.post("/updatePassword", async (req, res) => {
+  console.log("🔐 Password update API called");
+
+  try {
+    const { user_id, new_password } = req.body;
+
+    if (!user_id || !new_password) {
+      return res.status(400).json({ message: "User ID and new password are required." });
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password.trim(), 10);
+    const success = await DB.r_updateUserPassword(user_id, hashedPassword);
+
+    if (success) {
+      res.status(200).json({ message: "Password updated successfully." });
+    } else {
+      res.status(404).json({ message: "User not found or no changes made." });
+    }
+
+  } catch (error) {
+    console.error("❌ Error updating password:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+
+router.get("/holy", authenticateJWT, async (req, res)=> {
+  console.log(user_data);
+})
+
+
 export default router;
+

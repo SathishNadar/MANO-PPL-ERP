@@ -38,39 +38,6 @@ function safeParse(jsonField) {
 
 // ----------------------------- USER ----------------------------- //
 
-// Function to fetch Single or Multiple user by user_id
-export async function r_fetchUserByID(user_id_or_ids) {
-    try {
-        if (Array.isArray(user_id_or_ids)) {
-            if (user_id_or_ids.length === 0) return [];
-
-            const placeholders = user_id_or_ids.map(() => "?").join(", ");
-            const query = `SELECT * FROM users WHERE user_id IN (${placeholders})`;
-            const [rows] = await pool.query(query, user_id_or_ids);
-            return rows;
-        } else {
-            const query = "SELECT * FROM users WHERE user_id = ?";
-            const [row] = await pool.query(query, [user_id_or_ids]);
-            return row[0] || null;
-        }
-    } catch (error) {
-        console.error("❌ Error fetching user(s) by ID:", error);
-        throw error;
-    }
-}
-
-// Function to fetch user_name by ID
-export async function r_fetchUserNameByID(user_id) {
-    const query = "SELECT user_name FROM users WHERE user_id = ?";
-    try {
-        const [row] = await pool.query(query, [user_id]);
-        return row[0].user_name || null;
-    } catch (error) {
-        console.error("Error fetching DPR by ID:", error);
-        throw error;
-    }
-}
-
 // Function to fetch User by user_name
 export async function r_fetchUserByName(name) {
     const query = "SELECT * FROM users WHERE user_name = ?"
@@ -96,6 +63,24 @@ export async function r_addUser(user_data) {
     }
 }
 
+// Function to update password
+export async function r_updateUserPassword(user_id, hashed_password) {
+  const query = `
+    UPDATE users 
+    SET user_password = ? 
+    WHERE user_id = ?;
+  `;
+
+  try {
+    const [result] = await pool.query(query, [hashed_password, user_id]);
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error("Error updating user password:", error);
+    throw error;
+  }
+}
+
+
 // Function to check user_name exists
 export async function r_usernameExist(user_name) {
     const query = "SELECT user_id FROM users WHERE user_name = ?";
@@ -120,6 +105,7 @@ export async function r_isEmailOrPhoneTaken(email, phone) {
         throw error;
     }
 }
+
 
 // ---------------------- PROJECT ----------------------- //
 
@@ -357,13 +343,24 @@ export async function r_insertDPR(dprData) {
         throw new Error("Missing required fields: project_id or report_date");
     }
 
-    const query = `
-    INSERT INTO dpr (
-        project_id, report_date, site_condition, labour_report,
-        cumulative_manpower, today_prog, tomorrow_plan,
-        user_roles, report_footer, created_at
-    ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    // Step 1: Check if DPR already exists for same project and date
+    const checkQuery = `
+        SELECT dpr_id FROM dpr WHERE project_id = ? AND report_date = ? LIMIT 1;
+    `;
+    const [existing] = await pool.query(checkQuery, [dprData.project_id, dprData.report_date]);
+
+    if (existing.length > 0) {
+        return { success: false, message: "DPR already exists for this date.", data: null };
+    }
+
+    // Step 2: Insert new DPR
+    const insertQuery = `
+        INSERT INTO dpr (
+            project_id, report_date, site_condition, labour_report,
+            cumulative_manpower, today_prog, tomorrow_plan,
+            user_roles, report_footer, created_at
+        ) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
     const values = [
@@ -380,13 +377,18 @@ export async function r_insertDPR(dprData) {
     ];
 
     try {
-        const [result] = await pool.query(query, values);
-        return result.insertId;
+        const [result] = await pool.query(insertQuery, values);
+        return {
+            success: true,
+            message: "DPR inserted successfully.",
+            data: { insertId: result.insertId }
+        };
     } catch (error) {
         console.error("❌ Error inserting DPR:", error.message, "\nData:", dprData);
         throw error;
     }
 }
+
 
 // Function to Update DPR
 export async function r_updateDPR(dprData) {
@@ -683,12 +685,9 @@ const dprData = {
 };
 
 
-// const t = await r_fetchDPRsByProject(1, 50)
+// const t = await r_usernameExist("Mano")
 // console.log(t)
 
 
 // pool.end()
-
-
-
 
