@@ -369,27 +369,39 @@ function populateLabourReport(labourData) {
         debugLog(`Added row ${index}`, row);
     });
     
-    // Add cumulative manpower if available
+        // Populate cumulative manpower fields
     if (labourData.cumulative_manpower) {
-        const cumulativeRow = document.createElement('tr');
-        const td = document.createElement('td');
-        td.colSpan = labourData.headers.length - 3; // Span all columns except last 3
-        td.style.textAlign = 'left';
-        td.textContent = 'Cumulative man power upto last date';
-        cumulativeRow.appendChild(td);
-        
-        const valueTd = document.createElement('td');
-        valueTd.textContent = labourData.cumulative_manpower;
-        cumulativeRow.appendChild(valueTd);
-        
-        // Add empty cells for remaining columns
-        const emptyTd = document.createElement('td');
-        emptyTd.colSpan = 2;
-        cumulativeRow.appendChild(emptyTd);
-        
-        tbody.appendChild(cumulativeRow);
-        debugLog("Added cumulative manpower row", labourData.cumulative_manpower);
+        // Step 1: Calculate today's total manpower from labour tableData
+        let todayTotal = 0;
+        labourData.tableData.forEach(row => {
+            // The second last cell is the total (before remarks)
+            const totalCell = row[labourData.headers.length - 2];
+            const total = parseInt(totalCell) || 0;
+            todayTotal += total;
+        });
+
+        // Step 2: Calculate yesterday's cumulative by subtracting today's from total
+        const cumulativeToday = parseInt(labourData.cumulative_manpower) || 0;
+        const cumulativeYesterday = cumulativeToday - todayTotal;
+
+        // Step 3: Populate the fields
+        const cumulativeYesterdayEl = document.getElementById('cumulative-manpower-untill-yesterday');
+        if (cumulativeYesterdayEl) {
+            cumulativeYesterdayEl.textContent = cumulativeYesterday.toString();
+        }
+
+        const cumulativeTodayEl = document.getElementById('cumulative-manpower-4');
+        if (cumulativeTodayEl) {
+            cumulativeTodayEl.textContent = cumulativeToday.toString();
+        }
+
+        debugLog("Cumulative manpower breakdown", {
+            todayTotal,
+            cumulativeToday,
+            cumulativeYesterday
+        });
     }
+
 }
 
 function populateProgressTables(data) {

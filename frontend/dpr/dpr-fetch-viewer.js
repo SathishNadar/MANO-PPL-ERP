@@ -190,7 +190,7 @@ async function fetchAndDisplayDPR(dprId) {
   try {
     const response = await fetchWithRetry(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
     const { data } = await response;
-    
+
     // Site Conditions
     const { site_condition } = data;
     document.querySelectorAll('.condition-checkbox').forEach(checkbox => {
@@ -199,19 +199,15 @@ async function fetchAndDisplayDPR(dprId) {
     });
 
     if (site_condition.is_rainy) {
-      const checkbox = document.getElementById("rainy-day-checkbox");
-      checkbox.style.backgroundColor = "green";
+      document.getElementById("rainy-day-checkbox").style.backgroundColor = "green";
     } else {
-      const checkbox = document.getElementById("normal-day-checkbox");
-      checkbox.style.backgroundColor = "green";
+      document.getElementById("normal-day-checkbox").style.backgroundColor = "green";
     }
-    
+
     if (site_condition.ground_state === "slushy") {
-      const checkbox = document.getElementById("slushy-day-checkbox");
-      checkbox.style.backgroundColor = "green";
+      document.getElementById("slushy-day-checkbox").style.backgroundColor = "green";
     } else if (site_condition.ground_state === "dry") {
-      const checkbox = document.getElementById("dry-day-checkbox");
-      checkbox.style.backgroundColor = "green";
+      document.getElementById("dry-day-checkbox").style.backgroundColor = "green";
     }
 
     // Time Slots
@@ -232,23 +228,21 @@ async function fetchAndDisplayDPR(dprId) {
     const tbody = document.getElementById("displayTable").getElementsByTagName("tbody")[0];
     tbody.innerHTML = "";
 
-    // Get all labour types (excluding permanent columns)
     const permanentColumns = ['agency', 'remarks'];
     const dynamicColumns = Object.keys(labour).filter(
-      key => !permanentColumns.includes(key) && 
-             !key.startsWith('_') && 
+      key => !permanentColumns.includes(key) &&
+             !key.startsWith('_') &&
              Array.isArray(labour[key])
     );
 
-    // Create header row
+    const thead = document.getElementById("displayTable").getElementsByTagName("thead")[0];
+    thead.innerHTML = "";
     const headerRow = document.createElement("tr");
-    
-    // Agency column
+
     const agencyHeader = document.createElement("th");
     agencyHeader.textContent = "Agency Name";
     headerRow.appendChild(agencyHeader);
 
-    // Dynamic columns
     dynamicColumns.sort().forEach(col => {
       const th = document.createElement("th");
       th.textContent = col.charAt(0).toUpperCase() + col.slice(1);
@@ -256,53 +250,48 @@ async function fetchAndDisplayDPR(dprId) {
       headerRow.appendChild(th);
     });
 
-    // Total column
     const totalHeader = document.createElement("th");
     totalHeader.textContent = "Total";
     totalHeader.style.textAlign = "center";
     headerRow.appendChild(totalHeader);
 
-    // Remarks column
     const remarksHeader = document.createElement("th");
     remarksHeader.textContent = "Remarks";
     headerRow.appendChild(remarksHeader);
 
-    const thead = document.getElementById("displayTable").getElementsByTagName("thead")[0];
-    thead.innerHTML = "";
     thead.appendChild(headerRow);
 
-    // Create data rows
     const agencyCount = Math.max(
       ...permanentColumns.map(col => labour[col]?.length || 0),
       ...dynamicColumns.map(col => labour[col]?.length || 0)
     );
 
+    let todayManpowerTotal = 0;
+
     for (let i = 0; i < agencyCount; i++) {
       const tr = document.createElement("tr");
-      
-      // Agency cell
+
       const agencyCell = document.createElement("td");
       agencyCell.textContent = labour.agency?.[i] || "--";
       tr.appendChild(agencyCell);
 
-      // Dynamic columns data
       let rowTotal = 0;
       dynamicColumns.forEach(col => {
         const cell = document.createElement("td");
-        const value = labour[col]?.[i] || 0;
+        const value = parseInt(labour[col]?.[i]) || 0;
         cell.textContent = value;
         cell.style.textAlign = "center";
         tr.appendChild(cell);
-        rowTotal += parseInt(value) || 0;
+        rowTotal += value;
       });
 
-      // Total cell
+      todayManpowerTotal += rowTotal;
+
       const totalCell = document.createElement("td");
       totalCell.textContent = rowTotal;
       totalCell.style.textAlign = "center";
       tr.appendChild(totalCell);
 
-      // Remarks cell
       const remarksCell = document.createElement("td");
       remarksCell.textContent = labour.remarks?.[i] || "--";
       tr.appendChild(remarksCell);
@@ -310,8 +299,10 @@ async function fetchAndDisplayDPR(dprId) {
       tbody.appendChild(tr);
     }
 
-    // Cumulative Manpower
-    document.getElementById("cumulative-manpower").textContent = data.cumulative_manpower || "0";
+    // Cumulative Manpower Logic (subtract today's from total)
+    const totalCumulative = parseInt(data.cumulative_manpower) || 0;
+    const yesterdayCumulative = totalCumulative - todayManpowerTotal;
+    document.getElementById("cumulative-manpower").textContent = yesterdayCumulative.toString();
 
     // Progress Data
     populateTable(
@@ -360,6 +351,7 @@ async function fetchAndDisplayDPR(dprId) {
     showErrorToUser("Failed to load DPR data. Please try again.");
   }
 }
+
 
 // PDF Preview
 function prepareForPDFPreview() {
