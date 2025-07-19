@@ -1,4 +1,3 @@
-// LoginSignup.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_URI } from "../ip.js";
@@ -19,7 +18,8 @@ const LoginSignup = () => {
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const [focusedInput, setFocusedInput] = useState(null);
+  const [passwordFocus, setPasswordFocus] = useState(false);
   const [loginData, setLoginData] = useState({
     username: "",
     password: "",
@@ -35,6 +35,16 @@ const LoginSignup = () => {
   });
 
   const navigate = useNavigate();
+
+  const passwordChecks = {
+    length: signupData.password.length >= 8,
+    upper: /[A-Z]/.test(signupData.password),
+    lower: /[a-z]/.test(signupData.password),
+    number: /[0-9]/.test(signupData.password),
+    noSpace: !/\s/.test(signupData.password),
+  };
+
+  const allPasswordValid = () => Object.values(passwordChecks).every(Boolean);
 
   useEffect(() => {
     const sessionData = localStorage.getItem("session");
@@ -91,9 +101,9 @@ const LoginSignup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    const { username, email, password, confirmPassword, phone, countryCode } = signupData;
+    const { username, email, password, confirmPassword, phone, countryCode } =
+      signupData;
     const trimmedUsername = username.trim();
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
@@ -111,6 +121,11 @@ const LoginSignup = () => {
       return;
     }
 
+    if (!/^\d{10}$/.test(phone)) {
+      toast.error("Phone number must be exactly 10 digits.");
+      return;
+    }
+
     try {
       const response = await fetch(`http://${API_URI}:3000/auth/signup/`, {
         method: "POST",
@@ -124,7 +139,7 @@ const LoginSignup = () => {
       });
 
       const data = await response.json();
-      if (data.message === "Signup successful") {
+      if (data.message === "Signup successful. Login to continue.") {
         toast.success("Signup successful! Please log in.");
         setIsSignup(false);
       } else {
@@ -135,6 +150,34 @@ const LoginSignup = () => {
       toast.error("Signup failed. Try again.");
     }
   };
+
+  const renderFloatingInput = (
+    type,
+    name,
+    value,
+    setValue,
+    labelText,
+    isPassword = false
+  ) => (
+    <div className="floating-label-input">
+      <input
+        type={isPassword && showPassword ? "text" : type}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onFocus={() => setFocusedInput(name)}
+        onBlur={() => setFocusedInput(null)}
+        required
+      />
+      <label className={value || focusedInput === name ? "active" : ""}>
+        {labelText}
+      </label>
+      {isPassword && (
+        <span onClick={() => setShowPassword(!showPassword)}>
+          {showPassword ? <FiEyeOff /> : <FiEye />}
+        </span>
+      )}
+    </div>
+  );
 
   return (
     <div className="login-page-wrapper">
@@ -147,80 +190,104 @@ const LoginSignup = () => {
         </div>
 
         <div className={`form-slider ${isSignup ? "move" : ""}`}>
-          {/* Login Form */}
           <div className="login-form">
             <form onSubmit={handleLogin}>
-              <input
-                type="text"
-                placeholder="Username"
-                value={loginData.username}
-                onChange={(e) =>
-                  setLoginData({ ...loginData, username: e.target.value })
-                }
-                required
-              />
-
-              <div className="password-wrapper">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  value={loginData.password}
-                  onChange={(e) =>
-                    setLoginData({ ...loginData, password: e.target.value })
-                  }
-                  required
-                />
-                <span onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <FiEyeOff /> : <FiEye />}
-                </span>
-              </div>
-
+              {renderFloatingInput(
+                "text",
+                "loginUsername",
+                loginData.username,
+                (val) => setLoginData({ ...loginData, username: val }),
+                "Username"
+              )}
+              {renderFloatingInput(
+                "password",
+                "loginPassword",
+                loginData.password,
+                (val) => setLoginData({ ...loginData, password: val }),
+                "Password",
+                true
+              )}
               <input type="submit" value="Login" />
             </form>
           </div>
 
-          {/* Signup Form */}
           <div className="signup-form">
             <form onSubmit={handleSignup}>
-              <input
-                type="text"
-                placeholder="Username"
-                value={signupData.username}
-                onChange={(e) =>
-                  setSignupData({ ...signupData, username: e.target.value })
-                }
-                required
-              />
-
-              <input
-                type="email"
-                placeholder="Email"
-                value={signupData.email}
-                onChange={(e) =>
-                  setSignupData({ ...signupData, email: e.target.value })
-                }
-                required
-              />
+              {renderFloatingInput(
+                "text",
+                "signupUsername",
+                signupData.username,
+                (val) => setSignupData({ ...signupData, username: val }),
+                "Username"
+              )}
+              {renderFloatingInput(
+                "email",
+                "signupEmail",
+                signupData.email,
+                (val) => setSignupData({ ...signupData, email: val }),
+                "Email"
+              )}
 
               <div className="password-wrapper">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  value={signupData.password}
-                  onChange={(e) =>
-                    setSignupData({ ...signupData, password: e.target.value })
-                  }
-                  required
-                />
+                <div className="floating-label-input">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={signupData.password}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, password: e.target.value })
+                    }
+                    onFocus={() => setPasswordFocus(true)}
+                    onBlur={() => setPasswordFocus(false)}
+                    required
+                  />
+                  <label
+                    className={
+                      signupData.password || passwordFocus ? "active" : ""
+                    }
+                  >
+                    Password
+                  </label>
                 <span onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </span>
+                </div>
+
+                {passwordFocus && (
+                  <div className="password-popup">
+                    <ul>
+                      <li
+                        className={passwordChecks.length ? "valid" : "invalid"}
+                      >
+                        Min 8 characters
+                      </li>
+                      <li
+                        className={passwordChecks.upper ? "valid" : "invalid"}
+                      >
+                        1 uppercase
+                      </li>
+                      <li
+                        className={passwordChecks.lower ? "valid" : "invalid"}
+                      >
+                        1 lowercase
+                      </li>
+                      <li
+                        className={passwordChecks.number ? "valid" : "invalid"}
+                      >
+                        1 number
+                      </li>
+                      <li
+                        className={passwordChecks.noSpace ? "valid" : "invalid"}
+                      >
+                        No spaces
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
 
-              <div className="password-wrapper">
+              <div className="floating-label-input">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm Password"
                   value={signupData.confirmPassword}
                   onChange={(e) =>
                     setSignupData({
@@ -230,7 +297,12 @@ const LoginSignup = () => {
                   }
                   required
                 />
-                <span onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                <label className={signupData.confirmPassword ? "active" : ""}>
+                  Confirm Password
+                </label>
+                <span
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
                   {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                 </span>
               </div>
@@ -239,7 +311,10 @@ const LoginSignup = () => {
                 <select
                   value={signupData.countryCode}
                   onChange={(e) =>
-                    setSignupData({ ...signupData, countryCode: e.target.value })
+                    setSignupData({
+                      ...signupData,
+                      countryCode: e.target.value,
+                    })
                   }
                 >
                   {countryCodes.map((c) => (
@@ -248,15 +323,19 @@ const LoginSignup = () => {
                     </option>
                   ))}
                 </select>
-                <input
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={signupData.phone}
-                  onChange={(e) =>
-                    setSignupData({ ...signupData, phone: e.target.value })
-                  }
-                  required
-                />
+                <div className="floating-label-input">
+                  <input
+                    type="tel"
+                    value={signupData.phone}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, phone: e.target.value })
+                    }
+                    required
+                  />
+                  <label className={signupData.phone ? "active" : ""}>
+                    Phone Number
+                  </label>
+                </div>
               </div>
 
               <input type="submit" value="Sign Up" />

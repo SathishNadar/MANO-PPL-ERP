@@ -10,11 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "country-telephone-data": "^0.6.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2",
     "react-select": "^5.10.2",
-    "react-select-country-list": "^2.2.3"
+    "react-select-country-list": "^2.2.3",
+    "react-toastify": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
