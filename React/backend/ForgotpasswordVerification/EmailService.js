@@ -1,16 +1,17 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto'
+import '../config.js';
 
-import dotenv from 'dotenv'
-dotenv.config()
 class EmailService {
   constructor() {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail', 
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
       auth: {
-        user: process.env.EMAIL_USER, // your email
-        pass: process.env.EMAIL_PASSWORD, // your app password
-      },
+        user: process.env.NODEMAILER_EMAIL, //process.env.EMAIL_USER, // your email
+        pass: process.env.NODEMAILER_PASS, //process.env.EMAIL_PASSWORD, // your app password
+      }
     });
   }
 
@@ -28,8 +29,8 @@ class EmailService {
   async sendOTP(email, otp) {
     const mailOptions = {
       from: {
-        name: 'Your App Name',
-        address: process.env.EMAIL_USER,
+        name: 'Mano Projects Consultant Private Limited.',
+        address: 'hmmmmnicebike@gmail.com',//process.env.EMAIL_USER,
       },
       to: email,
       subject: 'Password Reset - Verification Code',

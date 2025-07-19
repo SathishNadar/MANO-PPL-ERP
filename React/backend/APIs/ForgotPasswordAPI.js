@@ -1,8 +1,8 @@
 import express from 'express'
 import bcrypt from 'bcrypt'
 import rateLimit from 'express-rate-limit'
-import emailService from './EmailService.js'
-import db from './Database.js';
+import emailService from '../ForgotpasswordVerification/EmailService.js'
+import * as db from '../Database.js';
 
 const router = express.Router();
 
@@ -32,18 +32,40 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000); // Clean up every 5 minutes
 
+//Step 0: Get Email from UserName
+router.post('/get-email', async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+
+    // Lookup user by username
+    const user = await db.r_fetchUserByName(username);
+    if (!user) {
+      // For security, don't reveal if user exists
+      return res.json({ success: true, email: 'admin@mano.co.in' });
+    }
+
+    res.json({ success: true, email: user.email });
+  } catch (error) {
+    console.error('Get email error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Step 1: Send OTP to email
 router.post('/send-otp', passwordResetLimiter, async (req, res) => {
   try {
     const { email } = req.body;
-
-    // Validate email
-    if (!email || !email.includes('@')) {
-      return res.status(400).json({ error: 'Valid email is required' });
-    }
+    console.log("Sending OTP to:", email);
+    // // Validate email
+    // if (!email || !email.includes('@')) {
+    //   return res.status(400).json({ error: 'Valid email is required' });
+    // }
 
     // Check if user exists
-    const user = await db.getUserByEmail(email);
+    const user = await db.r_fetchUserByEmail(email);
     if (!user) {
       // Don't reveal if user exists or not for security
       return res.json({ 
@@ -177,7 +199,7 @@ router.post('/reset-password', async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // Update password in database
-    await db.updateUserPassword(otpData.userId, hashedPassword);
+    await db.updateUserPassword(email, hashedPassword);
 
     // Clear OTP from store
     otpStore.delete(email);
@@ -185,12 +207,12 @@ router.post('/reset-password', async (req, res) => {
     // Send confirmation email
     await emailService.sendPasswordResetConfirmation(email);
 
-    // Log security event
-    await db.logSecurityEvent(otpData.userId, 'password_reset', {
-      timestamp: new Date().toISOString(),
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-    });
+    // // Log security event
+    // await db.logSecurityEvent(otpData.userId, 'password_reset', {
+    //   timestamp: new Date().toISOString(),
+    //   ip: req.ip,
+    //   userAgent: req.get('User-Agent'),
+    // });
 
     res.json({
       success: true,
@@ -203,25 +225,5 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-// Get OTP status (for debugging - remove in production)
-router.get('/otp-status/:email', async (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(404).json({ error: 'Not found' });
-  }
-
-  const { email } = req.params;
-  const otpData = otpStore.get(email);
-  
-  if (!otpData) {
-    return res.json({ status: 'No OTP found' });
-  }
-
-  res.json({
-    status: 'OTP exists',
-    expiresAt: new Date(otpData.expiresAt).toISOString(),
-    attempts: otpData.attempts,
-    verified: otpData.verified || false,
-  });
-});
 
 export default router;

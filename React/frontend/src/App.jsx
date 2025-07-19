@@ -1,6 +1,7 @@
+//DONT REMOVE THIS COMMENT
+// import reactLogo from './assets/react.svg'
+// import viteLogo from '/vite.svg'
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './context/protection.jsx'
 
