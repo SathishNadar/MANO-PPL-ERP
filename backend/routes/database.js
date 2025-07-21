@@ -254,6 +254,35 @@ export async function r_updateProject(data) {
     }
 }
 
+// Function to get a user role in project
+export async function r_fetchRole(user_id, project_id) {
+    const relation_query = `
+        SELECT role_id 
+        FROM project_user_roles 
+        WHERE user_id = ? AND project_id = ?;
+    `; 
+    
+    const role_query = `
+        SELECT * 
+        FROM roles 
+        WHERE role_id = ?;
+    `; 
+
+    try {
+        const [rows] = await pool.query(relation_query, [user_id, project_id]);
+        const role_id = rows.length > 0 ? rows[0].role_id : null;
+
+        if (!role_id) return null;
+
+        const [data] = await pool.query(role_query, [role_id]);
+        return data[0] || null;
+    } catch (error) {
+        console.error("❌ Error fetching role for user:", error);
+        throw error;
+    }
+}
+
+
 // ------------------------ DPR ------------------------- //
 
 const dprFormat = {
@@ -388,7 +417,6 @@ export async function r_insertDPR(dprData) {
         throw error;
     }
 }
-
 
 // Function to Update DPR
 export async function r_updateDPR(dprData) {
@@ -569,7 +597,7 @@ export async function r_fetchIdNamePairs(tableName) {
     }
 }
 
-// Function to fetch Count of vendors in table
+// Fetch Count of vendors in table
 export async function r_fetchVendorsCount() {
     const query = "SELECT COUNT(*) AS count FROM vendors";
     try {
@@ -581,7 +609,7 @@ export async function r_fetchVendorsCount() {
     }
 }
 
-// Function to fetch all Job Natures in table
+// Fetch all Job Natures in table
 export async function r_fetchVendorsAllJobNatures() {
     const query = `SELECT job_id, job_name FROM job_nature`;
     try {
@@ -593,7 +621,7 @@ export async function r_fetchVendorsAllJobNatures() {
     }
 }
 
-// Function to fetch all Locations in table
+// Fetch all Locations in table
 export async function r_fetchVendorsAllLocations() {
     const query = `SELECT loc_id, loc_name FROM locations`;
     try {
@@ -605,7 +633,7 @@ export async function r_fetchVendorsAllLocations() {
     }
 }
 
-// Function to fetch all Locations in table
+// Fetch all Locations in table
 export async function r_searchVendors({
     queryString = "",
     category = 1,
@@ -648,7 +676,6 @@ export async function r_searchVendors({
     };
 }
 
-
 const dprData = {
     project_id: 1,
     reported_by: 5,
@@ -685,7 +712,7 @@ const dprData = {
 };
 
 
-// const t = await r_usernameExist("Mano")
+// const t = await r_fetchRole(6, 166)
 // console.log(t)
 
 

@@ -1,15 +1,35 @@
 import express from "express";
 import * as DB from "./database.js"
+import { authenticateJWT } from "./auth.js";
 
 const router = express.Router();
 
+async function checkProjectRole(req, res, next) {
+  const { user_id } = req.user;
+  const { project_id } = req.body;
+
+  try {
+    const { rows } = await db.query(query, [user_id, project_id]);
+
+    if (rows.length === 0) {
+      return res.status(403).send('Forbidden: No access to this project.');
+    }
+
+    req.authorization = { role: rows[0] }; // Attach role to request
+    next();
+    
+  } catch (error) {
+    res.status(500).send('Internal Server Error');
+  }
+}
+
 // Post call to Insert DPR
-router.post("/insertDPR", async (req, res) => {
+router.post("/insertDPR", authenticateJWT, checkProjectRole, async (req, res) => {
     try {
         const {
             project_id,
             report_date,
-            site_condition = null,
+            site_condition = null,  
             labour_report = null,
             cumulative_manpower = 0,
             today_prog = null,

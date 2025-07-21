@@ -66,7 +66,6 @@ export async function generateJWT(user_data) {
 
 // Login route
 router.post("/login", async (req, res) => {
-  console.log("login api called");
   try {
     const { user_name, user_password } = req.body;
     if (!user_name || !user_password) {
@@ -90,7 +89,6 @@ router.post("/login", async (req, res) => {
     };
 
     const token = await generateJWT(response_data);
-    console.log(token);
 
     res.cookie('token', token, {
       httpOnly: true,
@@ -98,8 +96,6 @@ router.post("/login", async (req, res) => {
       sameSite: 'Strict',
       maxAge: tokenExpirePeriod * 1000
     });
-
-    console.log(token);
 
     res.status(200).json({ 
       message: "Login successful",
@@ -115,7 +111,6 @@ router.post("/login", async (req, res) => {
 
 // Signup route
 router.post("/signup", async (req, res) => {
-  console.log("signup api called");
   try {
     const { user_name, user_password, email, phone_no } = req.body;
     if (!user_name || !user_password || !email || !phone_no) {
@@ -144,8 +139,6 @@ router.post("/signup", async (req, res) => {
 
 // Update Password route
 router.post("/updatePassword", async (req, res) => {
-  console.log("🔐 Password update API called");
-
   try {
     const { user_id, new_password } = req.body;
 
@@ -170,7 +163,8 @@ router.post("/updatePassword", async (req, res) => {
 
 
 router.get("/holy", authenticateJWT, async (req, res)=> {
-  console.log(user_data);
+  console.log("Holy Smokes");
+  res.status(200).json({ message: "Holy smokes man" });
 })
 
 
