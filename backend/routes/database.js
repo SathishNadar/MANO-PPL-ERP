@@ -534,7 +534,7 @@ export async function r_fetchDPRsByProject(project_id, limit = 20) {
 
 // ----------------------- VENDOR ----------------------- //
 
-// Function to fetch vendors with pagination and filtering
+// Fetch vendors with pagination and filtering
 export async function r_fetchVendorsByTab({
     category = 0,
     tab = 1,
@@ -543,17 +543,17 @@ export async function r_fetchVendorsByTab({
     jobNatureIds = [],
     order = 'ASC'
 } = {}) {
+    limit = Math.max(1, Math.min(limit, 100));
+    tab = Math.max(1, tab);
 
     const offset = (tab - 1) * limit;
 
-    let baseQuery = "FROM vendors";
+    let baseQuery = "FROM vendors WHERE 1=1";
     const params = [];
 
     if (category !== 0) {
-        baseQuery += " WHERE category_id = ?";
+        baseQuery += " AND category_id = ?";
         params.push(category);
-    } else {
-        baseQuery += " WHERE 1";
     }
 
     if (locationIds.length > 0) {
@@ -566,10 +566,10 @@ export async function r_fetchVendorsByTab({
         params.push(...jobNatureIds);
     }
 
-    let query = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`;
+    const query = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`;
     params.push(limit, offset);
 
-    let countQuery = `SELECT COUNT(*) AS total ${baseQuery}`;
+    const countQuery = `SELECT COUNT(*) AS total ${baseQuery}`;
 
     try {
         const [[{ total }]] = await pool.query(countQuery, params.slice(0, -2));
@@ -581,18 +581,6 @@ export async function r_fetchVendorsByTab({
         };
     } catch (error) {
         console.error("Error fetching vendors:", error);
-        throw error;
-    }
-}
-
-// Generic function to fetch ID-name pairs from any table
-export async function r_fetchIdNamePairs(tableName) {
-    const query = `SELECT id, name FROM \`${tableName}\``;
-    try {
-        const [rows] = await pool.query(query);
-        return Object.fromEntries(rows.map(row => [row.name, row.id]));
-    } catch (error) {
-        console.error(`Error fetching data from ${tableName}:`, error);
         throw error;
     }
 }
@@ -634,30 +622,31 @@ export async function r_fetchVendorsAllLocations() {
 }
 
 // Fetch all Locations in table
-export async function r_searchVendors({
+export async function r_fetchVendors({
     queryString = "",
-    category = 1,
+    category = 0,
     tab = 1,
     limit = 25,
     locationIds = [],
     jobNatureIds = [],
+    order = 'ASC'
 } = {}) {
+    const offset = (tab - 1) * limit;
+
     const { vendors } = await r_fetchVendorsByTab({
         category,
-        tabNumber: 1,
+        tab: 1,
         limit: 10000,
         locationIds,
         jobNatureIds,
+        order
     });
 
-    if (!vendors || vendors.length === 0) {
-        console.log("No vendors found");
-        return [];
-    }
-
     if (!queryString.trim()) {
-        const offset = (tab - 1) * limit;
-        return vendors.slice(offset, offset + limit);
+        return {
+            vendors: vendors.slice(offset, offset + limit),
+            vendorCount: vendors.length
+        };
     }
 
     const fuse = new Fuse(vendors, {
@@ -665,51 +654,59 @@ export async function r_searchVendors({
         threshold: 0.4,
     });
 
-    let results = fuse.search(queryString).map(result => result.item);
-
-    const vendorCount = results.length;
-    const offset = (tab - 1) * limit;
-    results = results.slice(offset, offset + limit)
+    const results = fuse.search(queryString).map(r => r.item);
     return {
-        vendors: results,
-        vendorCount,
+        vendors: results.slice(offset, offset + limit),
+        vendorCount: results.length
     };
 }
 
-const dprData = {
-    project_id: 1,
-    reported_by: 5,
-    report_date: "2024-03-18",
-    site_condition: {
-        ground_state: "slushy",
-        weather_state: "rainy",
-        timing: ["11:00-12:00", "13:00-14:25"]
-    },
-    labour_report: {
-        agency: ["MAPLANI", "L&T", "AMAZON", "NVIDIA"],
-        mason: [0, 0, 1, 0],
-        carp: [1, 0, 3, 5],
-        fitter: [2, 1, 0, 4],
-        electrical: [0, 2, 1, 3],
-        painter: [1, 1, 0, 0],
-        gypsum: [3, 0, 2, 1],
-        plumber: [0, 0, 0, 2],
-        helper: [5, 2, 3, 1],
-        staff: [2, 1, 1, 0],
-        remarks: "Nices remark"
-    },
-    cumulative_manpower: 20,
-    today_prog: [{ "task": "Task one done", "qty": "1Kg" }, { "task": "Task two done", "qty": "7Kg" }, { "task": "Task three done", "qty": "1L" }],
-    tomorrow_plan: [{ "task": "Task seven done", "qty": "1Kg" }, { "task": "Task eight done", "qty": "7Kg" }, { "task": "Task nine done", "qty": "1L" }],
-    events_visit: "Safety audit scheduled",
-    distribute: "Material to be distributed",
-    prepared_by: "Site Manager",
-    approval: {
-        "Mano Bharathi": true,
-        "Rajesh": true,
-        "Sathish Nadar": false
-    }
-};
+// Insert a new vendor
+export async function r_insertVendor(data) {
+    const query = `
+        INSERT INTO vendors (
+            name, job_nature_id, contact_person, telephone_no, mobile,
+            location_id, email, address, gst_no, constitution,
+            website, reference, remarks, category_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const params = [
+        data.name, data.job_nature_id, data.contact_person, data.telephone_no, data.mobile,
+        data.location_id, data.email, data.address, data.gst_no, data.constitution,
+        data.website, data.reference, data.remarks, data.category_id
+    ];
+
+    const [result] = await pool.query(query, params);
+    return { id: result.insertId };
+}
+
+// Update existing vendor
+export async function r_updateVendor(id, data) {
+    const query = `
+        UPDATE vendors SET
+            name = ?, job_nature_id = ?, contact_person = ?, telephone_no = ?, mobile = ?,
+            location_id = ?, email = ?, address = ?, gst_no = ?, constitution = ?,
+            website = ?, reference = ?, remarks = ?, category_id = ?
+        WHERE id = ?
+    `;
+    const params = [
+        data.name, data.job_nature_id, data.contact_person, data.telephone_no, data.mobile,
+        data.location_id, data.email, data.address, data.gst_no, data.constitution,
+        data.website, data.reference, data.remarks, data.category_id,
+        id
+    ];
+
+    const [result] = await pool.query(query, params);
+    return { affectedRows: result.affectedRows };
+}
+
+// Delete vendor
+export async function r_deleteVendor(id) {
+    const query = `DELETE FROM vendors WHERE id = ?`;
+    const [result] = await pool.query(query, [id]);
+    return { affectedRows: result.affectedRows };
+}
+
 
 
 // const t = await r_fetchRole(6, 166)
