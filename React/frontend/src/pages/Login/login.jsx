@@ -145,13 +145,8 @@ const LoginSignup = () => {
       });
 
       const data = await response.json();
-<<<<<<< Updated upstream
       if (data.message === "Signup successful. Login to continue.") {
         toast.success("Signup successful! Please log in.");
-=======
-      if (response.ok && data.success) {
-        toast.success("Verification link sent to your email.");
->>>>>>> Stashed changes
         setIsSignup(false);
       } else {
         toast.error(data.error || "Signup failed.");
