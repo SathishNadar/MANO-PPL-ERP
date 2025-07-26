@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './context/protection.jsx'
-
+import Wip from './pages/Wip/Wip.jsx'
 import Login from "./pages/Login/login.jsx"
 import Forgotpassword from './pages/ForgotPassword/forgotpassword.jsx'
 import Dashboard from "./pages/Dashboard/dashboard.jsx"
@@ -21,6 +21,7 @@ function App() {
         <Route path="/login" element={<ProtectedRoute><Login /></ProtectedRoute>} />
         <Route path="/forgotpassword" element={<Forgotpassword/>}/> 
         <Route path="/dpr" element={<ProtectedRoute><DPR /></ProtectedRoute>} />
+        <Route path="/Wip" element={<ProtectedRoute><Wip /></ProtectedRoute>} />
       </Routes>
     </div>
   );

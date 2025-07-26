@@ -93,13 +93,14 @@ const LoginSignup = () => {
 
       if (data.message === "Login successful") {
         setSession(loginData.username);
+        toast.success("nice Bike")
         navigate("/dashboard");
       } else {
-        alert(data.message);
+        toast.message(data.message);
       }
     } catch (err) {
       console.error("Login error:", err);
-      alert("Login failed. Try again.");
+      toast.error("Login failed. Try again.");
     }
   };
 
@@ -357,6 +358,7 @@ const LoginSignup = () => {
           </button>
         </div>
       </div>
+      <ToastContainer position="top-right" autoClose={2000} />
     </div>
   );
 };
