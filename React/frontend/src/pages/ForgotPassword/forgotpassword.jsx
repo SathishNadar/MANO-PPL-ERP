@@ -101,7 +101,6 @@ const PasswordReset = () => {
 
     setStep(3);
     setSubtitle("Verification successful! Now set your new password.");
-    // Here you can later add the password reset form
   };
 
   const handleResetPassword = async () => {

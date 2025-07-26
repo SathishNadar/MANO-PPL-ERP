@@ -1,1 +1,1 @@
-export const API_URI= "34.47.131.237";
+export const API_URI2= "34.47.131.237";

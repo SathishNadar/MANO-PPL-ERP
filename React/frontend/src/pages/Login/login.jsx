@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { API_URI } from "../ip.js";
+import { useNavigate, useLocation } from "react-router-dom";
+import {API_URI2} from '../ip.js'
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -13,6 +13,7 @@ const countryCodes = [
   { code: "+61", label: "Australia" },
   { code: "+81", label: "Japan" },
 ];
+const API_URI = "http://localhost:5001/api";
 
 const LoginSignup = () => {
   const [isSignup, setIsSignup] = useState(false);
@@ -31,10 +32,11 @@ const LoginSignup = () => {
     password: "",
     confirmPassword: "",
     phone: "",
-    countryCode: "+91",
+    countryCode: "91",
   });
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const passwordChecks = {
     length: signupData.password.length >= 8,
@@ -56,7 +58,19 @@ const LoginSignup = () => {
         localStorage.removeItem("session");
       }
     }
-  }, []);
+
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+
+    if (token) { fetch(`${API_URI}/verify-signup?token=${token}`)
+        .then((res) => res.text())
+        .then((msg) => toast.success(msg))
+        .catch((err) => {
+          console.error("Verification error:", err);
+          toast.error("Verification failed.");
+        });
+    }
+  }, [location]);
 
   const setSession = (username, userid) => {
     const expiryTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
@@ -72,7 +86,7 @@ const LoginSignup = () => {
     }
 
     try {
-      const response = await fetch(`http://${API_URI}:3000/auth/login/`, {
+      const response = await fetch(`http://${API_URI2}:3000/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -127,23 +141,29 @@ const LoginSignup = () => {
     }
 
     try {
-      const response = await fetch(`http://${API_URI}:3000/auth/signup/`, {
+      const response = await fetch(`${API_URI}/start-signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_name: trimmedUsername,
-          user_password: password,
+          username: trimmedUsername,
           email,
-          phone_no: `${countryCode} ${phone}`,
+          password,
+          phone,
+          // phone: `${countryCode} ${phone}`,
         }),
       });
 
       const data = await response.json();
+<<<<<<< Updated upstream
       if (data.message === "Signup successful. Login to continue.") {
         toast.success("Signup successful! Please log in.");
+=======
+      if (response.ok && data.success) {
+        toast.success("Verification link sent to your email.");
+>>>>>>> Stashed changes
         setIsSignup(false);
       } else {
-        toast.error(data.message || "Signup failed.");
+        toast.error(data.error || "Signup failed.");
       }
     } catch (err) {
       console.error("Signup error:", err);

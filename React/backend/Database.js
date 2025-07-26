@@ -47,3 +47,13 @@ export async function updateUserPassword(email, hashedPassword) {
     }
 }
 
+export async function insertUser(username, email, hashedPassword, phone) {
+  const query = "INSERT INTO users (user_name, email, user_password, phone_no) VALUES (?, ?, ?, ?)";
+  try {
+    const [result] = await pool.query(query, [username, email, hashedPassword, phone]);
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error('Error inserting user:', error);
+    return false;
+  }
+}
