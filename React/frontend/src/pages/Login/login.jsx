@@ -25,12 +25,10 @@ const LoginSignup = () => {
     username: "",
     password: "",
   });
-
   const [signupData, setSignupData] = useState({
     username: "",
     email: "",
     password: "",
-    confirmPassword: "",
     phone: "",
     countryCode: "91",
   });
@@ -72,25 +70,20 @@ const LoginSignup = () => {
     }
   }, [location]);
 
-  const setSession = (username, userid) => {
+  const setSession = (username) => {
     const expiryTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
-    const sessionData = { username, expiry: expiryTime, user_id: userid };
+    const sessionData = { username, expiry: expiryTime };
     localStorage.setItem("session", JSON.stringify(sessionData));
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (loginData.password.includes(" ")) {
-      toast.error("Password cannot contain spaces.");
-      return;
-    }
-
     try {
       const response = await fetch(`http://${API_URI2}:3000/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_name: loginData.username.trim(),
+          user_name: loginData.username,
           user_password: loginData.password,
         }),
       });
@@ -99,16 +92,14 @@ const LoginSignup = () => {
       const data = await response.json();
 
       if (data.message === "Login successful") {
-        const userid = data["user_data"]["user_id"];
-        setSession(loginData.username, userid);
-        toast.success("Login successful!");
-        setTimeout(() => navigate("/dashboard"), 1200);
+        setSession(loginData.username);
+        navigate("/dashboard");
       } else {
-        toast.error(data.message);
+        alert(data.message);
       }
     } catch (err) {
       console.error("Login error:", err);
-      toast.error("Login failed. Try again.");
+      alert("Login failed. Try again.");
     }
   };
 
@@ -167,7 +158,7 @@ const LoginSignup = () => {
       }
     } catch (err) {
       console.error("Signup error:", err);
-      toast.error("Signup failed. Try again.");
+      alert("Signup failed. Try again.");
     }
   };
 
@@ -201,11 +192,10 @@ const LoginSignup = () => {
 
   return (
     <div className="login-page-wrapper">
-      <ToastContainer />
       <div className="container">
         <div className="header">
           <div className="header-cont">
-            {isSignup ? "USER SIGN UP" : "USER LOGIN"}
+            {isSignup ? "USER SIGN IN" : "USER LOGIN"}
           </div>
         </div>
 
@@ -367,7 +357,7 @@ const LoginSignup = () => {
           <button className="btn" onClick={() => setIsSignup(!isSignup)}>
             {isSignup ? "ALREADY HAVE AN ACCOUNT?" : "DON'T HAVE AN ACCOUNT?"}
           </button>
-          <button className="btn" id="forgot" onClick={() => navigate("/forgotpassword")}>
+          <button className="btn" id="forgot">
             Forgot Password
           </button>
         </div>
