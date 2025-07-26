@@ -1,0 +1,95 @@
+/* Root theme variables */
+:root {
+  --background-color: #111827;
+  --sidebar-bg: #1F2937;
+  --card-bg: #1F2937;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --accent-blue: #3B82F6;
+  --accent-blue-light: #60A5FA;
+  --accent-blue-dark: #2563EB;
+  --input-bg: #1F2937;
+  --input-border: #374151;
+  --input-focus-ring: #3B82F6;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+}
+
+.bg-background {
+  background-color: var(--background-color);
+}
+
+.bg-sidebar {
+  background-color: var(--sidebar-bg);
+}
+
+.bg-card {
+  background-color: var(--card-bg);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.bg-blue {
+  background-color: var(--accent-blue);
+}
+
+.text-blue-light {
+  color: var(--accent-blue-light);
+}
+
+.bg-blue-dark {
+  background-color: var(--accent-blue-dark);}
+
+/* Fix icon font */
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Search input styles */
+input[type="text"] {
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-primary);
+}
+
+input[type="text"]::placeholder {
+  color: var(--text-secondary);
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--input-focus-ring);
+  box-shadow: 0 0 0 2px var(--input-focus-ring);
+}
+
+/* Expand dropdown alignment */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-menu .material-icons {
+  font-size: 20px;
+  color: var(--text-secondary);}
