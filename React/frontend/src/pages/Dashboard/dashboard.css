@@ -48,48 +48,35 @@ body {
 }
 
 .bg-blue-dark {
-  background-color: var(--accent-blue-dark);}
-
-/* Fix icon font */
-.material-icons {
-  font-family: 'Material Icons';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
+  background-color: var(--accent-blue-dark);
 }
 
 /* Search input styles */
-input[type="text"] {
+.dashboard-input {
   background-color: var(--input-bg);
   border: 1px solid var(--input-border);
   color: var(--text-primary);
 }
 
-input[type="text"]::placeholder {
+.dashboard-input::placeholder {
   color: var(--text-secondary);
 }
 
-input[type="text"]:focus {
+.dashboard-input:focus {
   outline: none;
   border-color: var(--input-focus-ring);
   box-shadow: 0 0 0 2px var(--input-focus-ring);
+  background-color: var(--input-bg);
 }
 
 /* Expand dropdown alignment */
-.user-menu {
+.dashboard-user-menu {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.user-menu .material-icons {
+.dashboard-user-menu .material-icons {
   font-size: 20px;
-  color: var(--text-secondary);}
+  color: var(--text-secondary);
+}
