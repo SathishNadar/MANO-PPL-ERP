@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Chart from 'chart.js/auto';
+import Sidebar from '../SidebarComponent/sidebar'
 import 'material-icons/iconfont/material-icons.css';
 import './dashboard.css';
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -66,36 +68,7 @@ const Dashboard = () => {
 
   return (
     <div className="flex h-screen bg-background">
-      <aside className="w-20 bg-sidebar shadow-lg flex flex-col items-center py-5">
-        <div className="mb-10">
-          <img
-            alt="Company logo"
-            className="w-12 h-12"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYqC4QedXgsQ36OpYtKvw2u3RQPZYjuKva5zvxhp1XXmjHo-pvNPPQ9RibgZoE_2d5L92HBZU76yv7YtL6qvkme3XVjo-jtVfUa7HczOkcw1A9yCYwlOAPlAOrlyT5KLe0f1G_k9rKeAQHW8M5kU3KU8zUSsveuJJNy4HVehGl_VVapT9ztvcVvuiY8f07VLwaF33NpgBWumDplhw5dNWrowPiQsFJVGQ51bJZR6mzeNYOnVR0SCsWQI05YxNftU4e2qKBshCIA75I"
-          />
-        </div>
-        <nav className="flex flex-col space-y-8">
-          <button onClick={() => navigate('/')} className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">home</span>
-          </button>
-          <button className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">bar_chart</span>
-          </button>
-          <button className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">folder</span>
-          </button>
-          <button className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">receipt_long</span>
-          </button>
-          <button className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">summarize</span>
-          </button>
-          <button onClick={() => navigate('/Wip')} className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">wysiwyg</span>
-          </button>
-        </nav>
-        <div className="mt-auto text-secondary">CDX</div>
-      </aside>
+      <Sidebar/>
       <main className="flex-1 p-8 overflow-y-auto">
         <header className="flex justify-between items-center mb-8">
           <div>
@@ -104,17 +77,10 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]">search</span>
-              <input class="pl-10 pr-4 py-2 rounded-full border border-gray-600 bg-[var(--sidebar-bg)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]" placeholder="     Search projects..." type="text"/>
+              <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]">search</span>
+              <input className="pl-10 pr-4 py-2 rounded-full border border-gray-600 bg-[var(--sidebar-bg)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]" placeholder="     Search projects..." type="text"/>
             </div>
             <div className="flex items-center space-x-2">
-              <img
-                alt="User avatar"
-                className="w-10 h-10 rounded-full"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLfWyPP_yFAEG_gjAchak9ylgmyX8NDer_TYOCRBciD3o0EwO0w_xnK6RTdmrJbainVA5n-29GN4oIWWM62FwD6-kOZZQ8_3ymooziSk389zQ3B5j9bY2OjC_z9wh5pxpEKYdHOF3AYlR8A5w_lGWuYVtXGPQvTVSBLVtNWv0ZCojBMx_O-rpCZVwQjFVk3YkakHsyienX8VZgXDnYKsbtwph8bq3PgUWwFDhKmPIcP6NmG07p-oFgpltV8cjRP4Fw6qFaFlqUmUfK"
-              />
-              <span className="font-semibold text-primary">Mano</span>
-              <span className="material-icons text-secondary">expand_more</span>
             </div>
           </div>
         </header>
