@@ -151,7 +151,15 @@ function setMainContent(listname) {
           <th>Nature of Job</th>
           <th>Category</th>
           <th>Phone</th>
-          <th>Email</th>
+          <th class="email-column" style="
+            width: 120px;
+            min-width: 120px;
+            max-width: 120px;
+            white-space: normal;
+            word-break: break-all;
+            overflow: hidden;
+            padding: 4px 2px;
+          ">Email</th>
           <th>Location</th>
           <th>Website</th>
         </tr>
