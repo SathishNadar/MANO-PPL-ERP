@@ -78,7 +78,7 @@ const Dashboard = () => {
           <div className="flex items-center space-x-4">
             <div className="relative">
               <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]">search</span>
-              <input className="pl-10 pr-4 py-2 rounded-full border border-gray-600 bg-[var(--sidebar-bg)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]" placeholder="     Search projects..." type="text"/>
+              <input className="dashboard-input pl-10 pr-4 py-2 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]" placeholder="Search projects..." type="search"/>
             </div>
             <div className="flex items-center space-x-2">
             </div>
