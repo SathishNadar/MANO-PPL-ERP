@@ -78,7 +78,44 @@ body.vendor-active .sidebar {
   color: white;
 }
 
+/* Add this to your existing vendor.css file */
 
+/* ===== Email Column Specific Styles ===== */
+/* Email Column Specific Styles */
+.vendor-table td:nth-child(5), 
+.vendor-table th:nth-child(5) {
+  width: 10px !important;        /* Fixed width */
+  max-width: 10px !important;    /* Prevent expansion */
+  min-width: 10px !important;     /* Minimum width */
+  white-space: normal !important; /* Enable text wrapping */
+  word-break: break-all !important; /* Break long emails */
+  padding: 8px 4px !important;    /* Reduce padding */
+  line-height: 1.3 !important;    /* Better wrapped text spacing */
+}
+
+/* For the header specifically */
+.vendor-table th:nth-child(5) {
+  white-space: nowrap !important; /* Keep header text on one line */
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Hover effect to see full email */
+.vendor-table td:nth-child(5):hover {
+  background-color: #f0f7ff;
+  overflow: visible !important;
+  z-index: 10;
+  position: relative;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .vendor-table td:nth-child(5), 
+  .vendor-table th:nth-child(5) {
+    max-width: 80px !important;
+    font-size: 14px !important;
+  }
+}
 .employee-table tr:nth-child(even){
   background-color: #efefef;
   border-right: 1px solid wheat;
