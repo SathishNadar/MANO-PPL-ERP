@@ -1,6 +1,7 @@
 import React from 'react'
-
+import { useNavigate } from 'react-router-dom'
 function sidebar() {
+  const navigate = useNavigate()
   return (
     <aside className="w-20 bg-sidebar shadow-lg flex flex-col items-center py-5">
         <div className="mb-10">
@@ -37,7 +38,7 @@ function sidebar() {
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLfWyPP_yFAEG_gjAchak9ylgmyX8NDer_TYOCRBciD3o0EwO0w_xnK6RTdmrJbainVA5n-29GN4oIWWM62FwD6-kOZZQ8_3ymooziSk389zQ3B5j9bY2OjC_z9wh5pxpEKYdHOF3AYlR8A5w_lGWuYVtXGPQvTVSBLVtNWv0ZCojBMx_O-rpCZVwQjFVk3YkakHsyienX8VZgXDnYKsbtwph8bq3PgUWwFDhKmPIcP6NmG07p-oFgpltV8cjRP4Fw6qFaFlqUmUfK"
           />
         <span className="font-semibold text-primary">Mano</span>
-      </aside>
+    </aside>
   )
 }
 
