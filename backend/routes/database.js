@@ -23,7 +23,7 @@ const pool = mysql.createPool({
 }).promise();
 
 
-// ----------------------- HELPING FUNCTIONS ----------------------- //
+// #region 🛠️ HELP FUNCTIONS ─────────────────────────────────────────────
 
 function safeParse(jsonField) {
     if (!jsonField) return {};
@@ -36,7 +36,9 @@ function safeParse(jsonField) {
     }
 }
 
-// ----------------------------- USER ----------------------------- //
+// #endregion
+
+// #region 🧑‍💼 USERS  ─────────────────────────────────────────────
 
 // Function to fetch User by user_name
 export async function r_fetchUserByName(name) {
@@ -80,7 +82,6 @@ export async function r_updateUserPassword(user_id, hashed_password) {
   }
 }
 
-
 // Function to check user_name exists
 export async function r_usernameExist(user_name) {
     const query = "SELECT user_id FROM users WHERE user_name = ?";
@@ -106,8 +107,9 @@ export async function r_isEmailOrPhoneTaken(email, phone) {
     }
 }
 
+// #endregion
 
-// ---------------------- PROJECT ----------------------- //
+// #region 🧱 PROJECT  ─────────────────────────────────────────────
 
 // Function to fetch Project by ID
 export async function r_getProjectById(project_id) {
@@ -282,60 +284,9 @@ export async function r_fetchRole(user_id, project_id) {
     }
 }
 
+// #endregion
 
-// ------------------------ DPR ------------------------- //
-
-const dprFormat = {
-    project_id: null,
-    report_date: "",
-
-    site_condition: {
-        ground_state: "",         // e.g., "dry", "slushy"
-        is_rainy: false,          // true/false
-        rain_timing: []           // e.g., ["10:10-11:00", "01:05-02:00"]
-    },
-
-    labour_report: {
-        agency: [],               // List of agency names
-        mason: [],                // Count per agency
-        carp: [],
-        fitter: [],
-        electrical: [],
-        painter: [],
-        gypsum: [],
-        plumber: [],
-        helper: [],
-        staff: [],
-        remarks: ""               // Any remarks
-    },
-
-    cumulative_manpower: null,   // Total manpower count (including today)
-
-    today_prog: {
-        progress: [],             // e.g., ["cement imported.", "water distributed."]
-        qty: []                   // e.g., ["1kg", "5L"]
-    },
-
-    tomorrow_plan: {
-        plan: [],                 // e.g., ["cement imported.", "water distributed."]
-        qty: []                   // e.g., ["1kg", "5L"]
-    },
-
-    user_roles: {
-        created_by: null,
-        approvals: {},            // e.g., { "1": true, "3": false }
-        viewers: [],              // user IDs
-        editors: []               // user IDs
-    },
-
-    report_footer: {
-        events_visit: [],         // e.g., [{ time: "10:00", note: "VIP visit" }] or just []
-        distribute: [],           // e.g., ["L&T", "MAPLANI"]
-        prepared_by: ""           // Name of preparer
-    },
-
-    created_at: ""               // e.g., "2025-01-19 12:00:00"
-};
+// #region 📝 DPR  ─────────────────────────────────────────────
 
 // Function to fetch DPR by ID
 export async function r_getDPRById(dpr_id) {
@@ -379,7 +330,7 @@ export async function r_insertDPR(dprData) {
     const [existing] = await pool.query(checkQuery, [dprData.project_id, dprData.report_date]);
 
     if (existing.length > 0) {
-        return { success: false, message: "DPR already exists for this date.", data: null };
+        return { ok: false, message: "DPR already exists for this date.", data: null };
     }
 
     // Step 2: Insert new DPR
@@ -408,7 +359,7 @@ export async function r_insertDPR(dprData) {
     try {
         const [result] = await pool.query(insertQuery, values);
         return {
-            success: true,
+            ok: true,
             message: "DPR inserted successfully.",
             data: { insertId: result.insertId }
         };
@@ -531,8 +482,25 @@ export async function r_fetchDPRsByProject(project_id, limit = 20) {
     }
 }
 
+// Function to fetch project_id from 
+export async function r_getProjByDprID(dpr_id) {
+    const query = `SELECT project_id FROM dpr WHERE dpr_id = ?`;
+    try {
+        const [rows] = await pool.query(query, [dpr_id]);
+        if (!rows.length) {
+            return { ok: false, message: "No DPR found for that ID.", project_id: null };
+        }
+        return { ok: true, project_id: rows[0].project_id };
+    } catch (error) {
+        console.error("❌ Error fetching DPR by ID:", error.message);
+        throw error;
+    }
+}
 
-// ----------------------- VENDOR ----------------------- //
+
+// #endregion
+
+// #region 🏷️ VENDOR ─────────────────────────────────────────────
 
 // Fetch vendors with pagination and filtering
 export async function r_fetchVendorsByTab({
@@ -636,7 +604,7 @@ export async function r_fetchVendors({
     const { vendors } = await r_fetchVendorsByTab({
         category,
         tab: 1,
-        limit: 10000,
+        limit: 100000,
         locationIds,
         jobNatureIds,
         order
@@ -707,9 +675,34 @@ export async function r_deleteVendor(id) {
     return { affectedRows: result.affectedRows };
 }
 
+// #endregion
+
+// #region 🧬 CROSS MODULE ─────────────────────────────────────────────
+
+// Fetches user roles for a user in a given project
+export async function r_getUserRoleForProject(user_id, project_id) {
+    const query = `
+        SELECT r.*
+        FROM project_user_roles upr
+        JOIN roles r ON upr.role_id = r.role_id
+        WHERE upr.user_id = ? AND upr.project_id = ?;
+    `;
+    const params = [user_id, project_id];
+
+    try {
+        const [[rows]] = await pool.query(query, params);
+        console.log(rows)
+        return rows
+    } catch (error) {
+        console.error("Error fetching vendors:", error);
+        throw error;
+    }
+}
 
 
-// const t = await r_fetchRole(6, 166)
+// #endregion
+
+// const t = await r_getProjByDprID(12)
 // console.log(t)
 
 

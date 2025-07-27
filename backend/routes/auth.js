@@ -23,7 +23,6 @@ const router = express.Router();
 export async function authenticateJWT(req, res, next) {
   try {
     let token = req.cookies?.token;
-
     if (!token) {
       const authHeader = req.headers['authorization'];
       console.log("Authorization header:", authHeader);
@@ -47,7 +46,7 @@ export async function authenticateJWT(req, res, next) {
         user_name: decodedUser.user_name,
         email: decodedUser.email
       };
-
+      console.log("jwt verification completed")
       next();
     });
   } catch (error) {
