@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Chart from 'chart.js/auto';
-import Sidebar from '../SidebarComponent/sidebar'
+import Sidebar from '../../SidebarComponent/sidebar'
 import 'material-icons/iconfont/material-icons.css';
-import './dashboard.css';
+import './ProjectsView.css';
 
 
-const Dashboard = () => {
+const ProjectsView = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -127,4 +127,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default ProjectsView;
