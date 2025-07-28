@@ -7,8 +7,6 @@ body {
   font-family: 'MyCustomFont', sans-serif;
 }
 
-
-
 body {
   margin: 0;
   display: flex;
@@ -362,7 +360,7 @@ body {
   top: 50px;
   right: 10px;
   width: 180px;
-  background: #fff;
+  background: #aaeffb;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;

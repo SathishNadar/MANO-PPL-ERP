@@ -39,17 +39,17 @@
                 </table>
                 <table style="width: 25%; border-right: 0px; border-left: 0px;">
                     <tr><td style="padding-left: 5px; border: 0px;">PROJECT START DATE</td><td style="padding-left: 5px; border-right: 0px;" id="start_date"></td></tr>
-                    <tr><td style="padding-left: 5px;">PROJECT COMPLETION</td><td style="padding-left: 5px;" id="end_date"></td></tr>
+                    <tr><td style="padding-left: 5px;">PROJECT COMPLETION</td><td style="padding-left: 5px;" id="end_date">Dynamic</td></tr>
                 </table>
             </div>
             <div class="project-bottom">
                 <div class="durr" style="width: 15%; padding-left: 5px; border-bottom: 0px;">Dur. in Days</div>
                 <div class="total" style="width: 10%; padding-left: 5px; border-bottom: 0px;">Total</div>
-                <div class="total-value" style="width: 15%; padding-left: 5px;" id="total_days"></div>
+                <div class="total-value" style="width: 15%; padding-left: 5px;">Dy</div>
                 <div class="blank" style="width: 30%; padding-left: 5px;"></div>
-                <div class="balance-left" style="width: 10%; padding-left: 5px;"></div>
+                <div class="balance-left" style="width: 10%; padding-left: 5px;">Dy</div>
                 <div class="balance" style="width: 10%; padding-left: 5px;">Balance</div>
-                <div class="balance-right" style="width: 10%; padding-left: 5px;" id="days_remaining"></div>
+                <div class="balance-right" style="width: 10%; padding-left: 5px;">Dyn</div>
             </div>
             <div class="site">
                 <div class="site-label">Site</div>
@@ -57,10 +57,9 @@
                     <div id="normal-day" class="normal-day"><div id="normal-day-checkbox" class="normal-day-checkbox"></div>NORMAL DAY</div>
                     <div id="rainy-day" class="rainy-day"><div id="rainy-day-checkbox" class="rainy-day-checkbox"></div>RAINY DAY</div>
                 </div>
-                <table class="from-to">
-                    <tr><td>From: <span>Dynamic</span></td><td>To: <span>Dynamic</span></td></tr>
-                    <tr><td>From: <span>Dynamic</span></td><td>To: <span>Dynamic</span></td></tr>
-                </table>
+                <div id="from-to-container" class="from-to">
+                        <!-- Time slots will be inserted here by JavaScript -->
+                </div>
                 <div class="slushy-dry">
                     <span>SITE CONDITION</span>
                     <div id="slushy-day" class="slushy-day"><div id="slushy-day-checkbox" class="slushy-day-checkbox"></div>SLUSHY</div>
@@ -89,14 +88,14 @@
                     </tbody>
                 </table>
                 <table class="bottom-of-labour-table">
-                    <tr>
-                        <td class="commulative" style="text-align: left;">commulative man power upto last date</td>
-                        <td style="text-align: center;"id="cumulative-manpower-untill-yesterday"></td>
-                        <td style="text-align: center;"></td>
-                        <td style="text-align: center;" id="cumulative-manpower-for-today"></td>
-                        <td style="text-align: center;"></td>
-                    </tr>
-                </table>
+    <tr>
+        <td class="commulative" style="text-align: left;">commulative man power upto last date</td>
+        <td style="text-align: center;" id="cumulative-manpower-untill-yesterday">--</td>
+        <td style="text-align: center;"></td>
+        <td style="text-align: center;"></td>
+        <td style="text-align: center;" id="cumulative-manpower-4"></td>
+    </tr>
+</table>
             </div>
         </div>
             <div style="width: 100%; display: flex; flex-direction: row; border-top: 0px; border-left: 0px; border-right: 0px;" class="today-tomorrow-table-container">
@@ -155,6 +154,8 @@
         <div class="button-container">
             <button id="download-pdf">PRINT / SAVE <i class="fa-light fa-print"></i></button>
         </div>
-    <script src="dpr-pdf.js"></script>
+    <script src="dpr1-pdf.js">
+
+    </script>
 </body>
 </html>

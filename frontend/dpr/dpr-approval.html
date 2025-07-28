@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPR FORM</title>
+    <title>DPR FOM</title>
     <link rel="stylesheet" href="dpr-form.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +22,9 @@
         <div class="below-header">
             <div class="inside-below-header">
                 <h1>DAILY PROGRESS REPORT</h1>
-                <p id="todays_date" style="color: white;">REPORT DATE</p>
+                <p>REPORT DATE</p>
+                <p>DPR REVIEW PAGE</p>
+                <p>id?</p>
             </div>
         </div>
         <div class="except-header">
@@ -155,12 +157,9 @@
                     <h1>LABOUR REPORT</h1>
                 </div>
                 <div class="action-buttons">
-                    <!-- <button class="labourtable-button" onclick="addRow()">Add Row</button>
+                    <button class="labourtable-button" onclick="addRow()">Add Row</button>
                     <button class="labourtable-button" onclick="deleteRow()">Delete Row</button>
                     <button class="labourtable-button" onclick="clearTableKeepRows()">Reset</button>
-                    <button class="labourtable-button" onclick="addColumn()">Add Column</button>
-                    <button class="labourtable-button" onclick="removeColumn()">Remove Column</button> -->
-
                   </div>
                   <br>
                   <table id="labourTable">
@@ -168,15 +167,15 @@
                     <thead>
                       <tr>
                         <th style="padding-top: 0;">Agency Name</th>
-                         <th contenteditable="true">Mason</th>
-                          <th contenteditable="true">Carp</th>
-                          <th contenteditable="true">Fitter</th>
-                          <th contenteditable="true">Electrical</th>
-                          <th contenteditable="true">Painter</th>
-                          <th contenteditable="true">Gypsum</th>
-                          <th contenteditable="true">Plumber</th>
-                          <th contenteditable="true">Helper</th>
-                          <th contenteditable="true">Staff</th>
+                        <th style="padding-top: 0;">Mason</th>
+                        <th>Carp</th>
+                        <th>Fitter</th>
+                        <th>Electrical</th>
+                        <th>Painter</th>
+                        <th>Gypsum</th>
+                        <th>Plumber</th>
+                        <th>Helper</th>
+                        <th>Staff</th>
                         <th>Total</th>
                         <th>Remarks</th>
                       </tr>
@@ -235,7 +234,6 @@
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody>
                             <tr>
                                 <td>
                                     <input id="today-progress" type="text">
@@ -244,7 +242,6 @@
                                     <input id="today-progress-quantity" type="number">
                                 </td>
                             </tr>
-                            </tbody>
                         </table>
                     </div>
                     <div style="padding-left: 5px;" class="tomorrow-planning">
@@ -266,47 +263,42 @@
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody>
                             <tr>
                                 <td>
-                                    <input class="tomorrows-planning" type="text">
+                                    <input id="tomorrows-planning" type="text">
                                 </td>
                                 <td>
-                                    <input class="tomorrows-planning-quantity" type="number">
+                                    <input id="tomorrows-planning-quantity" type="number">
                                 </td>
                             </tr>
-                            </tbody>
                         </table>
                     </div>
                     </div>
                 </div>
                 <div class="remarks-events-input-container">
-<!-- Events Section -->
 <div class="table-header fixed-header">
-    <h1>Events</h1>
-</div>
-<div class="input-controls">
-    <button class="labourtable-button" id="addEventBtn">+ Add Event</button>
-</div>
-<div id="eventsContainer">
-    <div class="event-input-container">
-        <input type="text" class="event-input">
-        <button class="remove-input-btn">−</button>
-    </div>
+  <h1>Events</h1>
 </div>
 
-<!-- Remarks Section -->
-<div class="table-header fixed-header">
-    <h1>Remarks</h1>
-</div>
 <div class="input-controls">
-    <button class="labourtable-button" id="addRemarkBtn">+ Add Remark</button>
+  <button class="labourtable-button" id="addEventBtn">Add Event</button>
+  <button class="labourtable-button" id="removeEventBtn" disabled>Remove Event</button>
 </div>
-<div id="remarksContainer">
-    <div class="remark-input-container">
-        <input type="text" class="remark-input">
-        <button class="remove-input-btn">−</button>
-    </div>
+
+<div id="eventsContainer">
+  <!-- Events inputs will appear here -->
+</div>
+  <div class="table-header fixed-header">
+  <h1>Remarks</h1>
+</div>
+
+<div class="input-controls">
+  <button class="labourtable-button" id="addRemarkBtn">Add Input</button>
+  <button class="labourtable-button" id="removeRemarkBtn" disabled>Remove Last</button>
+</div>
+
+<div class="dynamicInputsContainer" id="remarksContainer">
+  <!-- Initial 3 inputs will be added by JavaScript -->
 </div>
                 <br>
                 <div class="submit-section">
@@ -315,5 +307,7 @@
             </div>
         </div>
 </body>
-<script src="dpr-form.js"></script>
-</html> 
+<script src="dpr-approval.js">
+   
+</script>
+</html>

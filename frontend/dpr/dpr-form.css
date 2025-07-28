@@ -580,6 +580,62 @@ button[type="submit"]:hover {
   align-items: center;
   padding: 30px 0;
 }
+.error_state{
+  color: red;
+  font-style: bold;
+}
+/* Events and Remarks Container Styles */
+.event-input-container, .remark-input-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.event-input, .remark-input {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+.remove-input-btn {
+    background: none;
+    border: 1px solid #d32f2f;
+    color: #d32f2f;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.remove-input-btn:hover {
+    background-color: #ffebee;
+}
+
+.input-controls {
+    margin-bottom: 10px;
+}
+
+.labourtable-button {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.labourtable-button:hover {
+    background-color: #0d5bba;
+}
 
 @media print {
   /* Reset all margins and padding for printing */

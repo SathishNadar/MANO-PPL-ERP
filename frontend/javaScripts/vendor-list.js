@@ -1,3 +1,4 @@
+import { ip_address } from "../ip.js";
 console.log("✅ vendor.js has loaded successfully!");
 
 // -----------------------------------------------------------Data storage--------------------------------------------------------------
@@ -46,11 +47,15 @@ const getValidURL = (url) => {
     : `https://${url}`;
 };
 
+function setCategory(id) {
+  categoryIds = id;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------------------------
 async function fetchMetadata() {
   try {
     const response = await fetch(
-      "http://35.154.101.129:3000/vendor_api/metadata/"
+      `http://${ip_address}:3000/vendor_api/metadata/`
     );
     if (!response.ok) throw new Error("Network response was not ok");
 
@@ -85,7 +90,7 @@ async function fetchVendorData(tab_no, orders) {
   }
 
   try {
-    const response = await fetch("http://35.154.101.129:3000/vendor_api/", {
+    const response = await fetch(`http://${ip_address}:3000/vendor_api/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -96,6 +101,7 @@ async function fetchVendorData(tab_no, orders) {
         locationIds: appliedFilters.locationIds || [],
         jobNatureIds: appliedFilters.jobNatureIds || [],
         category: categoryIds,
+        
       }),
     });
 
@@ -119,24 +125,20 @@ async function fetchVendorData(tab_no, orders) {
 async function search(tab_no, searchtext) {
   console.log(categoryIds);
   try {
-    let response = await fetch(
-      "http://35.154.101.129:3000/vendor_api/search/",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-
-        },
-        body: JSON.stringify({
-          queryString: `${searchtext}`,
-          tab: tab_no,
-          order: orders,
-          locationIds: appliedFilters.locationIds || [],
-          jobNatureIds: appliedFilters.jobNatureIds || [],
-          category: categoryIds,
-        }),
-      }
-    );
+    let response = await fetch(`http://${ip_address}:3000/vendor_api/search`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        queryString: `${searchtext}`,
+        tab: tab_no,
+        order: orders,
+        locationIds: appliedFilters.locationIds || [],
+        jobNatureIds: appliedFilters.jobNatureIds || [],
+        category: categoryIds,
+      }),
+    });
 
     if (!response.ok) throw new Error("Network response was not ok");
     let data = await response.json();
@@ -155,112 +157,109 @@ async function search(tab_no, searchtext) {
 async function initializeVendorList() {
   await fetchMetadata();
   fetchVendorData(1);
+  setupAddVendorButton();
 }
 initializeVendorList();
-
+console.log(jobNatureDict)
 async function renderVendorList(page) {
-  // console.log("Rendering Vendor List for Page:", page);
-
+  // const tbody = document.getElementById("vendor-data");
+  const thead = document.querySelector("#vendor-table thead tr");
   const tbody = document.getElementById("vendor-data");
+
+
+  // Ensure the header has the EDIT column
+  if (thead && !thead.querySelector("th.edit-column")) {
+    const editHeader = document.createElement("th");
+    editHeader.className = "edit-column";
+    editHeader.textContent = "EDIT";
+    thead.appendChild(editHeader);
+  }
+  if (!tbody) return;
+
+  // Ensure EDIT column exists in header
+  const theadRow = document.querySelector("#vendor-table thead tr");
+  if (theadRow && !theadRow.querySelector("th.edit-column")) {
+    const editHeader = document.createElement("th");
+    editHeader.className = "edit-column";
+    editHeader.textContent = "EDIT";
+    theadRow.appendChild(editHeader);
+  }
+
   if (!allVendors.length) {
-    console.warn("No vendors available to display.");
-    tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align:center; font-weight:bold; color:red;">
-                        No vendors found for the selected filters.
-                    </td>
-                </tr>
-            `;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red;">No vendors found</td></tr>`;
     return;
   }
 
-  if (!tbody) {
-    console.error("Vendor table body not found!");
-    return;
-  }
   tbody.innerHTML = "";
 
-  // const startIndex = (page - 1) * itemsPerPage;
-  // const endIndex = Math.min(startIndex + itemsPerPage, allVendors.length);
-
-  for (let i = 0; i < allVendors.length; i++) {
-    const vendor = allVendors[i];
+  allVendors.forEach((vendor, idx) => {
     const row = document.createElement("tr");
-
     row.innerHTML = `
-                <td>${formatValue(vendor.name)}</td>
-                <td>${formatValue(
-                  ReverseJobNatureDict[vendor.job_nature_id]
-                )}</td>
-                <td>${formatValue(CategoryDict[vendor.category_id])}</td>
-                <td>
-                    <span class="copy-text" data-copy="${formatValue(
-                      vendor.mobile
-                    )}" style="cursor: pointer;">
-                        ${formatValue(vendor.mobile)}
-                    </span>
-                </td>
-                <td>
-                    <span class="copy-text" data-copy="${formatValue(
-                      vendor.email
-                    )}" style="cursor: pointer;">
-                        ${formatValue(vendor.email)}
-                    </span>
-                </td>
-                <td>${formatValue(ReverseLocationDict[vendor.location_id])}</td>
-                <td>
-                    <a href="${getValidURL(
-                      vendor.website
-                    )}" target="_blank" class="website-link copy-text">
-                        ${formatValue(vendor.website)}
-                    </a>
-                </td>
-            `;
+      <td>${formatValue(vendor.name)}</td>
+      <td>${formatValue(ReverseJobNatureDict[vendor.job_nature_id] || "")}</td>
+      <td>${formatValue(CategoryDict[vendor.category_id] || "")}</td>
+      <td><span class="copy-text" data-copy="${formatValue(vendor.mobile)}">${formatValue(vendor.mobile)}</span></td>
+      <td><span class="copy-text" style="
+        width: 120px;
+        min-width: 120px;
+         max-width: 120px;
+        white-space: normal;
+        word-break: break-all;
+        overflow: hidden;
+        padding: 4px 2px;
+      " data-copy="${formatValue(vendor.email)}">${formatValue(vendor.email)}</span></td>
+      <td>${formatValue(ReverseLocationDict[vendor.location_id] || "")}</td>
+      <td><a href="${getValidURL(vendor.website)}" target="_blank">${formatValue(vendor.website)}</a></td>
+      <td class="edit-column">
+        <button class="edit-btn">✏️ Edit</button>
+      </td>
+    `;
 
-    tbody.appendChild(row);
-
-    row.querySelectorAll(".copy-text").forEach((copyItem) => {
-      copyItem.addEventListener("click", () => {
-        navigator.clipboard
-          .writeText(copyItem.dataset.copy)
-          .then(() => {
-            Swal.fire({
-              toast: true,
-              position: "bottom-end",
-              icon: "success",
-              title: "Text Copied!",
-              showConfirmButton: false,
-              timer: 1000,
-              timerProgressBar: true,
-              showClass: { popup: "swal2-noanimation" },
-              hideClass: { popup: "" },
-              background: "#333",
-              color: "#fff",
-              customClass: {
-                popup: "small-toast",
-                timerProgressBar: "blue-progress-bar",
-              },
-              didOpen: (toast) => {
-                const progressBar = toast.querySelector(".swal2-timer-progress-bar");
-                if (progressBar) {
-                  progressBar.classList.add("animate-progress-faster");
-                }
-              },
-            });
-          })
-          .catch((err) => console.error("Failed to copy:", err));
+    // Copy text functionality
+    row.querySelectorAll(".copy-text").forEach(el => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(el.dataset.copy).then(() => {
+          Swal.fire({
+            toast: true,
+            position: "bottom-end",
+            icon: "success",
+            title: "Text Copied!",
+            showConfirmButton: false,
+            timer: 1000,
+            timerProgressBar: true,
+            background: "#333",
+            color: "#fff",
+            customClass: {
+              popup: "small-toast",
+              timerProgressBar: "blue-progress-bar",
+            }
+          });
+        });
       });
     });
-    
 
-    row.addEventListener("click", (event) => {
-      if (!event.target.classList.contains("copy-text")) {
+    // Edit button functionality
+    const editBtn = row.querySelector(".edit-btn");
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openEditModal(vendor);
+    });
+
+    // Row click functionality (excluding edit button and copy text)
+    row.addEventListener("click", e => {
+      if (!e.target.classList.contains("copy-text") &&
+          !e.target.classList.contains("edit-btn")) {
         showPopup(vendor);
       }
     });
-  }
+
+    tbody.appendChild(row);
+  });
+
   renderVendorPagination(totalVendorCount, page);
 }
+
 
 function renderVendorPagination(totalVendors, activePage) {
   const totalPages = Math.ceil(totalVendors / itemsPerPage);
@@ -286,7 +285,7 @@ function renderVendorPagination(totalVendors, activePage) {
     btn.innerText = page;
     btn.onclick = () => {
       if (currentVendorPage !== page) {
-        goToPage(page); // 🔹 Now properly decides whether to call search() or fetchVendorData()
+        goToPage(page);
       }
     };
     return btn;
@@ -400,13 +399,8 @@ function changeorder() {
     svgElement.style.transformOrigin = "50% 70%";
     svgElement.style.transition = "transform 0.3s ease";
     svgElement.style.position = "relative";
-
-    // let scaleY = orders === "ASC" ? 1 : -1;
-    // svgElement.setAttribute("style", `transform: scaleY(${scaleY}); transition: transform 0.3s ease;`);
   }
 }
-
-// do  not Touch-------------------------------------------------------------------------------------------
 
 // ✅ Function to Show Vendor Details Popup
 function showPopup(vendor) {
@@ -523,7 +517,7 @@ function openFilterDialog() {
   }
 
   overlay.classList.add("active");
-  existingDialog.classList.add("active");          
+  existingDialog.classList.add("active");
 }
 
 function copyToClipboard() {
@@ -625,7 +619,7 @@ function filterSearch(inputId, listId) {
 
 function clearFilters() {
   document.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
-    console.log(checkbox)
+    console.log(checkbox);
     checkbox.checked = false;
     sessionStorage.removeItem(checkbox.value);
   });
@@ -656,14 +650,13 @@ function handleSearch() {
   if (!searchInput || searchText.length == 0) {
     return;
   }
-  // console.log(searchText);
   if (searchText.length > 0) {
     search(1, searchText);
   }
 }
 
 function attachSearchListeners() {
-  console.log("yo");  
+  console.log("yo");
   const searchInput = document.querySelector(".search-field .input");
   const searchButton = document.querySelector(".search-box-icon");
 
@@ -679,3 +672,322 @@ function attachSearchListeners() {
     });
   }
 }
+
+// ✅ Add/Edit Vendor Functions
+function setupAddVendorButton() {
+  // Check if button already exists
+  if (document.getElementById("add-vendor-btn")) return;
+
+  // Inject styles
+  const styles = `
+    /* Table Container & Structure */
+  #vendor-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  /* Column Widths */
+  #vendor-table th:nth-child(1),
+  #vendor-table td:nth-child(1) { width: 15%; } /* Name */
+  #vendor-table th:nth-child(2),
+  #vendor-table td:nth-child(2) { width: 12%; } /* Job Nature */
+  #vendor-table th:nth-child(3),
+  #vendor-table td:nth-child(3) { width: 10%; } /* Category */
+  #vendor-table th:nth-child(4),
+  #vendor-table td:nth-child(4) { width: 10%; } /* Mobile */
+  #vendor-table th:nth-child(6),
+  #vendor-table td:nth-child(6) { width: 12%; } /* Location */
+  #vendor-table th:nth-child(7),
+  #vendor-table td:nth-child(7) { width: 15%; } /* Website */
+  #vendor-table th:nth-child(8),
+  #vendor-table td:nth-child(8) { width: 10%; } /* EDIT */
+
+  /* Cell Styling */
+  #vendor-table th, 
+  #vendor-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* EDIT Column Specific */
+  .edit-column {
+    text-align: center !important;
+    padding: 8px 2px !important;
+  }
+
+  .edit-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    width: 100%;
+    max-width: 80px;
+  }
+
+  /* Responsive Fallback */
+  @media (max-width: 1200px) {
+    #vendor-table {
+      font-size: 13px;
+    }
+    #vendor-table th, 
+    #vendor-table td {
+      padding: 6px 4px;
+    }
+  }
+    .floating-add-btn { 
+    position: fixed; 
+    bottom: 20px; 
+    right: 20px; 
+    background:#2196f3; 
+    color:#fff; 
+    font-size:28px; 
+    border:none; 
+    border-radius:50%; 
+    width:60px; 
+    height:60px; 
+    cursor:pointer; 
+    z-index:999; 
+    box-shadow:0 4px 10px rgba(0,0,0,0.3);
+  }
+    .modal-overlay { 
+      position:fixed; 
+      display:none; 
+      top:0; left:0; right:0; bottom:0; 
+      background:rgba(0,0,0,0.5); 
+      z-index:998; 
+      justify-content:center; 
+      align-items:center; 
+    } 
+    .modal-overlay.active { 
+      display:flex; 
+    } 
+    .modal-content { 
+      background:#fff; 
+      padding:20px; 
+      border-radius:10px; 
+      width:90%; 
+      max-width:500px; 
+      position:relative; 
+    } 
+    .close-modal { 
+      position:absolute; 
+      top:10px; 
+      right:15px; 
+      font-size:22px; 
+      cursor:pointer; 
+    } 
+    .edit-column {
+  width: 100px;
+  text-align: center;
+}
+
+.edit-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.edit-btn:hover {
+  background: #0b7dda;
+} 
+    .actions-cell {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  `;
+  const styleEl = document.createElement("style"); 
+  styleEl.innerHTML = styles; 
+  document.head.appendChild(styleEl);
+
+  // Floating Add Button
+  const addBtn = document.createElement("button");
+  addBtn.id = "add-vendor-btn"; 
+  addBtn.innerText = "+"; 
+  addBtn.className = "floating-add-btn";
+  document.body.appendChild(addBtn);
+
+  // Modal HTML
+  const modalHTML = `
+    <div id="add-vendor-modal" class="modal-overlay">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Add New Vendor</h2>
+        <form id="add-vendor-form">
+          <input name="name" placeholder="Name" required />
+          <input name="contact_person" placeholder="Contact Person" />
+          <input name="telephone_no" placeholder="Telephone" />
+          <input name="mobile" placeholder="Mobile" required />
+          <input name="email" placeholder="Email" />
+          <input name="address" placeholder="Address" />
+          <input name="gst_no" placeholder="GST Number" />
+          <input name="constitution" placeholder="Constitution" />
+          <input name="website" placeholder="Website" />
+          <input name="reference" placeholder="Reference" />
+          <textarea name="remarks" placeholder="Remarks"></textarea>
+          <select name="job_nature_id" id="job-nature-select"></select>
+          <select name="location_id" id="location-select"></select>
+          <select name="category_id">
+            <option value="1">Consultant</option>
+            <option value="2">Contractor</option>
+            <option value="3">Supplier</option>
+          </select>
+          <button type="submit">Submit</button>
+        </form>
+      </div>
+    </div>
+  `;
+  const modalContainer = document.createElement("div"); 
+  modalContainer.innerHTML = modalHTML; 
+  document.body.appendChild(modalContainer);
+
+  // Event Listeners
+  addBtn.addEventListener("click", () => {
+  const form = document.getElementById("add-vendor-form");
+  form.reset(); // Explicitly reset the form
+  delete form.dataset.mode; 
+  delete form.dataset.id;
+  document.querySelector("#add-vendor-modal h2").innerText = "Add New Vendor";
+  populateVendorDropdowns();
+  document.getElementById("add-vendor-modal").classList.add("active");
+});
+
+  document.addEventListener("click", e => {
+    if (e.target.matches(".close-modal")) { 
+      document.getElementById("add-vendor-modal").classList.remove("active"); 
+    }
+  });
+
+  document.getElementById("add-vendor-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const form = e.target;
+    const isEdit = form.dataset.mode === "edit";
+    const payload = {
+      name: form.name.value,
+      contact_person: form.contact_person.value,
+      telephone_no: form.telephone_no.value,
+      mobile: form.mobile.value,
+      email: form.email.value,
+      address: form.address.value,
+      gst_no: form.gst_no.value,
+      constitution: form.constitution.value,
+      website: form.website.value,
+      reference: form.reference.value,
+      remarks: form.remarks.value,
+      job_nature_id: +form.job_nature_id.value,
+      location_id: +form.location_id.value,
+      category_id: +form.category_id.value
+    };
+
+    try {
+      let url, method;
+      if (isEdit) {
+        // Use PUT for updates
+        url = `http://${ip_address}:3000/vendor_api/update/${form.dataset.id}`;
+        method = "PUT";
+      } else {
+        // Use POST for new vendors
+        url = `http://${ip_address}:3000/vendor_api/add`;
+        method = "POST";
+      }
+
+      const res = await fetch(url, { 
+        method,
+        headers: {"Content-Type":"application/json"}, 
+        body: JSON.stringify(payload) 
+      });
+      
+      if (!res.ok) throw new Error(await res.text());
+      
+      Swal.fire({ 
+        icon: "success", 
+        title: isEdit ? "Vendor Updated" : "Vendor Added", 
+        toast: true, 
+        position: "top-end", 
+        timer: 1500, 
+        showConfirmButton: false 
+      });
+      
+      form.reset(); 
+      delete form.dataset.mode; 
+      delete form.dataset.id;
+      document.getElementById("add-vendor-modal").classList.remove("active");
+      fetchVendorData(currentVendorPage);
+    } catch(err) {
+      Swal.fire({ 
+        icon: "error", 
+        title: "Error", 
+        text: err.message 
+      });
+    }
+  });
+}
+
+function populateVendorDropdowns() {
+  const jobSel = document.getElementById("job-nature-select");
+  const locSel = document.getElementById("location-select");
+  jobSel.innerHTML = ""; 
+  locSel.innerHTML = "";
+  Object.entries(jobNatureDict).forEach(([name,id]) => { 
+    const o = document.createElement("option"); 
+    o.value = id; 
+    o.text = name; 
+    jobSel.appendChild(o);
+  });
+  Object.entries(locationDict).forEach(([name,id]) => { 
+    const o = document.createElement("option"); 
+    o.value = id; 
+    o.text = name; 
+    locSel.appendChild(o);
+  });
+}
+
+function openEditModal(vendor) {
+  const modal = document.getElementById("add-vendor-modal");
+  const form = document.getElementById("add-vendor-form");
+  form.dataset.mode = "edit";
+  form.dataset.id = vendor.id;
+  document.querySelector("#add-vendor-modal h2").innerText = "Edit Vendor";
+  
+  // Prefill form
+  ["name","contact_person","telephone_no","mobile","email","address",
+   "gst_no","constitution","website","reference","remarks"].forEach(field => {
+    form[field].value = vendor[field] || "";
+  });
+  
+  form.job_nature_id.value = vendor.job_nature_id;
+  form.location_id.value = vendor.location_id;
+  form.category_id.value = vendor.category_id;
+  
+  populateVendorDropdowns();
+  modal.classList.add("active");
+}
+
+export {
+  initializeVendorList,
+  attachSearchListeners,
+  setCategory,
+  changeorder,
+  clearFilters,
+  closeFilterDialog,
+  openFilterDialog,
+  toggleDropdown,
+  applyFilters,
+  closePopup,
+  filterSearch
+};
