@@ -31,36 +31,36 @@ function Sidebar() {
     navigate("/login");
   }
 
-  return (
-    <aside className="w-20 bg-sidebar shadow-lg flex flex-col items-center py-5">
-        <div className="mb-10">
-          <img
-            alt="Company logo"
-            className="w-12 h-12"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYqC4QedXgsQ36OpYtKvw2u3RQPZYjuKva5zvxhp1XXmjHo-pvNPPQ9RibgZoE_2d5L92HBZU76yv7YtL6qvkme3XVjo-jtVfUa7HczOkcw1A9yCYwlOAPlAOrlyT5KLe0f1G_k9rKeAQHW8M5kU3KU8zUSsveuJJNy4HVehGl_VVapT9ztvcVvuiY8f07VLwaF33NpgBWumDplhw5dNWrowPiQsFJVGQ51bJZR6mzeNYOnVR0SCsWQI05YxNftU4e2qKBshCIA75I"
-          />
-        </div>
-        <nav className="flex flex-col space-y-8">
-          <button onClick={() => navigate('/dashboard/home')} className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">home</span>
-          </button>
-          {/* <button className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">bar_chart</span>
-          </button> */}
-          <button onClick={() => navigate('/dashboard/projects')} className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">folder</span>
-          </button>
-          <button className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">receipt_long</span>
-          </button>
-          <button className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">summarize</span>
-          </button>
-          <button onClick={() => navigate('/dashboard/work-in-progress')} className="text-secondary hover:text-blue-light">
-            <span className="material-icons text-3xl">wysiwyg</span>
-          </button>
-        </nav>
-        
+   return (
+    <aside className="w-20 bg-sidebar shadow-lg flex flex-col items-center py-5 relative">
+    <img 
+    alt="Company logo"
+          className="w-12 h-12 mb-6"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYqC4QedXgsQ36OpYtKvw2u3RQPZYjuKva5zvxhp1XXmjHo-pvNPPQ9RibgZoE_2d5L92HBZU76yv7YtL6qvkme3XVjo-jtVfUa7HczOkcw1A9yCYwlOAPlAOrlyT5KLe0f1G_k9rKeAQHW8M5kU3KU8zUSsveuJJNy4HVehGl_VVapT9ztvcVvuiY8f07VLwaF33NpgBWumDplhw5dNWrowPiQsFJVGQ51bJZR6mzeNYOnVR0SCsWQI05YxNftU4e2qKBshCIA75I"
+        />
+
+      <nav className="flex flex-col space-y-8">
+        <button onClick={() => navigate("/dashboard/home")} className="text-secondary hover:text-blue-light">
+          <span className="material-icons text-3xl">home</span>
+        </button>
+        <button className="text-secondary hover:text-blue-light">
+          <span className="material-icons text-3xl">bar_chart</span>
+        </button>
+        <button onClick={() => navigate("/dashboard/projects")} className="text-secondary hover:text-blue-light">
+          <span className="material-icons text-3xl">folder</span>
+        </button>
+        <button className="text-secondary hover:text-blue-light">
+          <span className="material-icons text-3xl">receipt_long</span>
+        </button>
+        <button className="text-secondary hover:text-blue-light">
+          <span className="material-icons text-3xl">summarize</span>
+        </button>
+        <button onClick={() => navigate("/dashboard/work-in-progress")} className="text-secondary hover:text-blue-light">
+          <span className="material-icons text-3xl">wysiwyg</span>
+        </button>
+      </nav>
+
+      <div className="mt-auto relative" ref={containerRef}>
         <img
           alt="User avatar"
           onClick={(e) => {
@@ -87,8 +87,7 @@ function Sidebar() {
           </div>
         )}
       </div>
-    </aside>
+      </aside>
   );
 }
-
 export default Sidebar;

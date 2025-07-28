@@ -51,7 +51,7 @@ const LoginSignup = () => {
     if (sessionData) {
       const { expiry } = JSON.parse(sessionData);
       if (Date.now() < expiry) {
-        navigate("/dashboard");
+        navigate("/dashboard/home");
       } else {
         localStorage.removeItem("session");
       }
@@ -94,7 +94,7 @@ const LoginSignup = () => {
       if (data.message === "Login successful") {
         setSession(loginData.username);
         toast.success("nice Bike")
-        navigate("/dashboard");
+        navigate("/dashboard/home");
       } else {
         toast.message(data.message);
       }

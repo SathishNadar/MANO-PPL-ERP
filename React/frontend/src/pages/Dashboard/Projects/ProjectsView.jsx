@@ -4,7 +4,7 @@ import Chart from 'chart.js/auto';
 import Sidebar from '../../SidebarComponent/sidebar'
 import 'material-icons/iconfont/material-icons.css';
 import './ProjectsView.css';
-
+ 
 
 const ProjectsView = () => {
   const navigate = useNavigate();
