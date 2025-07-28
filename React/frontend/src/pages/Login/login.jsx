@@ -70,9 +70,9 @@ const LoginSignup = () => {
     }
   }, [location]);
 
-  const setSession = (username) => {
+  const setSession = (username, user_id) => {
     const expiryTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
-    const sessionData = { username, expiry: expiryTime };
+    const sessionData = { user_id ,username, expiry: expiryTime };
     localStorage.setItem("session", JSON.stringify(sessionData));
   };
 
@@ -92,7 +92,7 @@ const LoginSignup = () => {
       const data = await response.json();
 
       if (data.message === "Login successful") {
-        setSession(loginData.username);
+        setSession(data.user_data.user_name, data.user_data.user_id);
         toast.success("nice Bike")
         navigate("/dashboard/home");
       } else {

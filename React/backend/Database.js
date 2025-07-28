@@ -57,3 +57,151 @@ export async function insertUser(username, email, hashedPassword, phone) {
     return false;
   }
 }
+
+
+// ---------------------- PROJECT ----------------------- //
+
+// Function to fetch Project by ID
+export async function r_getProjectById(project_id) {
+    if (!project_id) throw new Error("Project ID is required");
+
+    const query = `SELECT * FROM projects WHERE project_id = ?`;
+
+    try {
+        const [rows] = await pool.query(query, [project_id]);
+        if (rows.length === 0) return null;
+
+        const row = rows[0];
+        return {
+            ...row,
+            user_roles: typeof row.user_roles === "string" ? JSON.parse(row.user_roles) : row.user_roles
+        };
+    } catch (error) {
+        console.error("❌ Error fetching project by ID:", error.message);
+        throw error;
+    }
+}
+
+// Function to fetch all projects a user is involved
+export async function r_fetchProjectsByUser(user_id) {
+    const query = `
+    SELECT 
+      p.project_id,
+      p.project_name,
+      p.project_description,
+      p.start_date,
+      p.end_date
+    FROM projects p
+    JOIN project_user_roles pur ON p.project_id = pur.project_id
+    WHERE pur.user_id = ?;
+  `;
+
+    try {
+        const [rows] = await pool.query(query, [user_id]);
+        return rows || [];
+    } catch (error) {
+        console.error("❌ Error fetching projects for user:", error);
+        throw error;
+    }
+}
+
+// Function to insert Project  ###### Hardcoded 
+export async function r_insertProject(data) {
+    const {
+        project_name,
+        user_id = null,
+        project_description = null,
+        start_date = null,
+        end_date = null,
+        location = null,
+        contract_no = null,
+        Employer = null
+    } = data;
+
+    if (!project_name) {
+        throw new Error("Missing required fields: project_name");
+    }
+
+    const projQuery = `
+        INSERT INTO projects (
+            project_name, project_description,
+            start_date, end_date, location,
+            contract_no, Employer
+        ) VALUES (?, ?, ?, ?, ?, ?, ?);
+    `;
+
+    const roleQuery = `
+        INSERT INTO project_user_roles (
+            project_id, user_id, role_id
+        ) VALUES (?, ?, ?);
+    `;
+
+    const values = [
+        project_name,
+        project_description,
+        start_date,
+        end_date,
+        location,
+        contract_no,
+        Employer
+    ];
+
+    try {
+        const [projResult] = await pool.query(projQuery, values);
+        await pool.query(roleQuery, [projResult.insertId, user_id, 1]);
+        return projResult.insertId;
+    } catch (error) {
+        console.error("❌ Error inserting project:", error.message);
+        throw error;
+    }
+}
+
+// Function to update Project
+export async function r_updateProject(data) {
+    const {
+        project_id,
+        project_name,
+        project_description = null,
+        start_date = null,
+        end_date = null,
+        location = null,
+        contract_no = null,
+        Employer = null
+    } = data;
+
+    if (!project_id || !project_name) {
+        throw new Error("Missing required fields: project_id or project_name");
+    }
+
+    const query = `
+        UPDATE projects
+        SET 
+            project_name = ?,
+            project_description = ?,
+            start_date = ?,
+            end_date = ?,
+            location = ?,
+            contract_no = ?,
+            Employer = ?
+        WHERE project_id = ?;
+    `;
+
+    const values = [
+        project_name,
+        project_description,
+        start_date,
+        end_date,
+        location,
+        contract_no,
+        Employer,
+        project_id
+    ];
+
+    try {
+        const [result] = await pool.query(query, values);
+        return result.affectedRows;
+    } catch (error) {
+        console.error("❌ Error updating project:", error.message);
+        throw error;
+    }
+}

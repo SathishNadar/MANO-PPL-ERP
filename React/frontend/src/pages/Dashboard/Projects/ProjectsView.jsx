@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import Chart from 'chart.js/auto';
 import Sidebar from '../../SidebarComponent/sidebar'
@@ -8,69 +9,76 @@ import './ProjectsView.css';
 
 const ProjectsView = () => {
   const navigate = useNavigate();
+  const [projects, setProjects] = useState([]);
+  const userId = JSON.parse(localStorage.getItem("session"))?.user_id;
+
+  const ip_address = "34.47.131.237";
 
   useEffect(() => {
-    const ctx = document.getElementById('projectChart');
-    let chartInstance;
-
-    if (ctx) {
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Project A', 'Project B', 'Project C', 'Project D', 'Project E'],
-          datasets: [{
-            label: 'Completion %',
-            data: [79, 52, 95, 30, 65],
-            backgroundColor: 'rgba(59, 130, 246, 0.5)',
-            borderColor: 'rgba(59, 130, 246, 1)',
-            borderWidth: 1,
-            borderRadius: 8,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 100,
-              grid: {
-                color: '#374151'
-              },
-              ticks: {
-                color: '#9CA3AF'
-              }
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch(`http://${ip_address}:3000/project/userProjects/${userId}`);
+        if (!response.ok) throw new Error("Failed to fetch projects");
+        const data = await response.json();
+        setProjects(data);
+                const projectNames = data.map(p => p.project_name);
+        const progressValues = data.map(() => Math.floor(Math.random() * 100));
+        const ctx = document.getElementById("projectChart");
+        if (ctx) {
+          const chartInstance = Chart.getChart("projectChart");
+          if (chartInstance) chartInstance.destroy();
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: projectNames,
+              datasets: [{
+                label: 'Progress %',
+                data: progressValues,
+                backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1,
+                borderRadius: 8,
+              }]
             },
-            x: {
-              grid: {
-                display: false
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false }
               },
-              ticks: {
-                color: '#9CA3AF'
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  max: 100,
+                  ticks: { color: '#9CA3AF' },
+                  grid: { color: '#374151' }
+                },
+                x: {
+                  ticks: { color: '#9CA3AF' },
+                  grid: { display: false }
+                }
               }
             }
-          }
+          });
         }
-      });
-    }
-
-    return () => {
-      if (chartInstance) {
-        chartInstance.destroy();
+      } catch (err) {
+        console.error("Error loading projects:", err);
       }
     };
-  }, []);
+
+    fetchProjects();
+
+    return () => {
+      const chartInstance = Chart.getChart("projectChart");
+      if (chartInstance) chartInstance.destroy();
+    };
+  }, [userId]);
 
   return (
     <div className="flex h-screen bg-background">
       <Sidebar/>
-      <main className="flex-1 p-8 overflow-y-auto">
-        <header className="flex justify-between items-center mb-8">
+            <main className="flex-1 p-8 overflow-y-auto">
+        <header className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-primary">Project List</h1>
             <p className="text-secondary">An overview of all ongoing projects.</p>
@@ -84,38 +92,47 @@ const ProjectsView = () => {
             </div>
           </div>
         </header>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {[79, 52].map((progress, index) => (
-            <div key={index} className="bg-card p-6 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300">
-              <h2 className="text-2xl font-bold text-primary mb-2">New Airport Terminal</h2>
-              <p className="text-secondary mb-4">Construction of the new international terminal with modern facilities.</p>
-              <div className="flex justify-between text-sm text-secondary mb-4">
-                <div><span className="font-semibold">Start Date:</span> 7/1/2025</div>
-                <div><span className="font-semibold">End Date:</span> 6/30/2026</div>
-              </div>
-              <div className="flex items-center mb-4">
-                <span className="font-semibold mr-2 text-primary">Status:</span>
-                <span className="bg-blue-900 text-blue-light text-xs font-semibold px-2.5 py-0.5 rounded-full">In Progress</span>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-medium text-primary">Progress</span>
-                  <span className="text-sm font-medium text-blue-light">{progress}%</span>
-                </div>
-                <div className="w-full bg-gray-700 rounded-full h-2.5">
-                  <div className="bg-blue h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
-                </div>
-              </div>
-            </div>
-          ))}
-          <div className="bg-card p-6 rounded-2xl shadow-md col-span-1 lg:col-span-2">
-            <h3 className="text-xl font-bold text-primary mb-4">Project Progress Overview</h3>
-            <div className="h-64 relative">
-              <div className="w-full h-full flex items-center justify-center bg-background rounded-lg">
-                <canvas id="projectChart"></canvas>
-              </div>
+        <div>
+          <div className="relative overflow-hidden mb-8 mt-8">
+            <div className="flex gap-8 transition-transform duration-300 scrollbar-hide" style={{ overflowX: 'auto', scrollbarWidth: 'none' }}>
+              {projects.length > 0 && projects.map((project, index) => {
+                const progress = Math.floor(Math.random() * 100);
+                return (
+                  <div key={index} className="min-w-[30%] bg-card p-6 rounded-2xl shadow-md hover:shadow-2xl transform transition-transform hover:-translate-y-2">
+                    <h2 className="text-2xl font-bold text-primary mb-2">{project.project_name}</h2>
+                    <p className="text-secondary mb-4">{project.project_description}</p>
+                    <div className="flex justify-between text-sm text-secondary mb-4">
+                      <div><span className="font-semibold">Start Date:</span> {new Date(project.start_date).toLocaleDateString()}</div>
+                      <div><span className="font-semibold">End Date:</span> {new Date(project.end_date).toLocaleDateString()}</div>
+                    </div>
+                    <div className="flex items-center mb-4">
+                      <span className="font-semibold mr-2 text-primary">Status:</span>
+                      <span className="bg-blue-900 text-blue-light text-xs font-semibold px-2.5 py-0.5 rounded-full">In Progress</span>
+                    </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium text-primary">Progress</span>
+                        <span className="text-sm font-medium text-blue-light">{progress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-2.5">
+                        <div className="bg-blue h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
+          {projects.length > 0 && (
+            <div className="bg-card p-6 rounded-2xl shadow-md col-span-1 lg:col-span-2">
+              <h3 className="text-xl font-bold text-primary mb-4">Project Progress Overview</h3>
+              <div className="h-64 relative">
+                <div className="w-full h-full flex items-center justify-center bg-background rounded-lg">
+                  <canvas id="projectChart"></canvas>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <button
           className="fixed bottom-8 right-8 bg-blue hover:bg-blue-dark text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform transform hover:scale-110"
