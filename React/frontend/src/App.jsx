@@ -15,6 +15,7 @@ import ProjectsView from './pages/Dashboard/Projects/ProjectsView.jsx'
 import WIP from './pages/Dashboard/WorkInProgress/workinprogress.jsx'
 // import './App.css'
 
+import ProjectDescription from './pages/ProjectDescription/ProjectDescription.jsx'
 function App() {
   return (
     <div>
@@ -27,6 +28,7 @@ function App() {
         <Route path="/dashboard/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/dashboard/projects" element={<ProtectedRoute><ProjectsView /></ProtectedRoute>} />
         <Route path="/dashboard/work-in-progress" element={<ProtectedRoute><WIP /></ProtectedRoute>} />
+        <Route path="/dashboard/projects/project-description" element={<ProtectedRoute><ProjectDescription /></ProtectedRoute>} />
       </Routes>
     </div>
   );

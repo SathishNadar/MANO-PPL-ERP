@@ -1,17 +1,17 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto'
 import '../config.js';
+import { google } from 'googleapis';
 
 class EmailService {
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.NODEMAILER_EMAIL, //process.env.EMAIL_USER, // your email
-        pass: process.env.NODEMAILER_PASS, //process.env.EMAIL_PASSWORD, // your app password
-      }
+    this.oAuth2Client = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      'https://developers.google.com/oauthplayground'
+    );
+    this.oAuth2Client.setCredentials({
+      refresh_token: process.env.GMAIL_REFRESH_TOKEN
     });
   }
 
@@ -27,10 +27,24 @@ class EmailService {
 
   // Send OTP email
   async sendOTP(email, otp) {
+    const accessToken = await this.oAuth2Client.getAccessToken();
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: process.env.GMAIL_USER,
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+        accessToken: accessToken.token,
+      },
+    });
+    
+
     const mailOptions = {
       from: {
         name: 'Mano Projects Consultant Private Limited.',
-        address: 'hmmmmnicebike@gmail.com',//process.env.EMAIL_USER,
+        address: process.env.GMAIL_USER,
       },
       to: email,
       subject: 'Password Reset - Verification Code',
@@ -105,25 +119,33 @@ class EmailService {
     };
 
     try {
-  await new Promise((resolve, reject) => {
-    this.transporter.sendMail(mailOptions, (error, info) => {
-      if (error) return reject(error);
-      resolve(info);
-    });
-  });
-  return { success: true, message: 'OTP sent successfully' };
-} catch (error) {
-  console.error('Email sending error:', error);
-  return { success: false, message: 'Failed to send OTP' };
-}
+      await transporter.sendMail(mailOptions);
+      return { success: true, message: 'OTP sent successfully' };
+    } catch (error) {
+      console.error('Email sending error:', error);
+      return { success: false, message: 'Failed to send OTP' };
+    }
   }
 
   // Send password reset confirmation email
   async sendPasswordResetConfirmation(email) {
+    const accessToken = await this.oAuth2Client.getAccessToken();
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: process.env.GMAIL_USER,
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+        accessToken: accessToken.token,
+      },
+    });
+
     const mailOptions = {
       from: {
         name: 'MANO Projects Consultant Private Limited',
-        address: process.env.EMAIL_USER,
+        address: process.env.GMAIL_USER,
       },
       to: email,
       subject: 'Password Reset Successful',
@@ -190,17 +212,12 @@ class EmailService {
     };
 
     try {
-  await new Promise((resolve, reject) => {
-    this.transporter.sendMail(mailOptions, (error, info) => {
-      if (error) return reject(error);
-      resolve(info);
-    });
-  });
-  return { success: true, message: 'Confirmation email sent' };
-} catch (error) {
-  console.error('Email sending error:', error);
-  return { success: false, message: 'Failed to send confirmation email' };
-}
+      await transporter.sendMail(mailOptions);
+      return { success: true, message: 'Confirmation email sent' };
+    } catch (error) {
+      console.error('Email sending error:', error);
+      return { success: false, message: 'Failed to send confirmation email' };
+    }
   }
 }
 

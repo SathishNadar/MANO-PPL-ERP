@@ -1,6 +1,17 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import "../config.js"
+import { google } from 'googleapis';
+
+const oAuth2Client = new google.auth.OAuth2(
+  process.env.GMAIL_CLIENT_ID,
+  process.env.GMAIL_CLIENT_SECRET,
+  'https://developers.google.com/oauthplayground'
+);
+
+oAuth2Client.setCredentials({
+  refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+});
 
 // This will hold token → user data temporarily (in-memory for now)
 export const pendingSignups = new Map();
@@ -22,17 +33,28 @@ export async function sendSignupVerificationEmail(userData) {
 
   const verificationLink = `http://localhost:5001/api/verify-signup?token=${token}`;
 
-  // Configure nodemailer transporter
+  // Configure nodemailer transporter with OAuth2
+  const accessToken = await oAuth2Client.getAccessToken();
+
+  if (!accessToken || !accessToken.token) {
+    console.error("🚨 No access token generated.");
+    return { success: false, message: "OAuth2 token generation failed" };
+  }
+
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.NODEMAILER_EMAIL,
-      pass: process.env.NODEMAILER_PASS,
+      type: 'OAuth2',
+      user: process.env.GMAIL_USER,
+      clientId: process.env.GMAIL_CLIENT_ID,
+      clientSecret: process.env.GMAIL_CLIENT_SECRET,
+      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+      accessToken: accessToken.token,
     },
   });
 
   const mailOptions = {
-    from: `"MANO ERP" <${process.env.NODEMAILER_EMAIL}>`,
+    from: `"MANO ERP" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: 'Verify your MANO account',
     html: `
