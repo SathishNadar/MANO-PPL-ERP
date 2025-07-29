@@ -71,9 +71,13 @@ function setActivePage(page) {
       loadProjectList();
       break;
     default:
+      // Hide the floating button every time we land on "home" or unknown page
+      toggleFloatingAddButton(false);
+
+      // Show homepage or fallback content
       mainContent.innerHTML = selectedItem
-        ? `<h2>${selectedItem.dataset.text}</h2>`
-        : `<h2>Page Not Found</h2>`;
+        ? `<h2>${selectedItem.dataset.text}</h2>` // shows sidebar text as title
+        : `<h2>Welcome! Select an option from the menu.</h2>`;
   }
 }
 
