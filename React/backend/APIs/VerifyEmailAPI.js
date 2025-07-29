@@ -22,6 +22,7 @@ router.post('/start-signup', async (req, res) => {
     if (result.success) {
       return res.json({ success: true, message: 'Verification link sent to your email.' });
     } else {
+      console.error('Email sending failed:', result.error || result);
       return res.status(500).json({ error: 'Failed to send verification email.' });
     }
 
@@ -46,9 +47,6 @@ router.get('/verify-signup', async (req, res) => {
       return res.status(400).send('Link expired. Please sign up again.');
     }
 
-    // Log when link is clicked and valid
-    console.log(`✅ Verification link clicked for token: ${token}`);
-
     // Save user to DB
     const { email, username, hashedPassword, phone } = userData;
     const insertSuccess = await insertUser(username, email, hashedPassword, phone);
@@ -57,8 +55,7 @@ router.get('/verify-signup', async (req, res) => {
       return res.status(500).send('Failed to create account. Please try again.');
     }
 
-    console.log(`✅ User ${username} successfully inserted into DB`);
-
+    // console.log(`✅ User ${username} successfully inserted into DB`);
     pendingSignups.delete(token);
 
     res.send('✅ Your account has been created. You can now log in!');

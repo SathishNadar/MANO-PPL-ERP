@@ -29,6 +29,7 @@ const LoginSignup = () => {
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
     phone: "",
     countryCode: "91",
   });
@@ -146,8 +147,8 @@ const LoginSignup = () => {
       });
 
       const data = await response.json();
-      if (data.message === "Signup successful. Login to continue.") {
-        toast.success("Signup successful! Please log in.");
+      if (data.success) {
+        toast.success("Verification email has been sent to your email address.");
         setIsSignup(false);
       } else {
         toast.error(data.error || "Signup failed.");
