@@ -189,6 +189,7 @@ function loadVendorList() {
     initializeVendorList();
     attachSearchListeners();
   }
+  toggleFloatingAddButton(true); 
 }
 
 function loadConsultantList() {
@@ -208,6 +209,7 @@ function loadConsultantList() {
     attachSearchListeners();
     initializeVendorList();
   }
+  toggleFloatingAddButton(true);
 }
 
 function loadContractorList() {
@@ -227,6 +229,7 @@ function loadContractorList() {
     initializeVendorList();
     attachSearchListeners();
   }
+  toggleFloatingAddButton(true);
 }
 
 function loadSupplierList() {
@@ -246,6 +249,7 @@ function loadSupplierList() {
     initializeVendorList();
     attachSearchListeners();
   }
+  toggleFloatingAddButton(true);
 }
 
 function loadProjectList() {
@@ -288,6 +292,7 @@ function loadProjectList() {
   } else {
     loadAndAttach();
   }
+  toggleFloatingAddButton(false);
 }
 
 function toggleUserMenu() {
@@ -370,12 +375,22 @@ function loadclientlist() {
   } else {
     renderClientList(clients);
   }
+  toggleFloatingAddButton(false);
 }
 
 function logout() {
   localStorage.removeItem("session");
   window.location.href = "../login/index.html";
 }
+
+//FOR THE VISIBILITY OF BUTTON ONLY ON A VENDOR LIST OAGE AND NOT ANYOTHER
+function toggleFloatingAddButton(show = true) {
+  const btn = document.querySelector(".floating-add-btn");
+  if (btn) {
+    btn.style.display = show ? "block" : "none";
+  }
+}
+
 
 // 👇️ Export functions to global scope for inline onclick="..." usage
 window.openFilterDialog = openFilterDialog;
