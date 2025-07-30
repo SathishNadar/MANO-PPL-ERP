@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {API_URI2} from '../ip.js'
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -13,7 +12,8 @@ const countryCodes = [
   { code: "+61", label: "Australia" },
   { code: "+81", label: "Japan" },
 ];
-const API_URI = "http://localhost:5001/api";
+const API_URI = import.meta.env.VITE_API_URI;
+const LOCAL_API_URI = "http://localhost:5001/api";
 
 const LoginSignup = () => {
   const [isSignup, setIsSignup] = useState(false);
@@ -61,7 +61,7 @@ const LoginSignup = () => {
     const params = new URLSearchParams(location.search);
     const token = params.get("token");
 
-    if (token) { fetch(`${API_URI}/verify-signup?token=${token}`)
+    if (token) { fetch(`${LOCAL_API_URI}/verify-signup?token=${token}`)
         .then((res) => res.text())
         .then((msg) => toast.success(msg))
         .catch((err) => {
@@ -80,7 +80,7 @@ const LoginSignup = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://${API_URI2}:3000/auth/login/`, {
+      const response = await fetch(`http://${API_URI}:3000/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -134,7 +134,7 @@ const LoginSignup = () => {
     }
 
     try {
-      const response = await fetch(`${API_URI}/start-signup`, {
+      const response = await fetch(`${LOCAL_API_URI}/start-signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

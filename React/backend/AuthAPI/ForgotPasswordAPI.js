@@ -58,11 +58,7 @@ router.post('/get-email', async (req, res) => {
 router.post('/send-otp', passwordResetLimiter, async (req, res) => {
   try {
     const { email } = req.body;
-    console.log("Sending OTP to:", email);
-    // // Validate email
-    // if (!email || !email.includes('@')) {
-    //   return res.status(400).json({ error: 'Valid email is required' });
-    // }
+
 
     // Check if user exists
     const user = await db.r_fetchUserByEmail(email);
