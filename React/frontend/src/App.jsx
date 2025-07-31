@@ -5,9 +5,8 @@ import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './context/protection.jsx'
 
-import Login from "./pages/Login/login.jsx"
-import Forgotpassword from './pages/ForgotPassword/forgotpassword.jsx'
 
+import UserAuth from './pages/UserAuth/UserAuth.jsx'
 import DPR from "./pages/DPR/dpr.jsx"
 
 import Home from "./pages/Dashboard/Home/home.jsx"
@@ -16,13 +15,16 @@ import WIP from './pages/Dashboard/WorkInProgress/workinprogress.jsx'
 // import './App.css'
 
 import ProjectDescription from './pages/ProjectDescription/ProjectDescription.jsx'
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 function App() {
   return (
     <div>
       <Routes>
-        <Route exact path="/" element={<Login />} /> // default route set to login
-        <Route path="/login" element={<ProtectedRoute><Login /></ProtectedRoute>} />
-        <Route path="/forgotpassword" element={<Forgotpassword/>}/> 
+        <Route exact path="/" element={<UserAuth />} /> // default route set to login
+        <Route path="/auth" element={<UserAuth />} />
+      
         <Route path="/dpr" element={<ProtectedRoute><DPR /></ProtectedRoute>} />
         
         <Route path="/dashboard/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
@@ -30,6 +32,7 @@ function App() {
         <Route path="/dashboard/work-in-progress" element={<ProtectedRoute><WIP /></ProtectedRoute>} />
         <Route path="/dashboard/projects/project-description" element={<ProtectedRoute><ProjectDescription /></ProtectedRoute>} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 }

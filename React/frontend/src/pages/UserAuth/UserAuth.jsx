@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import LoginForm from './LoginForm';
-import SignupForm from './SignupForm';
-import ForgotPasswordForm from './ForgotPasswordForm';
+import LoginForm from './Login';
+import SignupForm from './Signup';
+import ForgotPasswordForm from './ForgotPassword';
 
 const AuthPage = () => {
   const [view, setView] = useState('login'); // can be 'login', 'signup', 'forgot'

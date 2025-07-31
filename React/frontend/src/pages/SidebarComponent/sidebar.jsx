@@ -13,7 +13,7 @@ function Sidebar() {
       setUsername(JSON.parse(session).username || "User");
     } else {
       alert("Kindly Login");
-      navigate("/login");
+      navigate("/auth");
     }
 
     function handleClickOutside(e) {
@@ -28,7 +28,7 @@ function Sidebar() {
 
   function logout() {
     localStorage.removeItem("session");
-    navigate("/login");
+    navigate("/auth");
   }
 
   return (
