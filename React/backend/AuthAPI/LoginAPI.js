@@ -5,7 +5,7 @@ import * as DB from "../Database.js";
 
 const tokenExpirePeriod = 7 * 24 * 60 * 60; // Time in seconds 
 const router = express.Router();
-
+ 
 export async function authenticateJWT(req, res, next) {
   try {
     let token;

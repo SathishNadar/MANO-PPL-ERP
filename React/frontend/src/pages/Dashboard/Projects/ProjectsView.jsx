@@ -9,7 +9,7 @@ const ProjectsView = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const userId = JSON.parse(localStorage.getItem("session"))?.user_id;
-  const ip_address = "34.47.131.237";
+  const ip_address = import.meta.env.VITE_API_URI;
 
   useEffect(() => {
     const fetchProjects = async () => {

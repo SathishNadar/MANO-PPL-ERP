@@ -354,7 +354,7 @@ const LoginSignup = () => {
           <button className="btn" onClick={() => setIsSignup(!isSignup)}>
             {isSignup ? "ALREADY HAVE AN ACCOUNT?" : "DON'T HAVE AN ACCOUNT?"}
           </button>
-          <button className="btn" id="forgot">
+          <button onClick={ () => navigate('./forgotpassword')} className="btn" id="forgot">
             Forgot Password
           </button>
         </div>
