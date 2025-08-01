@@ -21,6 +21,7 @@ export async function checkUserProjectRole(user_id, project_id) {
 
 
 
+
 // Post call to Insert DPR
 router.post("/insertDPR", authenticateJWT, async (req, res) => {  
   try {
@@ -41,7 +42,11 @@ router.post("/insertDPR", authenticateJWT, async (req, res) => {
     const role = await checkUserProjectRole(user_id, project_id);
 
     if (!role.ok || !role.role || !role.role.can_create_dpr) {
-      return res.status(403).json({ message: "Forbidden: You do not have permission to create DPR for this project." });
+      return res.status(403).json({ 
+        success: false,
+        message: "Forbidden: You do not have permission to create DPR for this project.",
+        data: null
+      });
     }
 
     if (!project_id || !report_date) {
@@ -133,7 +138,21 @@ router.post("/updateDPR", authenticateJWT, async (req, res) => {
     const role = await checkUserProjectRole(user_id, project_id);
 
     if (!role.ok || !role.role || !role.role.can_edit_dpr) {
-      return res.status(403).json({ message: "Forbidden: You do not have permission to create DPR for this project." });
+      return res.status(403).json({ 
+        success: false,
+        message: "Forbidden: You do not have permission to edit DPR for this project.",
+        data: null
+      });
+    }
+
+    const current_handler = await DB.getCurrentHandlerForDpr(dpr_id);
+
+    if (user_id != current_handler) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Forbidden: This DPR is under another user's control.",
+        data: null
+      });
     }
 
     if (!dpr_id || !project_id || !report_date) {
