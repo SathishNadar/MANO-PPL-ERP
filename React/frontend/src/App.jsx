@@ -7,7 +7,7 @@ import ProtectedRoute from './context/protection.jsx'
 
 
 import UserAuth from './pages/UserAuth/UserAuth.jsx'
-import DPR from "./pages/DPR/dpr.jsx"
+import DPR from "./pages/DPR/DailyProgressReport.jsx"
 
 import Home from "./pages/Dashboard/Home/home.jsx"
 import ProjectsView from './pages/Dashboard/Projects/ProjectsView.jsx'
@@ -25,7 +25,7 @@ function App() {
         <Route exact path="/" element={<UserAuth />} /> // default route set to login
         <Route path="/auth" element={<UserAuth />} />
       
-        <Route path="/dpr" element={<ProtectedRoute><DPR /></ProtectedRoute>} />
+        <Route path="/daily-progress-report" element={<ProtectedRoute><DPR /></ProtectedRoute>} />
         
         <Route path="/dashboard/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/dashboard/projects" element={<ProtectedRoute><ProjectsView /></ProtectedRoute>} />

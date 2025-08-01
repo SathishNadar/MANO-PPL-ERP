@@ -1,9 +1,9 @@
 import React from 'react'
 
-function dpr() {
+function DailyProgressReport() {
   return (
     <div>this is dpr page</div>
   )
 }
 
-export default dpr
+export default DailyProgressReport

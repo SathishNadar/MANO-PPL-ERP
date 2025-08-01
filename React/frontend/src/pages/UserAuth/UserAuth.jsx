@@ -4,7 +4,7 @@ import SignupForm from './Signup';
 import ForgotPasswordForm from './ForgotPassword';
 
 const AuthPage = () => {
-  const [view, setView] = useState('login'); // can be 'login', 'signup', 'forgot'
+  const [view, setView] = useState('login');
 
   return (
     <div className="auth-page">
