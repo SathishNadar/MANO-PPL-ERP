@@ -1,0 +1,82 @@
+/* Root theme variables */
+:root {
+  --background-color: #111827;
+  --sidebar-bg: #1F2937;
+  --card-bg: #1F2937;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --accent-blue: #3B82F6;
+  --accent-blue-light: #60A5FA;
+  --accent-blue-dark: #2563EB;
+  --input-bg: #1F2937;
+  --input-border: #374151;
+  --input-focus-ring: #3B82F6;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+}
+
+.bg-background {
+  background-color: var(--background-color);
+}
+
+.bg-sidebar {
+  background-color: var(--sidebar-bg);
+}
+
+.bg-card {
+  background-color: var(--card-bg);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.bg-blue {
+  background-color: var(--accent-blue);
+}
+
+.text-blue-light {
+  color: var(--accent-blue-light);
+}
+
+.bg-blue-dark {
+  background-color: var(--accent-blue-dark);
+}
+
+/* Search input styles */
+.dashboard-input {
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-primary);
+}
+
+.dashboard-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.dashboard-input:focus {
+  outline: none;
+  border-color: var(--input-focus-ring);
+  box-shadow: 0 0 0 2px var(--input-focus-ring);
+  background-color: var(--input-bg);
+}
+
+/* Expand dropdown alignment */
+.dashboard-user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-user-menu .material-icons {
+  font-size: 20px;
+  color: var(--text-secondary);
+}
