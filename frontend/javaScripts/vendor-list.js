@@ -820,6 +820,8 @@ function setupAddVendorButton() {
   addBtn.id = "add-vendor-btn"; 
   addBtn.innerText = "+"; 
   addBtn.className = "floating-add-btn";
+  addBtn.style.display = "none"; //Hiding it by default
+
   document.body.appendChild(addBtn);
 
   // Modal HTML
