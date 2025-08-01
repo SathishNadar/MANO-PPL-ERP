@@ -592,7 +592,16 @@ export async function r_fetchVendors({
   const [allVendors] = await pool.query(fullFetchQuery, params);
 
   const fuse = new Fuse(allVendors, {
-    keys: ['name'],
+    keys: [
+        { name: "name", weight: 0.5 },
+        { name: "remarks", weight: 0.2 },
+        { name: "email", weight: 0.1 },
+        { name: "website", weight: 0.1 },
+        { name: "telephone", weight: 0.05 },
+        { name: "mobile", weight: 0.05 },
+        { name: "reference", weight: 0.025 },
+        { name: "contact_person", weight: 0.025 },
+    ],
     threshold: 0.4,
   });
   const results = fuse.search(queryString).map(r => r.item);
