@@ -1,4 +1,6 @@
+const ip_addr = '../ip.js'
 // =================== TIME SLOTS ===================
+
 let timeSlots = [];
 
 function updateTimeslotDisplay() {
@@ -88,7 +90,7 @@ document.getElementById("addTimeSlotBtn").addEventListener("click", (e) => {
 async function fetchProjectDetails() {
   try {
     const project_id = localStorage.getItem("selected_project_id") || "1";
-    const response = await fetch(`http://34.47.131.237:3000/project/getProject/${project_id}`);
+    const response = await fetch(`http://${ip_addr}:3000/project/getProject/${project_id}`);
     const projectData = await response.json();
     
     // Populate the project details in the table
@@ -162,7 +164,7 @@ async function initializeLabourTable() {
   try {
     // Fetch project data containing agency and labour types
     const project_id = localStorage.getItem("selected_project_id") || "1";
-    const response = await fetch(`http://34.47.131.237:3000/project/getProject/${project_id}`);
+    const response = await fetch(`http://${ip_addr}:3000/project/getProject/${project_id}`);
     const projectData = await response.json();
     
     // Extract agency names and labour types from metadata
@@ -412,7 +414,7 @@ sessionStorage.setItem("labourColumns", JSON.stringify(labourTypes));
 async function initializeTodayTomorrowTables() {
   try {
     // Get latest DPR for project ID 1
-    const response = await fetch(`http://34.47.131.237:3000/report/Alldpr/1?limit=10`);
+    const response = await fetch(`http://${ip_addr}:3000/report/Alldpr/1?limit=10`);
     const dprArray = await response.json();
 
     if (dprArray.length > 0) {
@@ -420,7 +422,7 @@ async function initializeTodayTomorrowTables() {
         new Date(current.report_date) > new Date(latest.report_date) ? current : latest
       );
 
-      const dprDetails = await fetch(`http://34.47.131.237:3000/report/getDPR/${latestDPR.dpr_id}`);
+      const dprDetails = await fetch(`http://${ip_addr}:3000/report/getDPR/${latestDPR.dpr_id}`);
       const prevDPR = await dprDetails.json();
 
       const prevPlan = prevDPR?.data?.tomorrow_plan;

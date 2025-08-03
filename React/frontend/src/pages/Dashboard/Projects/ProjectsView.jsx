@@ -4,10 +4,11 @@ import Chart from "chart.js/auto";
 import Sidebar from "../../SidebarComponent/sidebar";
 import "material-icons/iconfont/material-icons.css";
 import "./ProjectsView.css";
-
+import ProjectCreate from "./ProjectCreate";
 const ProjectsView = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
+  const [showCreateProject, setCreateProject] = useState(false);
   const userId = JSON.parse(localStorage.getItem("session"))?.user_id;
   const ip_address = import.meta.env.VITE_API_URI;
 
@@ -181,9 +182,24 @@ const ProjectsView = () => {
           </div>
         )}
 
-        <button className="fixed bottom-8 right-8 bg-blue hover:bg-blue-dark text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform transform hover:scale-110">
+        <button
+         onClick = {() => setCreateProject(true)}
+         className="fixed bottom-8 right-8 bg-blue hover:bg-blue-dark text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform transform hover:scale-110">
           <span className="material-icons text-3xl">add</span>
         </button>
+        {showCreateProject && (
+  <>
+    {/* Dimmed Background */}
+    <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[2px] z-40" />
+
+    {/* Modal Content */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-8">
+      <div className="relative w-full max-w-4xl bg-transparent">
+        <ProjectCreate onClose={() => setCreateProject(false)} />
+      </div>
+    </div>
+  </>
+)}
       </main>
     </div>
   );

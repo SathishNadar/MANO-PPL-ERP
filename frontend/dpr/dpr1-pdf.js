@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function fetchAndPopulateFromAPI(dprId, projectId) {
     try {
         debugLog(`Fetching DPR data for ID: ${dprId}`);
-        const dprResponse = await fetch(`http://34.47.131.237:3000/report/getDPR/${dprId}`);
+        const dprResponse = await fetch(`http://34.93.159.62:3000/report/getDPR/${dprId}`);
         if (!dprResponse.ok) throw new Error('Failed to fetch DPR data');
         
         const apiData = await dprResponse.json();

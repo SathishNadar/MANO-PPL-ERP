@@ -5,7 +5,6 @@ import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './context/protection.jsx'
 
-
 import UserAuth from './pages/UserAuth/UserAuth.jsx'
 import DPR from "./pages/DPR/DailyProgressReport.jsx"
 
