@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import "../config.js"
 import { google } from 'googleapis';
 
+
 const oAuth2Client = new google.auth.OAuth2(
   process.env.GMAIL_CLIENT_ID,
   process.env.GMAIL_CLIENT_SECRET,
@@ -31,7 +32,7 @@ export async function sendSignupVerificationEmail(userData) {
     expiresAt: Date.now() + 15 * 60 * 1000,
   });
 
-  const verificationLink = `http://localhost:5001/api/verify-signup?token=${token}`;
+  const verificationLink = `http://${process.env.URI}:${process.env.PORT}/api/verify-signup?token=${token}`;
 
   // Configure nodemailer transporter with OAuth2
   const accessToken = await oAuth2Client.getAccessToken();
