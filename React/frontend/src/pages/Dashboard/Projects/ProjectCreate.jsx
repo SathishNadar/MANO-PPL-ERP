@@ -40,7 +40,7 @@ function ProjectCreate({ onClose }) {
     };
 
     try {
-      const response = await fetch(`http:/${API_URI}:${PORT}/project/insertProject`, {
+      const response = await fetch(`http://${API_URI}:${PORT}/project/insertProject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
