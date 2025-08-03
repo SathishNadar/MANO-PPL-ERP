@@ -10,13 +10,14 @@ const ProjectsView = () => {
   const [projects, setProjects] = useState([]);
   const [showCreateProject, setCreateProject] = useState(false);
   const userId = JSON.parse(localStorage.getItem("session"))?.user_id;
-  const ip_address = import.meta.env.VITE_API_URI;
+  const API_URI = import.meta.env.VITE_API_URI;
+  const PORT = import.meta.env.VITE_BACKEND_PORT;
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const response = await fetch(
-          `http://${ip_address}:3000/project/userProjects/${userId}`
+          `http://${API_URI}:${PORT}/project/userProjects/${userId}`
         );
         if (!response.ok) throw new Error("Failed to fetch projects");
         const data = await response.json();

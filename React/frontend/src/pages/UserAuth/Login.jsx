@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {toast, ToastContainer} from "react-toastify";
 
 const API_URI = import.meta.env.VITE_API_URI;
-
+const PORT = import.meta.env.VITE_BACKEND_PORT;
 const LoginForm = ({ onSwitch }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginData, setLoginData] = useState({
@@ -21,7 +21,7 @@ const LoginForm = ({ onSwitch }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://${API_URI}:3000/auth/login/`, {
+      const response = await fetch(`http://${API_URI}::${PORT}/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

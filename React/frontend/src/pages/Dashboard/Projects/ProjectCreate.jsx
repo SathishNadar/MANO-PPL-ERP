@@ -1,5 +1,7 @@
 import React from 'react';
 
+const API_URI = import.meta.env.VITE_API_URI;
+const PORT = import.meta.env.VITE_BACKEND_PORT;
 function ProjectCreate({ onClose }) {
   // Handles project creation
   async function handleCreateProject() {
@@ -38,7 +40,7 @@ function ProjectCreate({ onClose }) {
     };
 
     try {
-      const response = await fetch(`http://localhost:5001/project/insertProject`, {
+      const response = await fetch(`http:/${API_URI}:${PORT}/project/insertProject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
