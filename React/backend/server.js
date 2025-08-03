@@ -18,6 +18,6 @@ app.get('/', (req, res) => {
   res.send('Backend is running 🚀');
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend server listening on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Backend server listening on http://0.0.0.0:${PORT}`);
 }); 

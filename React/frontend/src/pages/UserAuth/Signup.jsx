@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
 
 const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_API;
+const PORT = import.meta.env.VITE_BACKEND_PORT;
 
 const countryCodes = [
   { code: "+1", label: "US" },
