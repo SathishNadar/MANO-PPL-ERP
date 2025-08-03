@@ -21,7 +21,7 @@ const LoginForm = ({ onSwitch }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://${API_URI}::${PORT}/auth/login/`, {
+      const response = await fetch(`http://${API_URI}:${PORT}/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
