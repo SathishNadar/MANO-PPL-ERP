@@ -10,6 +10,7 @@ import DPR from "./pages/DPR/DailyProgressReport.jsx"
 
 import Home from "./pages/Dashboard/Home/home.jsx"
 import ProjectsView from './pages/Dashboard/Projects/ProjectsView.jsx'
+import VendorList from './pages/Dashboard/VendorList/VendorList.jsx'
 import WIP from './pages/Dashboard/WorkInProgress/workinprogress.jsx'
 // import './App.css'
 
@@ -28,6 +29,8 @@ function App() {
         
         <Route path="/dashboard/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/dashboard/projects" element={<ProtectedRoute><ProjectsView /></ProtectedRoute>} />
+        
+        <Route path="/dashboard/vendors/" element={<ProtectedRoute><VendorList /></ProtectedRoute>} />
         <Route path="/dashboard/work-in-progress" element={<ProtectedRoute><WIP /></ProtectedRoute>} />
         <Route path="/dashboard/projects/project-description" element={<ProtectedRoute><ProjectDescription /></ProtectedRoute>} />
       </Routes>

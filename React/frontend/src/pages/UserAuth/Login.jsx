@@ -23,6 +23,7 @@ const LoginForm = ({ onSwitch }) => {
     try {
       const response = await fetch(`http://${API_URI}:${PORT}/auth/login/`, {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_name: loginData.username,

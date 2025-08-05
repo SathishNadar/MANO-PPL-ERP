@@ -1,5 +1,5 @@
 import { ip_address } from "../ip.js";
-console.log("✅ vendor.js has loaded successfully!");
+
 
 // -----------------------------------------------------------Data storage--------------------------------------------------------------
 let itemsPerPage = 25;
@@ -21,11 +21,6 @@ let CategoryDict = {
   3: "Supplier",
 };
 
-let ReversecategoryDict = {
-  Consultant: 1,
-  Contractor: 2,
-  Supplier: 3,
-};
 
 // -------------------------------------------------------utility/helper functions------------------------------------------------------------------
 const formatValue = (value) => {

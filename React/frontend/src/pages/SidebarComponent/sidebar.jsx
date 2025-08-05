@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-function Sidebar() {
+function Sidebar({ onCategoryChange }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const categoryParam = new URLSearchParams(location.search).get("category");
   const [showPopup, setShowPopup] = useState(false);
   const containerRef = useRef();
   const [username, setUsername] = useState("");
+  const [activeMenu, setActiveMenu] = useState(""); // for dropdown toggle
 
   useEffect(() => {
     const session = localStorage.getItem("session");
@@ -41,20 +44,73 @@ function Sidebar() {
 
       <nav className="flex flex-col space-y-8">
         {[
-          { icon: "home", path: "/dashboard/home" },
-          { icon: "bar_chart" },
-          { icon: "folder", path: "/dashboard/projects" },
-          { icon: "receipt_long" },
-          { icon: "summarize" },
-          { icon: "wysiwyg", path: "/dashboard/work-in-progress" },
-        ].map(({ icon, path }, idx) => (
-          <button
-            key={idx}
-            onClick={() => path && navigate(path)}
-            className="text-secondary hover:text-blue-light transition-all duration-300 transform hover:scale-110 cursor-pointer"
-          >
-            <span className="material-icons text-3xl">{icon}</span>
-          </button>
+          { icon: "home", path: "/dashboard/home", id: "home" },
+          { icon: "bar_chart", id: "reports" },
+          {
+            icon: "receipt_long",
+            id: "vendors",
+            children: [
+              { label: "Contractors", category: "2" },
+              { label: "Consultants", category: "1" },
+              { label: "Suppliers", category: "3" },
+            ],
+          },
+          { icon: "folder", path: "/dashboard/projects", id: "projects" },
+          { icon: "summarize", id: "summary" },
+          { icon: "wysiwyg", path: "/dashboard/work-in-progress", id: "work" },
+        ].map(({ icon, path, id, children }, idx) => (
+          <div key={idx} className="w-full">
+            <button
+              onClick={() => {
+                if (id === "vendors") {
+                  setActiveMenu((prev) => {
+                    if (prev === "vendors") return ""; // collapse dropdown
+                    if (!location.pathname.includes("/dashboard/vendors")) {
+                      navigate("/dashboard/vendors?category=2");
+                    }
+                    return "vendors"; // open dropdown
+                  });
+                } else {
+                  path && navigate(path);
+                  setActiveMenu(""); // collapse dropdown on other clicks
+                }
+              }}
+              className={`text-secondary hover:text-blue-light transition-all duration-300 transform hover:scale-110 cursor-pointer w-full flex justify-center ${
+                location.pathname.includes(id) ? "text-blue-light" : ""
+              }`}
+            >
+              <span className="material-icons text-3xl">{icon}</span>
+            </button>
+
+            {/* Dropdown submenu for vendors */}
+            {id === "vendors" && activeMenu === "vendors" && (
+              <div className="mt-4 flex flex-col space-y-5 transition-all duration-300 ease-in-out">
+                {children.map((item, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      navigate(`/dashboard/vendors?category=${item.category}`);
+                      onCategoryChange(parseInt(item.category, 10));
+                      setActiveMenu("vendors"); // keep dropdown open
+                    }}
+                    className={`flex items-center gap-2 text-xs px-2 text-left transition-colors duration-200 ${
+                      categoryParam === item.category
+                        ? "text-blue-light font-semibold"
+                        : "text-gray-300 hover:text-blue-light"
+                    }`}
+                  >
+                    <span className="material-icons text-[26px] ml-2">
+                      {item.label === "Contractors"
+                        ? "engineering"
+                        : item.label === "Consultants"
+                        ? "support_agent"
+                        : "local_shipping"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </nav>
 
