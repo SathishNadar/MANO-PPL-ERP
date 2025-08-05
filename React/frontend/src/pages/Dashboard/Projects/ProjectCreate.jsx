@@ -56,7 +56,7 @@ function ProjectCreate({ onClose }) {
   return (
     <div className="bg-transparent p-8">
       <div className="flex justify-center items-center min-h-full">
-        <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-4xl transform transition-all border border-gray-600">
+        <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-4xl transform transition-all border border-gray-700">
           
           {/* Header */}
           <div className="flex justify-between items-center mb-6">

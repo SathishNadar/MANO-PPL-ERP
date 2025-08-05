@@ -177,7 +177,7 @@ function VendorList() {
           <>
             <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[2px] z-40" />
             <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div className="bg-gray-800 text-white rounded-xl shadow-xl w-11/12 max-w-2xl p-6">
+              <div className="bg-gray-800 text-white rounded-xl shadow-xl w-11/12 max-w-2xl p-6 border border-gray-600">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">Vendor Details</h2>
                   <button onClick={() => setSelectedVendor(null)} className="text-gray-400 hover:text-white">
