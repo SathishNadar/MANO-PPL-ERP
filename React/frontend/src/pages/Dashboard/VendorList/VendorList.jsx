@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Sidebar from '../../SidebarComponent/sidebar'
 
+const API_URI = import.meta.env.VITE_API_URI;
+const PORT = import.meta.env.VITE_BACKEND_PORT;
+
 const CategoryDict = {
   2: "Contractor",
   1: "Consultant",
@@ -13,6 +16,8 @@ function VendorList() {
   const [jobNatures, setJobNatures] = useState({});
   const [locations, setLocations] = useState({});
   const [selectedVendor, setSelectedVendor] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const categoryFromQuery = parseInt(queryParams.get("category") || "0");
@@ -22,7 +27,7 @@ function VendorList() {
 
   const fetchMetadata = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/vendor_api/metadata/`);
+      const response = await fetch(`http://${API_URI}:${PORT}/vendor_api/metadata/`);
       if (!response.ok) throw new Error("Network response was not ok");
 
       const data = await response.json();
@@ -35,7 +40,7 @@ function VendorList() {
 
   const fetchVendors = async () => {
       try {
-        const res = await fetch(`http://localhost:5001/vendor_api/`, {
+        const res = await fetch(`http://${API_URI}:${PORT}/vendor_api/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -71,6 +76,8 @@ function VendorList() {
       fetchVendors();
     }
   }, [categoryFromQuery, jobNatures, locations]);
+
+  const paginatedVendors = vendors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="flex h-screen bg-background">
@@ -124,7 +131,7 @@ function VendorList() {
                 </tr>
               </thead>
               <tbody>
-                {vendors.map((vendor, index) => (
+                {paginatedVendors.map((vendor, index) => (
                   <tr
                     key={index}
                     className="border-b border-gray-700 hover:bg-gray-700 transition duration-300"
@@ -150,6 +157,19 @@ function VendorList() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="flex justify-center mt-4 space-x-2">
+            {Array.from({ length: Math.ceil(vendors.length / itemsPerPage) }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
           </div>
         </div>
 
