@@ -1,11 +1,12 @@
 import express from 'express';
 import cors from 'cors'
-import ForgotPasswordAPI from './AuthAPI/ForgotPasswordAPI.js'
-import SignupRoutes from './AuthAPI/VerifyEmailAPI.js';
 import LoginRoutes from './AuthAPI/LoginAPI.js'
-import ProjectRoutes from './ProjectAPI/Projects.js';
-import VendorRoutes from './VendorClientAPI/vendor.js'
+import SignupRoutes from './AuthAPI/VerifyEmailAPI.js';
+import ForgotPasswordRoutes from './AuthAPI/ForgotPasswordAPI.js'
 
+import ProjectRoutes from './ProjectAPI/Projects.js';
+import ReportRoutes from './ProjectAPI/Reports.js'
+import VendorRoutes from './VendorClientAPI/vendor.js'
 const app = express();
 const PORT = 5001;
 
@@ -25,11 +26,14 @@ app.use(cors({
   },
   credentials: true
 }));
+
 app.use(express.json())
-app.use('/api',ForgotPasswordAPI)
-app.use('/api',SignupRoutes)
 app.use('/auth',LoginRoutes)
-app.use('/project', ProjectRoutes)
+app.use('/api',SignupRoutes)
+app.use('/api',ForgotPasswordRoutes)
+
+app.use('/project', ProjectRoutes);
+app.use("/report", ReportRoutes); 
 app.use("/vendor_api", VendorRoutes);
 
 app.get('/', (req, res) => {

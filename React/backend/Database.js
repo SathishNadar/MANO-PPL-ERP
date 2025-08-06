@@ -358,3 +358,259 @@ export async function r_fetchVendorsAllLocations() {
         throw error;
     }
 }
+
+// #region 📝 DPR  ─────────────────────────────────────────────
+
+// Fetch DPR by ID
+export async function r_getDPRById(dpr_id) {
+    if (!dpr_id) {
+        throw new Error("DPR ID is required");
+    }
+
+    const query = `SELECT * FROM dpr WHERE dpr_id = ?`;
+
+    try {
+        const [rows] = await pool.query(query, [dpr_id]);
+        if (rows.length === 0) return null;
+
+        const row = rows[0];
+
+        return {
+            ...row,
+            site_condition: safeParse(row.site_condition),
+            labour_report: safeParse(row.labour_report),
+            today_prog: safeParse(row.today_prog),
+            tomorrow_plan: safeParse(row.tomorrow_plan),
+            user_roles: safeParse(row.user_roles),
+            report_footer: safeParse(row.report_footer)
+        };
+    } catch (error) {
+        console.error("❌ Error fetching DPR by ID:", error.message);
+        throw error;
+    }
+}
+
+// Fetch PDR current handler
+export async function getCurrentHandlerForDpr(dpr_id) {
+  const [rows] = await pool.query(
+    'SELECT current_handler FROM dpr WHERE dpr_id = ?',
+    [dpr_id]
+  );
+  return rows[0] ? rows[0].current_handler : null;
+}
+
+// Insert DPR
+export async function r_insertDPR(dprData) {
+    if (!dprData.project_id || !dprData.report_date) {
+        throw new Error("Missing required fields: project_id or report_date");
+    }
+
+    // Step 1: Check if DPR already exists for same project and date
+    const checkQuery = `
+        SELECT dpr_id FROM dpr WHERE project_id = ? AND report_date = ? LIMIT 1;
+    `;
+    const [existing] = await pool.query(checkQuery, [dprData.project_id, dprData.report_date]);
+
+    if (existing.length > 0) {
+        return { ok: false, message: "DPR already exists for this date.", data: null };
+    }
+
+    // Step 2: Insert new DPR
+    const insertQuery = `
+        INSERT INTO dpr (
+            project_id, report_date, site_condition, labour_report,
+            cumulative_manpower, today_prog, tomorrow_plan,
+            user_roles, report_footer, created_at
+        ) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `;
+
+    const values = [
+        dprData.project_id,
+        dprData.report_date,
+        dprData.site_condition ? JSON.stringify(dprData.site_condition) : null,
+        dprData.labour_report ? JSON.stringify(dprData.labour_report) : null,
+        dprData.cumulative_manpower ?? 0,
+        dprData.today_prog ? JSON.stringify(dprData.today_prog) : null,
+        dprData.tomorrow_plan ? JSON.stringify(dprData.tomorrow_plan) : null,
+        dprData.user_roles ? JSON.stringify(dprData.user_roles) : null,
+        dprData.report_footer ? JSON.stringify(dprData.report_footer) : null,
+        dprData.created_at ?? new Date()
+    ];
+
+    try {
+        const [result] = await pool.query(insertQuery, values);
+        return {
+            ok: true,
+            message: "DPR inserted successfully.",
+            data: { insertId: result.insertId }
+        };
+    } catch (error) {
+        console.error("❌ Error inserting DPR:", error.message, "\nData:", dprData);
+        throw error;
+    }
+}
+
+// Update DPR
+export async function r_updateDPR(dprData) {
+  if (!dprData.dpr_id || !dprData.project_id) {
+    throw new Error("Missing required field: dpr_id or project_id");
+  }
+
+  const allowedColumns = new Set([
+    'project_id',
+    'report_date',
+    'site_condition',
+    'labour_report',
+    'cumulative_manpower',
+    'today_prog',
+    'tomorrow_plan',
+    'user_roles',
+    'report_footer',
+    'created_at',
+    'created_by',
+    'approved_by',
+    'final_approved_by',
+    'current_handler',
+    'dpr_status',
+  ]);
+
+  const jsonColumns = new Set([
+    'site_condition',
+    'labour_report',
+    'today_prog',
+    'tomorrow_plan',
+    'user_roles',
+    'report_footer',
+  ]);
+
+  const setClauses = [];
+  const values = [];
+
+  for (const column of allowedColumns) {
+    if (dprData.hasOwnProperty(column)) {
+      let val = dprData[column];
+      
+      if (val === undefined) continue;
+      if (val === null) {
+        val = null;
+      } else if (jsonColumns.has(column)) {
+        try {
+          val = JSON.stringify(val);
+        } catch (e) {
+          throw new Error(`Failed to JSON.stringify field ${column}: ${e.message}`);
+        }
+      } else if (column === 'created_at' && !val) {
+        val = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      }
+
+      setClauses.push(`\`${column}\` = ?`);
+      values.push(val);
+    }
+  }
+
+  if (setClauses.length === 0) {
+    throw new Error("No valid fields provided to update");
+  }
+
+  const query = `
+    UPDATE dpr
+    SET ${setClauses.join(', ')}
+    WHERE dpr_id = ?;
+  `;
+
+  values.push(dprData.dpr_id);
+
+  try {
+    const [result] = await pool.query(query, values);
+    return result.affectedRows;
+  } catch (error) {
+    console.error("❌ Error updating DPR:", error.message, "\nData:", dprData);
+    throw error;
+  }
+}
+
+// Fetch the last DPR of a project
+export async function r_fetchLastDPR(project_id) {
+    const query = `
+        SELECT * FROM dpr
+        WHERE project_id = ?
+        ORDER BY report_date DESC
+        LIMIT 1;
+    `;
+
+    try {
+        const [rows] = await pool.query(query, [project_id]);
+        return rows[0] || null;
+    } catch (error) {
+        console.error("❌ Error fetching last DPR:", error);
+        throw error;
+    }
+}
+
+// Fetch all DPR under a specific Project
+export async function r_fetchDPRsByProject(project_id, limit = 20) {
+    const query = `
+    SELECT 
+      dpr_id,
+      report_date,
+      user_roles
+    FROM dpr
+    WHERE project_id = ?
+    ORDER BY report_date DESC
+    LIMIT ?;
+  `;
+
+    try {
+        const [rows] = await pool.query(query, [project_id, Number(limit)]);
+
+        const results = rows.map(row => {
+            let userRoles = row.user_roles;
+
+            if (typeof userRoles === "string") {
+                try {
+                    userRoles = JSON.parse(userRoles);
+                } catch (e) {
+                    console.warn("⚠️ Failed to parse user_roles:", e);
+                    userRoles = {};
+                }
+            }
+
+            const approvals = userRoles.approvals || {};
+
+
+            const approverValues = Object.values(approvals);
+            console.log(approvals);
+            const approved = approverValues.length === 0 || approverValues.every(v => v === true || v === "true");
+
+            return {
+                dpr_id: row.dpr_id,
+                report_date: row.report_date,
+                approval_status: approved
+            };
+        });
+
+        return results;
+    } catch (error) {
+        console.error("❌ Error fetching DPRs for project:", error);
+        throw error;
+    }
+}
+
+// Fetch project_id from 
+export async function r_getProjByDprID(dpr_id) {
+    const query = `SELECT project_id FROM dpr WHERE dpr_id = ?`;
+    try {
+        const [rows] = await pool.query(query, [dpr_id]);
+        if (!rows.length) {
+            return { ok: false, message: "No DPR found for that ID.", project_id: null };
+        }
+        return { ok: true, project_id: rows[0].project_id };
+    } catch (error) {
+        console.error("❌ Error fetching DPR by ID:", error.message);
+        throw error;
+    }
+}
+
+
+// #endregion

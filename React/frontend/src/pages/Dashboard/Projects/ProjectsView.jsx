@@ -110,12 +110,18 @@ const ProjectsView = () => {
             className="flex gap-8 transition-transform duration-300 scrollbar-hide"
             style={{ overflowX: "auto", scrollbarWidth: "none" }}
           >
+            {projects.length === 0 && (
+              <div className="text-secondary text-lg mt-8 ml-4">
+                🚧 No projects at the moment.
+              </div>
+            )}
             {projects.length > 0 &&
               projects.map((project, index) => {
                 const progress = Math.floor(Math.random() * 100);
                 return (
                   <div key={index} className="pt-2">
                     <div
+                      onClick={() => navigate(`/dashboard/project-description?projectId=${project.project_id}`)}
                       className="bg-card p-6 rounded-2xl shadow-md hover:shadow-2xl transform transition-transform hover:-translate-y-2 hover:cursor-pointer"
                       style={{
                         minWidth: "600px", // or use a Tailwind class like min-w-[300px]
