@@ -10,7 +10,6 @@ export async function authenticateJWT(req, res, next) {
   try {
     let token;
     const authHeader = req.headers['authorization'];
-    console.log(authHeader)
     if (authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
     }
@@ -50,7 +49,7 @@ export async function generateJWT(user_data) {
 }
 
 
-
+ 
 // Login route
 router.post("/login", async (req, res) => {
   try {

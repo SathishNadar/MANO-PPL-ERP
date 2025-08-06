@@ -6,25 +6,33 @@ function ProjectDescription() {
   const location = useLocation();
   const [project, setProject] = useState(null);
   const [dprs, setDprs] = useState([]);
-  // Replace with your actual IP address import or variable
-  const ip_address = "localhost";
+  
+  const API_URI = import.meta.env.VITE_API_URI;
+  const PORT = import.meta.env.VITE_BACKEND_PORT;
   const queryParams = new URLSearchParams(location.search);
   const projectId = queryParams.get('projectId');
 
   useEffect(() => {
     if (!projectId) return;
 
-    fetch(`http://${ip_address}:5001/project/getProject/${projectId}`)
+    fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) setProject(data.data);
       })
       .catch(err => console.error("Failed to load project:", err));
 
-    fetch(`http://${ip_address}:5001/report/Alldpr/${projectId}`)
+    fetch(`http://${API_URI}:${PORT}/report/Alldpr/${projectId}`, {
+      credentials: 'include',
+    })
       .then(res => res.json())
-      .then(dprs => {
-        const recentDprs = dprs.filter(dpr => {
+      .then(dprs2 => {
+        if (!Array.isArray(dprs2)) {
+          console.error("Unexpected DPRs response:", dprs2);
+          return;
+        }
+
+        const recentDprs = dprs2.filter(dpr => {
           const today = new Date();
           const reportDate = new Date(dpr.report_date);
           today.setHours(0, 0, 0, 0);
@@ -37,6 +45,22 @@ function ProjectDescription() {
       })
       .catch(err => console.error("Failed to load DPRs:", err));
   }, [projectId]);
+
+  // Calculate project progress percentage
+  const getProgressPercentage = () => {
+    if (!project?.start_date || !project?.end_date) return "0%";
+    const start = new Date(project.start_date);
+    const end = new Date(project.end_date);
+    const today = new Date();
+
+    if (today < start) return "0%";
+    if (today > end) return "100%";
+
+    const total = end - start;
+    const elapsed = today - start;
+    const percent = Math.floor((elapsed / total) * 100);
+    return `${percent}%`;
+  };
 
   return (
     <main className="flex-1 p-8 bg-gray-900">
@@ -75,9 +99,10 @@ function ProjectDescription() {
             </div>
             <div className="mt-6 space-y-2 text-[var(--text-secondary)]">
               <p><strong className="text-[var(--text-primary)]">Project:</strong> {project?.project_name || "-"}</p>
-              <p><strong className="text-[var(--text-primary)]">Client:</strong> {project?.client || "-"}</p>
+              <p><strong className="text-[var(--text-primary)]">Employer:</strong> {project?.Employer || "-"}</p>
               <p><strong className="text-[var(--text-primary)]">Location:</strong> {project?.location || "-"}</p>
-              <p><strong className="text-[var(--text-primary)]">Contract No:</strong> {project?.contract_no || "-"}</p>
+              <p><strong className="text-[var(--text-primary)]">Project Code:</strong> {project?.contract_no || "-"}</p>
+              <p><strong className="text-[var(--text-primary)]">Project Description:</strong> {project?.project_description || "-"}</p>
               <p><strong className="text-[var(--text-primary)]">Start:</strong> {project?.start_date ? new Date(project.start_date).toLocaleDateString("en-GB") : "-"}</p>
               <p><strong className="text-[var(--text-primary)]">End:</strong> {project?.end_date ? new Date(project.end_date).toLocaleDateString("en-GB") : "-"}</p>
             </div>
@@ -88,10 +113,13 @@ function ProjectDescription() {
             <div className="relative pt-1">
               <div className="flex mb-2 items-center justify-between">
                 <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-[var(--accent-blue)] bg-gray-900">Task in progress</span>
-                <span className="text-xs font-semibold text-[var(--accent-blue)]">60%</span>
+                <span className="text-xs font-semibold text-[var(--accent-blue)]">{getProgressPercentage()}</span>
               </div>
               <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-[var(--border-color)]">
-                <div className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[var(--accent-blue)]" style={{ width: '60%' }}></div>
+                <div
+                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[var(--accent-blue)]"
+                  style={{ width: getProgressPercentage() }}
+                ></div>
               </div>
             </div>
           </div>

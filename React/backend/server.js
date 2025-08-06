@@ -7,6 +7,9 @@ import ForgotPasswordRoutes from './AuthAPI/ForgotPasswordAPI.js'
 import ProjectRoutes from './ProjectAPI/Projects.js';
 import ReportRoutes from './ProjectAPI/Reports.js'
 import VendorRoutes from './VendorClientAPI/vendor.js'
+
+import cookieParser from 'cookie-parser';
+
 const app = express();
 const PORT = 5001;
 
@@ -16,6 +19,7 @@ const allowedOrigins = [
   // 'https://my-frontend-domain.com'
 ];
 
+app.use(cookieParser());
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
