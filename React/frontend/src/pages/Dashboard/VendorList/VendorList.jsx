@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Sidebar from '../../SidebarComponent/sidebar'
+import VendorCreate from "./VendorCreate";
 
 const API_URI = import.meta.env.VITE_API_URI;
 const PORT = import.meta.env.VITE_BACKEND_PORT;
@@ -17,7 +18,8 @@ function VendorList() {
   const [locations, setLocations] = useState({});
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [showVendorForm, setShowVendorForm] = useState(false);
+  const itemsPerPage = 11;
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const categoryFromQuery = parseInt(queryParams.get("category") || "0");
@@ -33,6 +35,7 @@ function VendorList() {
       const data = await response.json();
       setJobNatures(flipObject(data.jobNatures || {}));
       setLocations(flipObject(data.locations || {}));
+      console.log(data)
     } catch (error) {
       console.error("Error fetching metadata:", error);
     }
@@ -60,7 +63,6 @@ function VendorList() {
           location_name: locations[vendor.location_id] || "--",
           category_name: CategoryDict[vendor.category_id] || "-"
         }));
-        console.log(data)
         setVendors(enrichedVendors);
       } catch (err) {
         console.error("Error fetching vendors", err);
@@ -80,10 +82,10 @@ function VendorList() {
   const paginatedVendors = vendors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
     <Sidebar />
-    <div className="bg-gray-900 text-white font-sans h-screen w-full flex">
-      <main className="flex-1 p-8">
+    <div className="flex flex-col flex-1 h-full">
+    <main className="flex-1 p-8 bg-gray-900 text-white">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">
             Vendor List
@@ -102,6 +104,13 @@ function VendorList() {
             <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full flex items-center space-x-2 transition duration-300">
               <span>Filter</span>
               <span className="material-icons">filter_list</span>
+            </button>
+            <button
+              onClick={() => setShowVendorForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full flex items-center space-x-2 transition duration-300"
+            >
+              <span>Add Vendor</span>
+              <span className="material-icons">add</span>
             </button>
           </div>
         </header>
@@ -231,9 +240,17 @@ function VendorList() {
           </>
         )}
 
-        <button className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition duration-300">
-          <span className="material-icons text-3xl">add</span>
-        </button>
+        {showVendorForm && (
+      <>
+       <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[2px] z-40" />
+         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-8">
+          <div className="relative w-full max-w-4xl bg-transparent">
+           <VendorCreate onClose={() => setShowVendorForm(false)} />
+         </div>
+        </div>
+      </>
+)}
+
       </main>
     </div>
     </div>

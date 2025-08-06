@@ -10,7 +10,7 @@ router.post("/", async (req, res) => {
         const {
             queryString = "",
             tab = 1,
-            limit = 30,
+            limit = 15,
             order = "ASC",
             category = 0,
             locationIds = [],

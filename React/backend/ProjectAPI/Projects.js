@@ -108,7 +108,6 @@ router.get("/userProjects/:user_id", async (req, res) => {
 
         const projects = await DB.r_fetchProjectsByUser(user_id);
         if (!projects) return res.status(404).json({ message: "Projects not found" });
-        console.log(projects)
 
         res.json(projects);
     } catch (error) {
