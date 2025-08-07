@@ -614,3 +614,57 @@ export async function r_getProjByDprID(dpr_id) {
 
 
 // #endregion
+
+
+// #region 🧬 CROSS MODULE ─────────────────────────────────────────────
+
+// Fetches user roles for a user in a given project
+export async function r_getUserRoleForProject(user_id, project_id) {
+    const query = `
+        SELECT r.*
+        FROM project_user_roles upr
+        JOIN roles r ON upr.role_id = r.role_id
+        WHERE upr.user_id = ? AND upr.project_id = ?;
+    `;
+    const params = [user_id, project_id];
+
+    try {
+        const [[rows]] = await pool.query(query, params);
+        console.log(rows)
+        return rows
+    } catch (error) {
+        console.error("Error fetching vendors:", error);
+        throw error;
+    }
+}
+
+// Fetch users involved in project and their role
+export async function r_getUsersInvolvedInProject(project_id) {
+    const query = `
+        SELECT upr.user_id, r.role_name
+        FROM project_user_roles upr
+        JOIN roles r ON upr.role_id = r.role_id
+        WHERE upr.project_id = 1;
+    `;
+    const params = [project_id];
+    
+    try {
+        const [rows] = await pool.query(query, params);
+        const roleMap = {};
+
+        for (const { user_id, role_name } of rows) {
+            if (!roleMap[role_name]) {
+            roleMap[role_name] = [];
+            }
+            roleMap[role_name].push(user_id);   
+        }   
+
+        return roleMap
+    } catch (error) {
+        console.error("Error fetching vendors:", error);
+        throw error;
+    }
+}
+
+
+// #endregion
