@@ -580,7 +580,6 @@ export async function r_fetchDPRsByProject(project_id, limit = 20) {
 
 
             const approverValues = Object.values(approvals);
-            console.log(approvals);
             const approved = approverValues.length === 0 || approverValues.every(v => v === true || v === "true");
 
             return {

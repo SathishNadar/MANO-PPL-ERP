@@ -15,6 +15,7 @@ import WIP from './pages/Dashboard/WorkInProgress/workinprogress.jsx'
 import ProjectsView from './pages/Dashboard/Projects/ProjectsView.jsx'
 import ProjectDescription from './pages/Dashboard/Projects/ProjectDescription.jsx'
 
+import Dummy from './pages/Dashboard/VendorList/VendorFilter.jsx'
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -33,6 +34,7 @@ function App() {
         <Route path="/dashboard/vendors/" element={<ProtectedRoute><VendorList /></ProtectedRoute>} />
         <Route path="/dashboard/work-in-progress" element={<ProtectedRoute><WIP /></ProtectedRoute>} />
         <Route path="/dashboard/project-description" element={<ProtectedRoute><ProjectDescription /></ProtectedRoute>} />
+        <Route path="/dummy" element={<Dummy/>} />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
     </div>

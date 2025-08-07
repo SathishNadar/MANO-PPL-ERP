@@ -39,7 +39,6 @@ function VendorCreate({ onClose }) {
         setLocations(Object.keys(data.locations || {}));
         setJobNatureMap(data.jobNatures || {});
         setLocationMap(data.locations || {});
-        console.log(data)
       } catch (error) {
         console.error("Error fetching metadata:", error);
       }

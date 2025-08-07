@@ -32,16 +32,8 @@ function ProjectDescription() {
           return;
         }
 
-        const recentDprs = dprs2.filter(dpr => {
-          const today = new Date();
-          const reportDate = new Date(dpr.report_date);
-          today.setHours(0, 0, 0, 0);
-          reportDate.setHours(0, 0, 0, 0);
-          const diffDays = Math.floor((today - reportDate) / (1000 * 60 * 60 * 24));
-          return diffDays >= 0 && diffDays <= 10;
-        });
-        recentDprs.sort((a, b) => new Date(b.report_date) - new Date(a.report_date));
-        setDprs(recentDprs);
+        dprs2.sort((a, b) => new Date(b.report_date) - new Date(a.report_date));
+        setDprs(dprs2);
       })
       .catch(err => console.error("Failed to load DPRs:", err));
   }, [projectId]);
@@ -160,7 +152,7 @@ function ProjectDescription() {
           <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Daily Progress Reports</h3>
             {dprs.length === 0 ? (
-              <p className="text-[var(--text-secondary)]">No DPRs in the last 10 days.</p>
+              <p className="text-[var(--text-secondary)]">No DPR Data to fetch.</p>
             ) : (
               <ul className="space-y-4">
                 {dprs.map(dpr => {
