@@ -24,7 +24,8 @@ function safeParse(jsonField) {
 }
 
 // #endregion
-// ----------------------- USER FUNCTIONS ----------------------- //
+
+// #region 🧑‍💼 USERS  ─────────────────────────────────────────────
 
 // Function to fetch User by user_name
 export async function r_fetchUserByName(name) {
@@ -73,8 +74,9 @@ export async function insertUser(username, email, hashedPassword, phone) {
   }
 }
 
+// #endregion
 
-// ---------------------- PROJECT ----------------------- //
+// #region 🧱 PROJECT  ─────────────────────────────────────────────
 
 // Function to fetch Project by ID
 export async function r_getProjectById(project_id) {
@@ -221,6 +223,9 @@ export async function r_updateProject(data) {
     }
 }
 
+// #endregion
+
+// #region 🏷️ VENDOR ─────────────────────────────────────────────
 
 // Fetch vendors with pagination, filtering and search
 export async function r_fetchVendors({
@@ -373,6 +378,8 @@ export async function r_fetchVendorsAllLocations() {
         throw error;
     }
 }
+
+// #endregion
 
 // #region 📝 DPR  ─────────────────────────────────────────────
 
@@ -629,7 +636,6 @@ export async function r_getProjByDprID(dpr_id) {
 
 // #endregion
 
-
 // #region 🧬 CROSS MODULE ─────────────────────────────────────────────
 
 // Fetches user roles for a user in a given project
@@ -682,3 +688,10 @@ export async function r_getUsersInvolvedInProject(project_id) {
 
 
 // #endregion
+
+
+// const t = await fetchVendors(vendor);
+// console.log(t)
+
+
+// pool.end()
