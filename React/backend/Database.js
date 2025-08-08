@@ -231,13 +231,13 @@ export async function r_updateProject(data) {
 export async function r_fetchVendors({
   queryString = "",
   category = 0,
-  tab = 1,
-  limit = 25,
+  limit = 11,
+  page = 1,
   locationIds = [],
   jobNatureIds = [],
   order = 'ASC',
 } = {}) {
-  const offset = (tab - 1) * limit;
+  const offset = (page - 1) * limit;
 
   let baseQuery = "FROM vendors WHERE 1=1";
   const params = [];

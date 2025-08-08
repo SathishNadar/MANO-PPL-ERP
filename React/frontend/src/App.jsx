@@ -36,7 +36,7 @@ function App() {
         <Route path="/dashboard/work-in-progress" element={<ProtectedRoute><WIP /></ProtectedRoute>} />
         <Route path="/dashboard/project-description" element={<ProtectedRoute><ProjectDescription /></ProtectedRoute>} />
         <Route path="/dashboard/project-description/dpr-fetch" element={<ProtectedRoute><DprFetchViewer /></ProtectedRoute>} />
-        {/* <Route path="/dummy" element={<Dummy/>} /> */}
+        <Route path="/dummy" element={<Dummy/>} />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
     </div>

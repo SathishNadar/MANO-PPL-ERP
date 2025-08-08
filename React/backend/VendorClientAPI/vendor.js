@@ -9,8 +9,8 @@ router.post("/", async (req, res) => {
     try {
         const {
             queryString = "",
-            tab = 1,
-            limit = 15,
+            limit = 11,
+            page = 1,
             order = "ASC",
             category = 0,
             locationIds = [],
@@ -20,8 +20,8 @@ router.post("/", async (req, res) => {
         const vendors = await DB.r_fetchVendors({
             queryString,
             category,
-            tab,
             limit,
+            page,
             locationIds,
             jobNatureIds,
             order
@@ -89,4 +89,3 @@ router.delete("/delete/:id", async (req, res) => {
 
 
 export default router;
-
