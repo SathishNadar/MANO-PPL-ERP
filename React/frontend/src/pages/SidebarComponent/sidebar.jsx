@@ -44,23 +44,33 @@ function Sidebar({ onCategoryChange }) {
 
       <nav className="flex flex-col space-y-8">
         {[
-          { icon: "home", path: "/dashboard/home", id: "home" },
-          { icon: "folder", path: "/dashboard/projects", id: "projects" },
-          { icon: "bar_chart", id: "reports" },
+          { icon: "home", path: "/dashboard/home", id: "home", label: "Home" },
+          {
+            icon: "folder",
+            path: "/dashboard/projects",
+            id: "projects",
+            label: "Projects",
+          },
+          { icon: "bar_chart", id: "reports", label: "Reports" },
           {
             icon: "receipt_long",
             id: "vendors",
+            label: "Vendors",
             children: [
               { label: "Contractors", category: "2" },
               { label: "Consultants", category: "1" },
               { label: "Suppliers", category: "3" },
             ],
           },
-          
-          { icon: "summarize", id: "summary" },
-          { icon: "wysiwyg", path: "/dashboard/work-in-progress", id: "work" },
-        ].map(({ icon, path, id, children }, idx) => (
-          <div key={idx} className="w-full">
+          { icon: "summarize", id: "summary", label: "Summary" },
+          {
+            icon: "wysiwyg",
+            path: "/dashboard/work-in-progress",
+            id: "work",
+            label: "Work In Progress",
+          },
+        ].map(({ icon, path, id, children, label }, idx) => (
+          <div key={idx} className="w-full relative group">
             <button
               onClick={() => {
                 if (id === "vendors") {
@@ -82,6 +92,11 @@ function Sidebar({ onCategoryChange }) {
             >
               <span className="material-icons text-3xl">{icon}</span>
             </button>
+
+            {/* Tooltip */}
+            <span className="absolute top-1/2 left-full ml-2 -translate-y-1/2 w-max rounded bg-gray-700 px-2 py-1 text-xs text-white opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 select-none">
+              {label}
+            </span>
 
             {/* Dropdown submenu for vendors */}
             {id === "vendors" && activeMenu === "vendors" && (
@@ -107,6 +122,7 @@ function Sidebar({ onCategoryChange }) {
                         ? "support_agent"
                         : "local_shipping"}
                     </span>
+                    {item.label}
                   </button>
                 ))}
               </div>

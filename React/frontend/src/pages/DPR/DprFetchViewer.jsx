@@ -16,7 +16,7 @@ const DprFetchViewer = () => {
         `http://${API_URI}:${PORT}/project/getProject/${pid}`
       );
       const { data: static_data } = await response.json();
-      // console.log("static_data", static_data);
+      console.log("static_data", static_data);
 
       const setText = (id, text) => {
         const el = document.getElementById(id);
@@ -171,6 +171,36 @@ const DprFetchViewer = () => {
       ];
       return { html: `<tr>${cells.join("")}</tr>`, total };
     };
+
+    const renderSiteConditions = (site_condition) => {
+      const { is_rainy, ground_state, rain_timing = [] } = site_condition || {};
+      const setActive = (id, active) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle("underline", active);
+        el.classList.toggle("decoration-green-400", active);
+        el.classList.toggle("decoration-2", active); // thickness
+        el.classList.toggle("underline-offset-4", active); // gap between icon and underline
+      };
+
+      setActive("normal-day", !is_rainy);
+      setActive("rainy-day", is_rainy);
+      setActive("slushy-day", ground_state === "slushy");
+      setActive("dry-day", ground_state === "dry");
+
+      const container = document.getElementById("from-to-container");
+      if (container) {
+        container.innerHTML = rain_timing.length
+          ? rain_timing
+              .map((t) => {
+                const [from, to] = t.split("-");
+                return `<span class="inline-block bg-gray-700 rounded px-2 py-0.5 mr-1 mb-1">${from}–${to}</span>`;
+              })
+              .join("")
+          : "—";
+      }
+    };
+
     //#endregion
 
     const dprId = params.get("dprId");
@@ -184,6 +214,8 @@ const DprFetchViewer = () => {
       const { data } = await response.json();
       console.log(data);
 
+      //Site-Contditions
+      renderSiteConditions(data.site_condition);
       // LABOUR REPORT TABLE
       const labour_report = data.labour_report || {};
       generateTable(labour_report);
@@ -321,8 +353,12 @@ const DprFetchViewer = () => {
                 <p>Dry</p>
               </div>
             </div>
-            <p className="text-xs text-center text-gray-400 mt-4">
-              Time Slots: <span id="from-to-container"></span>
+            <p className="text-xs text-center text-gray-400 mt-4 grid">
+              Time Slots:
+              <span
+                className="[display:contents]"
+                id="from-to-container"
+              ></span>
             </p>
           </div>
         </div>
@@ -410,7 +446,7 @@ const DprFetchViewer = () => {
                 </div>
               </div>
               <div className="text-center">
-                <div>Approved By</div>
+                <div>Distrubuters</div>
                 <div
                   id="distribution"
                   className="mt-1 font-semibold text-white"
