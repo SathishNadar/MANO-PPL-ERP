@@ -45,6 +45,7 @@ function Sidebar({ onCategoryChange }) {
       <nav className="flex flex-col space-y-8">
         {[
           { icon: "home", path: "/dashboard/home", id: "home" },
+          { icon: "folder", path: "/dashboard/projects", id: "projects" },
           { icon: "bar_chart", id: "reports" },
           {
             icon: "receipt_long",
@@ -55,7 +56,7 @@ function Sidebar({ onCategoryChange }) {
               { label: "Suppliers", category: "3" },
             ],
           },
-          { icon: "folder", path: "/dashboard/projects", id: "projects" },
+          
           { icon: "summarize", id: "summary" },
           { icon: "wysiwyg", path: "/dashboard/work-in-progress", id: "work" },
         ].map(({ icon, path, id, children }, idx) => (

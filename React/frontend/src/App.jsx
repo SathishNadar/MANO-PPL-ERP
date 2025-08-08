@@ -16,7 +16,7 @@ import ProjectsView from './pages/Dashboard/Projects/ProjectsView.jsx'
 import ProjectDescription from './pages/Dashboard/Projects/ProjectDescription.jsx'
 import DprFetchViewer from './pages/DPR/DprFetchViewer.jsx'
 
-// import Dummy from './pages/Dashboard/VendorList/VendorFilter.jsx'
+import Dummy from './pages/Dashboard/VendorList/VendorFilter.jsx'
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

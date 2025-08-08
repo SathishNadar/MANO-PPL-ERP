@@ -69,8 +69,8 @@ const DprFetchViewer = () => {
           ?.map(
             (task, i) => `
         <tr>
-          <td class="py-2">${task || "--"}</td>
-          <td>${quantities?.[i] ?? "--"}</td>
+          <td class="py-2 pl-4 text-left">${task || "--"}</td>
+          <td class="text-center">${quantities?.[i] ?? "--"}</td>
         </tr>
       `
           )
@@ -358,8 +358,8 @@ const DprFetchViewer = () => {
             <table className="w-full text-sm">
               <thead className="text-gray-300 border-b border-gray-600">
                 <tr>
-                  <th className="py-2">Task</th>
-                  <th>Quantity</th>
+                  <th className="py-2 pl-4 text-left">Task</th>
+                  <th className="text-center">Quantity</th>
                 </tr>
               </thead>
               <tbody className="text-white" id="today-table">
@@ -372,8 +372,8 @@ const DprFetchViewer = () => {
             <table className="w-full text-sm">
               <thead className="text-gray-300 border-b border-gray-600">
                 <tr>
-                  <th className="py-2">Task</th>
-                  <th>Quantity</th>
+                  <th className="py-2 pl-4 text-left">Task</th>
+                  <th className="text-center">Quantity</th>
                 </tr>
               </thead>
               <tbody className="text-white" id="tomorrow-table">
