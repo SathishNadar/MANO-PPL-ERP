@@ -9,6 +9,21 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE,
 }).promise();
 
+
+// #region 🛠️ HELP FUNCTIONS ─────────────────────────────────────────────
+
+function safeParse(jsonField) {
+    if (!jsonField) return {};
+    if (typeof jsonField === "object") return jsonField;
+    try {
+        return JSON.parse(jsonField);
+    } catch (err) {
+        console.error("❌ Failed to parse JSON field:", jsonField);
+        return {};
+    }
+}
+
+// #endregion
 // ----------------------- USER FUNCTIONS ----------------------- //
 
 // Function to fetch User by user_name

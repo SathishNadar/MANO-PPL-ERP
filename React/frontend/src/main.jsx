@@ -5,7 +5,6 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import App from './App.jsx'
 import './index.css';
 
-// cd React
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>

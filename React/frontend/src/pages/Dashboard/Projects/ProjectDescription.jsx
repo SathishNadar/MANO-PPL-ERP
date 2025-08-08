@@ -1,32 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function ProjectDescription() {
   const navigate = useNavigate();
   const location = useLocation();
   const [project, setProject] = useState(null);
   const [dprs, setDprs] = useState([]);
-  
+
   const API_URI = import.meta.env.VITE_API_URI;
   const PORT = import.meta.env.VITE_BACKEND_PORT;
   const queryParams = new URLSearchParams(location.search);
-  const projectId = queryParams.get('projectId');
+  const projectId = queryParams.get("projectId");
 
   useEffect(() => {
     if (!projectId) return;
 
     fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success) setProject(data.data);
       })
-      .catch(err => console.error("Failed to load project:", err));
+      .catch((err) => console.error("Failed to load project:", err));
 
     fetch(`http://${API_URI}:${PORT}/report/Alldpr/${projectId}`, {
-      credentials: 'include',
+      credentials: "include",
     })
-      .then(res => res.json())
-      .then(dprs2 => {
+      .then((res) => res.json())
+      .then((dprs2) => {
         if (!Array.isArray(dprs2)) {
           console.error("Unexpected DPRs response:", dprs2);
           return;
@@ -35,7 +35,7 @@ function ProjectDescription() {
         dprs2.sort((a, b) => new Date(b.report_date) - new Date(a.report_date));
         setDprs(dprs2);
       })
-      .catch(err => console.error("Failed to load DPRs:", err));
+      .catch((err) => console.error("Failed to load DPRs:", err));
   }, [projectId]);
 
   // Calculate project progress percentage
@@ -58,13 +58,17 @@ function ProjectDescription() {
     <main className="flex-1 p-8 bg-gray-900">
       <header className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-[var(--text-primary)]">{project?.project_name || "Project"}</h1>
-          <p className="text-[var(--text-secondary)]">Welcome back, let's get to work!</p>
+          <h1 className="text-4xl font-bold text-[var(--text-primary)]">
+            {project?.project_name || "Project"}
+          </h1>
+          <p className="text-[var(--text-secondary)]">
+            Welcome back, let's get to work!
+          </p>
         </div>
         <div className="flex items-center space-x-4">
           <button
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center space-x-2"
-            onClick={() => navigate('/dashboard/home')}
+            onClick={() => navigate("/dashboard/home")}
           >
             <span className="material-icons">home</span>
             <span>Home</span>
@@ -85,27 +89,70 @@ function ProjectDescription() {
           <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
             <div className="flex flex-col items-center">
               <div className="w-32 h-32 rounded-full bg-gray-900 mb-4 flex items-center justify-center border-4 border-[var(--accent-blue)]">
-                <span className="material-icons text-5xl text-[var(--accent-blue)]">flight</span>
+                <span className="material-icons text-5xl text-[var(--accent-blue)]">
+                  flight
+                </span>
               </div>
-              <h2 className="text-xl font-bold text-[var(--text-primary)]">{project?.project_name || "Project"}</h2>
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">
+                {project?.project_name || "Project"}
+              </h2>
             </div>
             <div className="mt-6 space-y-2 text-[var(--text-secondary)]">
-              <p><strong className="text-[var(--text-primary)]">Project:</strong> {project?.project_name || "-"}</p>
-              <p><strong className="text-[var(--text-primary)]">Employer:</strong> {project?.Employer || "-"}</p>
-              <p><strong className="text-[var(--text-primary)]">Location:</strong> {project?.location || "-"}</p>
-              <p><strong className="text-[var(--text-primary)]">Project Code:</strong> {project?.contract_no || "-"}</p>
-              <p><strong className="text-[var(--text-primary)]">Project Description:</strong> {project?.project_description || "-"}</p>
-              <p><strong className="text-[var(--text-primary)]">Start:</strong> {project?.start_date ? new Date(project.start_date).toLocaleDateString("en-GB") : "-"}</p>
-              <p><strong className="text-[var(--text-primary)]">End:</strong> {project?.end_date ? new Date(project.end_date).toLocaleDateString("en-GB") : "-"}</p>
+              <p>
+                <strong className="text-[var(--text-primary)]">Project:</strong>{" "}
+                {project?.project_name || "-"}
+              </p>
+              <p>
+                <strong className="text-[var(--text-primary)]">
+                  Employer:
+                </strong>{" "}
+                {project?.Employer || "-"}
+              </p>
+              <p>
+                <strong className="text-[var(--text-primary)]">
+                  Location:
+                </strong>{" "}
+                {project?.location || "-"}
+              </p>
+              <p>
+                <strong className="text-[var(--text-primary)]">
+                  Project Code:
+                </strong>{" "}
+                {project?.contract_no || "-"}
+              </p>
+              <p>
+                <strong className="text-[var(--text-primary)]">
+                  Project Description:
+                </strong>{" "}
+                {project?.project_description || "-"}
+              </p>
+              <p>
+                <strong className="text-[var(--text-primary)]">Start:</strong>{" "}
+                {project?.start_date
+                  ? new Date(project.start_date).toLocaleDateString("en-GB")
+                  : "-"}
+              </p>
+              <p>
+                <strong className="text-[var(--text-primary)]">End:</strong>{" "}
+                {project?.end_date
+                  ? new Date(project.end_date).toLocaleDateString("en-GB")
+                  : "-"}
+              </p>
             </div>
           </div>
 
           <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Project Progress</h3>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
+              Project Progress
+            </h3>
             <div className="relative pt-1">
               <div className="flex mb-2 items-center justify-between">
-                <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-[var(--accent-blue)] bg-gray-900">Task in progress</span>
-                <span className="text-xs font-semibold text-[var(--accent-blue)]">{getProgressPercentage()}</span>
+                <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-[var(--accent-blue)] bg-gray-900">
+                  Task in progress
+                </span>
+                <span className="text-xs font-semibold text-[var(--accent-blue)]">
+                  {getProgressPercentage()}
+                </span>
               </div>
               <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-[var(--border-color)]">
                 <div
@@ -120,26 +167,44 @@ function ProjectDescription() {
         <div className="lg:col-span-2 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Manpower</h3>
-              <p className="text-[var(--text-secondary)] mb-4">Current on-site personnel.</p>
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
+                Manpower
+              </h3>
+              <p className="text-[var(--text-secondary)] mb-4">
+                Current on-site personnel.
+              </p>
               <div className="flex items-center space-x-4">
-                <span className="material-icons text-5xl text-[var(--accent-blue)]">groups</span>
-                <div className="text-5xl font-bold text-[var(--text-primary)]">1,250</div>
+                <span className="material-icons text-5xl text-[var(--accent-blue)]">
+                  groups
+                </span>
+                <div className="text-5xl font-bold text-[var(--text-primary)]">
+                  1,250
+                </div>
               </div>
             </div>
 
             <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Equipment</h3>
-              <p className="text-[var(--text-secondary)] mb-4">Active machinery and tools.</p>
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
+                Equipment
+              </h3>
+              <p className="text-[var(--text-secondary)] mb-4">
+                Active machinery and tools.
+              </p>
               <div className="flex items-center space-x-4">
-                <span className="material-icons text-5xl text-[var(--accent-blue)]">construction</span>
-                <div className="text-5xl font-bold text-[var(--text-primary)]">350</div>
+                <span className="material-icons text-5xl text-[var(--accent-blue)]">
+                  construction
+                </span>
+                <div className="text-5xl font-bold text-[var(--text-primary)]">
+                  350
+                </div>
               </div>
             </div>
           </div>
 
           <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Financial Overview</h3>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
+              Financial Overview
+            </h3>
             <div className="w-full h-64 bg-gray-900 rounded-lg flex items-center justify-center border border-gray-700">
               <img
                 alt="Financial Chart"
@@ -150,24 +215,52 @@ function ProjectDescription() {
           </div>
 
           <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Daily Progress Reports</h3>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
+              Daily Progress Reports
+            </h3>
             {dprs.length === 0 ? (
-              <p className="text-[var(--text-secondary)]">No DPR Data to fetch.</p>
+              <p className="text-[var(--text-secondary)]">
+                No DPR Data to fetch.
+              </p>
             ) : (
               <ul className="space-y-4">
-                {dprs.map(dpr => {
+                {dprs.map((dpr) => {
                   const date = new Date(dpr.report_date);
-                  const dateStr = date.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+                  const dateStr = date.toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  });
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
                   date.setHours(0, 0, 0, 0);
-                  const diffDays = Math.floor((today - date) / (1000 * 60 * 60 * 24));
-                  const label = diffDays === 0 ? "Today" : diffDays === 1 ? "Yesterday" : `${diffDays} days ago`;
+                  const diffDays = Math.floor(
+                    (today - date) / (1000 * 60 * 60 * 24)
+                  );
+                  const label =
+                    diffDays === 0
+                      ? "Today"
+                      : diffDays === 1
+                      ? "Yesterday"
+                      : `${diffDays} days ago`;
                   return (
-                    <li key={dpr.dpr_id} className="flex justify-between items-center p-4 bg-gray-900 rounded-lg border border-gray-700 hover:border-[var(--accent-blue)] transition-all">
+                    <li
+                      key={dpr.dpr_id}
+                      id={dpr.dpr_id}
+                      className="flex justify-between items-center p-4 bg-gray-900 rounded-lg border border-gray-700 hover:border-[var(--accent-blue)] transition-all cursor-pointer"
+                      onClick={() =>
+                        navigate(
+                          `/dashboard/project-description/dpr-fetch?projectId=${projectId}&dprId=${dpr.dpr_id}`
+                        )
+                      }
+                    >
                       <div>
-                        <p className="font-semibold text-[var(--text-primary)]">DPR - {dateStr}</p>
-                        <p className="text-sm text-[var(--text-secondary)]">Submitted by {dpr.username}</p>
+                        <p className="font-semibold text-[var(--text-primary)]">
+                          DPR - {dateStr}
+                        </p>
+                        <p className="text-sm text-[var(--text-secondary)]">
+                          Submitted by {dpr.username}
+                        </p>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)]">
                         <span className="material-icons text-base">today</span>

@@ -1,0 +1,39 @@
+/* Default table style */
+#dpr-data-head th,
+#dpr-data td {
+    text-align: center;
+    border-bottom: 1px solid #555;
+    white-space: nowrap;
+    color: white;
+}
+
+/* Header style */
+#dpr-data-head th {
+    font-weight: 600;
+    /* font-size: 14px; */
+}
+
+/* More cramped table for many columns */
+.table-tight th,
+.table-tight td {
+    padding: 4px 6px;
+    /* font-size: 0.8rem; */
+}
+
+/* Spacious table for fewer columns */
+.table-spacious th,
+.table-spacious td {
+    padding: 10px 14px;
+    /* font-size: 1rem; */
+}
+
+/* Row hover effect */
+#dpr-data tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* First column (Agency) left-aligned */
+#dpr-data-head th:first-child,
+#dpr-data td:first-child {
+    text-align: left;
+}
