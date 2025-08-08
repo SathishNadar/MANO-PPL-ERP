@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import Calendar from "../../SmolComponents/calendar";
 
 function ProjectDescription() {
   const navigate = useNavigate();
@@ -203,14 +204,12 @@ function ProjectDescription() {
 
           <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
-              Financial Overview
+               Daily Progress Report Summary
             </h3>
-            <div className="w-full h-64 bg-gray-900 rounded-lg flex items-center justify-center border border-gray-700">
-              <img
-                alt="Financial Chart"
-                className="object-contain h-full w-full"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHVV3T1YrOTwaoUbibKI92U68WCv2z2uI4i5SEx8OV5AQhBx17vcvMMgfXA_DeGi3HasTfBf6F2kYNQCvG7N2z15kUqE0m6Umnf2AcKgj1kTvfwUWqsMbayuhV7bkAjIDd055pwW2rpEQbzJQWCZdHGNLIm1Cn2c9XGKPlPQaHeSbyOjQo4wbJkO7H1da8vgxujvgyFpICkBgZhryllaTvFydGBNCzExy2iCdnvd-XS2GpB3IWdD2wvmqqr9YDPpcB5c68r66r1U8"
-              />
+            <div className="w-full h-64 bg-gray-900 rounded-lg flex items-stretch justify-stretch border border-gray-700 p-0">
+              <div className="w-full h-full">
+                <Calendar dprDates={dprs.map(d => d.report_date)} />
+              </div>
             </div>
           </div>
 
