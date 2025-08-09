@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./DprFetchViewer.css";
 
@@ -7,6 +7,8 @@ const DprFetchViewer = () => {
   const PORT = import.meta.env.VITE_BACKEND_PORT;
 
   const params = new URLSearchParams(window.location.search);
+  const [projectData, setProjectData] = useState(null);
+  const [dprData, setDprData] = useState(null);
 
   const fetchandUpdateProjectData = async () => {
     const pid = params.get("projectId");
@@ -17,6 +19,7 @@ const DprFetchViewer = () => {
       );
       const { data: static_data } = await response.json();
       console.log("static_data", static_data);
+      setProjectData(static_data);
 
       const setText = (id, text) => {
         const el = document.getElementById(id);
@@ -213,7 +216,7 @@ const DprFetchViewer = () => {
       );
       const { data } = await response.json();
       console.log(data);
-
+      setDprData(data);
       //Site-Contditions
       renderSiteConditions(data.site_condition);
       // LABOUR REPORT TABLE
@@ -275,10 +278,36 @@ const DprFetchViewer = () => {
     }
   };
 
+
   useEffect(() => {
     fetchandUpdateProjectData();
     fetchandUpdateDprdata();
   }, []);
+
+  const loadPdf = () => {
+    
+    localStorage.setItem("dprData", JSON.stringify(dprData));
+    localStorage.setItem("projectData", JSON.stringify(projectData));
+
+    // debugging purposes
+    // window.open("/pdf-static/dpr1-pdf.html", "_blank");
+
+    const pdfFrame = document.getElementById("pdfPreviewFrame");
+    const pdfContainer = document.getElementById("pdfPreviewContainer");
+
+    pdfFrame.src = "/pdf-static/dpr1-pdf.html";
+
+    pdfContainer.style.display = "flex";
+
+    pdfFrame.onload = function () {
+      setTimeout(() => {
+        if (pdfFrame.contentWindow) {
+          pdfFrame.contentWindow.focus();
+          pdfFrame.contentWindow.print();
+        }
+      }, 500);
+    };
+  };
 
   return (
     <div className="bg-gray-900 text-white font-sans min-h-screen p-6">
@@ -294,51 +323,51 @@ const DprFetchViewer = () => {
         {/* Grid Layout */}
         <div className="grid md:grid-cols-3 gap-4">
           {/* Project Info */}
-          <div class="bg-gray-800 rounded-xl p-6 space-y-2 col-span-2">
-            <h2 class="text-xl font-semibold mb-4">Project Information</h2>
+          <div className="bg-gray-800 rounded-xl p-6 space-y-2 col-span-2">
+            <h2 className="text-xl font-semibold mb-4">Project Information</h2>
 
-            <div class="grid grid-cols-2 gap-2 text-base">
+            <div className="grid grid-cols-2 gap-2 text-base">
               <p>
-                <span class="text-gray-400">Name of Work:</span>{" "}
+                <span className="text-gray-400">Name of Work:</span>{" "}
                 <strong id="project_name"></strong>
               </p>
               <p>
-                <span class="text-gray-400">Employer:</span>{" "}
+                <span className="text-gray-400">Employer:</span>{" "}
                 <strong id="Employer"></strong>
               </p>
               <p>
-                <span class="text-gray-400">Contract No:</span>{" "}
+                <span className="text-gray-400">Contract No:</span>{" "}
                 <strong id="contract_no"></strong>
               </p>
               <p>
-                <span class="text-gray-400">Location:</span>{" "}
+                <span className="text-gray-400">Location:</span>{" "}
                 <strong id="location"></strong>
               </p>
             </div>
 
-            <div class="flex justify-between mt-4 text-sm">
-              <div class="relative left-10">
-                <div class="text-2xl font-bold flex items-center justify-center gap-2">
-                  <span class="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-2.5">
+            <div className="flex justify-between mt-4 text-sm">
+              <div className="relative left-10">
+                <div className="text-2xl font-bold flex items-center justify-center gap-2">
+                  <span className="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-2.5">
                     calendar_today
                   </span>
                   <span id="total_days"></span>
-                  <span class="text-xl font-normal">days</span>
+                  <span className="text-xl font-normal">days</span>
                 </div>
-                <div class="text-gray-400 relative left-12 bottom-0.5">
+                <div className="text-gray-400 relative left-12 bottom-0.5">
                   Start: <span id="start_date"></span>
                 </div>
               </div>
 
-              <div class="relative right-40">
-                <div class="text-2xl font-bold flex items-center justify-center gap-2">
-                  <span class="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-2.5">
+              <div className="relative right-40">
+                <div className="text-2xl font-bold flex items-center justify-center gap-2">
+                  <span className="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-2.5">
                     calendar_today
                   </span>
                   <span id="days_left"></span>
-                  <span class="text-xl font-normal">days</span>
+                  <span className="text-xl font-normal">days</span>
                 </div>
-                <div class="text-gray-400 relative left-12 bottom-0.5">
+                <div className="text-gray-400 relative left-12 bottom-0.5">
                   End: <span id="end_date"></span>
                 </div>
               </div>
@@ -487,11 +516,24 @@ const DprFetchViewer = () => {
         {/* Button Section */}
         <div className="justify-end flex gap-4 pt-6">
           <button
-            onClick={() => prepareForPDFPreview()}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            onClick={() => loadPdf()}
+            className="bg-blue-500 hover:bg-blue-600 cursor-pointer text-white px-4 py-2 rounded "
           >
-            SEE PDF PREVIEW
+            Print PDF
           </button>
+        </div>
+
+        <div className="mt-5 border border-gray-300 p-3 invisible">
+          <div
+            id="pdfPreviewContainer"
+            className="w-full h-[80vh] flex-col hidden"
+          >
+            <iframe
+              id="pdfPreviewFrame"
+              className="flex-grow border-0 w-full min-h-[700px]"
+              title="PDF Preview"
+            ></iframe>
+          </div>
         </div>
       </div>
     </div>
