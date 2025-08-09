@@ -68,8 +68,8 @@ const DprFetchViewer = () => {
         tasks
           ?.map(
             (task, i) => `
-        <tr>
-          <td class="py-2 pl-4 text-left">${task || "--"}</td>
+        <tr class=" bg-gray-700 rounded">
+          <td class=" py-2 pl-4 text-left">${task || "--"}</td>
           <td class="text-center">${quantities?.[i] ?? "--"}</td>
         </tr>
       `
@@ -194,7 +194,7 @@ const DprFetchViewer = () => {
           ? rain_timing
               .map((t) => {
                 const [from, to] = t.split("-");
-                return `<span class="inline-block bg-gray-700 rounded px-2 py-0.5 mr-1 mb-1">${from}–${to}</span>`;
+                return `<span class="inline-block bg-gray-700 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${from}–${to}</span>`;
               })
               .join("")
           : "—";
@@ -294,41 +294,54 @@ const DprFetchViewer = () => {
         {/* Grid Layout */}
         <div className="grid md:grid-cols-3 gap-4">
           {/* Project Info */}
-          <div className="bg-gray-800 rounded-xl p-6 space-y-2 md:col-span-2">
-            <h2 className="text-xl font-semibold mb-4">Project Information</h2>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+          <div class="bg-gray-800 rounded-xl p-6 space-y-2 col-span-2">
+            <h2 class="text-xl font-semibold mb-4">Project Information</h2>
+
+            <div class="grid grid-cols-2 gap-2 text-base">
               <p>
-                <span className="text-gray-400">Name of Work:</span>{" "}
-                <strong id="project_name">Give Projectid</strong>
+                <span class="text-gray-400">Name of Work:</span>{" "}
+                <strong id="project_name"></strong>
               </p>
               <p>
-                <span className="text-gray-400">Employer:</span>{" "}
-                <strong id="Employer">Airports Authority of India</strong>
+                <span class="text-gray-400">Employer:</span>{" "}
+                <strong id="Employer"></strong>
               </p>
               <p>
-                <span className="text-gray-400">Contract No:</span>{" "}
-                <strong id="contract_no">AAI-CNX-T3-0825</strong>
+                <span class="text-gray-400">Contract No:</span>{" "}
+                <strong id="contract_no"></strong>
               </p>
               <p>
-                <span className="text-gray-400">Location:</span>{" "}
-                <strong id="location">Chennai International Airport</strong>
+                <span class="text-gray-400">Location:</span>{" "}
+                <strong id="location"></strong>
               </p>
-              <p>
-                <span className="text-gray-400">Start Date:</span>{" "}
-                <strong id="start_date">01-Jul-2025</strong>
-              </p>
-              <p>
-                <span className="text-gray-400">Completion Date:</span>{" "}
-                <strong id="end_date">30-Jun-2026</strong>
-              </p>
-              <p>
-                <span className="text-gray-400">Duration (Days):</span>{" "}
-                <strong id="total_days">365</strong>
-              </p>
-              <p>
-                <span className="text-gray-400">Days Remaining:</span>{" "}
-                <strong id="days_left">328</strong>
-              </p>
+            </div>
+
+            <div class="flex justify-between mt-4 text-sm">
+              <div class="relative left-10">
+                <div class="text-2xl font-bold flex items-center justify-center gap-2">
+                  <span class="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-2.5">
+                    calendar_today
+                  </span>
+                  <span id="total_days"></span>
+                  <span class="text-xl font-normal">days</span>
+                </div>
+                <div class="text-gray-400 relative left-12 bottom-0.5">
+                  Start: <span id="start_date"></span>
+                </div>
+              </div>
+
+              <div class="relative right-40">
+                <div class="text-2xl font-bold flex items-center justify-center gap-2">
+                  <span class="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-2.5">
+                    calendar_today
+                  </span>
+                  <span id="days_left"></span>
+                  <span class="text-xl font-normal">days</span>
+                </div>
+                <div class="text-gray-400 relative left-12 bottom-0.5">
+                  End: <span id="end_date"></span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -353,12 +366,14 @@ const DprFetchViewer = () => {
                 <p>Dry</p>
               </div>
             </div>
-            <p className="text-xs text-center text-gray-400 mt-4 grid">
+            <p className="text-[18px] text-center text-white mt-4">
               Time Slots:
-              <span
-                className="[display:contents]"
-                id="from-to-container"
-              ></span>
+              <span className="mt-1 grid">
+                <span
+                  className="[display:contents]"
+                  id="from-to-container"
+                ></span>
+              </span>
             </p>
           </div>
         </div>
@@ -390,12 +405,17 @@ const DprFetchViewer = () => {
         {/* Progress & Planning */}
         <div className="grid md:grid-cols-2 gap-4">
           <div className="bg-gray-800 rounded-xl p-4">
-            <h2 className="text-lg font-semibold mb-2">Today's Progress</h2>
-            <table className="w-full text-sm">
+            <h2 className="text-lg font-semibold mb-2">
+              <span className="material-icons mr-2 relative top-1.5">
+                assignment
+              </span>
+              Today's Progress
+            </h2>
+            <table className="w-full text-sm border-separate border-spacing-y-2">
               <thead className="text-gray-300 border-b border-gray-600">
                 <tr>
-                  <th className="py-2 pl-4 text-left">Task</th>
-                  <th className="text-center">Quantity</th>
+                  <th className="py-2 pl-4 text-left text-[16px]">Task</th>
+                  <th className="text-center text-[16px]">Quantity</th>
                 </tr>
               </thead>
               <tbody className="text-white" id="today-table">
@@ -404,12 +424,18 @@ const DprFetchViewer = () => {
             </table>
           </div>
           <div className="bg-gray-800 rounded-xl p-4">
-            <h2 className="text-lg font-semibold mb-2">Tomorrow's Planning</h2>
-            <table className="w-full text-sm">
+            <h2 className="text-lg font-semibold mb-2">
+              {" "}
+              <span className="material-icons mr-2 relative top-1.5">
+                assignment
+              </span>
+              Tomorrow's Planning
+            </h2>
+            <table className="w-full text-sm border-separate border-spacing-y-2">
               <thead className="text-gray-300 border-b border-gray-600">
                 <tr>
-                  <th className="py-2 pl-4 text-left">Task</th>
-                  <th className="text-center">Quantity</th>
+                  <th className="py-2 pl-4 text-left ">Task</th>
+                  <th className="text-center text-[16px]">Quantity</th>
                 </tr>
               </thead>
               <tbody className="text-white" id="tomorrow-table">
@@ -459,7 +485,7 @@ const DprFetchViewer = () => {
         </div>
 
         {/* Button Section */}
-        <div className="flex gap-4 pt-6">
+        <div className="justify-end flex gap-4 pt-6">
           <button
             onClick={() => prepareForPDFPreview()}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
