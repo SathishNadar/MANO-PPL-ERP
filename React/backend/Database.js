@@ -63,16 +63,25 @@ export async function updateUserPassword(email, hashedPassword) {
     }
 }
 
+export async function checkUserExists(email, phone) {
+  const [rows] = await pool.query(
+    "SELECT user_id FROM users WHERE email = ? OR phone_no = ? LIMIT 1",
+    [email, phone]
+  );
+  return rows.length > 0;
+}
+
 export async function insertUser(username, email, hashedPassword, phone) {
-  const query = "INSERT INTO users (user_name, email, user_password, phone_no) VALUES (?, ?, ?, ?)";
-  try {
-    const [result] = await pool.query(query, [username, email, hashedPassword, phone]);
-    return result.affectedRows > 0;
-  } catch (error) {
+    try {
+        const userInsertQuery = `INSERT INTO users (user_name, email, user_password, phone_no, designation) VALUES (?, ?, ?, ?, 'stranger')`;
+        const [userResult] = await pool.query(userInsertQuery, [username, email, hashedPassword, phone]);
+        return !!userResult.insertId;
+    } catch (error) {
     console.error('Error inserting user:', error);
     return false;
   }
 }
+
 
 // #endregion
 

@@ -71,7 +71,8 @@ router.post("/login", async (req, res) => {
     const response_data = {
       user_id: user_data.user_id,
       user_name: user_data.user_name,
-      email: user_data.email
+      email: user_data.email,
+      designation:user_data.designation
     };
 
     const token = await generateJWT(response_data);

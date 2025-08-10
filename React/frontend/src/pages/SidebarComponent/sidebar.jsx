@@ -9,11 +9,14 @@ function Sidebar({ onCategoryChange }) {
   const containerRef = useRef();
   const [username, setUsername] = useState("");
   const [activeMenu, setActiveMenu] = useState(""); // for dropdown toggle
+  const [designation, setDesignation] = useState(""); // user designation (string)
 
   useEffect(() => {
     const session = localStorage.getItem("session");
     if (session) {
-      setUsername(JSON.parse(session).username || "User");
+      const sessionData = JSON.parse(session);
+      setUsername(sessionData.username || "User");
+      setDesignation(sessionData.designation || "stranger");
     } else {
       alert("Kindly Login");
       navigate("/auth");
@@ -34,6 +37,59 @@ function Sidebar({ onCategoryChange }) {
     navigate("/auth");
   }
 
+  const menuItems = [
+    { icon: "home", path: "/dashboard/home", id: "home", label: "Home", roles: ["stranger", "client", "other"] },
+    {
+      icon: "folder",
+      path: "/dashboard/projects",
+      id: "projects",
+      label: "Projects",
+      roles: ["client", "other"],
+    },
+    { icon: "bar_chart", id: "reports", label: "Reports", roles: ["client", "other"] },
+    {
+      icon: "receipt_long",
+      id: "vendors",
+      label: "Vendors",
+      roles: ["other"],
+      children: [
+        { label: "Contractors", category: "2" },
+        { label: "Consultants", category: "1" },
+        { label: "Suppliers", category: "3" },
+      ],
+    },
+    // { icon: "summarize", id: "summary", label: "Summary", roles: ["other"] },
+    // {
+    //   icon: "wysiwyg",
+    //   path: "/dashboard/work-in-progress",
+    //   id: "work",
+    //   label: "Work In Progress",
+    //   roles: ["other"],
+    // },
+  ];
+
+  // Determine currentRole for filtering menu items based on designation
+  // "stranger" -> only Home, "client" -> Home, Projects, Reports, "admin" -> all, others -> none
+  let currentRole = "other";
+  if (designation === "stranger") {
+    currentRole = "stranger";
+  } else if (designation === "client") {
+    currentRole = "client";
+  } else if (designation === "admin") {
+    currentRole = "admin";
+  }
+
+  let filteredMenuItems = [];
+  if (currentRole === "stranger") {
+    filteredMenuItems = menuItems.filter((item) => item.id === "home");
+  } else if (currentRole === "client") {
+    filteredMenuItems = menuItems.filter((item) =>
+      ["home", "projects", "reports"].includes(item.id)
+    );
+  } else if (currentRole === "admin") {
+    filteredMenuItems = menuItems; // show all
+  }
+
   return (
     <aside className="w-20 bg-sidebar shadow-lg flex flex-col items-center py-5 relative">
       <img
@@ -43,33 +99,7 @@ function Sidebar({ onCategoryChange }) {
       />
 
       <nav className="flex flex-col space-y-8">
-        {[
-          { icon: "home", path: "/dashboard/home", id: "home", label: "Home" },
-          {
-            icon: "folder",
-            path: "/dashboard/projects",
-            id: "projects",
-            label: "Projects",
-          },
-          { icon: "bar_chart", id: "reports", label: "Reports" },
-          {
-            icon: "receipt_long",
-            id: "vendors",
-            label: "Vendors",
-            children: [
-              { label: "Contractors", category: "2" },
-              { label: "Consultants", category: "1" },
-              { label: "Suppliers", category: "3" },
-            ],
-          },
-          { icon: "summarize", id: "summary", label: "Summary" },
-          {
-            icon: "wysiwyg",
-            path: "/dashboard/work-in-progress",
-            id: "work",
-            label: "Work In Progress",
-          },
-        ].map(({ icon, path, id, children, label }, idx) => (
+        {filteredMenuItems.map(({ icon, path, id, children, label }, idx) => (
           <div key={idx} className="w-full relative group">
             <button
               onClick={() => {
@@ -122,7 +152,6 @@ function Sidebar({ onCategoryChange }) {
                         ? "support_agent"
                         : "local_shipping"}
                     </span>
-                    {item.label}
                   </button>
                 ))}
               </div>

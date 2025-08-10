@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import { sendSignupVerificationEmail, pendingSignups } from '../SignupEmailVerification/EmailUrlService.js';
 import '../config.js'; // makes sure .env is loaded
-import { insertUser } from '../Database.js'; // you'd write this in your DB module
+import { insertUser, checkUserExists } from '../Database.js'; // you'd write this in your DB module
 
 const router = express.Router();
 
@@ -15,8 +15,12 @@ router.post('/start-signup', async (req, res) => {
       return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const exists = await checkUserExists(email, phone);
+    if (exists) {
+      return res.status(400).json({ error: 'Email or phone already exists.' });
+    }
 
+    const hashedPassword = await bcrypt.hash(password, 12);
     const result = await sendSignupVerificationEmail({ email, username, hashedPassword, phone });
 
     if (result.success) {
@@ -66,4 +70,4 @@ router.get('/verify-signup', async (req, res) => {
   }
 });
 
-export default router;
+export default router; 
