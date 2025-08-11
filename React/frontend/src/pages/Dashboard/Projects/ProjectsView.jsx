@@ -121,7 +121,7 @@ const ProjectsView = () => {
                 return (
                   <div key={index} className="pt-2">
                     <div
-                      onClick={() => navigate(`/dashboard/project-description?projectId=${project.project_id}`)}
+                      onClick={() => navigate(`/dashboard/project-description/${project.project_id}`)}
                       className="bg-card p-6 rounded-2xl shadow-md hover:shadow-2xl transform transition-transform hover:-translate-y-2 hover:cursor-pointer"
                       style={{
                         minWidth: "600px", // or use a Tailwind class like min-w-[300px]

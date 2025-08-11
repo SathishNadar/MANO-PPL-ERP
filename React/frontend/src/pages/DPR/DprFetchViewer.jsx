@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "./DprFetchViewer.css";
 
 const DprFetchViewer = () => {
   const API_URI = import.meta.env.VITE_API_URI;
   const PORT = import.meta.env.VITE_BACKEND_PORT;
 
-  const params = new URLSearchParams(window.location.search);
+  const { projectId, dprId } = useParams();
   const [projectData, setProjectData] = useState(null);
   const [dprData, setDprData] = useState(null);
 
   const fetchandUpdateProjectData = async () => {
-    const pid = params.get("projectId");
+    // const { projectId } = useParams();
+    const pid = projectId;
 
     try {
       const response = await fetch(
         `http://${API_URI}:${PORT}/project/getProject/${pid}`
       );
       const { data: static_data } = await response.json();
-      console.log("static_data", static_data);
       setProjectData(static_data);
 
       const setText = (id, text) => {
@@ -206,16 +206,12 @@ const DprFetchViewer = () => {
 
     //#endregion
 
-    const dprId = params.get("dprId");
-    console.log("did", dprId);
-
     try {
       const response = await fetch(
         `http://${API_URI}:${PORT}/report/getDPR/${dprId}`,
         { credentials: "include" }
       );
       const { data } = await response.json();
-      console.log(data);
       setDprData(data);
       //Site-Contditions
       renderSiteConditions(data.site_condition);

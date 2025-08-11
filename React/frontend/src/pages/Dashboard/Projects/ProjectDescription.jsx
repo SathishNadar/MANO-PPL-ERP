@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Calendar from "../../SmolComponents/calendar";
 
 function ProjectDescription() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { projectId } = useParams();
   const [project, setProject] = useState(null);
   const [dprs, setDprs] = useState([]);
 
   const API_URI = import.meta.env.VITE_API_URI;
   const PORT = import.meta.env.VITE_BACKEND_PORT;
-  const queryParams = new URLSearchParams(location.search);
-  const projectId = queryParams.get("projectId");
 
   useEffect(() => {
     if (!projectId) return;
@@ -249,7 +247,7 @@ function ProjectDescription() {
                       className="flex justify-between items-center p-4 bg-gray-900 rounded-lg border border-gray-700 hover:border-[var(--accent-blue)] transition-all cursor-pointer"
                       onClick={() =>
                         navigate(
-                          `/dashboard/project-description/dpr-fetch?projectId=${projectId}&dprId=${dpr.dpr_id}`
+                          `/dashboard/project-description/${projectId}/${dpr.dpr_id}`
                         )
                       }
                     >
