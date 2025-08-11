@@ -12,9 +12,9 @@ const LoginForm = ({ onSwitch }) => {
   });
   const navigate = useNavigate();
 
-  const setSession = (username, user_id, designation) => {
+  const setSession = (username, user_id, title_id) => {
     const expiryTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
-    const sessionData = { user_id, username, designation, expiry: expiryTime };
+    const sessionData = { user_id, username, title_id, expiry: expiryTime };
     localStorage.setItem("session", JSON.stringify(sessionData));
   };
 
@@ -35,7 +35,7 @@ const LoginForm = ({ onSwitch }) => {
       const data = await response.json();
 
       if (data.message === "Login successful") {
-        setSession(data.user_data.user_name, data.user_data.user_id, data.user_data.designation);
+        setSession(data.user_data.user_name, data.user_data.user_id, data.user_data.title_id);
         toast.success("Login successful!");
         navigate("/dashboard/home");
       } else {

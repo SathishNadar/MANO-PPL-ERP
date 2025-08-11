@@ -9,14 +9,14 @@ function Sidebar({ onCategoryChange }) {
   const containerRef = useRef();
   const [username, setUsername] = useState("");
   const [activeMenu, setActiveMenu] = useState(""); // for dropdown toggle
-  const [designation, setDesignation] = useState(""); // user designation (string)
+  const [titleId, setTitleId] = useState(null); // user title id (number)
 
   useEffect(() => {
     const session = localStorage.getItem("session");
     if (session) {
       const sessionData = JSON.parse(session);
       setUsername(sessionData.username || "User");
-      setDesignation(sessionData.designation || "stranger");
+      setTitleId(sessionData.title_id || null);
     } else {
       alert("Kindly Login");
       navigate("/auth");
@@ -37,57 +37,51 @@ function Sidebar({ onCategoryChange }) {
     navigate("/auth");
   }
 
+  // Title ID map for roles
+  const TITLE_MAP = {
+    1: "client",
+    2: "admin",
+    3: "developer",
+    4: "ceo",
+    5: "engineer",
+    6: "new_user"
+  };
+
   const menuItems = [
-    { icon: "home", path: "/dashboard/home", id: "home", label: "Home", roles: ["stranger", "client", "other"] },
+    { icon: "home", path: "/dashboard/home", id: "home", label: "Home", roles: [1, 2, 6] },
     {
       icon: "folder",
       path: "/dashboard/projects",
       id: "projects",
       label: "Projects",
-      roles: ["client", "other"],
+      roles: [1, 2],
     },
-    { icon: "bar_chart", id: "reports", label: "Reports", roles: ["client", "other"] },
+    { icon: "bar_chart", id: "reports", label: "Reports", roles: [1, 2] },
     {
       icon: "receipt_long",
       id: "vendors",
       label: "Vendors",
-      roles: ["other"],
+      roles: [2],
       children: [
         { label: "Contractors", category: "2" },
         { label: "Consultants", category: "1" },
         { label: "Suppliers", category: "3" },
       ],
     },
-    // { icon: "summarize", id: "summary", label: "Summary", roles: ["other"] },
+    // { icon: "summarize", id: "summary", label: "Summary", roles: [2] },
     // {
     //   icon: "wysiwyg",
     //   path: "/dashboard/work-in-progress",
     //   id: "work",
     //   label: "Work In Progress",
-    //   roles: ["other"],
+    //   roles: [2],
     // },
   ];
 
-  // Determine currentRole for filtering menu items based on designation
-  // "stranger" -> only Home, "client" -> Home, Projects, Reports, "admin" -> all, others -> none
-  let currentRole = "other";
-  if (designation === "stranger") {
-    currentRole = "stranger";
-  } else if (designation === "client") {
-    currentRole = "client";
-  } else if (designation === "admin") {
-    currentRole = "admin";
-  }
-
+  // Filter menu items based on titleId
   let filteredMenuItems = [];
-  if (currentRole === "stranger") {
-    filteredMenuItems = menuItems.filter((item) => item.id === "home");
-  } else if (currentRole === "client") {
-    filteredMenuItems = menuItems.filter((item) =>
-      ["home", "projects", "reports"].includes(item.id)
-    );
-  } else if (currentRole === "admin") {
-    filteredMenuItems = menuItems; // show all
+  if (titleId) {
+    filteredMenuItems = menuItems.filter((item) => item.roles.includes(titleId));
   }
 
   return (

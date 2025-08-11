@@ -73,8 +73,8 @@ export async function checkUserExists(email, phone) {
 
 export async function insertUser(username, email, hashedPassword, phone) {
     try {
-        const userInsertQuery = `INSERT INTO users (user_name, email, user_password, phone_no, designation) VALUES (?, ?, ?, ?, 'stranger')`;
-        const [userResult] = await pool.query(userInsertQuery, [username, email, hashedPassword, phone]);
+        const userInsertQuery = `INSERT INTO users (user_name, email, user_password, phone_no, title_id) VALUES (?, ?, ?, ?, ?)`;
+        const [userResult] = await pool.query(userInsertQuery, [username, email, hashedPassword, phone, 1]);
         return !!userResult.insertId;
     } catch (error) {
     console.error('Error inserting user:', error);

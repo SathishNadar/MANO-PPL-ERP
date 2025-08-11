@@ -86,6 +86,37 @@ router.post("/insertDPR", authenticateJWT, async (req, res) => {
   }
 });
 
+// Get call to fetch DPR Initial Data
+router.get("/initDPR/:project_id", authenticateJWT, async (req, res) => {
+  try {
+    const project_id = parseInt(req.params.project_id, 10);
+    if (isNaN(project_id)) {
+      return res.status(400).json({ message: "Invalid DPR ID" });
+    }
+
+    const user_id = req.user.user_id;
+    const role = await checkUserProjectRole(user_id, project_id);
+
+    if (!role.ok || !role.role || !role.role.can_create_dpr) {
+      return res.status(403).json({ message: "Forbidden: You do not have permission to create DPR for this project." });
+    }
+
+    const project_data = await DB.r_getProjectById(project_id);
+    const prev_dpr = await DB.r_fetchLastDPR(project_id);
+
+    const init_data = {
+      ...project_data,
+      cumulative_manpower_till_date: prev_dpr?.cumulative_manpower ?? 0,
+      todays_plan: prev_dpr?.tomorrow_plan ?? { plan: [], qty: [] }
+    };
+
+    res.json(init_data);
+  } catch (error) {
+    console.error("❌ API error in getDPR:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}); 
+
 // Get call to fetch DPR
 router.get("/getDPR/:id", authenticateJWT, async (req, res) => {
   try {
@@ -111,6 +142,36 @@ router.get("/getDPR/:id", authenticateJWT, async (req, res) => {
 
     res.json({ success: true, data: DprData });
 
+  } catch (error) {
+    console.error("❌ API error in getDPR:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Get call to fetch all DPR under a project
+router.get("/allDPR/:project_id", authenticateJWT, async (req, res) => {
+  try {
+    const project_id = parseInt(req.params.project_id, 10);
+    const limit = req.query.limit ?? 50;
+
+    if (isNaN(project_id)) {
+      return res.status(400).json({ message: "Invalid Project ID" });
+    }
+    
+    
+    const user_id = req.user.user_id;
+    const role = await checkUserProjectRole(user_id, project_id);
+
+    if (!role.ok || !role.role || !role.role.can_view_dpr) {
+      return res.status(403).json({ message: "Forbidden: You do not have permission to view this DPR." });
+    }
+
+    const projects = await DB.r_fetchDPRsByProject(project_id, limit);
+    if (!projects) {
+      return res.status(404).json({ message: "Projects not found" });
+    }
+
+    res.json(projects);
   } catch (error) {
     console.error("❌ API error in getDPR:", error.message);
     res.status(500).json({ message: "Internal server error" });
@@ -188,66 +249,6 @@ router.post("/updateDPR", authenticateJWT, async (req, res) => {
   }
 });
 
-// Get call to fetch DPR Initial Data
-router.get("/initDPR/:project_id", authenticateJWT, async (req, res) => {
-  try {
-    const project_id = parseInt(req.params.project_id, 10);
-    if (isNaN(project_id)) {
-      return res.status(400).json({ message: "Invalid DPR ID" });
-    }
-
-    const user_id = req.user.user_id;
-    const role = await checkUserProjectRole(user_id, project_id);
-
-    if (!role.ok || !role.role || !role.role.can_create_dpr) {
-      return res.status(403).json({ message: "Forbidden: You do not have permission to create DPR for this project." });
-    }
-
-    const project_data = await DB.r_getProjectById(project_id);
-    const prev_dpr = await DB.r_fetchLastDPR(project_id);
-
-    const init_data = {
-      ...project_data,
-      cumulative_manpower_till_date: prev_dpr?.cumulative_manpower ?? 0,
-      todays_plan: prev_dpr?.tomorrow_plan ?? { plan: [], qty: [] }
-    };
-
-    res.json(init_data);
-  } catch (error) {
-    console.error("❌ API error in getDPR:", error.message);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-// Get call to fetch all DPR under a project
-router.get("/allDPR/:project_id", authenticateJWT, async (req, res) => {
-  try {
-    const project_id = parseInt(req.params.project_id, 10);
-    const limit = req.query.limit ?? 50;
-
-    if (isNaN(project_id)) {
-      return res.status(400).json({ message: "Invalid Project ID" });
-    }
-    
-    
-    const user_id = req.user.user_id;
-    const role = await checkUserProjectRole(user_id, project_id);
-
-    if (!role.ok || !role.role || !role.role.can_view_dpr) {
-      return res.status(403).json({ message: "Forbidden: You do not have permission to view this DPR." });
-    }
-
-    const projects = await DB.r_fetchDPRsByProject(project_id, limit);
-    if (!projects) {
-      return res.status(404).json({ message: "Projects not found" });
-    }
-
-    res.json(projects);
-  } catch (error) {
-    console.error("❌ API error in getDPR:", error.message);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
 
 
 export default router;
