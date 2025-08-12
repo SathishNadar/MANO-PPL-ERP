@@ -22,6 +22,14 @@ function ProjectCreate({ onClose }) {
       }
     }
 
+    const sessionStr = localStorage.getItem('session');
+    const sessionData = JSON.parse(sessionStr);
+    const userId = sessionData.user_id;
+    if (!userId) {
+      alert("User not logged in or invalid user ID.");
+      return;
+    }
+
     const data = {
       project_name: document.getElementById("project-name").value,
       project_code: document.getElementById("project-code").value,
@@ -30,13 +38,7 @@ function ProjectCreate({ onClose }) {
       Employer: document.getElementById("employer").value,
       start_date: document.getElementById("start-date").value,
       end_date: document.getElementById("end-date").value,
-      user_id: 1, // Hardcoded for now or make it a prop
-      user_roles: {
-        editors: [1, 3, 4],
-        viewers: [10, 11, 15],
-        approvals: { 1: true, 3: false },
-        created_by: 1,
-      },
+      user_id: userId,
     };
 
     try {
