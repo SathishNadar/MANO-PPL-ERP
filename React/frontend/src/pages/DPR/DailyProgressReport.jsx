@@ -73,7 +73,7 @@ function DailyProgressReport() {
           </div>
           <div className="flex justify-between border-b border-gray-700 py-2 ">
             <span className="font-medium text-gray-200">Employer</span>
-            <span className="text-gray-400">{project?.employer || "--"}</span>
+            <span className="text-gray-400">{project?.Employer || "--"}</span>
           </div>
           {/* Removed Date row */}
           <div className="flex justify-between border-b border-gray-700 py-2 ">
@@ -94,7 +94,7 @@ function DailyProgressReport() {
           </div>
           <div className="flex justify-between border-b border-gray-700 py-2 col-span-1 md:col-span-2 ">
             <span className="font-medium text-gray-200">Project Description</span>
-            <span className="text-gray-400 text-right">{project?.description || "--"}</span>
+            <span className="text-gray-400 text-right">{project?.project_description || "--"}</span>
           </div>
         </div>
         {/* Duration in Days Section moved here */}
@@ -144,7 +144,7 @@ function DailyProgressReport() {
               }`}
               onClick={() => setCondition("normal")}
             >
-              <span className="material-icons text-gray-300">ac_unit</span>
+              <span className="material-icons text-orange-400">terrain</span>
               <p>Dry</p>
             </div>
             <div
