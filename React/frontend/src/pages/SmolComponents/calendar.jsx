@@ -135,7 +135,7 @@ function Calendar({ dprDates = [] }) {
                     key={rowIdx}
                     className="m-[1px] bg-transparent"
                     style={{
-                      width: '90%',
+                      width: '80%',
                       height: `calc(100% / 7)`,
                     }}
                   />
@@ -149,7 +149,7 @@ function Calendar({ dprDates = [] }) {
                   className={`m-[1px] rounded ${filled ? 'bg-blue-500' : 'bg-gray-800'}`}
                   title={day.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                   style={{
-                    width: '80%',
+                    width: '78%',
                     height: `calc(100% / 7)`,
                   }}
                 />

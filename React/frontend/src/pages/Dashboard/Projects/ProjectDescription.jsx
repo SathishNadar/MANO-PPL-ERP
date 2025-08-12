@@ -160,6 +160,25 @@ function ProjectDescription() {
                 ></div>
               </div>
             </div>
+            <div className="mt-6">
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <button
+                  onClick={() => navigate(`/dashboard/project-description/${projectId}/dprCreate`)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  DPR
+                </button>
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
+                  WPR
+                </button>
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
+                  MPR
+                </button>
+              </div>
+              <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
+                Edit DPR
+              </button>
+            </div>
           </div>
         </div>
 
@@ -204,7 +223,7 @@ function ProjectDescription() {
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
                Daily Progress Report Summary
             </h3>
-            <div className="w-full h-64 bg-gray-900 rounded-lg flex items-stretch justify-stretch border border-gray-700 p-0">
+            <div className="w-full h-42 bg-gray-900 rounded-lg flex items-stretch justify-stretch border border-gray-700 p-0">
               <div className="w-full h-full">
                 <Calendar dprDates={dprs.map(d => d.report_date)} />
               </div>
