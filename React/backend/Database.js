@@ -140,7 +140,7 @@ export async function r_insertProject(data) {
         start_date = null,
         end_date = null,
         location = null,
-        contract_no = null,
+        project_code = null,
         Employer = null
     } = data;
 
@@ -152,7 +152,7 @@ export async function r_insertProject(data) {
         INSERT INTO projects (
             project_name, project_description,
             start_date, end_date, location,
-            contract_no, Employer
+            project_code, Employer
         ) VALUES (?, ?, ?, ?, ?, ?, ?);
     `;
 
@@ -168,7 +168,7 @@ export async function r_insertProject(data) {
         start_date,
         end_date,
         location,
-        contract_no,
+        project_code,
         Employer
     ];
 
@@ -191,7 +191,7 @@ export async function r_updateProject(data) {
         start_date = null,
         end_date = null,
         location = null,
-        contract_no = null,
+        project_code = null,
         Employer = null
     } = data;
 
@@ -207,7 +207,7 @@ export async function r_updateProject(data) {
             start_date = ?,
             end_date = ?,
             location = ?,
-            contract_no = ?,
+            project_code = ?,
             Employer = ?
         WHERE project_id = ?;
     `;
@@ -218,7 +218,7 @@ export async function r_updateProject(data) {
         start_date,
         end_date,
         location,
-        contract_no,
+        project_code,
         Employer,
         project_id
     ];

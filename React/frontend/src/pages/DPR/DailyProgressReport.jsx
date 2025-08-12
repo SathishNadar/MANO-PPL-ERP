@@ -78,7 +78,7 @@ function DailyProgressReport() {
           {/* Removed Date row */}
           <div className="flex justify-between border-b border-gray-700 py-2 ">
             <span className="font-medium text-gray-200">Contract No</span>
-            <span className="text-gray-400">{project?.contract_no || "--"}</span>
+            <span className="text-gray-400">{project?.project_code || "--"}</span>
           </div>
           <div className="flex justify-between border-b border-gray-700 py-2 ">
             <span className="font-medium text-gray-200">Location</span>

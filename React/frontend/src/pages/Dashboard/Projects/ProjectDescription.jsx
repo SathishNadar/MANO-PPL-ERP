@@ -117,7 +117,7 @@ function ProjectDescription() {
                 <strong className="text-[var(--text-primary)]">
                   Project Code:
                 </strong>{" "}
-                {project?.contract_no || "-"}
+                {project?.project_code || "-"}
               </p>
               <p>
                 <strong className="text-[var(--text-primary)]">

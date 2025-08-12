@@ -28,7 +28,7 @@ const DprFetchViewer = () => {
 
       setText("project_name", static_data.project_name);
       setText("Employer", static_data.Employer);
-      setText("contract_no", static_data.contract_no);
+      setText("project_code", static_data.project_code);
       setText("location", static_data.location);
 
       const formatDate = (dateStr) =>
@@ -332,8 +332,8 @@ const DprFetchViewer = () => {
                 <strong id="Employer"></strong>
               </p>
               <p>
-                <span className="text-gray-400">Contract No:</span>{" "}
-                <strong id="contract_no"></strong>
+                <span className="text-gray-400">Project Code:</span>{" "}
+                <strong id="project_code"></strong>
               </p>
               <p>
                 <span className="text-gray-400">Location:</span>{" "}

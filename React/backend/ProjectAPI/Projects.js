@@ -30,7 +30,7 @@ router.post("/insertProject", async (req, res) => {
             start_date,
             end_date = null,
             location = null,
-            contract_no = null,
+            project_code = null,
             Employer = null
         } = req.body;
 
@@ -46,7 +46,7 @@ router.post("/insertProject", async (req, res) => {
             start_date,
             end_date,
             location,
-            contract_no,
+            project_code,
             Employer
         });
 
@@ -69,7 +69,7 @@ router.post("/updateProject", async (req, res) => {
             start_date = null,
             end_date = null,
             location = null,
-            contract_no = null,
+            project_code = null,
             Employer = null
         } = req.body;
 
@@ -85,7 +85,7 @@ router.post("/updateProject", async (req, res) => {
             start_date,
             end_date,
             location,
-            contract_no,
+            project_code,
             Employer
         });
 
