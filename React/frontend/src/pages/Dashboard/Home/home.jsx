@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import Sidebar from '../../SidebarComponent/sidebar'
+
+const TITLE_MAP = {
+  1: "client",
+  2: "admin",
+  3: "developer",
+  4: "ceo",
+  5: "engineer",
+  6: "new_user"
+};
+
 function home() {
   const [username, setUsername] = useState('');
-  const [userRoles, setUserRoles] = useState([]);
+  const [userRoles, setUserRoles] = useState('');
 
   useEffect(() => {
     const session = localStorage.getItem('session');
@@ -10,10 +20,10 @@ function home() {
       try {
         const parsed = JSON.parse(session);
         setUsername(parsed.username || '');
-        setUserRoles(Array.isArray(parsed.designation) ? parsed.designation : (parsed.designation ? [parsed.designation] : []));
+        setUserRoles(TITLE_MAP[parsed.title_id] || '');
       } catch (e) {
         setUsername('');
-        setUserRoles([]);
+        setUserRoles('');
       }
     }
   }, []);
@@ -27,7 +37,7 @@ function home() {
           <div className="text-3xl font-extrabold mt-2 mb-2">Welcome to MANO PPL</div>
         </div>
         <p className="text-lg">
-          Your role: {Array.isArray(userRoles) ? userRoles.join(', ') : userRoles}
+          Your role: {userRoles}
         </p>
       </div>
     </div>
