@@ -1,6 +1,6 @@
 // ====================== DEBUGGING HELPERS ======================
 function debugLog(message, data) {
-  console.log(`[DEBUG] ${message}`, data);
+  // console.log(`[DEBUG] ${message}`, data);
 }
 
 // ====================== MAIN DATA LOADER ======================
@@ -36,7 +36,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // ====================== DATA TRANSFORMATION ======================
 function transformApiData(apiData) {
-  debugLog("Transforming API Data", apiData);
 
   // Convert API data structure to match what our HTML expects
   const transformed = {
@@ -49,8 +48,10 @@ function transformApiData(apiData) {
       apiData.projectDetails?.Employer ||
       apiData.Employer ||
       "Employer Not Available",
-    contract_no:
-      apiData.projectDetails?.contract_no || apiData.contract_no || "--",
+    project_code:
+      apiData.projectDetails?.project_code || 
+      apiData.project_code || 
+      "--",
     location:
       apiData.projectDetails?.location ||
       apiData.location ||
@@ -232,7 +233,7 @@ function populateProjectInfo(data) {
   document.getElementById("project_name").textContent =
     data.project_name || "--";
   document.getElementById("Employer").textContent = data.Employer || "--";
-  document.getElementById("contract_no").textContent = data.contract_no || "--";
+  document.getElementById("project_code").textContent = data.project_code || "--";
   document.getElementById("location").textContent = data.location || "--";
   document.getElementById("start_date").textContent = data.start_date || "--";
   document.getElementById("end_date").textContent = data.end_date || "--";
