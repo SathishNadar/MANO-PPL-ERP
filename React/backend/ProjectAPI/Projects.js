@@ -1,10 +1,11 @@
 import express from "express";
 import * as DB from "../Database.js"
+import { authenticateJWT } from "../AuthAPI/LoginAPI.js";
 
 const router = express.Router();
 
 // Get call to fetch Project Detail
-router.get("/getProject/:id", async (req, res) => {
+router.get("/getProject/:id", authenticateJWT, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         if (isNaN(id)) return res.status(400).json({ message: "Invalid project ID" });
@@ -20,11 +21,10 @@ router.get("/getProject/:id", async (req, res) => {
 });
 
 // Post call to add Project Detail
-router.post("/insertProject", async (req, res) => {
+router.post("/insertProject", authenticateJWT, async (req, res) => {
     try {
         const {
             user_roles = {},
-            user_id,
             project_name,
             project_description = null,
             start_date,
@@ -33,6 +33,8 @@ router.post("/insertProject", async (req, res) => {
             project_code = null,
             Employer = null
         } = req.body;
+
+        const user_id = req.user.user_id;
 
         if (!project_name) {
             return res.status(400).json({ message: "Missing project_name" });
@@ -59,73 +61,29 @@ router.post("/insertProject", async (req, res) => {
 });
 
 // Post call to update an existing Project
-router.post("/updateProject", async (req, res) => {
+router.post("/updateProject", authenticateJWT, async (req, res) => {
     try {
-        const {
-            project_id,
-            user_roles = {},
-            project_name,
-            project_description = null,
-            start_date = null,
-            end_date = null,
-            location = null,
-            project_code = null,
-            Employer = null
-        } = req.body;
+        const { project_id } = req.body;
 
-        if (!project_id || !project_name) {
-            return res.status(400).json({ message: "Missing project_id or project_name" });
+        if (!project_id) {
+            return res.status(400).json({ ok: false, message: "Missing project_id" });
         }
 
-        const affectedRows = await DB.r_updateProject({
-            project_id,
-            user_roles,
-            project_name,
-            project_description,
-            start_date,
-            end_date,
-            location,
-            project_code,
-            Employer
-        });
+        const updated = await DB.r_updateProject(req.body);
 
-        if (affectedRows === 0) {
-            return res.status(404).json({ message: "No project found to update" });
+        if (updated === 0) {
+            return res.status(404).json({ ok: false, message: "No project fields updated" });
         }
 
-        res.json({ success: true, updated: affectedRows });
+        res.json({ ok: true, updated });
     } catch (error) {
         console.error("❌ API error in updateProject:", error.message);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ ok: false, message: "Internal server error" });
     }
-});
-
-router.post("/updateMetadata", async (req, res) => {
-  try {
-    const { project_id, metadata } = req.body;
-
-    if (!project_id || !metadata) {
-      return res.status(400).json({ message: "Missing project_id or metadata" });
-    }
-
-    const affectedRows = await DB.r_updateProjectMetadata({
-      project_id,
-      metadata: JSON.stringify(metadata), // store as JSON string
-    });
-
-    if (affectedRows === 0) {
-      return res.status(404).json({ message: "No project found to update" });
-    }
-
-    res.json({ success: true, updated: affectedRows });
-  } catch (error) {
-    console.error("❌ API error in updateMetadata:", error.message);
-    res.status(500).json({ message: "Internal server error" });
-  }
 });
 
 // Get call to fetch all projects a user is involved using user_id
-router.get("/userProjects/:user_id", async (req, res) => {
+router.get("/userProjects/:user_id", authenticateJWT, async (req, res) => {
     try {
         const user_id = parseInt(req.params.user_id);
         if (isNaN(user_id)) return res.status(400).json({ message: "Invalid project ID" });

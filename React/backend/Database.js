@@ -186,59 +186,75 @@ export async function r_insertProject(data) {
 export async function r_updateProject(data) {
     const {
         project_id,
-        project_name,
-        project_description = null,
-        start_date = null,
-        end_date = null,
-        location = null,
-        project_code = null,
-        Employer = null
+        user_roles,
+        ...fields
     } = data;
 
-    if (!project_id || !project_name) {
-        throw new Error("Missing required fields: project_id or project_name");
+    if (!project_id) {
+        throw new Error("Missing required field: project_id");
     }
 
-    const query = `
-        UPDATE projects
-        SET 
-            project_name = ?,
-            project_description = ?,
-            start_date = ?,
-            end_date = ?,
-            location = ?,
-            project_code = ?,
-            Employer = ?
-        WHERE project_id = ?;
-    `;
+    // ✅ Allowed columns based on your schema
+    const allowedColumns = new Set([
+        'project_name',
+        'project_description',
+        'start_date',
+        'end_date',
+        'location',
+        'contract_no',
+        'Employer',
+        'metadata' // JSON column
+    ]);
 
-    const values = [
-        project_name,
-        project_description,
-        start_date,
-        end_date,
-        location,
-        project_code,
-        Employer,
-        project_id
-    ];
+    const setClauses = [];
+    const values = [];
 
-    try {
-        const [result] = await pool.query(query, values);
-        return result.affectedRows;
-    } catch (error) {
-        console.error("❌ Error updating project:", error.message);
-        throw error;
+    for (const [key, value] of Object.entries(fields)) {
+        if (!allowedColumns.has(key)) continue;
+        if (typeof value === "undefined") continue;
+
+        // ✅ Special handling for JSON column
+        if (key === "metadata") {
+            setClauses.push(`\`${key}\` = ?`);
+            values.push(JSON.stringify(value)); // store as stringified JSON
+        } else {
+            setClauses.push(`\`${key}\` = ?`);
+            values.push(value); // normal value
+        }
     }
+
+    let affectedRows = 0;
+
+    // ✅ Update project table only if we have fields
+    if (setClauses.length > 0) {
+        const sql = `
+            UPDATE projects
+            SET ${setClauses.join(', ')}
+            WHERE project_id = ?;
+        `;
+        values.push(project_id);
+        try {
+            const [result] = await pool.query(sql, values);
+            affectedRows = result.affectedRows;
+        } catch (error) {
+            console.error("❌ Error updating project:", error.message);
+            throw error;
+        }
+    }
+
+    // ✅ Update roles if provided
+    if (user_roles && typeof user_roles === 'object' && Object.keys(user_roles).length > 0) {
+        const roleUpdateResult = await patchProjectRoles(project_id, user_roles);
+        if (!roleUpdateResult.ok) {
+            throw new Error(`Project updated but failed to update roles: ${roleUpdateResult.msg}`);
+        }
+    }
+
+    return affectedRows;
 }
 
-export async function r_updateProjectMetadata({ project_id, metadata }) {
-  const [result] = await pool.execute(
-    `UPDATE projects SET metadata = ? WHERE project_id = ?`,
-    [metadata, project_id]
-  );
-  return result.affectedRows;
-}
+
+
 
 // #endregion
 
@@ -256,62 +272,62 @@ export async function r_fetchVendors({
 } = {}) {
   const offset = (page - 1) * limit;
 
-  let baseQuery = "FROM vendors WHERE 1=1";
-  const params = [];
+    let baseQuery = "FROM vendors WHERE 1=1";
+    const params = [];
 
-  if (category !== 0) {
-    baseQuery += " AND category_id = ?";
-    params.push(category);
-  }
-  if (locationIds.length > 0) {
-    baseQuery += ` AND location_id IN (${locationIds.map(() => '?').join(',')})`;
-    params.push(...locationIds);
-  }
-  if (jobNatureIds.length > 0) {
-    baseQuery += ` AND job_nature_id IN (${jobNatureIds.map(() => '?').join(',')})`;
-    params.push(...jobNatureIds);
-  }
+    if (category !== 0) {
+        baseQuery += " AND category_id = ?";
+        params.push(category);
+    }
+    if (locationIds.length > 0) {
+        baseQuery += ` AND location_id IN (${locationIds.map(() => '?').join(',')})`;
+        params.push(...locationIds);
+    }
+    if (jobNatureIds.length > 0) {
+        baseQuery += ` AND job_nature_id IN (${jobNatureIds.map(() => '?').join(',')})`;
+        params.push(...jobNatureIds);
+    }
 
-  // If no search string, fetch paginated results directly from DB
-  if (!queryString.trim()) {
-    const countQuery = `SELECT COUNT(*) AS total ${baseQuery}`;
-    const [[{ total }]] = await pool.query(countQuery, params);
+    // If no search string, fetch paginated results directly from DB
+    if (!queryString.trim()) {
+        const countQuery = `SELECT COUNT(*) AS total ${baseQuery}`;
+        const [[{ total }]] = await pool.query(countQuery, params);
 
-    const fetchQuery = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`;
-    const fetchParams = [...params, limit, offset];
-    const [vendors] = await pool.query(fetchQuery, fetchParams);
+        const fetchQuery = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`;
+        const fetchParams = [...params, limit, offset];
+        const [vendors] = await pool.query(fetchQuery, fetchParams);
+
+        return {
+            vendors,
+            vendorCount: total,
+        };
+    }
+
+    // With search, fetch ALL matching vendors (no limit, no offset)
+    const fullFetchQuery = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'}`;
+    const [allVendors] = await pool.query(fullFetchQuery, params);
+
+    const fuse = new Fuse(allVendors, {
+        keys: [
+            { name: "name", weight: 0.5 },
+            { name: "remarks", weight: 0.2 },
+            { name: "email", weight: 0.1 },
+            { name: "website", weight: 0.1 },
+            { name: "telephone", weight: 0.05 },
+            { name: "mobile", weight: 0.05 },
+            { name: "reference", weight: 0.025 },
+            { name: "contact_person", weight: 0.025 },
+        ],
+        threshold: 0.4,
+    });
+    const results = fuse.search(queryString).map(r => r.item);
+
+    const paginatedResults = results.slice(offset, offset + limit);
 
     return {
-      vendors,
-      vendorCount: total,
+        vendors: paginatedResults,
+        vendorCount: results.length,
     };
-  }
-
-  // With search, fetch ALL matching vendors (no limit, no offset)
-  const fullFetchQuery = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'}`;
-  const [allVendors] = await pool.query(fullFetchQuery, params);
-
-  const fuse = new Fuse(allVendors, {
-    keys: [
-        { name: "name", weight: 0.5 },
-        { name: "remarks", weight: 0.2 },
-        { name: "email", weight: 0.1 },
-        { name: "website", weight: 0.1 },
-        { name: "telephone", weight: 0.05 },
-        { name: "mobile", weight: 0.05 },
-        { name: "reference", weight: 0.025 },
-        { name: "contact_person", weight: 0.025 },
-    ],
-    threshold: 0.4,
-  });
-  const results = fuse.search(queryString).map(r => r.item);
-
-  const paginatedResults = results.slice(offset, offset + limit);
-
-  return {
-    vendors: paginatedResults,
-    vendorCount: results.length,
-  };
 }
 
 // Insert a new vendor
@@ -431,11 +447,11 @@ export async function r_getDPRById(dpr_id) {
 
 // Fetch PDR current handler
 export async function getCurrentHandlerForDpr(dpr_id) {
-  const [rows] = await pool.query(
-    'SELECT current_handler FROM dpr WHERE dpr_id = ?',
-    [dpr_id]
-  );
-  return rows[0] ? rows[0].current_handler : null;
+    const [rows] = await pool.query(
+        'SELECT current_handler FROM dpr WHERE dpr_id = ?',
+        [dpr_id]
+    );
+    return rows[0] ? rows[0].current_handler : null;
 }
 
 // Insert DPR
@@ -492,81 +508,81 @@ export async function r_insertDPR(dprData) {
 
 // Update DPR
 export async function r_updateDPR(dprData) {
-  if (!dprData.dpr_id || !dprData.project_id) {
-    throw new Error("Missing required field: dpr_id or project_id");
-  }
-
-  const allowedColumns = new Set([
-    'project_id',
-    'report_date',
-    'site_condition',
-    'labour_report',
-    'cumulative_manpower',
-    'today_prog',
-    'tomorrow_plan',
-    'user_roles',
-    'report_footer',
-    'created_at',
-    'created_by',
-    'approved_by',
-    'final_approved_by',
-    'current_handler',
-    'dpr_status',
-  ]);
-
-  const jsonColumns = new Set([
-    'site_condition',
-    'labour_report',
-    'today_prog',
-    'tomorrow_plan',
-    'user_roles',
-    'report_footer',
-  ]);
-
-  const setClauses = [];
-  const values = [];
-
-  for (const column of allowedColumns) {
-    if (dprData.hasOwnProperty(column)) {
-      let val = dprData[column];
-      
-      if (val === undefined) continue;
-      if (val === null) {
-        val = null;
-      } else if (jsonColumns.has(column)) {
-        try {
-          val = JSON.stringify(val);
-        } catch (e) {
-          throw new Error(`Failed to JSON.stringify field ${column}: ${e.message}`);
-        }
-      } else if (column === 'created_at' && !val) {
-        val = new Date().toISOString().slice(0, 19).replace('T', ' ');
-      }
-
-      setClauses.push(`\`${column}\` = ?`);
-      values.push(val);
+    if (!dprData.dpr_id || !dprData.project_id) {
+        throw new Error("Missing required field: dpr_id or project_id");
     }
-  }
 
-  if (setClauses.length === 0) {
-    throw new Error("No valid fields provided to update");
-  }
+    const allowedColumns = new Set([
+        'project_id',
+        'report_date',
+        'site_condition',
+        'labour_report',
+        'cumulative_manpower',
+        'today_prog',
+        'tomorrow_plan',
+        'user_roles',
+        'report_footer',
+        'created_at',
+        'created_by',
+        'approved_by',
+        'final_approved_by',
+        'current_handler',
+        'dpr_status',
+    ]);
 
-  const query = `
+    const jsonColumns = new Set([
+        'site_condition',
+        'labour_report',
+        'today_prog',
+        'tomorrow_plan',
+        'user_roles',
+        'report_footer',
+    ]);
+
+    const setClauses = [];
+    const values = [];
+
+    for (const column of allowedColumns) {
+        if (dprData.hasOwnProperty(column)) {
+            let val = dprData[column];
+
+            if (val === undefined) continue;
+            if (val === null) {
+                val = null;
+            } else if (jsonColumns.has(column)) {
+                try {
+                    val = JSON.stringify(val);
+                } catch (e) {
+                    throw new Error(`Failed to JSON.stringify field ${column}: ${e.message}`);
+                }
+            } else if (column === 'created_at' && !val) {
+                val = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            }
+
+            setClauses.push(`\`${column}\` = ?`);
+            values.push(val);
+        }
+    }
+
+    if (setClauses.length === 0) {
+        throw new Error("No valid fields provided to update");
+    }
+
+    const query = `
     UPDATE dpr
     SET ${setClauses.join(', ')}
     WHERE dpr_id = ?;
   `;
 
-  values.push(dprData.dpr_id);
+    values.push(dprData.dpr_id);
 
-  try {
-    const [result] = await pool.query(query, values);
-    return result.affectedRows;
-  } catch (error) {
-    console.error("❌ Error updating DPR:", error.message, "\nData:", dprData);
-    throw error;
-  }
+    try {
+        const [result] = await pool.query(query, values);
+        return result.affectedRows;
+    } catch (error) {
+        console.error("❌ Error updating DPR:", error.message, "\nData:", dprData);
+        throw error;
+    }
 }
 
 // Fetch the last DPR of a project
@@ -684,17 +700,17 @@ export async function r_getUsersInvolvedInProject(project_id) {
         WHERE upr.project_id = 1;
     `;
     const params = [project_id];
-    
+
     try {
         const [rows] = await pool.query(query, params);
         const roleMap = {};
 
         for (const { user_id, role_name } of rows) {
             if (!roleMap[role_name]) {
-            roleMap[role_name] = [];
+                roleMap[role_name] = [];
             }
-            roleMap[role_name].push(user_id);   
-        }   
+            roleMap[role_name].push(user_id);
+        }
 
         return roleMap
     } catch (error) {
@@ -703,12 +719,108 @@ export async function r_getUsersInvolvedInProject(project_id) {
     }
 }
 
+// Update the roles of users for a project
+async function patchProjectRoles(project_id, changes) {
+  const roleNameToId = {
+    reporter: 1,
+    approver: 2,
+    client: 3,
+    final_approver: 4,
+    stranger: 5
+  };
+
+  try {
+    const deletePairs = [];
+    const insertRows = [];
+
+    // Step 1: Prepare the delete list
+    for (const [role, change] of Object.entries(changes)) {
+      const role_id = roleNameToId[role];
+      if (!role_id) continue;
+
+      if (role === "approver" || role === "final_approver") {
+        if (change) { 
+          deletePairs.push([project_id, change]);
+          insertRows.push([project_id, change, role_id]);
+        }
+      } else if (change) {
+        if (change.delete?.length) {
+          change.delete.forEach(uid => deletePairs.push([project_id, uid]));
+        }
+        if (change.insert?.length) {
+          change.insert.forEach(uid => insertRows.push([project_id, uid, role_id]));
+        }
+      }
+    }
+
+    // Step 2: Execute deletes first
+    for (const [proj, uid] of deletePairs) {
+      await pool.query(
+        `DELETE FROM project_user_roles WHERE project_id = ? AND user_id = ?`,
+        [proj, uid]
+      );
+    }
+
+    // Step 3: Check for duplicates in insertRows
+    const seen = new Set();
+    const safeInserts = insertRows.filter(([proj, uid]) => {
+      const key = `${proj}-${uid}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // Step 4: Insert new roles
+    if (safeInserts.length) {
+      await pool.query(
+        `INSERT IGNORE INTO project_user_roles (project_id, user_id, role_id) VALUES ?`,
+        [safeInserts]
+      );
+    }
+
+    return { ok: true, msg: "Roles updated safely" };
+  } catch (err) {
+    console.error("❌ Error updating roles:", err);
+    return { ok: false, msg: err.message };
+  }
+}
+
+
+
 
 // #endregion
 
 
-// const t = await fetchVendors(vendor);
-// console.log(t)
+let project_data = {
+    project_id: 19,
+    project_name: "New Airport Terminal",
+    project_description: "Construction of the new international terminal with Gaandu Prasath with HTML Cable ALONE!!",
+    start_date: "2025-07-01",
+    end_date: "2026-06-30",
+    location: "Chennai, Tamil Nadu",
+    contract_no: "CNT-AIR-2025-009",
+    Employer: "Airports Authority of India",
+    metadata: {
+    agency: ["MAPLANI", "L&T", "AMAZON", "NVIDIA"],
+    labour_type: ["carp", "mason", "staff", "fitter", "gypsum", "helper", "painter", "plumber"]
+  },
+    user_roles: {
+        reporter: {
+            insert: [1, 3],
+            delete: [11]
+        },
+        approver: 6,
+        final_approver: 42,
+        client: {
+            insert: [7, 8],
+            delete: []
+        }
+    }
+};
 
 
-// pool.end()
+// const t = await r_updateProject(project_data);
+// console.log(t);
+
+
+// pool.end();
