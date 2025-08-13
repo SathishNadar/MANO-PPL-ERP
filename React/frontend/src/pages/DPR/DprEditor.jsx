@@ -20,8 +20,8 @@ function DprEditor() {
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingMetadata, setSavingMetadata] = useState(false);
 
-  const agencyDict = ["Alpha Builders", "Beta Constructions", "Gamma Works", "Delta Infra"];
-  const labourDict = ["Mason", "Carpenter", "Electrician", "Painter", "Welder"];
+  const agencyDict = ['MALPANI/GOYAL', 'MANO', 'MIDAS', 'MARATHON', 'PAWAR PAINTERS', 'SL ELECTRICALS', 'SRIANSH ENGINEERS', 'A.S CONSTRUCTION', 'AGNISURKSHA'];
+  const labourDict = ["Mason", "Electrical", "Painter", "Welder", "Carp", "Fitter", "Gypsum", "Plumber", "Helper", "Staff"];
 
   // Fetch project and metadata
   useEffect(() => {
@@ -238,6 +238,7 @@ function DprEditor() {
                 value={projectName}
                 onChange={e => setProjectName(e.target.value)}
                 className="w-full bg-transparent border-b border-gray-500 focus:border-blue-500 outline-none text-white py-1 transition-colors"
+                placeholder="Project Name"
               />
             </div>
             <div>
