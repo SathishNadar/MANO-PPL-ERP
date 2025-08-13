@@ -11,13 +11,15 @@ import Home from "./pages/Dashboard/Home/home.jsx"
 import VendorList from './pages/Dashboard/VendorList/VendorList.jsx'
 import WIP from './pages/Dashboard/WorkInProgress/workinprogress.jsx'
 
-import DPR from "./pages/DPR/DailyProgressReport.jsx"
+import DPRCreate from "./pages/DPR/DailyProgressReport.jsx"
+import ProjectEdit from './pages/DPR/DprEditor.jsx'
 
 import ProjectsView from './pages/Dashboard/Projects/ProjectsView.jsx'
 import ProjectDescription from './pages/Dashboard/Projects/ProjectDescription.jsx'
 import DprFetchViewer from './pages/DPR/DprFetchViewer.jsx'
 
 import Dummy from './pages/Dashboard/VendorList/VendorFilter.jsx'
+
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -37,10 +39,11 @@ function App() {
         
         <Route path="/dashboard/project-description/:projectId" element={<ProtectedRoute><ProjectDescription /></ProtectedRoute>} />
         <Route path="/dashboard/project-description/:projectId/:dprId" element={<ProtectedRoute><DprFetchViewer /></ProtectedRoute>} />
-        <Route path="/dashboard/project-description/:projectId/dprCreate" element={<ProtectedRoute><DPR /></ProtectedRoute>} />
+        <Route path="/dashboard/project-description/:projectId/dprCreate" element={<ProtectedRoute><DPRCreate /></ProtectedRoute>} />
+        <Route path="/dashboard/project-description/:projectId/dprEdit" element={<ProtectedRoute><ProjectEdit /></ProtectedRoute>} />
         <Route path="/dashboard/project-description/dpr-fetch" element={<ProtectedRoute>< DprFetchViewer/></ProtectedRoute>} />
         
-        <Route path="/dummy" element={<Dummy/>} />
+        <Route path="/dummy2" element={<Dummy/>} />
         
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
