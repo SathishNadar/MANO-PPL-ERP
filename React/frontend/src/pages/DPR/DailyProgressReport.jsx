@@ -263,49 +263,163 @@ function DailyProgressReport() {
       <div className="bg-gray-800 rounded-xl p-6 mb-6 border border-gray-800">
         <h2 className="text-lg font-semibold text-gray-200 mb-4">Labour Report Details</h2>
         <div className="overflow-x-auto rounded-lg">
-          <table className="w-full border-collapse">
-            {/* Dynamically render table head and rows based on project.metadata */}
-            {project?.metadata && Array.isArray(project.metadata.agency) && Array.isArray(project.metadata.labour_type) ? (
-              <>
-                <thead>
-                  <tr>
-                    <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold">Agency</th>
-                    {project.metadata.labour_type.map((type) => (
-                      <th key={type} className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold">{type}</th>
-                    ))}
-                    <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold">Total</th>
-                    <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold">Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {labourReport && labourReport.length > 0 ? (
-                    <>
-                      {labourReport.map((row, idx) => (
-                        <tr className="bg-gray-800" key={row.agency || idx}>
-                          <td className="border-b border-gray-800 px-4 py-2">{row.agency || "--"}</td>
-                          {project.metadata.labour_type.map((type) => (
-                            <td key={type} className="border-b border-gray-800 px-4 py-2">{row[type] ?? "--"}</td>
-                          ))}
-                          <td className="border-b border-gray-800 px-4 py-2 font-bold text-gray-200">
-                            {project.metadata.labour_type.reduce(
-                              (sum, type) => sum + (Number(row[type]) || 0),
-                              0
-                            )}
-                          </td>
-                          <td className="border-b border-gray-800 px-4 py-2">{row.remarks ?? "--"}</td>
-                        </tr>
-                      ))}
-                    </>
-                  ) : (
+          {project?.metadata && Array.isArray(project.metadata.agency) && Array.isArray(project.metadata.labour_type) ? (
+            (() => {
+              // Calculate column totals and grand total
+              const colTotals = project.metadata.labour_type.map(type =>
+                labourReport.reduce((sum, row) => sum + (Number(row[type]) || 0), 0)
+              );
+              const rowTotals = labourReport.map(row =>
+                project.metadata.labour_type.reduce((sum, type) => sum + (Number(row[type]) || 0), 0)
+              );
+              const grandTotal = colTotals.reduce((sum, val) => sum + val, 0);
+              // Table rendering:
+              return (
+                <table className="w-full border-separate border-spacing-0">
+                  <thead>
                     <tr>
-                      <td className="text-center text-gray-400 px-4 py-2" colSpan={project.metadata.labour_type.length + 3}>
-                        No Labour Report Data
-                      </td>
+                      <th className="border-b border-gray-700 border-r border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">Agency</th>
+                      {project.metadata.labour_type.map((type, i) => (
+                        <th
+                          key={type}
+                          className={`border-b border-gray-700 border-r border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800`}
+                        >
+                          {type}
+                        </th>
+                      ))}
+                      <th className="border-b border-gray-700 border-r border-gray-700 px-4 py-2 text-left text-blue-300 font-bold bg-gray-800">Total</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-blue-300 font-bold bg-gray-800">Remarks</th>
                     </tr>
-                  )}
-                </tbody>
-              </>
-            ) : (
+                  </thead>
+                  <tbody>
+                    {labourReport && labourReport.length > 0 ? (
+                      <>
+                        {labourReport.map((row, idx) => (
+                          <tr key={row.agency || idx} className="bg-gray-800">
+                            <td className="border-b border-gray-700 border-r border-gray-700 px-4 py-2 font-semibold">{row.agency || "--"}</td>
+                            {project.metadata.labour_type.map((type, colIdx) => (
+                              <td
+                                key={type}
+                                className="border-b border-gray-700 border-r border-gray-700 px-4 py-2"
+                              >
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  pattern="[0-9]*"
+                                  inputMode="numeric"
+                                  className="w-20 bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]"
+                                  value={row[type] ?? ""}
+                                  onChange={e => {
+                                    const val = e.target.value.replace(/[^0-9]/g, "");
+                                    setLabourReport(prev => {
+                                      const updated = [...prev];
+                                      updated[idx] = {
+                                        ...updated[idx],
+                                        [type]: val
+                                      };
+                                      return updated;
+                                    });
+                                  }}
+                                  onKeyDown={e => {
+                                    // Arrow key navigation between inputs
+                                    const numRows = labourReport.length;
+                                    const numCols = project.metadata.labour_type.length;
+                                    // Only handle arrow keys
+                                    let targetRow = idx;
+                                    let targetCol = colIdx;
+                                    if (e.key === "ArrowUp") {
+                                      if (idx > 0) {
+                                        targetRow = idx - 1;
+                                      } else {
+                                        return;
+                                      }
+                                    } else if (e.key === "ArrowDown") {
+                                      if (idx < numRows - 1) {
+                                        targetRow = idx + 1;
+                                      } else {
+                                        return;
+                                      }
+                                    } else if (e.key === "ArrowLeft") {
+                                      if (colIdx > 0) {
+                                        targetCol = colIdx - 1;
+                                      } else {
+                                        return;
+                                      }
+                                    } else if (e.key === "ArrowRight") {
+                                      if (colIdx < numCols - 1) {
+                                        targetCol = colIdx + 1;
+                                      } else {
+                                        return;
+                                      }
+                                    } else {
+                                      return;
+                                    }
+                                    e.preventDefault();
+                                    // Find the target input and focus it
+                                    // Inputs have a unique data-row and data-col attribute
+                                    const selector = `input[data-labour-row="${targetRow}"][data-labour-col="${targetCol}"]`;
+                                    const targetInput = document.querySelector(selector);
+                                    if (targetInput) targetInput.focus();
+                                  }}
+                                  data-labour-row={idx}
+                                  data-labour-col={colIdx}
+                                />
+                              </td>
+                            ))}
+                            <td className="border-b border-gray-700 border-r border-gray-700 px-4 py-2 font-bold text-blue-300">
+                              {project.metadata.labour_type.reduce(
+                                (sum, type) => sum + (Number(row[type]) || 0),
+                                0
+                              )}
+                            </td>
+                            <td className="border-b border-gray-700 px-2 py-2">
+                              <input
+                                type="text"
+                                className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={row.remarks ?? ""}
+                                onChange={e => {
+                                  setLabourReport(prev => {
+                                    const updated = [...prev];
+                                    updated[idx] = {
+                                      ...updated[idx],
+                                      remarks: e.target.value
+                                    };
+                                    return updated;
+                                  });
+                                }}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                        {/* Total row */}
+                        <tr className="bg-gray-800 font-bold">
+                          <td className="border-t border-gray-700 border-r border-gray-700 px-4 py-2 text-blue-300">Total</td>
+                          {colTotals.map((ct, i) => (
+                            <td
+                              key={"total-" + i}
+                              className="border-t border-gray-700 border-r border-gray-700 px-4 py-2 text-blue-300"
+                            >
+                              {ct}
+                            </td>
+                          ))}
+                          <td className="border-t border-gray-700 border-r border-gray-700 px-4 py-2 text-blue-300">{grandTotal}</td>
+                          <td className="border-t border-gray-700 px-4 py-2"></td>
+                        </tr>
+                      </>
+                    ) : (
+                      <tr>
+                        <td className="text-center text-gray-400 px-4 py-2" colSpan={project.metadata.labour_type.length + 3}>
+                          No Labour Report Data
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              );
+            })()
+          ) : (
+            <table className="w-full border-collapse">
               <tbody>
                 <tr>
                   <td className="text-center text-gray-400 px-4 py-2" colSpan={11}>
@@ -313,8 +427,8 @@ function DailyProgressReport() {
                   </td>
                 </tr>
               </tbody>
-            )}
-          </table>
+            </table>
+          )}
         </div>
       </div>
 
