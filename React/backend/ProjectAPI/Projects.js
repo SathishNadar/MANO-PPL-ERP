@@ -100,6 +100,30 @@ router.post("/updateProject", async (req, res) => {
     }
 });
 
+router.post("/updateMetadata", async (req, res) => {
+  try {
+    const { project_id, metadata } = req.body;
+
+    if (!project_id || !metadata) {
+      return res.status(400).json({ message: "Missing project_id or metadata" });
+    }
+
+    const affectedRows = await DB.r_updateProjectMetadata({
+      project_id,
+      metadata: JSON.stringify(metadata), // store as JSON string
+    });
+
+    if (affectedRows === 0) {
+      return res.status(404).json({ message: "No project found to update" });
+    }
+
+    res.json({ success: true, updated: affectedRows });
+  } catch (error) {
+    console.error("❌ API error in updateMetadata:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Get call to fetch all projects a user is involved using user_id
 router.get("/userProjects/:user_id", async (req, res) => {
     try {

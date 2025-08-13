@@ -232,6 +232,14 @@ export async function r_updateProject(data) {
     }
 }
 
+export async function r_updateProjectMetadata({ project_id, metadata }) {
+  const [result] = await pool.execute(
+    `UPDATE projects SET metadata = ? WHERE project_id = ?`,
+    [metadata, project_id]
+  );
+  return result.affectedRows;
+}
+
 // #endregion
 
 // #region 🏷️ VENDOR ─────────────────────────────────────────────
