@@ -129,37 +129,79 @@ function DailyProgressReport() {
 
   // Construct the complete DPR object
   function generateCompleteDPRObject() {
+    // --- site_condition object ---
+    const isRainy = condition === "rainy";
+    const rainTiming = timeSlots
+      .filter(slot => slot.from && slot.to)
+      .map(slot => `${slot.from}-${slot.to}`);
+    const groundState = isRainy ? "lava" : "dry";
+    const site_condition = {
+      is_rainy: isRainy,
+      rain_timing: rainTiming,
+      ground_state: groundState,
+    };
+
+    // --- labour_report as single object ---
+    let labour_report = {};
+    if (
+      Array.isArray(labourReport) &&
+      project?.metadata?.labour_type &&
+      Array.isArray(project.metadata.labour_type)
+    ) {
+      // For each labour type, collect array of numbers per agency row
+      project.metadata.labour_type.forEach(type => {
+        labour_report[type] = labourReport.map(row => Number(row[type]) || 0);
+      });
+      labour_report.agency = labourReport.map(row => row.agency || "");
+      // remarks: array of remarks per agency (matching number of agencies)
+      labour_report.remarks = labourReport.map(row => row.remarks ?? "");
+    } else {
+      // fallback: just output as-is
+      labour_report = labourReport;
+    }
+
+    // --- cumulative_manpower ---
+    const cumulative_manpower = Array.isArray(labourReport)
+      ? labourReport.reduce(
+          (sum, row) =>
+            sum +
+            (project?.metadata?.labour_type
+              ? project.metadata.labour_type.reduce(
+                  (rowSum, type) => rowSum + (Number(row[type]) || 0),
+                  0
+                )
+              : 0),
+          0
+        )
+      : 0;
+
+    // --- remarks field (top-level string) ---
+    const remarksVal = remarks;
+
+    // --- today_prog and tomorrow_plan ---
+    const today_prog = {
+      progress: todaysProgress.map((row) => row.task),
+      qty: todaysProgress.map((row) => row.qty),
+    };
+    const tomorrow_plan = {
+      plan: tomorrowsPlan.map((row) => row.task),
+      qty: tomorrowsPlan.map((row) => row.qty),
+    };
+
+    // --- Compose object in required order ---
     return {
       project_id: projectId,
       report_date: new Date().toISOString().split("T")[0], // e.g., "2024-06-24"
-      site_condition: condition,
-      labour_report: labourReport,
-      cumulative_manpower: Array.isArray(labourReport)
-        ? labourReport.reduce(
-            (sum, row) =>
-              sum +
-              (project?.metadata?.labour_type
-                ? project.metadata.labour_type.reduce(
-                    (rowSum, type) => rowSum + (Number(row[type]) || 0),
-                    0
-                  )
-                : 0),
-            0
-          )
-        : 0,
-      today_prog: {
-        plan: todaysProgress.map((row) => row.task),
-        qty: todaysProgress.map((row) => row.qty),
-      },
-      tomorrow_plan: {
-        plan: tomorrowsPlan.map((row) => row.task),
-        qty: tomorrowsPlan.map((row) => row.qty),
-      },
-      user_roles: [], // Placeholder, replace with actual user role logic if needed
-      report_footer: {
-        remarks: remarks,
-      },
+      site_condition,
+      labour_report,
+      cumulative_manpower,
+      today_prog,
+      today_qty: today_prog.qty,
+      tomorrow_plan,
+      tomorrow_qty: tomorrow_plan.qty,
+      remarks: remarksVal,
       created_at: getMySQLDateTime(),
+      user_roles: [], // Placeholder, replace with actual user role logic if needed
     };
   }
 
