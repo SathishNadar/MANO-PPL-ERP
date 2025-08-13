@@ -131,35 +131,39 @@ export async function r_fetchProjectsByUser(user_id) {
     }
 }
 
-// Function to insert Project  ###### Hardcoded 
+// Function to insert Project
 export async function r_insertProject(data) {
     const {
         project_name,
-        user_id = null,
+        created_by,
         project_description = null,
         start_date = null,
         end_date = null,
         location = null,
         project_code = null,
-        Employer = null
+        Employer = null,
+        metadata = null,
+        user_roles = {}
     } = data;
 
-    if (!project_name) {
-        throw new Error("Missing required fields: project_name");
+    if (!project_name || !created_by) {
+        throw new Error("Missing required field: project_name or created_by");
     }
 
-    const projQuery = `
-        INSERT INTO projects (
-            project_name, project_description,
-            start_date, end_date, location,
-            project_code, Employer
-        ) VALUES (?, ?, ?, ?, ?, ?, ?);
-    `;
+    const metadataValue = metadata ? JSON.stringify(metadata) : null;
 
-    const roleQuery = `
-        INSERT INTO project_user_roles (
-            project_id, user_id, role_id
-        ) VALUES (?, ?, ?);
+    const insertSQL = `
+        INSERT INTO projects (
+            project_name,
+            project_description,
+            start_date,
+            end_date,
+            location,
+            project_code,
+            Employer,
+            metadata,
+            created_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
     const values = [
@@ -169,13 +173,23 @@ export async function r_insertProject(data) {
         end_date,
         location,
         project_code,
-        Employer
+        Employer,
+        metadataValue,
+        created_by
     ];
 
     try {
-        const [projResult] = await pool.query(projQuery, values);
-        await pool.query(roleQuery, [projResult.insertId, user_id, 1]);
-        return projResult.insertId;
+        const [projResult] = await pool.query(insertSQL, values);
+        const newProjectId = projResult.insertId;
+
+        if (user_roles && typeof user_roles === 'object' && Object.keys(user_roles).length > 0) {
+            const roleUpdateResult = await patchProjectRoles(newProjectId, user_roles);
+            if (!roleUpdateResult.ok) {
+                throw new Error(`Project created but failed to set roles: ${roleUpdateResult.msg}`);
+            }
+        }
+
+        return { ok: true, project_id: newProjectId };
     } catch (error) {
         console.error("❌ Error inserting project:", error.message);
         throw error;
@@ -194,16 +208,15 @@ export async function r_updateProject(data) {
         throw new Error("Missing required field: project_id");
     }
 
-    // ✅ Allowed columns based on your schema
     const allowedColumns = new Set([
         'project_name',
         'project_description',
         'start_date',
         'end_date',
         'location',
-        'contract_no',
+        'project_code',
         'Employer',
-        'metadata' // JSON column
+        'metadata'
     ]);
 
     const setClauses = [];
@@ -213,7 +226,6 @@ export async function r_updateProject(data) {
         if (!allowedColumns.has(key)) continue;
         if (typeof value === "undefined") continue;
 
-        // ✅ Special handling for JSON column
         if (key === "metadata") {
             setClauses.push(`\`${key}\` = ?`);
             values.push(JSON.stringify(value)); // store as stringified JSON
@@ -225,7 +237,6 @@ export async function r_updateProject(data) {
 
     let affectedRows = 0;
 
-    // ✅ Update project table only if we have fields
     if (setClauses.length > 0) {
         const sql = `
             UPDATE projects
@@ -242,7 +253,6 @@ export async function r_updateProject(data) {
         }
     }
 
-    // ✅ Update roles if provided
     if (user_roles && typeof user_roles === 'object' && Object.keys(user_roles).length > 0) {
         const roleUpdateResult = await patchProjectRoles(project_id, user_roles);
         if (!roleUpdateResult.ok) {
@@ -252,8 +262,6 @@ export async function r_updateProject(data) {
 
     return affectedRows;
 }
-
-
 
 
 // #endregion
@@ -798,7 +806,7 @@ let project_data = {
     start_date: "2025-07-01",
     end_date: "2026-06-30",
     location: "Chennai, Tamil Nadu",
-    contract_no: "CNT-AIR-2025-009",
+    project_code: "CNT-AIR-2025-009",
     Employer: "Airports Authority of India",
     metadata: {
     agency: ["MAPLANI", "L&T", "AMAZON", "NVIDIA"],
@@ -819,6 +827,7 @@ let project_data = {
 };
 
 
+// const t = await r_insertProject(project_data);
 // const t = await r_updateProject(project_data);
 // console.log(t);
 

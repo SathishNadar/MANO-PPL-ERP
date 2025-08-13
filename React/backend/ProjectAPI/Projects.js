@@ -23,40 +23,26 @@ router.get("/getProject/:id", authenticateJWT, async (req, res) => {
 // Post call to add Project Detail
 router.post("/insertProject", authenticateJWT, async (req, res) => {
     try {
-        const {
-            user_roles = {},
-            project_name,
-            project_description = null,
-            start_date,
-            end_date = null,
-            location = null,
-            project_code = null,
-            Employer = null
-        } = req.body;
-
-        const user_id = req.user.user_id;
+        const { project_name} = req.body;
+        req.body.created_by = req.user.user_id;
 
         if (!project_name) {
-            return res.status(400).json({ message: "Missing project_name" });
+            return res.status(400).json({
+                ok: false,
+                message: "Missing required fields: project_name"
+            });
         }
 
-        const insertId = await DB.r_insertProject({
-            user_roles,
-            user_id,
-            project_name,
-            project_description,
-            start_date,
-            end_date,
-            location,
-            project_code,
-            Employer
+        const result = await DB.r_insertProject(req.body);
+
+        res.json({
+            ok: true,
+            message: "Project created successfully",
+            project_id: result.project_id
         });
-
-        res.json({ success: true, insertId });
-
     } catch (error) {
         console.error("❌ API error in insertProject:", error.message);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ ok: false, message: error.message });
     }
 });
 
