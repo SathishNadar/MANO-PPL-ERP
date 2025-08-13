@@ -44,9 +44,36 @@ function DailyProgressReport() {
           if (data.condition) {
             setCondition(data.condition);
           }
-          // If API returns labour report
-          if (data.labourReport && Array.isArray(data.labourReport)) {
+          // If project metadata exists and has agency and labour_type arrays, build labourReport accordingly
+          if (
+            data.metadata &&
+            Array.isArray(data.metadata.agency) &&
+            Array.isArray(data.metadata.labour_type)
+          ) {
+            // If API returns a labourReport, try to use values from it, else default to empty/zero
+            let apiLabourReport = Array.isArray(data.labourReport) ? data.labourReport : [];
+            // Map by agency for fast lookup
+            const apiLabourByAgency = {};
+            for (const row of apiLabourReport) {
+              if (row.agency) apiLabourByAgency[row.agency] = row;
+            }
+            // Build rows for each agency, with keys for each labour_type
+            const reportRows = data.metadata.agency.map((agencyName) => {
+              const apiRow = apiLabourByAgency[agencyName] || {};
+              const row = { agency: agencyName };
+              data.metadata.labour_type.forEach((type) => {
+                row[type] = apiRow[type] ?? "";
+              });
+              // Optionally add remarks if present
+              if (apiRow.remarks) row.remarks = apiRow.remarks;
+              return row;
+            });
+            setLabourReport(reportRows);
+          } else if (data.labourReport && Array.isArray(data.labourReport)) {
+            // fallback: use API's labourReport directly if no metadata
             setLabourReport(data.labourReport);
+          } else {
+            setLabourReport([]);
           }
         }
       } catch (error) {
@@ -237,86 +264,60 @@ function DailyProgressReport() {
         <h2 className="text-lg font-semibold text-gray-200 mb-4">Labour Report Details</h2>
         <div className="overflow-x-auto rounded-lg">
           <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Agency</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Help</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Mason</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Mill</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Fitter</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Carpenter</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Helper</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Foreman</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Mechanic</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Driver</th>
-                <th className="bg-gray-700 text-gray-300 uppercase text-xs font-semibold px-4 py-2">Operator</th>
-              </tr>
-            </thead>
-            <tbody>
-              {labourReport && labourReport.length > 0 ? (
-                <>
-                  {labourReport.map((row, idx) => (
-                    <tr className="bg-gray-800" key={row.agency || idx}>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.agency || "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.help ?? "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.mason ?? "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.mill ?? "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.fitter ?? "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.carpenter ?? "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.helper ?? "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.foreman ?? "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.mechanic ?? "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.driver ?? "--"}</td>
-                      <td className="border-b border-gray-800 px-4 py-2">{row.operator ?? "--"}</td>
-                    </tr>
-                  ))}
-                  {/* Optionally, total row calculation */}
+            {/* Dynamically render table head and rows based on project.metadata */}
+            {project?.metadata && Array.isArray(project.metadata.agency) && Array.isArray(project.metadata.labour_type) ? (
+              <>
+                <thead>
                   <tr>
-                    <td className="font-bold text-gray-200 px-4 py-2">Total</td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.help) || 0), 0)}
-                    </td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.mason) || 0), 0)}
-                    </td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.mill) || 0), 0)}
-                    </td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.fitter) || 0), 0)}
-                    </td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.carpenter) || 0), 0)}
-                    </td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.helper) || 0), 0)}
-                    </td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.foreman) || 0), 0)}
-                    </td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.mechanic) || 0), 0)}
-                    </td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.driver) || 0), 0)}
-                    </td>
-                    <td className="font-bold text-gray-200 px-4 py-2">
-                      {labourReport.reduce((acc, row) => acc + (Number(row.operator) || 0), 0)}
-                    </td>
+                    <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold">Agency</th>
+                    {project.metadata.labour_type.map((type) => (
+                      <th key={type} className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold">{type}</th>
+                    ))}
+                    <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold">Total</th>
+                    <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold">Remarks</th>
                   </tr>
-                </>
-              ) : (
-                // fallback to no data
+                </thead>
+                <tbody>
+                  {labourReport && labourReport.length > 0 ? (
+                    <>
+                      {labourReport.map((row, idx) => (
+                        <tr className="bg-gray-800" key={row.agency || idx}>
+                          <td className="border-b border-gray-800 px-4 py-2">{row.agency || "--"}</td>
+                          {project.metadata.labour_type.map((type) => (
+                            <td key={type} className="border-b border-gray-800 px-4 py-2">{row[type] ?? "--"}</td>
+                          ))}
+                          <td className="border-b border-gray-800 px-4 py-2 font-bold text-gray-200">
+                            {project.metadata.labour_type.reduce(
+                              (sum, type) => sum + (Number(row[type]) || 0),
+                              0
+                            )}
+                          </td>
+                          <td className="border-b border-gray-800 px-4 py-2">{row.remarks ?? "--"}</td>
+                        </tr>
+                      ))}
+                    </>
+                  ) : (
+                    <tr>
+                      <td className="text-center text-gray-400 px-4 py-2" colSpan={project.metadata.labour_type.length + 3}>
+                        No Labour Report Data
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </>
+            ) : (
+              <tbody>
                 <tr>
                   <td className="text-center text-gray-400 px-4 py-2" colSpan={11}>
                     No Labour Report Data
                   </td>
                 </tr>
-              )}
-            </tbody>
+              </tbody>
+            )}
           </table>
         </div>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gray-800 rounded-xl p-6 mb-6 border border-gray-800">
           <h2 className="text-lg font-medium mb-4 text-[#E0E0E0]">Today's Progress</h2>
@@ -366,6 +367,7 @@ function DailyProgressReport() {
           <button className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4">Add Plan</button>
         </div>
       </div>
+      
       {/* Events & Remarks Section in grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
         {/* Events Section */}

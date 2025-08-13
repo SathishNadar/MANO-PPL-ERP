@@ -14,7 +14,7 @@ function ProjectDescription() {
   useEffect(() => {
     if (!projectId) return;
 
-    fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`)
+    fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`) 
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setProject(data.data);
@@ -175,8 +175,10 @@ function ProjectDescription() {
                   MPR
                 </button>
               </div>
-              <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
-                Edit DPR
+              <button 
+              onClick={() => navigate(`/dashboard/project-description/${projectId}/dprEdit`)}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
+                Edit Project
               </button>
             </div>
           </div>
