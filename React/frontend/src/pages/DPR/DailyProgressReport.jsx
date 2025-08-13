@@ -15,6 +15,14 @@ function DailyProgressReport() {
   ]);
   const [labourReport, setLabourReport] = React.useState([]); // dynamic labour report rows
 
+  // --- New states for today's progress and tomorrow's plan ---
+  const [todaysProgress, setTodaysProgress] = useState([]);
+  const [tomorrowsPlan, setTomorrowsPlan] = useState([]);
+  const [editToday, setEditToday] = useState(false);
+  const [editTomorrow, setEditTomorrow] = useState(false);
+  // New state for remarks textarea
+  const [remarks, setRemarks] = useState("");
+
   useEffect(() => {
     if (!projectId) return;
     const fetchProjectDetails = async () => {
@@ -76,12 +84,114 @@ function DailyProgressReport() {
             setLabourReport([]);
           }
         }
+        // --- Fetch last DPR for today's progress prefill ---
+        try {
+          const dprResp = await fetch(`http://${API_URI}:${PORT}/report/initDPR/${projectId}`, {
+            credentials: "include",
+          });
+          const dprJson = await dprResp.json();
+          // Prefill today's progress directly from dprJson.todays_plan if available
+          if (
+            dprJson?.todays_plan &&
+            Array.isArray(dprJson.todays_plan.plan) &&
+            dprJson.todays_plan.plan.length > 0
+          ) {
+            setTodaysProgress(
+              dprJson.todays_plan.plan.map((task, idx) => ({
+                task: task || "",
+                qty:
+                  (Array.isArray(dprJson.todays_plan.qty) &&
+                    typeof dprJson.todays_plan.qty[idx] !== "undefined")
+                    ? dprJson.todays_plan.qty[idx]
+                    : ""
+              }))
+            );
+          } else {
+            setTodaysProgress([]);
+          }
+        } catch (err) {
+          setTodaysProgress([]);
+        }
+        setTomorrowsPlan([]);
       } catch (error) {
         console.error("Error fetching project details:", error);
       }
     };
     fetchProjectDetails();
   }, [projectId]);
+
+  // Helper to get MySQL DATETIME string (YYYY-MM-DD HH:MM:SS)
+  function getMySQLDateTime() {
+    // toISOString() gives 'YYYY-MM-DDTHH:MM:SS.sssZ'
+    // We want 'YYYY-MM-DD HH:MM:SS'
+    return new Date().toISOString().slice(0, 19).replace('T', ' ');
+  }
+
+  // Construct the complete DPR object
+  function generateCompleteDPRObject() {
+    return {
+      project_id: projectId,
+      report_date: new Date().toISOString().split("T")[0], // e.g., "2024-06-24"
+      site_condition: condition,
+      labour_report: labourReport,
+      cumulative_manpower: Array.isArray(labourReport)
+        ? labourReport.reduce(
+            (sum, row) =>
+              sum +
+              (project?.metadata?.labour_type
+                ? project.metadata.labour_type.reduce(
+                    (rowSum, type) => rowSum + (Number(row[type]) || 0),
+                    0
+                  )
+                : 0),
+            0
+          )
+        : 0,
+      today_prog: {
+        plan: todaysProgress.map((row) => row.task),
+        qty: todaysProgress.map((row) => row.qty),
+      },
+      tomorrow_plan: {
+        plan: tomorrowsPlan.map((row) => row.task),
+        qty: tomorrowsPlan.map((row) => row.qty),
+      },
+      user_roles: [], // Placeholder, replace with actual user role logic if needed
+      report_footer: {
+        remarks: remarks,
+      },
+      created_at: getMySQLDateTime(),
+    };
+  }
+
+  // Function to post DPR to backend
+  async function postDPRToBackend() {
+    try {
+      const dprObj = generateCompleteDPRObject();
+      const response = await fetch(
+        `http://${API_URI}:${PORT}/report/insertDPR`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(dprObj),
+        }
+      );
+      const data = await response.json();
+      if (response.ok && data.success) {
+        alert("DPR generated and submitted successfully!");
+      } else {
+        alert(
+          `Failed to generate DPR: ${
+            data?.message || response.statusText || "Unknown error"
+          }`
+        );
+      }
+    } catch (err) {
+      alert(`Error submitting DPR: ${err.message}`);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-4 py-6 md:px-12 lg:px-24">
@@ -433,52 +543,199 @@ function DailyProgressReport() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Today's Progress Table */}
         <div className="bg-gray-800 rounded-xl p-6 mb-6 border border-gray-800">
-          <h2 className="text-lg font-medium mb-4 text-[#E0E0E0]">Today's Progress</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-              <div className="flex items-center">
-                <span className="material-icons text-blue-400 mr-3">construction</span>
-                <p>Concrete pouring for foundation</p>
-              </div>
-              <span className="text-sm text-gray-400">100%</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-              <div className="flex items-center">
-                <span className="material-icons text-blue-400 mr-3">square_foot</span>
-                <p>Steel framework assembly</p>
-              </div>
-              <span className="text-sm text-gray-400">75%</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-              <div className="flex items-center">
-                <span className="material-icons text-blue-400 mr-3">electrical_services</span>
-                <p>Electrical wiring installation</p>
-              </div>
-              <span className="text-sm text-gray-400">50%</span>
-            </div>
+          <div className="flex items-center mb-4">
+            <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">Today's Progress</h2>
+            <button
+              type="button"
+              className="ml-1 text-gray-400 hover:text-blue-400 transition-colors"
+              title={editToday ? "Done" : "Edit"}
+              onClick={() => setEditToday(e => !e)}
+            >
+              {!editToday ? (
+                <span className="material-icons align-middle">edit</span>
+              ) : (
+                <span className="material-icons align-middle">check</span>
+              )}
+            </button>
           </div>
-          <button className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4">Add Task</button>
+          <div className="overflow-x-auto">
+            <table className="w-full border-separate border-spacing-0">
+              <thead>
+                <tr>
+                  <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">Task</th>
+                  <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">Quantity</th>
+                  {editToday && (
+                    <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {todaysProgress.length === 0 && (
+                  <tr>
+                    <td colSpan={editToday ? 3 : 2} className="text-center text-gray-400 px-4 py-2">
+                      No tasks added yet.
+                    </td>
+                  </tr>
+                )}
+                {todaysProgress.map((row, idx) => (
+                  <tr key={idx} className="bg-gray-800">
+                    <td className="border-b border-gray-700 px-4 py-2">
+                      <input
+                        className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Task"
+                        value={row.task}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setTodaysProgress(prev => {
+                            const updated = [...prev];
+                            updated[idx] = { ...updated[idx], task: val };
+                            return updated;
+                          });
+                        }}
+                      />
+                    </td>
+                    <td className="border-b border-gray-700 px-4 py-2">
+                      <input
+                        className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Quantity"
+                        value={row.qty}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9.]/g, "");
+                          setTodaysProgress(prev => {
+                            const updated = [...prev];
+                            updated[idx] = { ...updated[idx], qty: val };
+                            return updated;
+                          });
+                        }}
+                      />
+                    </td>
+                    {editToday && (
+                      <td className="border-b border-gray-700 px-2 py-2 text-center">
+                        <button
+                          type="button"
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                          title="Delete"
+                          onClick={() =>
+                            setTodaysProgress(prev => prev.filter((_, i) => i !== idx))
+                          }
+                        >
+                          <span className="material-icons align-middle">close</span>
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button
+            className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4"
+            type="button"
+            onClick={() =>
+              setTodaysProgress(prev => [...prev, { task: "", qty: "" }])
+            }
+          >
+            Add Task
+          </button>
         </div>
+        {/* Tomorrow's Planning Table */}
         <div className="bg-gray-800 rounded-xl p-6 mb-6 border border-gray-800">
-          <h2 className="text-lg font-medium mb-4 text-[#E0E0E0]">Tomorrow's Planning</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-              <div className="flex items-center">
-                <span className="material-icons text-yellow-400 mr-3">construction</span>
-                <p>Complete steel framework</p>
-              </div>
-              <span className="text-sm text-gray-400">To Do</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-              <div className="flex items-center">
-                <span className="material-icons text-yellow-400 mr-3">plumbing</span>
-                <p>Plumbing rough-in</p>
-              </div>
-              <span className="text-sm text-gray-400">To Do</span>
-            </div>
+          <div className="flex items-center mb-4">
+            <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">Tomorrow's Planning</h2>
+            <button
+              type="button"
+              className="ml-1 text-gray-400 hover:text-blue-400 transition-colors"
+              title={editTomorrow ? "Done" : "Edit"}
+              onClick={() => setEditTomorrow(e => !e)}
+            >
+              {!editTomorrow ? (
+                <span className="material-icons align-middle">edit</span>
+              ) : (
+                <span className="material-icons align-middle">check</span>
+              )}
+            </button>
           </div>
-          <button className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4">Add Plan</button>
+          <div className="overflow-x-auto">
+            <table className="w-full border-separate border-spacing-0">
+              <thead>
+                <tr>
+                  <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">Task</th>
+                  <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">Quantity</th>
+                  {editTomorrow && (
+                    <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {tomorrowsPlan.length === 0 && (
+                  <tr>
+                    <td colSpan={editTomorrow ? 3 : 2} className="text-center text-gray-400 px-4 py-2">
+                      No plans added yet.
+                    </td>
+                  </tr>
+                )}
+                {tomorrowsPlan.map((row, idx) => (
+                  <tr key={idx} className="bg-gray-800">
+                    <td className="border-b border-gray-700 px-4 py-2">
+                      <input
+                        className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Task"
+                        value={row.task}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setTomorrowsPlan(prev => {
+                            const updated = [...prev];
+                            updated[idx] = { ...updated[idx], task: val };
+                            return updated;
+                          });
+                        }}
+                      />
+                    </td>
+                    <td className="border-b border-gray-700 px-4 py-2">
+                      <input
+                        className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Quantity"
+                        value={row.qty}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9.]/g, "");
+                          setTomorrowsPlan(prev => {
+                            const updated = [...prev];
+                            updated[idx] = { ...updated[idx], qty: val };
+                            return updated;
+                          });
+                        }}
+                      />
+                    </td>
+                    {editTomorrow && (
+                      <td className="border-b border-gray-700 px-2 py-2 text-center">
+                        <button
+                          type="button"
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                          title="Delete"
+                          onClick={() =>
+                            setTomorrowsPlan(prev => prev.filter((_, i) => i !== idx))
+                          }
+                        >
+                          <span className="material-icons align-middle">close</span>
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button
+            className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4"
+            type="button"
+            onClick={() =>
+              setTomorrowsPlan(prev => [...prev, { task: "", qty: "" }])
+            }
+          >
+            Add Plan
+          </button>
         </div>
       </div>
       
@@ -547,6 +804,8 @@ function DailyProgressReport() {
             rows={3}
             placeholder="Add remarks..."
             className="bg-gray-700 border border-gray-700 text-[#E0E0E0] px-3 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            value={remarks}
+            onChange={e => setRemarks(e.target.value)}
           ></textarea>
         </div>
       </div>
@@ -554,12 +813,7 @@ function DailyProgressReport() {
       <div className="fixed bottom-8 right-8 z-50">
         <button
           className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-colors duration-150"
-          onClick={async () => {
-            // Example DPR generation logic (replace with actual logic as needed)
-            const project_id = projectId;
-            // ... rest of logic
-            alert(`Generate DPR for project ID: ${project_id}`);
-          }}
+          onClick={postDPRToBackend}
         >
           Generate &amp; Close
         </button>
