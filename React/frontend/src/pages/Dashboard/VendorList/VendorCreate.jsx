@@ -32,7 +32,8 @@ function VendorCreate({ onClose }) {
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const response = await fetch(`http://${API_URI}:${PORT}/vendor_api/metadata/`);
+        const response = await fetch(`http://${API_URI}:${PORT}/vendor_api/metadata/`, {
+          credentials: 'include',});
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
         setJobNatures(Object.keys(data.jobNatures || {}));
@@ -90,6 +91,7 @@ function VendorCreate({ onClose }) {
       const response = await fetch(`http://${API_URI}:${PORT}/vendor_api/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload)
       });
 
