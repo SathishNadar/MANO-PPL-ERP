@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-const API_BASE = "http://localhost:5001";
+  const API_URI = import.meta.env.VITE_API_URI;
+  const PORT = import.meta.env.VITE_BACKEND_PORT;
 
 function DprEditor() {
   const { projectId } = useParams(); 
@@ -30,7 +31,7 @@ function DprEditor() {
     async function fetchProject() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/project/getProject/${projectId}`, {
+        const res = await fetch(`${API_URI}:${PORT}/project/getProject/${projectId}`, {
           credentials: 'include',
         });
         const data = await res.json();
@@ -74,7 +75,7 @@ function DprEditor() {
   async function saveProjectDetails() {
     setSavingDetails(true);
     try {
-      const res = await fetch(`${API_BASE}/project/updateProject`, {
+      const res = await fetch(`${API_URI}:${PORT}/project/updateProject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -144,7 +145,7 @@ function DprEditor() {
   async function saveMetadata() {
   setSavingMetadata(true);
   try {
-    const res = await fetch(`${API_BASE}/project/updateMetadata`, {
+    const res = await fetch(`${API_URI}:${PORT}/project/updateMetadata`, {
       method: "POST",
       credentials: 'include',
       headers: { "Content-Type": "application/json" },
