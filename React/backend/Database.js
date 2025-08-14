@@ -262,7 +262,11 @@ export async function r_updateProject(data) {
 
     return affectedRows;
 }
-
+export async function r_updateProjectMetadata({ project_id, metadata }) {
+  const [result] = await pool.execute(
+    `UPDATE projects SET metadata = ? WHERE project_id = ?`,
+    [metadata, project_id]
+  )};
 
 // #endregion
 
@@ -795,41 +799,4 @@ async function patchProjectRoles(project_id, changes) {
 
 
 
-
 // #endregion
-
-
-let project_data = {
-    project_id: 19,
-    project_name: "New Airport Terminal",
-    project_description: "Construction of the new international terminal with Gaandu Prasath with HTML Cable ALONE!!",
-    start_date: "2025-07-01",
-    end_date: "2026-06-30",
-    location: "Chennai, Tamil Nadu",
-    project_code: "CNT-AIR-2025-009",
-    Employer: "Airports Authority of India",
-    metadata: {
-    agency: ["MAPLANI", "L&T", "AMAZON", "NVIDIA"],
-    labour_type: ["carp", "mason", "staff", "fitter", "gypsum", "helper", "painter", "plumber"]
-  },
-    user_roles: {
-        reporter: {
-            insert: [1, 3],
-            delete: [11]
-        },
-        approver: 6,
-        final_approver: 42,
-        client: {
-            insert: [7, 8],
-            delete: []
-        }
-    }
-};
-
-
-// const t = await r_insertProject(project_data);
-// const t = await r_updateProject(project_data);
-// console.log(t);
-
-
-// pool.end();
