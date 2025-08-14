@@ -27,7 +27,9 @@ function DailyProgressReport() {
     if (!projectId) return;
     const fetchProjectDetails = async () => {
       try {
-        const response = await fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`);
+        const response = await fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`, {
+          credentials: 'include',
+          });
         const projectData = await response.json();
         if (projectData.success) {
           const data = projectData.data;

@@ -30,7 +30,9 @@ function DprEditor() {
     async function fetchProject() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/project/getProject/${projectId}`);
+        const res = await fetch(`${API_BASE}/project/getProject/${projectId}`, {
+          credentials: 'include',
+        });
         const data = await res.json();
 
         if (res.ok && data.success) {
@@ -75,6 +77,7 @@ function DprEditor() {
       const res = await fetch(`${API_BASE}/project/updateProject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({
           project_id: projectId,
           project_name: projectName,
@@ -143,6 +146,7 @@ function DprEditor() {
   try {
     const res = await fetch(`${API_BASE}/project/updateMetadata`, {
       method: "POST",
+      credentials: 'include',
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         project_id: projectId,

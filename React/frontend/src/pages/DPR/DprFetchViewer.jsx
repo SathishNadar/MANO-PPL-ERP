@@ -16,8 +16,9 @@ const DprFetchViewer = () => {
 
     try {
       const response = await fetch(
-        `http://${API_URI}:${PORT}/project/getProject/${pid}`
-      );
+        `http://${API_URI}:${PORT}/project/getProject/${pid}`, {
+          credentials: 'include',
+        });
       const { data: static_data } = await response.json();
       setProjectData(static_data);
 
