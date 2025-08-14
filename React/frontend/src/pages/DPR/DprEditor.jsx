@@ -31,7 +31,7 @@ function DprEditor() {
     async function fetchProject() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_URI}:${PORT}/project/getProject/${projectId}`, {
+        const res = await fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`, {
           credentials: 'include',
         });
         const data = await res.json();
@@ -75,7 +75,7 @@ function DprEditor() {
   async function saveProjectDetails() {
     setSavingDetails(true);
     try {
-      const res = await fetch(`${API_URI}:${PORT}/project/updateProject`, {
+      const res = await fetch(`http://${API_URI}:${PORT}/project/updateProject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -145,7 +145,7 @@ function DprEditor() {
   async function saveMetadata() {
   setSavingMetadata(true);
   try {
-    const res = await fetch(`${API_URI}:${PORT}/project/updateMetadata`, {
+    const res = await fetch(`http://${API_URI}:${PORT}/project/updateMetadata`, {
       method: "POST",
       credentials: 'include',
       headers: { "Content-Type": "application/json" },
