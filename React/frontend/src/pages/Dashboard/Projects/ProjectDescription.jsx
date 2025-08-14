@@ -14,7 +14,9 @@ function ProjectDescription() {
   useEffect(() => {
     if (!projectId) return;
 
-    fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`) 
+    fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`, {
+      credentials: 'include',
+    }) 
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setProject(data.data);

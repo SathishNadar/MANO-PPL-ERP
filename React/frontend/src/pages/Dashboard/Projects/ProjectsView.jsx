@@ -17,8 +17,9 @@ const ProjectsView = () => {
     const fetchProjects = async () => {
       try {
         const response = await fetch(
-          `http://${API_URI}:${PORT}/project/userProjects/${userId}`
-        );
+          `http://${API_URI}:${PORT}/project/userProjects/${userId}`, {
+            credentials:'include',
+        });
         if (!response.ok) throw new Error("Failed to fetch projects");
         const data = await response.json();
         setProjects(data);
