@@ -3,6 +3,28 @@ import React from 'react';
 const API_URI = import.meta.env.VITE_API_URI;
 const PORT = import.meta.env.VITE_BACKEND_PORT;
 function ProjectCreate({ onClose }) {
+  const [users, setUsers] = React.useState([]);
+  const [approver, setApprover] = React.useState("");
+  const [finalApprover, setFinalApprover] = React.useState("");
+  const [clients, setClients] = React.useState([]);
+  const [reporterName, setReporterName] = React.useState("");
+
+  React.useEffect(() => {
+    fetch(`http://${API_URI}:${PORT}/project/eligibleUsers`, { 
+      credentials: 'include' 
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) setUsers(data.users);
+      });
+
+    const sessionStr = localStorage.getItem('session');
+    const sessionData = JSON.parse(sessionStr);
+    if (sessionData?.username) {
+      setReporterName(sessionData.username);
+    }
+  }, []);
+
   // Handles project creation
   async function handleCreateProject() {
     const requiredFields = [
@@ -30,6 +52,15 @@ function ProjectCreate({ onClose }) {
       return;
     }
 
+    const user_roles = {
+      reporter: userId,
+      approver: approver || null,
+      final_approver: finalApprover || null,
+      client: {
+        insert: clients
+      }
+    };
+
     const data = {
       project_name: document.getElementById("project-name").value,
       project_code: document.getElementById("project-code").value,
@@ -39,6 +70,7 @@ function ProjectCreate({ onClose }) {
       start_date: document.getElementById("start-date").value,
       end_date: document.getElementById("end-date").value,
       user_id: userId,
+      user_roles
     };
 
     try {
@@ -47,7 +79,7 @@ function ProjectCreate({ onClose }) {
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
         body: JSON.stringify(data),
-      });
+      }); 
 
       if (!response.ok) throw new Error("Failed to create project");
 
@@ -151,6 +183,97 @@ function ProjectCreate({ onClose }) {
                   type="date"
                   className="w-full bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm py-1.5 px-2"
                 />
+              </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Reporter
+              </label>
+              <input
+                type="text"
+                value={reporterName}
+                disabled
+                className="w-full bg-gray-600 border border-gray-500 rounded-md py-2 px-3 text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Approver
+              </label>
+              <select
+                value={approver}
+                onChange={(e) => setApprover(e.target.value)}
+                className="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white"
+              >
+                <option value="">Select Approver</option>
+                {users.map(user => (
+                  <option key={user.user_id} value={user.user_id}>{user.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Final Approver
+              </label>
+              <select
+                value={finalApprover}
+                onChange={(e) => setFinalApprover(e.target.value)}
+                className="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white"
+              >
+                <option value="">Select Final Approver</option>
+                {users.map(user => (
+                  <option key={user.user_id} value={user.user_id}>{user.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Clients
+              </label>
+
+              {/* Dropdown for selecting one client at a time */}
+              <select
+                value=""
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  if (selectedId && !clients.includes(selectedId)) {
+                    setClients([...clients, selectedId]);
+                  }
+                }}
+                className="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white"
+              >
+                <option value="">Select Client</option>
+                {users.map((user) => (
+                  <option key={user.user_id} value={user.user_id}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Display selected clients */}
+              <div className="mt-2 space-y-1">
+                {clients.map((clientId) => {
+                  const clientUser = users.find((u) => u.user_id === parseInt(clientId));
+                  return (
+                    <div
+                      key={clientId}
+                      className="flex items-center justify-between bg-gray-800 px-3 py-1 rounded"
+                    >
+                      <span>{clientUser ? clientUser.name : clientId}</span>
+                      <button
+                        type="button"
+                        onClick={() => setClients(clients.filter((c) => c !== clientId))}
+                        className="text-red-400 hover:text-red-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

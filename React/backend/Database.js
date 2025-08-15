@@ -261,6 +261,20 @@ export async function r_fetchProjectsByUser(user_id) {
     }
 }
 
+
+// Exported function to get eligible users (title_id < 6)
+export async function r_getEligibleUsers() {
+    try {
+        const [rows] = await pool.query(
+            `SELECT user_id, user_name AS name, title_id FROM users WHERE title_id < 6`
+        );
+        return rows;
+    } catch (error) {
+        console.error("❌ Error fetching eligible users:", error.message);
+        throw error;
+    }
+}
+
 // Function to insert Project
 export async function r_insertProject(data) {
     const {
@@ -312,6 +326,10 @@ export async function r_insertProject(data) {
         const [projResult] = await pool.query(insertSQL, values);
         const newProjectId = projResult.insertId;
 
+        // Always set reporter to creator if not already set
+        if (!user_roles.reporter) {
+            user_roles.reporter = created_by; // Always set reporter to creator
+        }
         if (user_roles && typeof user_roles === 'object' && Object.keys(user_roles).length > 0) {
             const roleUpdateResult = await patchProjectRoles(newProjectId, user_roles);
             if (!roleUpdateResult.ok) {
@@ -925,7 +943,7 @@ async function patchProjectRoles(project_id, changes) {
     console.error("❌ Error updating roles:", err);
     return { ok: false, msg: err.message };
   }
-}
+} 
 
 
 

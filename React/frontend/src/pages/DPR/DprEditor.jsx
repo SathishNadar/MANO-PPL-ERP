@@ -93,8 +93,8 @@ function DprEditor() {
         }),
       });
       const data = await res.json();
-      if (res.ok && data.success) {
-        alert("Project details saved!");
+      if (res.ok && data.ok) {
+      alert("Project details saved!");
       } else {
         alert(data.message || "Failed to save project details");
       }

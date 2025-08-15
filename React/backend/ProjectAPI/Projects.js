@@ -4,6 +4,16 @@ import { authenticateJWT } from "../AuthAPI/LoginAPI.js";
 
 const router = express.Router();
 
+router.get("/eligibleUsers", authenticateJWT, async (req, res) => {
+    try {
+        const users = await DB.r_getEligibleUsers();
+        res.json({ ok: true, users });
+    } catch (err) {
+        console.error("❌ Error fetching eligible users:", err.message);
+        res.status(500).json({ ok: false, message: err.message });
+    }
+});
+
 // Get call to fetch Project Detail
 router.get("/getProject/:id", authenticateJWT, async (req, res) => {
     try {
@@ -44,7 +54,7 @@ router.post("/insertProject", authenticateJWT, async (req, res) => {
         console.error("❌ API error in insertProject:", error.message);
         res.status(500).json({ ok: false, message: error.message });
     }
-});
+}); 
 
 // Post call to update an existing Project
 router.post("/updateProject", authenticateJWT, async (req, res) => {
