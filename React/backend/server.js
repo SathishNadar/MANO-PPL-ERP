@@ -7,6 +7,7 @@ import ForgotPasswordRoutes from './AuthAPI/ForgotPasswordAPI.js'
 import ProjectRoutes from './ProjectAPI/Projects.js';
 import ReportRoutes from './ProjectAPI/Reports.js'
 import VendorRoutes from './VendorClientAPI/vendor.js'
+import TaskRoutes from './Tasks/task.js'
 
 import cookieParser from 'cookie-parser';
 
@@ -39,6 +40,7 @@ app.use('/api',ForgotPasswordRoutes)
 app.use('/project', ProjectRoutes);
 app.use("/report", ReportRoutes); 
 app.use("/vendor_api", VendorRoutes);
+app.use("/tasks", TaskRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');

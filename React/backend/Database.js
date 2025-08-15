@@ -25,7 +25,7 @@ function safeParse(jsonField) {
 
 // #endregion
 
-// #region 🧑‍💼 USERS  ─────────────────────────────────────────────
+// #region 🧑‍💼 USERS ─────────────────────────────────────────────
 
 // Function to fetch User by user_name
 export async function r_fetchUserByName(name) {
@@ -85,7 +85,137 @@ export async function insertUser(username, email, hashedPassword, phone) {
 
 // #endregion
 
-// #region 🧱 PROJECT  ─────────────────────────────────────────────
+// #region ✅ TASKS ─────────────────────────────────────────────
+
+
+// Function to fetch task by task_id
+export async function fetchTaskById(task_id) {
+    const sql = "SELECT * FROM tasks WHERE task_id = ?";
+    try {
+        const [[result]] = await pool.query(sql, [task_id])
+        return result;
+    } catch (err) {
+        console.error("❌ Error fetching tasks:", err);
+        throw err;
+    }
+}
+
+// Function to fetch all task of people under the user control
+export async function fetchTasksOfControlled(user_id) {
+    const sql = "SELECT controlled_id FROM task_control WHERE controller_id = ?";
+    try {
+        const [result] = await pool.query(sql, [user_id])
+        const ids = result.map(item => item.controlled_id);
+        let allTask = []
+        for (const id of ids) {
+            const tasks = await fetchTasks(id);
+            allTask.push(...tasks)
+        }
+        return allTask;
+    } catch (err) {
+        console.error("❌ Error fetching tasks:", err);
+        throw err;
+    }
+}
+
+// Function to fetch all task under a user
+export async function fetchTasks(user_id) {
+    const sql = "SELECT * FROM tasks WHERE assigned_to = ?";
+    try {
+        const [result] = await pool.query(sql, [user_id])
+        return result;
+    } catch (err) {
+        console.error("❌ Error fetching tasks:", err);
+        throw err;
+    }
+}
+
+// Function to add new task
+export async function insertTask({ 
+    task_name, 
+    task_description = null, 
+    assigned_to = null, 
+    assigned_date = null, 
+    due_date = null, 
+    status = null 
+}) {
+    const sql = `
+        INSERT INTO tasks (task_name, task_description, assigned_to, assigned_date, due_date, status)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    try {
+        const [result] = await pool.query(sql, [
+            task_name, task_description, assigned_to, assigned_date, due_date, status
+        ]);
+        return result.insertId;
+    } catch (err) {
+        console.error("❌ Error inserting task:", err.message);
+        throw err;
+    }
+}
+
+// Function to update task
+export async function updateTask(task_id, { 
+    task_name, 
+    task_description, 
+    assigned_to, 
+    assigned_date,
+    due_date, status }) {
+        
+    try {
+        const allowed = ["task_name", "task_description", "assigned_to", "assigned_date", "due_date", "status"];
+        const updates = [];
+        const values = [];
+        for (const k of allowed) {
+            if (typeof arguments[1][k] !== "undefined") {
+                updates.push(`${k} = ?`);
+                values.push(arguments[1][k]);
+            }
+        }
+        if (updates.length === 0) return 0;
+        const sql = `UPDATE tasks SET ${updates.join(", ")} WHERE task_id = ?`;
+        values.push(task_id);
+        const [result] = await pool.query(sql, values);
+        return result.affectedRows;
+    } catch (err) {
+        console.error("❌ Error updating task:", err.message);
+        throw err;
+    }
+}
+
+// Function to delete task
+export async function deleteTask(task_id) {
+    const sql = `DELETE FROM tasks WHERE task_id = ?`;
+    try {
+        const [result] = await pool.query(sql, [task_id]);
+        return result.affectedRows;
+    } catch (err) {
+        console.error("❌ Error deleting task:", err.message);
+        throw err;
+    }
+}
+
+// Function to get control_type
+export async function getControlType(controller_id, controlled_id) {
+    const sql = `SELECT control_type FROM task_control WHERE controller_id = ? AND controlled_id = ?;`;
+    try {
+        const [[result]] = await pool.query(sql, [controller_id, controlled_id]);
+        return result ? result.control_type : null;
+    } catch (err) {
+        console.error("❌ Error fetching control type:", err.message);
+        throw err;
+    }
+}
+
+// export async function getAssignedTo() {
+    
+// }
+
+
+
+// #endregion
+
+// #region 🧱 PROJECT ─────────────────────────────────────────────
 
 // Function to fetch Project by ID
 export async function r_getProjectById(project_id) {
