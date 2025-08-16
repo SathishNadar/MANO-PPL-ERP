@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Calendar from "../../SmolComponents/calendar";
-
+import Sidebar from '../../SidebarComponent/sidebar'
 function ProjectDescription() {
   const navigate = useNavigate();
   const { projectId } = useParams();
@@ -56,6 +56,8 @@ function ProjectDescription() {
   };
 
   return (
+    <div className="flex h-screen bg-background">
+      <Sidebar/>
     <main className="flex-1 p-8 bg-gray-900">
       <header className="flex justify-between items-center mb-8">
         <div>
@@ -295,6 +297,7 @@ function ProjectDescription() {
         </div>
       </div>
     </main>
+    </div>
   );
 }
 

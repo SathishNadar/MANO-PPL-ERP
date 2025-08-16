@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import Sidebar from '../SidebarComponent/sidebar'
 
 function DailyProgressReport() {
   const API_URI = import.meta.env.VITE_API_URI;
@@ -238,6 +239,8 @@ function DailyProgressReport() {
   }
 
   return (
+    <div className="flex h-screen bg-background">
+      <Sidebar/>
     <div className="min-h-screen bg-gray-900 text-gray-100 px-4 py-6 md:px-12 lg:px-24">
       {/* Header */}
       <div className="text-center mb-8">
@@ -862,6 +865,7 @@ function DailyProgressReport() {
           Generate &amp; Close
         </button>
       </div>
+    </div>
     </div>
   );
 }
