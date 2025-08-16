@@ -1,9 +1,8 @@
 // ====================== DEBUGGING HELPERS ======================
 function debugLog(message, data) {
-    console.log(`[DEBUG] ${message}`, data);
+  // console.log(`[DEBUG] ${message}`, data);
 }
 
-// ====================== JSON DATA ======================
 // ====================== MAIN DATA LOADER ======================
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -34,9 +33,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     showErrorState("Failed to load data");
   }
 });
-
-// Remove the hardcoded dprData and projectData constants
-// ====================== MAIN DATA LOADER ======================
 
 // ====================== DATA TRANSFORMATION ======================
 function transformApiData(apiData) {
@@ -210,29 +206,32 @@ function populateAllData(data) {
 }
 
 function populateProjectInfo(data) {
-    debugLog("Populating Project Info", data);
-    
-    document.getElementById("project_name").textContent = data.project_name || "--";
-    document.getElementById("Employer").textContent = data.Employer || "--";
-    document.getElementById("contract_no").textContent = data.contract_no || "--";
-    document.getElementById("location").textContent = data.location || "--";
-    document.getElementById("start_date").textContent = data.start_date || "--";
-    document.getElementById("end_date").textContent = data.end_date || "--";
-    
-    const reportDateElement = document.querySelector(".daily-progress-report-table tr:nth-child(2) td:nth-child(2)");
-    if (reportDateElement) {
-        reportDateElement.textContent = data.report_date || "--";
-    }
-    
-    const totalDaysElement = document.querySelector(".total-value");
-    if (totalDaysElement) {
-        totalDaysElement.textContent = data.total_days || "--";
-    }
-    
-    const daysRemainingElement = document.querySelector(".balance-right");
-    if (daysRemainingElement) {
-        daysRemainingElement.textContent = data.days_remaining || "--";
-    }
+  debugLog("Populating Project Info", data);
+
+  document.getElementById("project_name").textContent =
+    data.project_name || "--";
+  document.getElementById("Employer").textContent = data.Employer || "--";
+  document.getElementById("project_code").textContent = data.project_code || "--";
+  document.getElementById("location").textContent = data.location || "--";
+  document.getElementById("start_date").textContent = data.start_date || "--";
+  document.getElementById("end_date").textContent = data.end_date || "--";
+
+  const reportDateElement = document.querySelector(
+    ".daily-progress-report-table tr:nth-child(2) td:nth-child(2)"
+  );
+  if (reportDateElement) {
+    reportDateElement.textContent = data.report_date || "--";
+  }
+
+  const totalDaysElement = document.querySelector(".total-value");
+  if (totalDaysElement) {
+    totalDaysElement.textContent = data.total_days || "--";
+  }
+
+  const daysRemainingElement = document.querySelector(".balance-right");
+  if (daysRemainingElement) {
+    daysRemainingElement.textContent = data.days_remaining || "--";
+  }
 }
 
 function populateSiteConditions(conditions) {
@@ -412,15 +411,15 @@ function populateRemarksAndEvents(data) {
 
 // ====================== HELPER FUNCTIONS ======================
 function setCheckboxState(elementId, isActive) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        if (isActive) {
-            element.style.backgroundColor = "green";
-            element.textContent = "âœ“";
-            element.style.color = "white";
-        } else {
-            element.style.backgroundColor = "";
-            element.textContent = "";
-        }
+  const element = document.getElementById(elementId);
+  if (element) {
+    if (isActive) {
+      element.style.backgroundColor = "green";
+      element.textContent = "✓";
+      element.style.color = "white";
+    } else {
+      element.style.backgroundColor = "";
+      element.textContent = "";
     }
+  }
 }
