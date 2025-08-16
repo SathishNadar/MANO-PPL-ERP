@@ -270,15 +270,13 @@ function ProjectDescription() {
                       ? "Yesterday"
                       : `${diffDays} days ago`;
                   return (
-                    <li
+                    <a
                       key={dpr.dpr_id}
                       id={dpr.dpr_id}
+                      href= {`/dashboard/project-description/${projectId}/${dpr.dpr_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex justify-between items-center p-4 bg-gray-900 rounded-lg border border-gray-700 hover:border-[var(--accent-blue)] transition-all cursor-pointer"
-                      onClick={() =>
-                        navigate(
-                          `/dashboard/project-description/${projectId}/${dpr.dpr_id}`
-                        )
-                      }
                     >
                       <div>
                         <p className="font-semibold text-[var(--text-primary)]">
@@ -292,7 +290,7 @@ function ProjectDescription() {
                         <span className="material-icons text-base">today</span>
                         <span>{label}</span>
                       </div>
-                    </li>
+                    </a>
                   );
                 })}
               </ul>

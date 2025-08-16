@@ -148,22 +148,27 @@ function Calendar({ dprList = [] }) {
               }
               const dateStr = formatDate(day);
               const dpr = dprMap.get(dateStr);
-              return (
-                <div
-                  key={rowIdx}
-                  className={`m-[1px] rounded ${dpr ? 'bg-blue-500 cursor-pointer hover:bg-blue-600' : 'bg-gray-800'}`}
-                  title={day.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                  style={{
-                    width: '78%',
-                    height: `calc(100% / 7)`,
-                  }}
-                  onClick={() => {
-                    if (dpr) {
-                      navigate(`/dashboard/project-description/${dpr.project_id}/${dpr.dpr_id}`);
-                    }
-                  }}
-                />
-              );
+              if (dpr) {
+                return (
+                  <a
+                    key={rowIdx}
+                    href={`/dashboard/project-description/${dpr.project_id}/${dpr.dpr_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="m-[1px] rounded bg-blue-500 hover:bg-blue-600 block"
+                    title={day.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}
+                    style={{ width: '78%', height: `calc(100% / 7)` }}
+                  />
+                );
+              } else {
+                return (
+                  <div
+                    key={rowIdx}
+                    className="m-[1px] rounded bg-gray-800"
+                    style={{ width: '78%', height: `calc(100% / 7)` }}
+                  />
+                );
+              }
             })}
           </div>
         ))}
