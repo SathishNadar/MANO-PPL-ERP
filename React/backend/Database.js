@@ -597,6 +597,8 @@ export async function r_getDPRById(dpr_id) {
             today_prog: safeParse(row.today_prog),
             tomorrow_plan: safeParse(row.tomorrow_plan),
             user_roles: safeParse(row.user_roles),
+            events_remarks: safeParse(row.events_remarks),
+            general_remarks: safeParse(row.general_remarks),
             report_footer: safeParse(row.report_footer)
         };
     } catch (error) {
@@ -635,9 +637,10 @@ export async function r_insertDPR(dprData) {
         INSERT INTO dpr (
             project_id, report_date, site_condition, labour_report,
             cumulative_manpower, today_prog, tomorrow_plan,
-            user_roles, report_footer, created_at
-        ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            user_roles, events_remarks, general_remarks,
+            report_footer, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
     const values = [
@@ -649,6 +652,8 @@ export async function r_insertDPR(dprData) {
         dprData.today_prog ? JSON.stringify(dprData.today_prog) : null,
         dprData.tomorrow_plan ? JSON.stringify(dprData.tomorrow_plan) : null,
         dprData.user_roles ? JSON.stringify(dprData.user_roles) : null,
+        dprData.events_remarks ? JSON.stringify(dprData.events_remarks) : null,
+        dprData.general_remarks ? JSON.stringify(dprData.general_remarks) : null,
         dprData.report_footer ? JSON.stringify(dprData.report_footer) : null,
         dprData.created_at ?? new Date()
     ];
@@ -688,6 +693,8 @@ export async function r_updateDPR(dprData) {
         'final_approved_by',
         'current_handler',
         'dpr_status',
+        'events_remarks',
+        'general_remarks',
     ]);
 
     const jsonColumns = new Set([
@@ -697,6 +704,8 @@ export async function r_updateDPR(dprData) {
         'tomorrow_plan',
         'user_roles',
         'report_footer',
+        'events_remarks',
+        'general_remarks',
     ]);
 
     const setClauses = [];

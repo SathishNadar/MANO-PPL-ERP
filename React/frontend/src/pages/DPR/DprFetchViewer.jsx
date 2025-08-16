@@ -248,7 +248,7 @@ const DprFetchViewer = () => {
       );
 
       // EVENTS & REMARKS
-      renderList("events-container", data.report_footer?.events_visit);
+      renderList("events-container", data.events_remarks);
       renderList(
         "remarks-content-container",
         data.report_footer?.bottom_remarks

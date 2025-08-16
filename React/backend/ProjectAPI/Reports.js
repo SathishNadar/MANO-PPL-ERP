@@ -34,6 +34,8 @@ router.post("/insertDPR", authenticateJWT, async (req, res) => {
       today_prog = null,
       tomorrow_plan = null,
       user_roles = null,
+      events_remarks = null,
+      general_remarks = null,
       report_footer = null,
       created_at = new Date()
     } = req.body || {};
@@ -66,6 +68,8 @@ router.post("/insertDPR", authenticateJWT, async (req, res) => {
       today_prog,
       tomorrow_plan,
       user_roles,
+      events_remarks,
+      general_remarks,
       report_footer,
       created_at
     });

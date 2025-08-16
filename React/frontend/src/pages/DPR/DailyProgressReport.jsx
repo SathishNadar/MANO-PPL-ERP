@@ -15,6 +15,10 @@ function DailyProgressReport() {
     { from: "", to: "" }
   ]);
   const [labourReport, setLabourReport] = React.useState([]); // dynamic labour report rows
+  const [eventsEnabled, setEventsEnabled] = useState(true);
+  const [eventsList, setEventsList] = useState([]);
+  const [eventInput, setEventInput] = useState("");
+  const [remarksEnabled, setRemarksEnabled] = useState(true);
 
   // --- New states for today's progress and tomorrow's plan ---
   const [todaysProgress, setTodaysProgress] = useState([]);
@@ -179,7 +183,15 @@ function DailyProgressReport() {
       : 0;
 
     // --- remarks field (top-level string) ---
-    const remarksVal = remarks;
+    const remarksVal = remarksEnabled ? remarks : "NO General remarks";
+
+    // --- events_remarks logic ---
+    let events_remarks;
+    if (!eventsEnabled) {
+      events_remarks = ["No Event Remark"];
+    } else {
+      events_remarks = eventsList;
+    }
 
     // --- today_prog and tomorrow_plan ---
     const today_prog = {
@@ -203,6 +215,7 @@ function DailyProgressReport() {
       tomorrow_plan,
       tomorrow_qty: tomorrow_plan.qty,
       remarks: remarksVal,
+      events_remarks,
       created_at: getMySQLDateTime(),
       user_roles: [], // Placeholder, replace with actual user role logic if needed
     };
@@ -649,7 +662,7 @@ function DailyProgressReport() {
                         placeholder="Quantity"
                         value={row.qty}
                         onChange={e => {
-                          const val = e.target.value.replace(/[^0-9.]/g, "");
+                          const val = e.target.value;
                           setTodaysProgress(prev => {
                             const updated = [...prev];
                             updated[idx] = { ...updated[idx], qty: val };
@@ -746,7 +759,7 @@ function DailyProgressReport() {
                         placeholder="Quantity"
                         value={row.qty}
                         onChange={e => {
-                          const val = e.target.value.replace(/[^0-9.]/g, "");
+                          const val = e.target.value;
                           setTomorrowsPlan(prev => {
                             const updated = [...prev];
                             updated[idx] = { ...updated[idx], qty: val };
@@ -796,17 +809,20 @@ function DailyProgressReport() {
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
-                  className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block relative cursor-pointer mr-2 checked:border-blue-500 checked:bg-blue-500"
+                  checked={eventsEnabled}
+                  onChange={() => setEventsEnabled(true)}
                   name="event-occurred"
-                  defaultChecked
+                  className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block mr-2 checked:border-blue-500 checked:bg-blue-500"
                 />
                 <span className="ml-2 text-gray-200">Yes</span>
               </label>
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
-                  className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block relative cursor-pointer mr-2 checked:border-blue-500 checked:bg-blue-500"
+                  checked={!eventsEnabled}
+                  onChange={() => { setEventsEnabled(false); setEventsList([]); }}
                   name="event-occurred"
+                  className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block mr-2 checked:border-blue-500 checked:bg-blue-500"
                 />
                 <span className="ml-2 text-gray-200">No</span>
               </label>
@@ -816,12 +832,44 @@ function DailyProgressReport() {
             <input
               type="text"
               placeholder="Describe event..."
+              value={eventInput}
+              onChange={e => setEventInput(e.target.value)}
+              disabled={!eventsEnabled}
               className="bg-gray-700 border border-gray-700 text-[#E0E0E0] px-3 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <button className="bg-blue-500 text-white hover:bg-blue-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full md:w-auto">
+            <button
+              onClick={() => {
+                if (eventInput.trim() !== "") {
+                  setEventsList(prev => [...prev, eventInput]);
+                  setEventInput("");
+                }
+              }}
+              disabled={!eventsEnabled}
+              className="bg-blue-500 text-white hover:bg-blue-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full md:w-auto"
+            >
               Add Event
             </button>
           </div>
+          {/* Render events as a list or placeholder below the Add Event button */}
+          {eventsEnabled && (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold mb-2 text-blue-300">Event List</h3>
+              {eventsList.length > 0 ? (
+                <div className="space-y-2">
+                  {eventsList.map((ev, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-gray-700 p-2 rounded">
+                      <span>{ev}</span>
+                      <button onClick={() => setEventsList(prev => prev.filter((_, i) => i !== idx))}>
+                        <span className="material-icons text-red-400">close</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">No events added yet.</p>
+              )}
+            </div>
+          )}
         </div>
         {/* Remarks Section */}
         <div className="bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-800">
@@ -833,7 +881,8 @@ function DailyProgressReport() {
                   type="radio"
                   className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block relative cursor-pointer mr-2 checked:border-blue-500 checked:bg-blue-500"
                   name="remarks-required"
-                  defaultChecked
+                  checked={remarksEnabled}
+                  onChange={() => setRemarksEnabled(true)}
                 />
                 <span className="ml-2 text-gray-200">Yes</span>
               </label>
@@ -842,6 +891,8 @@ function DailyProgressReport() {
                   type="radio"
                   className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block relative cursor-pointer mr-2 checked:border-blue-500 checked:bg-blue-500"
                   name="remarks-required"
+                  checked={!remarksEnabled}
+                  onChange={() => setRemarksEnabled(false)}
                 />
                 <span className="ml-2 text-gray-200">No</span>
               </label>
@@ -853,6 +904,7 @@ function DailyProgressReport() {
             className="bg-gray-700 border border-gray-700 text-[#E0E0E0] px-3 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             value={remarks}
             onChange={e => setRemarks(e.target.value)}
+            disabled={!remarksEnabled}
           ></textarea>
         </div>
       </div>
