@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom';
 
 // Helper to get date string in 'YYYY-MM-DD' using local date components (avoids timezone shift)
 function formatDate(date) {
@@ -13,11 +14,15 @@ function getMonthShort(date) {
   return date.toLocaleString('default', { month: 'short' });
 }
 
-function Calendar({ dprDates = [] }) {
-  // Set for quick lookup, normalize to YYYY-MM-DD
-  const dprSet = React.useMemo(() => {
-    return new Set(dprDates.map(d => formatDate(new Date(d))));
-  }, [dprDates]);
+function Calendar({ dprList = [] }) {
+  const navigate = useNavigate();
+  const dprMap = React.useMemo(() => {
+    const map = new Map();
+    dprList.forEach(dpr => {
+      map.set(formatDate(new Date(dpr.date)), dpr);
+    });
+    return map;
+  }, [dprList]);
 
   // Today and six months ago
   const today = new Date();
@@ -142,15 +147,20 @@ function Calendar({ dprDates = [] }) {
                 );
               }
               const dateStr = formatDate(day);
-              const filled = dprSet.has(dateStr);
+              const dpr = dprMap.get(dateStr);
               return (
                 <div
                   key={rowIdx}
-                  className={`m-[1px] rounded ${filled ? 'bg-blue-500' : 'bg-gray-800'}`}
-                  title={day.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                  className={`m-[1px] rounded ${dpr ? 'bg-blue-500 cursor-pointer hover:bg-blue-600' : 'bg-gray-800'}`}
+                  title={day.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                   style={{
                     width: '78%',
                     height: `calc(100% / 7)`,
+                  }}
+                  onClick={() => {
+                    if (dpr) {
+                      navigate(`/dashboard/project-description/${dpr.project_id}/${dpr.dpr_id}`);
+                    }
                   }}
                 />
               );

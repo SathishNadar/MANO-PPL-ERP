@@ -231,7 +231,11 @@ function ProjectDescription() {
             </h3>
             <div className="w-full h-42 bg-gray-900 rounded-lg flex items-stretch justify-stretch border border-gray-700 p-0">
               <div className="w-full h-full">
-                <Calendar dprDates={dprs.map(d => d.report_date)} />
+                <Calendar dprList={dprs.map(d => ({
+                  date: d.report_date,
+                  dpr_id: d.dpr_id,
+                  project_id: projectId
+                }))} />
               </div>
             </div>
           </div>
