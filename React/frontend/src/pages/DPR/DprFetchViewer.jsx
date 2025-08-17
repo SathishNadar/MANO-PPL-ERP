@@ -9,6 +9,8 @@ const DprFetchViewer = () => {
   const { projectId, dprId } = useParams();
   const [projectData, setProjectData] = useState(null);
   const [dprData, setDprData] = useState(null);
+  let projectStart = null;
+  let projectEnd = null;
 
   const fetchandUpdateProjectData = async () => {
     // const { projectId } = useParams();
@@ -16,12 +18,14 @@ const DprFetchViewer = () => {
 
     try {
       const response = await fetch(
-        `http://${API_URI}:${PORT}/project/getProject/${pid}`, {
-          credentials: 'include',
-        });
+        `http://${API_URI}:${PORT}/project/getProject/${pid}`,
+        {
+          credentials: "include",
+        }
+      );
       const { data: static_data } = await response.json();
       setProjectData(static_data);
-
+      console.log(static_data);
       const setText = (id, text) => {
         const el = document.getElementById(id);
         if (el) el.textContent = text || "--";
@@ -35,28 +39,14 @@ const DprFetchViewer = () => {
       const formatDate = (dateStr) =>
         new Date(dateStr).toLocaleDateString("en-GB");
 
-      const start = static_data.start_date
-        ? new Date(static_data.start_date)
-        : null;
-      const end = static_data.end_date ? new Date(static_data.end_date) : null;
+      if (static_data.start_date) {
+        projectStart = new Date(static_data.start_date);
+        setText("start_date", formatDate(projectStart));
+      }
 
-      if (start) setText("start_date", formatDate(start));
-      if (end) setText("end_date", formatDate(end));
-
-      if (start && end) {
-        const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const daysRemaining =
-          today < start
-            ? totalDays
-            : today > end
-            ? 0
-            : Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-
-        setText("total_days", totalDays);
-        setText("days_left", daysRemaining);
+      if (static_data.end_date) {
+        projectEnd = new Date(static_data.end_date);
+        setText("end_date", formatDate(projectEnd));
       }
     } catch (error) {
       console.error("Failed to fetch project data:", error);
@@ -84,10 +74,11 @@ const DprFetchViewer = () => {
     const renderList = (containerId, items = []) => {
       const container = document.getElementById(containerId);
       if (!container) return;
-      container.innerHTML =
-        items
-          ?.map((item) => `<div class="remarks-item">${item || "--"}</div>`)
-          .join("") || "";
+
+      const arr = Array.isArray(items) ? items : [items];
+      container.innerHTML = arr
+        .map((item) => `<div class="remarks-item">${item || "--"}</div>`)
+        .join("");
     };
 
     const capitalize = (str) =>
@@ -214,6 +205,36 @@ const DprFetchViewer = () => {
       );
       const { data } = await response.json();
       setDprData(data);
+
+      // console.log(data);
+
+      // console.log(data.report_date);
+
+      if (data?.created_at && projectStart && projectEnd) {
+        const DAY = 1000 * 60 * 60 * 24;
+
+        const created = new Date(data.created_at);
+        const totalDays = Math.floor((projectEnd - projectStart) / DAY);
+
+        let elapsedDays = Math.floor((created - projectStart) / DAY);
+        if (elapsedDays < 0) elapsedDays = 0;
+        if (elapsedDays > totalDays) elapsedDays = totalDays;
+
+        const remainingDays = totalDays - elapsedDays;
+
+        document.getElementById("elapsed_days").textContent = elapsedDays;
+        document.getElementById("days_left").textContent = remainingDays;
+
+        // console.log({
+        //   projectStart,
+        //   projectEnd,
+        //   created,
+        //   totalDays,
+        //   elapsedDays,
+        //   remainingDays,
+        // });
+      }
+
       //Site-Contditions
       renderSiteConditions(data.site_condition);
       // LABOUR REPORT TABLE
@@ -223,15 +244,15 @@ const DprFetchViewer = () => {
       let totalmanpower = 0;
       let labourRowsHTML = "";
       const rowCount = labour_report.agency?.length || 0;
-
+      // console.log(data);
       for (let i = 0; i < rowCount; i++) {
         const { html, total } = createLabourRow(labour_report, i);
         labourRowsHTML += html;
         totalmanpower += total;
       }
 
-      const totalCumulative = parseInt(data.cumulative_manpower) || 0;
-      const yesterdayCumulative = totalCumulative - totalmanpower;
+      const yesterdayCumulative = parseInt(data.cumulative_manpower);
+      // const yesterdayCumulative = totalCumulative - totalmanpower;
       document.getElementById("cumulative-manpower").textContent =
         yesterdayCumulative.toLocaleString();
 
@@ -275,14 +296,12 @@ const DprFetchViewer = () => {
     }
   };
 
-
   useEffect(() => {
-    fetchandUpdateProjectData();
     fetchandUpdateDprdata();
+    fetchandUpdateProjectData();
   }, []);
 
   const loadPdf = () => {
-    
     localStorage.setItem("dprData", JSON.stringify(dprData));
     localStorage.setItem("projectData", JSON.stringify(projectData));
 
@@ -313,7 +332,7 @@ const DprFetchViewer = () => {
         <div className="flex justify-between items-center border-b border-gray-700 pb-4">
           <h1 className="text-3xl font-bold">Daily Progress Report</h1>
           <div className="bg-gray-800 px-4 py-2 rounded text-sm text-gray-300">
-            Report Date: <span id="report_date">May 15, 2023</span>
+            Report Date: <span id="report_date">--</span>
           </div>
         </div>
 
@@ -344,11 +363,14 @@ const DprFetchViewer = () => {
 
             <div className="flex justify-between mt-4 text-sm">
               <div className="relative left-10">
+                <div className="text-gray-400 relative left-12 top-1 bottom-0.5">
+                  Elapsed days
+                </div>
                 <div className="text-2xl font-bold flex items-center justify-center gap-2">
-                  <span className="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-2.5">
+                  <span className="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-1">
                     calendar_today
                   </span>
-                  <span id="total_days"></span>
+                  <span id="elapsed_days"></span>
                   <span className="text-xl font-normal">days</span>
                 </div>
                 <div className="text-gray-400 relative left-12 bottom-0.5">
@@ -357,8 +379,11 @@ const DprFetchViewer = () => {
               </div>
 
               <div className="relative right-40">
+                <div className="text-gray-400 relative left-12 top-1 bottom-0.5">
+                  Remaining days
+                </div>
                 <div className="text-2xl font-bold flex items-center justify-center gap-2">
-                  <span className="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-2.5">
+                  <span className="material-icons bg-white rounded-full text-black text-3xl flex items-center justify-center w-10 h-10 relative top-1">
                     calendar_today
                   </span>
                   <span id="days_left"></span>
