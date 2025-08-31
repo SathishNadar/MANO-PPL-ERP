@@ -8,15 +8,16 @@ import ProjectRoutes from './ProjectAPI/Projects.js';
 import ReportRoutes from './ProjectAPI/Reports.js'
 import VendorRoutes from './VendorClientAPI/vendor.js'
 import TaskRoutes from './Tasks/task.js'
-
+import './config.js';
 import cookieParser from 'cookie-parser';
 
 const app = express();
 const PORT = 5001;
+const public_ip = process.env.URI;
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://35.207.249.142:5173',
+  `http://${public_ip}:5173`,
   // 'https://my-frontend-domain.com'
 ];
 
@@ -49,3 +50,4 @@ app.get('/', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend server listening on http://0.0.0.0:${PORT}`);
 }); 
+

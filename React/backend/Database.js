@@ -261,7 +261,6 @@ export async function r_fetchProjectsByUser(user_id) {
     }
 }
 
-
 // Exported function to get eligible users (title_id < 6)
 export async function r_getEligibleUsers() {
     try {
@@ -410,6 +409,8 @@ export async function r_updateProject(data) {
 
     return affectedRows;
 }
+
+// Function to update Project
 export async function r_updateProjectMetadata({ project_id, metadata }) {
   const [result] = await pool.execute(
     `UPDATE projects SET metadata = ? WHERE project_id = ?`,
@@ -778,7 +779,8 @@ export async function r_fetchDPRsByProject(project_id, limit = 20) {
     SELECT 
       dpr_id,
       report_date,
-      user_roles
+      dpr_status,
+      current_handler
     FROM dpr
     WHERE project_id = ?
     ORDER BY report_date DESC
@@ -786,32 +788,7 @@ export async function r_fetchDPRsByProject(project_id, limit = 20) {
   `;
 
     try {
-        const [rows] = await pool.query(query, [project_id, Number(limit)]);
-
-        const results = rows.map(row => {
-            let userRoles = row.user_roles;
-
-            if (typeof userRoles === "string") {
-                try {
-                    userRoles = JSON.parse(userRoles);
-                } catch (e) {
-                    console.warn("⚠️ Failed to parse user_roles:", e);
-                    userRoles = {};
-                }
-            }
-
-            const approvals = userRoles.approvals || {};
-
-
-            const approverValues = Object.values(approvals);
-            const approved = approverValues.length === 0 || approverValues.every(v => v === true || v === "true");
-
-            return {
-                dpr_id: row.dpr_id,
-                report_date: row.report_date,
-                approval_status: approved
-            };
-        });
+        const [results] = await pool.query(query, [project_id, Number(limit)]);
 
         return results;
     } catch (error) {
@@ -955,5 +932,5 @@ async function patchProjectRoles(project_id, changes) {
 } 
 
 
-
 // #endregion
+
