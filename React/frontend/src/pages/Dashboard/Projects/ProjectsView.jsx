@@ -17,9 +17,11 @@ const ProjectsView = () => {
     const fetchProjects = async () => {
       try {
         const response = await fetch(
-          `http://${API_URI}:${PORT}/project/userProjects/${userId}`, {
-            credentials:'include',
-        });
+          `http://${API_URI}:${PORT}/project/userProjects/${userId}`,
+          {
+            credentials: "include",
+          }
+        );
         if (!response.ok) throw new Error("Failed to fetch projects");
         const data = await response.json();
         setProjects(data);
@@ -122,7 +124,11 @@ const ProjectsView = () => {
                 return (
                   <div key={index} className="pt-2">
                     <div
-                      onClick={() => navigate(`/dashboard/project-description/${project.project_id}`)}
+                      onClick={() =>
+                        navigate(
+                          `/dashboard/project-description/${project.project_id}`
+                        )
+                      }
                       className="bg-card p-6 rounded-2xl shadow-md hover:shadow-2xl transform transition-transform hover:-translate-y-2 hover:cursor-pointer"
                       style={{
                         minWidth: "600px", // or use a Tailwind class like min-w-[300px]
@@ -191,23 +197,24 @@ const ProjectsView = () => {
         )}
 
         <button
-         onClick = {() => setCreateProject(true)}
-         className="fixed bottom-8 right-8 bg-blue hover:bg-blue-dark text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform transform hover:scale-110">
+          onClick={() => setCreateProject(true)}
+          className="fixed bottom-8 right-8 bg-blue hover:bg-blue-dark text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform transform hover:scale-110"
+        >
           <span className="material-icons text-3xl">add</span>
         </button>
         {showCreateProject && (
-  <>
-    {/* Dimmed Background */}
-    <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[2px] z-40" />
+          <>
+            {/* Dimmed Background */}
+            <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[2px] z-40" />
 
-    {/* Modal Content */}
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-8">
-      <div className="relative w-full max-w-4xl bg-transparent">
-        <ProjectCreate onClose={() => setCreateProject(false)} />
-      </div>
-    </div>
-  </>
-)}
+            {/* Modal Content */}
+            <div className="absolute inset-0 z-50 flex justify-center px-4 py-8 overflow-y-auto">
+              <div className="relative w-full max-w-4xl my-8">
+                <ProjectCreate onClose={() => setCreateProject(false)} />
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
