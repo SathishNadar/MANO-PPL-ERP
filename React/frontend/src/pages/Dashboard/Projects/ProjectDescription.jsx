@@ -58,7 +58,7 @@ function ProjectDescription() {
   return (
     <div className="flex h-screen bg-background">
       <Sidebar/>
-    <main className="flex-1 p-8 bg-gray-900">
+    <main className="flex-1 p-8 bg-gray-900 overflow-y-auto">
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold text-[var(--text-primary)]">
