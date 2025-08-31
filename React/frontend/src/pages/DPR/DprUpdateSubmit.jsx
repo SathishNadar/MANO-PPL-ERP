@@ -217,27 +217,79 @@ function DprUpdateSubmit() {
 
   // Deep diff function unchanged...
 
-  const deepDiff = (prev, curr) => {
-    if (prev === curr) return undefined;
-    if (typeof prev !== typeof curr) return curr;
-    if (Array.isArray(prev) && Array.isArray(curr)) {
-      if (prev.length !== curr.length || prev.some((v, i) => v !== curr[i]))
-        return curr;
-      return undefined;
-    }
-    if (typeof prev === "object" && typeof curr === "object" && prev && curr) {
-      let diffResult = {};
-      for (const key of new Set([...Object.keys(prev), ...Object.keys(curr)])) {
-        const d = deepDiff(prev[key], curr[key]);
-        if (d !== undefined) diffResult[key] = d;
-      }
-      if (Object.keys(diffResult).length === 0) return undefined;
-      return diffResult;
-    }
-    return curr;
-  };
+  const normalize = (dpr) => ({
+    site_condition: {
+      is_rainy: Boolean(dpr?.site_condition?.is_rainy),
+      ground_state: dpr?.site_condition?.ground_state || "",
+      rain_timing: Array.isArray(dpr?.site_condition?.rain_timing)
+        ? dpr.site_condition.rain_timing
+        : [],
+    },
+    // labour_report is ALWAYS an object
+    labour_report: (() => {
+      const lr = dpr?.labour_report || {};
+      const safe = {
+        agency: Array.isArray(lr.agency) ? lr.agency : [],
+        remarks: Array.isArray(lr.remarks) ? lr.remarks : [],
+      };
+      Object.keys(lr || {}).forEach((k) => {
+        if (k !== "agency" && k !== "remarks") {
+          safe[k] = Array.isArray(lr[k]) ? lr[k] : [];
+        }
+      });
+      return safe;
+    })(),
+    today_prog: {
+      progress: Array.isArray(dpr?.today_prog?.progress)
+        ? dpr.today_prog.progress
+        : [],
+      qty: Array.isArray(dpr?.today_prog?.qty) ? dpr.today_prog.qty : [],
+    },
+    tomorrow_plan: {
+      plan: Array.isArray(dpr?.tomorrow_plan?.plan)
+        ? dpr.tomorrow_plan.plan
+        : [],
+      qty: Array.isArray(dpr?.tomorrow_plan?.qty) ? dpr.tomorrow_plan.qty : [],
+    },
+    events_remarks: Array.isArray(dpr?.events_remarks)
+      ? dpr.events_remarks
+      : [],
+    report_footer: {
+      distribute: Array.isArray(dpr?.report_footer?.distribute)
+        ? dpr.report_footer.distribute
+        : [],
+      prepared_by: dpr?.report_footer?.prepared_by || "",
+      events_visit: Array.isArray(dpr?.report_footer?.events_visit)
+        ? dpr.report_footer.events_visit
+        : [],
+      bottom_remarks: Array.isArray(dpr?.report_footer?.bottom_remarks)
+        ? dpr.report_footer.bottom_remarks
+        : [],
+    },
+  });
 
-  // Save
+  function deepSectionDiff(prev, next) {
+    prev = normalize(prev);
+    next = normalize(next);
+
+    const diff = {};
+
+    for (const key of Object.keys(next)) {
+      const p = prev[key];
+      const n = next[key];
+
+      if (typeof p === "object" && typeof n === "object" && p && n) {
+        if (JSON.stringify(p) !== JSON.stringify(n)) {
+          diff[key] = n;
+        }
+      } else if (n !== undefined && n !== null) {
+        if (p !== n) diff[key] = n;
+      }
+    }
+
+    return diff;
+  }
+
   const onSave = async () => {
     try {
       setSaving(true);
@@ -260,42 +312,31 @@ function DprUpdateSubmit() {
         },
         events_remarks: eventsRemarks,
         report_footer: {
-          bottom_remarks: bottomRemarks,
-          prepared_by: preparedBy,
           distribute,
+          prepared_by: preparedBy,
+          bottom_remarks: bottomRemarks,
+          events_visit: [], // add if you have events_visit editing
         },
       };
 
-      const orig = initialDpr.current
-        ? {
-            report_date: initialDpr.current.report_date
-              ? isoToYMD(initialDpr.current.report_date)
-              : "",
-            site_condition: initialDpr.current.site_condition || {},
-            labour_report: initialDpr.current.labour_report || {},
-            today_prog: initialDpr.current.today_prog || {},
-            tomorrow_plan: initialDpr.current.tomorrow_plan || {},
-            events_remarks: initialDpr.current.events_remarks || [],
-            report_footer: {
-              bottom_remarks:
-                initialDpr.current.report_footer?.bottom_remarks || [],
-              prepared_by: initialDpr.current.report_footer?.prepared_by || "",
-              distribute: initialDpr.current.report_footer?.distribute || [],
-            },
-          }
-        : {};
+      const patch = deepSectionDiff(initialDpr.current || {}, currentDpr);
 
-      const patch = deepDiff(orig, currentDpr);
+      console.log("PATCH:", patch);
 
       if (!patch || Object.keys(patch).length === 0) {
         toast.info("No changes to save.");
         setSaving(false);
         return;
       }
-      patch.dpr_id = dprId;
-      patch.project_id = projectId;
-      patch.report_date = reportDate;
-      console.log(patch);
+
+      if (Object.keys(patch).length > 0) {
+        patch.project_id = projectId;
+        patch.report_date = reportDate;
+      }
+
+      console.log("FINAL PATCH SENT:", JSON.stringify(patch, null, 2));
+
+
       const res = await fetch(
         `http://${API_URI}:${PORT}/report/updateDPR/${dprId}`,
         {
@@ -306,9 +347,10 @@ function DprUpdateSubmit() {
         }
       );
       const data = await res.json();
+
       if (res.ok && (data.ok || data.success)) {
         toast.success("DPR updated successfully");
-        initialDpr.current = { ...initialDpr.current, ...currentDpr };
+        initialDpr.current = currentDpr;
       } else {
         toast.error(data.message || "Failed to update DPR");
       }
@@ -436,8 +478,7 @@ function DprUpdateSubmit() {
                 <button
                   type="button"
                   onClick={() => onRemove(i)}
-                  className="text-red-400 hover:text-red-500 hover:cursor-pointer"
-                  title="Delete row"
+                  className="text-red-400 hover:text-red-500 text-sm"
                 >
                   <span className="material-icons text-md">delete</span>
                 </button>
@@ -871,7 +912,7 @@ function DprUpdateSubmit() {
                       onClick={() => removeDistributor(i)}
                       className="text-red-400 hover:text-red-500 text-sm"
                     >
-                      Remove
+                      <div className="material-icons"> delete </div>
                     </button>
                   </div>
                 ))}
