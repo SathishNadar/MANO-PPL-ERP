@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import "./DprFetchViewer.css";
 
 const DprFetchViewer = () => {
+  const navigate = useNavigate()
   const API_URI = import.meta.env.VITE_API_URI;
   const PORT = import.meta.env.VITE_BACKEND_PORT;
 
@@ -13,7 +14,6 @@ const DprFetchViewer = () => {
   let projectEnd = null;
 
   const fetchandUpdateProjectData = async () => {
-    // const { projectId } = useParams();
     const pid = projectId;
 
     try {
@@ -25,7 +25,7 @@ const DprFetchViewer = () => {
       );
       const { data: static_data } = await response.json();
       setProjectData(static_data);
-      console.log(static_data);
+      // console.log(static_data);
       const setText = (id, text) => {
         const el = document.getElementById(id);
         if (el) el.textContent = text || "--";
@@ -98,14 +98,13 @@ const DprFetchViewer = () => {
         remarks: "Remarks",
         total: "Total",
       };
-
       const allKeys = Object.keys(data);
       const middleCols = allKeys.filter(
         (k) => k !== "agency" && k !== "remarks"
       );
       const finalCols = ["agency", ...middleCols, "total", "remarks"];
 
-      // Table spacing adjustment
+      // table spacing
       if (table) {
         const colCount = finalCols.length;
         if (colCount > 8) {
@@ -117,6 +116,7 @@ const DprFetchViewer = () => {
         }
       }
 
+      // header
       tableHead.innerHTML = finalCols
         .map(
           (key) =>
@@ -124,29 +124,52 @@ const DprFetchViewer = () => {
         )
         .join("");
 
-      // Get row count from the first available key
+      // init totals
+      const colTotals = {};
+      finalCols.forEach((col) => (colTotals[col] = 0));
+
+      // row count
       const firstAvailableKey = finalCols.find((key) =>
         Array.isArray(data[key])
       );
       const rowCount = firstAvailableKey ? data[firstAvailableKey].length : 0;
 
-      tableBody.innerHTML = Array.from({ length: rowCount }, (_, i) => {
+      let rowsHTML = "";
+
+      for (let i = 0; i < rowCount; i++) {
         let total = 0;
         const rowCells = finalCols
           .map((key) => {
             if (key === "total") {
+              colTotals[key] += total;
               return `<td class="px-2 py-1">${total}</td>`;
             } else if (key === "agency" || key === "remarks") {
               return `<td class="px-2 py-1">${data[key]?.[i] || ""}</td>`;
             } else {
               const val = data[key]?.[i] ?? 0;
-              if (typeof val === "number") total += val;
+              if (typeof val === "number") {
+                total += val;
+                colTotals[key] += val;
+              }
               return `<td class="px-2 py-1">${val}</td>`;
             }
           })
           .join("");
-        return `<tr>${rowCells}</tr>`;
-      }).join("");
+        rowsHTML += `<tr>${rowCells}</tr>`;
+      }
+
+      // totals row
+      const totalsRow = finalCols
+        .map((key) => {
+          if (key === "agency") return `<td class="font-bold">Total</td>`;
+          if (key === "remarks") return `<td></td>`;
+          if (key === "total")
+            return `<td class="font-bold">${colTotals[key] || 0}</td>`;
+          return `<td>${colTotals[key] || 0}</td>`;
+        })
+        .join("");
+
+      tableBody.innerHTML = rowsHTML + `<tr>${totalsRow}</tr>`;
     }
 
     const createLabourRow = (labour_report, i) => {
@@ -206,14 +229,10 @@ const DprFetchViewer = () => {
       const { data } = await response.json();
       setDprData(data);
 
-      // console.log(data);
-
-      // console.log(data.report_date);
-
       if (data?.created_at && projectStart && projectEnd) {
         const DAY = 1000 * 60 * 60 * 24;
 
-        const created = new Date(data.created_at);
+        const created = new Date(data.report_date);
         const totalDays = Math.floor((projectEnd - projectStart) / DAY);
 
         let elapsedDays = Math.floor((created - projectStart) / DAY);
@@ -224,15 +243,6 @@ const DprFetchViewer = () => {
 
         document.getElementById("elapsed_days").textContent = elapsedDays;
         document.getElementById("days_left").textContent = remainingDays;
-
-        // console.log({
-        //   projectStart,
-        //   projectEnd,
-        //   created,
-        //   totalDays,
-        //   elapsedDays,
-        //   remainingDays,
-        // });
       }
 
       //Site-Contditions
@@ -536,12 +546,22 @@ const DprFetchViewer = () => {
         </div>
 
         {/* Button Section */}
-        <div className="justify-end flex gap-4 pt-6">
+        <div className="flex justify-end gap-4 pt-6">
           <button
             onClick={() => loadPdf()}
-            className="bg-blue-500 hover:bg-blue-600 cursor-pointer text-white px-4 py-2 rounded "
+            className="bg-blue-500 hover:bg-blue-600 cursor-pointer text-white px-4 py-2 rounded"
           >
             Print PDF
+          </button>
+          <button
+            onClick={() =>
+              navigate(
+                `/dashboard/project-description/dprUpdate/${projectId}/${dprId}`
+              )
+            }
+            className="bg-blue-500 hover:bg-blue-600 cursor-pointer text-white px-4 py-2 rounded"
+          >
+            Edit
           </button>
         </div>
 
