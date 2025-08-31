@@ -619,141 +619,133 @@ export async function getCurrentHandlerForDpr(dpr_id) {
 
 // Insert DPR
 export async function r_insertDPR(dprData) {
-    if (!dprData.project_id || !dprData.report_date) {
-        throw new Error("Missing required fields: project_id or report_date");
-    }
+  if (!dprData.project_id || !dprData.report_date) {
+    throw new Error("Missing required fields: project_id or report_date");
+  }
 
-    // Step 1: Check if DPR already exists for same project and date
-    const checkQuery = `
-        SELECT dpr_id FROM dpr WHERE project_id = ? AND report_date = ? LIMIT 1;
-    `;
-    const [existing] = await pool.query(checkQuery, [dprData.project_id, dprData.report_date]);
+  // Step 1: Check if DPR already exists for the same project and date
+  const checkQuery = `
+    SELECT dpr_id FROM dpr WHERE project_id = ? AND report_date = ? LIMIT 1;
+  `;
+  const [existing] = await pool.query(checkQuery, [dprData.project_id, dprData.report_date]);
 
-    if (existing.length > 0) {
-        return { ok: false, message: "DPR already exists for this date.", data: null };
-    }
+  if (existing.length > 0) {
+    return { ok: false, message: "DPR already exists for this date.", data: null };
+  }
 
-    // Step 2: Insert new DPR
-    const insertQuery = `
-        INSERT INTO dpr (
-            project_id, report_date, site_condition, labour_report,
-            cumulative_manpower, today_prog, tomorrow_plan,
-            user_roles, events_remarks, general_remarks,
-            report_footer, created_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-    `;
+  // Step 2: Insert new DPR
+  const insertQuery = `
+    INSERT INTO dpr (
+      project_id, report_date, site_condition, labour_report,
+      cumulative_manpower, today_prog, tomorrow_plan,
+      events_remarks, general_remarks,
+      report_footer, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  `;
 
-    const values = [
-        dprData.project_id,
-        dprData.report_date,
-        dprData.site_condition ? JSON.stringify(dprData.site_condition) : null,
-        dprData.labour_report ? JSON.stringify(dprData.labour_report) : null,
-        dprData.cumulative_manpower ?? 0,
-        dprData.today_prog ? JSON.stringify(dprData.today_prog) : null,
-        dprData.tomorrow_plan ? JSON.stringify(dprData.tomorrow_plan) : null,
-        dprData.user_roles ? JSON.stringify(dprData.user_roles) : null,
-        dprData.events_remarks ? JSON.stringify(dprData.events_remarks) : null,
-        dprData.general_remarks ? JSON.stringify(dprData.general_remarks) : null,
-        dprData.report_footer ? JSON.stringify(dprData.report_footer) : null,
-        dprData.created_at ?? new Date()
-    ];
+  const values = [
+    dprData.project_id,
+    dprData.report_date,
+    dprData.site_condition ? JSON.stringify(dprData.site_condition) : null,
+    dprData.labour_report ? JSON.stringify(dprData.labour_report) : null,
+    dprData.cumulative_manpower ?? 0,
+    dprData.today_prog ? JSON.stringify(dprData.today_prog) : null,
+    dprData.tomorrow_plan ? JSON.stringify(dprData.tomorrow_plan) : null,
+    dprData.events_remarks ? JSON.stringify(dprData.events_remarks) : null,
+    dprData.general_remarks ? JSON.stringify(dprData.general_remarks) : null,
+    dprData.report_footer ? JSON.stringify(dprData.report_footer) : null,
+    dprData.created_at ?? new Date()
+  ];
 
-    try {
-        const [result] = await pool.query(insertQuery, values);
-        return {
-            ok: true,
-            message: "DPR inserted successfully.",
-            data: { insertId: result.insertId }
-        };
-    } catch (error) {
-        console.error("❌ Error inserting DPR:", error.message, "\nData:", dprData);
-        throw error;
-    }
+  try {
+    const [result] = await pool.query(insertQuery, values);
+    return {
+      ok: true,
+      message: "DPR inserted successfully.",
+      data: { insertId: result.insertId }
+    };
+  } catch (error) {
+    console.error("❌ Error inserting DPR:", error.message, "\nData:", dprData);
+    throw error;
+  }
 }
 
 // Update DPR
 export async function r_updateDPR(dprData) {
-    if (!dprData.dpr_id || !dprData.project_id) {
-        throw new Error("Missing required field: dpr_id or project_id");
-    }
+  if (!dprData.dpr_id || !dprData.project_id) {
+    throw new Error("Missing required field: dpr_id or project_id");
+  }
 
-    const allowedColumns = new Set([
-        'project_id',
-        'report_date',
-        'site_condition',
-        'labour_report',
-        'cumulative_manpower',
-        'today_prog',
-        'tomorrow_plan',
-        'user_roles',
-        'report_footer',
-        'created_at',
-        'created_by',
-        'approved_by',
-        'final_approved_by',
-        'current_handler',
-        'dpr_status',
-        'events_remarks',
-        'general_remarks',
-    ]);
+  // Allowed updatable columns (remove user_roles if desired)
+  const allowedColumns = new Set([
+    'project_id',
+    'report_date',
+    'site_condition',
+    'labour_report',
+    'cumulative_manpower',
+    'today_prog',
+    'tomorrow_plan',
+    'report_footer',
+  ]);
 
-    const jsonColumns = new Set([
-        'site_condition',
-        'labour_report',
-        'today_prog',
-        'tomorrow_plan',
-        'user_roles',
-        'report_footer',
-        'events_remarks',
-        'general_remarks',
-    ]);
+  const jsonColumns = new Set([
+    'site_condition',
+    'labour_report',
+    'today_prog',
+    'tomorrow_plan',
+    'report_footer'
+  ]);
 
-    const setClauses = [];
-    const values = [];
+  const setClauses = [];
+  const values = [];
 
-    for (const column of allowedColumns) {
-        if (dprData.hasOwnProperty(column)) {
-            let val = dprData[column];
+  for (const column of allowedColumns) {
+    if (dprData.hasOwnProperty(column)) {
+      let val = dprData[column];
 
-            if (val === undefined) continue;
-            if (val === null) {
-                val = null;
-            } else if (jsonColumns.has(column)) {
-                try {
-                    val = JSON.stringify(val);
-                } catch (e) {
-                    throw new Error(`Failed to JSON.stringify field ${column}: ${e.message}`);
-                }
-            } else if (column === 'created_at' && !val) {
-                val = new Date().toISOString().slice(0, 19).replace('T', ' ');
-            }
+      // Skip keys with undefined values (not sent)
+      if (val === undefined) continue;
 
-            setClauses.push(`\`${column}\` = ?`);
-            values.push(val);
+      if (val === null) {
+        val = null; // Explicit null is respected - will clear field
+      } else if (jsonColumns.has(column)) {
+        try {
+          val = JSON.stringify(val); // Serialize objects/arrays if needed
+        } catch (e) {
+          throw new Error(`Failed to JSON.stringify field ${column}: ${e.message}`);
         }
-    }
+      } else if (column === 'created_at' && !val) {
+        val = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      }
 
-    if (setClauses.length === 0) {
-        throw new Error("No valid fields provided to update");
+      setClauses.push(`\`${column}\` = ?`);
+      values.push(val);
     }
+  }
 
-    const query = `
+  if (setClauses.length === 0) {
+    throw new Error("No valid fields provided to update");
+  }
+
+  const query = `
     UPDATE dpr
     SET ${setClauses.join(', ')}
     WHERE dpr_id = ?;
   `;
 
-    values.push(dprData.dpr_id);
+  values.push(dprData.dpr_id);
 
-    try {
-        const [result] = await pool.query(query, values);
-        return result.affectedRows;
-    } catch (error) {
-        console.error("❌ Error updating DPR:", error.message, "\nData:", dprData);
-        throw error;
-    }
+  try {
+    const [result] = await pool.query(query, values);
+    return result.affectedRows;
+  } catch (error) {
+    console.error("❌ Error updating DPR:", error.message, "\nData:", dprData);
+    throw error;
+  }
 }
+
+
 
 // Fetch the last DPR of a project
 export async function r_fetchLastDPR(project_id) {
