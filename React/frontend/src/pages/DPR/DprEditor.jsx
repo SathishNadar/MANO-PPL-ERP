@@ -147,7 +147,7 @@ function DprEditor() {
           }
         );
         const data = await res.json();
-
+        console.log(data);
         if (res.ok && data.success) {
           setProject(data.data);
           setProjectName(data.data.project_name || "");
@@ -155,11 +155,30 @@ function DprEditor() {
           setLocation(data.data.location || "");
           setProjectCode(data.data.project_code || "");
           setProjectDescription(data.data.project_description || "");
+
+          //it is a temporary change do not touch start and end date here
           setStartDate(
-            data.data.start_date ? data.data.start_date.split("T")[0] : ""
+            data.data.start_date
+              ? new Date(
+                  new Date(data.data.start_date).setDate(
+                    new Date(data.data.start_date).getDate() + 1
+                  )
+                )
+                  .toISOString()
+                  .split("T")[0]
+              : ""
           );
+
           setEndDate(
-            data.data.end_date ? data.data.end_date.split("T")[0] : ""
+            data.data.end_date
+              ? new Date(
+                  new Date(data.data.end_date).setDate(
+                    new Date(data.data.end_date).getDate() + 1
+                  )
+                )
+                  .toISOString()
+                  .split("T")[0]
+              : ""
           );
 
           if (data.data.metadata) {
@@ -200,14 +219,8 @@ function DprEditor() {
             location,
             project_code: projectCode,
             project_description: projectDescription,
-            start_date: project?.start_date
-              ? new Date(project.start_date).toISOString().split("T")[0]
-              : startDate
-              ? new Date(startDate).toISOString().split("T")[0]
-              : null,
-            end_date: endDate
-              ? new Date(endDate).toISOString().split("T")[0]
-              : null,
+            start_date: startDate || null,
+            end_date: endDate || null,
           }),
         }
       );
@@ -233,6 +246,7 @@ function DprEditor() {
       agency: prev.agency.filter((_, i) => i !== idx),
     }));
   }
+
   function updateAgency(idx, val) {
     setMetadata((prev) => {
       const newAgency = [...prev.agency];
@@ -446,6 +460,7 @@ function DprEditor() {
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="w-full bg-transparent border-b border-gray-500 focus:border-blue-500 outline-none text-white py-1 transition-colors"
+                style={{ colorScheme: "dark" }}
               />
             </div>
             <div>
@@ -461,6 +476,7 @@ function DprEditor() {
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 className="w-full bg-transparent border-b border-gray-500 focus:border-blue-500 outline-none text-white py-1 transition-colors"
+                style={{ colorScheme: "dark" }}
               />
             </div>
             <div className="md:col-span-2">
