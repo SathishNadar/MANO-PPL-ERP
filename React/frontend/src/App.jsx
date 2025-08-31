@@ -17,7 +17,7 @@ import ProjectEdit from './pages/DPR/DprEditor.jsx'
 import ProjectsView from './pages/Dashboard/Projects/ProjectsView.jsx'
 import ProjectDescription from './pages/Dashboard/Projects/ProjectDescription.jsx'
 import DprFetchViewer from './pages/DPR/DprFetchViewer.jsx'
-
+import DprUpdateSubmit from './pages/DPR/DprUpdateSubmit.jsx'
 import Dummy from './pages/Dashboard/VendorList/VendorFilter.jsx'
 
 import { ToastContainer } from "react-toastify";
@@ -42,6 +42,7 @@ function App() {
         <Route path="/dashboard/project-description/:projectId/dprCreate" element={<ProtectedRoute><DPRCreate /></ProtectedRoute>} />
         <Route path="/dashboard/project-description/:projectId/dprEdit" element={<ProtectedRoute><ProjectEdit /></ProtectedRoute>} />
         <Route path="/dashboard/project-description/dpr-fetch" element={<ProtectedRoute>< DprFetchViewer/></ProtectedRoute>} />
+        <Route path="/dashboard/project-description/dprUpdate/:projectId/:dprId" element={<ProtectedRoute>< DprUpdateSubmit/></ProtectedRoute>} />
         
         <Route path="/dummy2" element={<Dummy/>} />
         
