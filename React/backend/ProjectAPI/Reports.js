@@ -183,10 +183,9 @@ router.get("/allDPR/:project_id", authenticateJWT, async (req, res) => {
 });
 
 // Post call to update an existing DPR
-router.post("/updateDPR", authenticateJWT, async (req, res) => {
+router.post("/updateDPR/:dpr_id", authenticateJWT, async (req, res) => {
   try {
     const {
-      dpr_id,
       project_id,
       report_date,
       site_condition = null,
@@ -199,6 +198,7 @@ router.post("/updateDPR", authenticateJWT, async (req, res) => {
       created_at = null
     } = req.body || {};
 
+    const dpr_id = parseInt(req.params.dpr_id, 10);
     const user_id = req.user.user_id;
     const role = await checkUserProjectRole(user_id, project_id);
 
