@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 
@@ -9,48 +9,39 @@ function DprUpdateSubmit() {
   const { projectId, dprId } = useParams();
   const navigate = useNavigate();
 
-  // ---------- Read-only project data ----------
   const [project, setProject] = useState(null);
 
-  // ---------- Editable DPR form state ----------
   const [reportDate, setReportDate] = useState(""); // read-only later
   const [siteCondition, setSiteCondition] = useState({
     is_rainy: false,
     ground_state: "",
     rain_timing: [],
   });
-
   const [labourReport, setLabourReport] = useState({
     agency: [],
     remarks: [],
   });
-  const labourCols = useMemo(() => {
-    return Object.keys(labourReport).filter(
-      (k) => k !== "agency" && k !== "remarks"
-    );
-  }, [labourReport]);
 
-  // Today / Tomorrow
-  const [todayProg, setTodayProg] = useState({ progress: [], qty: [] });
-  const [tomorrowPlan, setTomorrowPlan] = useState({ plan: [], qty: [] });
-
-  // Events & Footer
+  const [todayProg, setTodayProg] = useState([{ left: "", right: "" }]);
+  const [tomorrowPlan, setTomorrowPlan] = useState([{ left: "", right: "" }]);
   const [eventsRemarks, setEventsRemarks] = useState([]);
   const [bottomRemarks, setBottomRemarks] = useState([]);
   const [preparedBy, setPreparedBy] = useState("");
   const [distribute, setDistribute] = useState([]);
 
-  // UI helpers
+  const initialDpr = useRef(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Utils
   const isoToYMD = (iso) => (typeof iso === "string" ? iso.split("T")[0] : "");
+
   const ymdToDMY = (ymd) => {
-    if (!ymd) return "";
+    if (!ymd || typeof ymd !== "string") return "";
     const [y, m, d] = ymd.split("-");
     return `${d}/${m}/${y}`;
   };
+
   const formatISOToDMY = (iso) => {
     if (!iso) return "";
     const ymd = isoToYMD(iso);
@@ -92,7 +83,6 @@ function DprUpdateSubmit() {
   // Fetch data
   useEffect(() => {
     let mounted = true;
-
     async function fetchProject() {
       const res = await fetch(
         `http://${API_URI}:${PORT}/project/getProject/${projectId}`,
@@ -110,6 +100,8 @@ function DprUpdateSubmit() {
       );
       const { data } = await res.json();
       if (!mounted) return;
+
+      initialDpr.current = data;
 
       setReportDate(data?.report_date ? isoToYMD(data.report_date) : "");
       setSiteCondition({
@@ -132,20 +124,24 @@ function DprUpdateSubmit() {
       });
       setLabourReport(safe);
 
-      setTodayProg({
-        progress: Array.isArray(data?.today_prog?.progress)
-          ? data.today_prog.progress
-          : [],
-        qty: Array.isArray(data?.today_prog?.qty) ? data.today_prog.qty : [],
-      });
-      setTomorrowPlan({
-        plan: Array.isArray(data?.tomorrow_plan?.plan)
-          ? data.tomorrow_plan.plan
-          : [],
-        qty: Array.isArray(data?.tomorrow_plan?.qty)
-          ? data.tomorrow_plan.qty
-          : [],
-      });
+      // Map array data to object-arrays for EditableTable
+      setTodayProg(
+        Array.isArray(data?.today_prog?.progress)
+          ? data.today_prog.progress.map((left, i) => ({
+              left,
+              right: data.today_prog.qty?.[i] ?? "",
+            }))
+          : [{ left: "", right: "" }]
+      );
+
+      setTomorrowPlan(
+        Array.isArray(data?.tomorrow_plan?.plan)
+          ? data.tomorrow_plan.plan.map((left, i) => ({
+              left,
+              right: data.tomorrow_plan.qty?.[i] ?? "",
+            }))
+          : [{ left: "", right: "" }]
+      );
 
       setEventsRemarks(
         Array.isArray(data?.events_remarks) ? data.events_remarks : []
@@ -180,13 +176,19 @@ function DprUpdateSubmit() {
     };
   }, [projectId, dprId]);
 
-  // ---- Labour handlers (only numbers & remarks editable) ----
+  const labourCols = useMemo(() => {
+    return Object.keys(labourReport).filter(
+      (k) => k !== "agency" && k !== "remarks"
+    );
+  }, [labourReport]);
+
   const setRemark = (idx, val) =>
     setLabourReport((p) => {
       const next = { ...p, remarks: [...p.remarks] };
       next.remarks[idx] = val;
       return next;
     });
+
   const setCell = (col, idx, val) =>
     setLabourReport((p) => {
       const next = { ...p, [col]: [...(p[col] || [])] };
@@ -213,38 +215,102 @@ function DprUpdateSubmit() {
     return totals;
   }, [labourCols, labourReport]);
 
+  // Deep diff function unchanged...
+
+  const deepDiff = (prev, curr) => {
+    if (prev === curr) return undefined;
+    if (typeof prev !== typeof curr) return curr;
+    if (Array.isArray(prev) && Array.isArray(curr)) {
+      if (prev.length !== curr.length || prev.some((v, i) => v !== curr[i]))
+        return curr;
+      return undefined;
+    }
+    if (typeof prev === "object" && typeof curr === "object" && prev && curr) {
+      let diffResult = {};
+      for (const key of new Set([...Object.keys(prev), ...Object.keys(curr)])) {
+        const d = deepDiff(prev[key], curr[key]);
+        if (d !== undefined) diffResult[key] = d;
+      }
+      if (Object.keys(diffResult).length === 0) return undefined;
+      return diffResult;
+    }
+    return curr;
+  };
+
   // Save
   const onSave = async () => {
     try {
       setSaving(true);
-      const payload = {
-        report_date: reportDate || null,
-        site_condition: siteCondition,
+
+      const currentDpr = {
+        report_date: reportDate,
+        site_condition: {
+          is_rainy: siteCondition.is_rainy,
+          ground_state: siteCondition.ground_state,
+          rain_timing: siteCondition.rain_timing,
+        },
         labour_report: labourReport,
-        today_prog: todayProg,
-        tomorrow_plan: tomorrowPlan,
+        today_prog: {
+          progress: todayProg.map((row) => row.left),
+          qty: todayProg.map((row) => row.right),
+        },
+        tomorrow_plan: {
+          plan: tomorrowPlan.map((row) => row.left),
+          qty: tomorrowPlan.map((row) => row.right),
+        },
         events_remarks: eventsRemarks,
         report_footer: {
+          bottom_remarks: bottomRemarks,
           prepared_by: preparedBy,
           distribute,
-          bottom_remarks: bottomRemarks,
         },
       };
+
+      const orig = initialDpr.current
+        ? {
+            report_date: initialDpr.current.report_date
+              ? isoToYMD(initialDpr.current.report_date)
+              : "",
+            site_condition: initialDpr.current.site_condition || {},
+            labour_report: initialDpr.current.labour_report || {},
+            today_prog: initialDpr.current.today_prog || {},
+            tomorrow_plan: initialDpr.current.tomorrow_plan || {},
+            events_remarks: initialDpr.current.events_remarks || [],
+            report_footer: {
+              bottom_remarks:
+                initialDpr.current.report_footer?.bottom_remarks || [],
+              prepared_by: initialDpr.current.report_footer?.prepared_by || "",
+              distribute: initialDpr.current.report_footer?.distribute || [],
+            },
+          }
+        : {};
+
+      const patch = deepDiff(orig, currentDpr);
+
+      if (!patch || Object.keys(patch).length === 0) {
+        toast.info("No changes to save.");
+        setSaving(false);
+        return;
+      }
+      patch.dpr_id = dprId;
+      patch.project_id = projectId;
+      patch.report_date = reportDate;
+      console.log(patch);
       const res = await fetch(
         `http://${API_URI}:${PORT}/report/updateDPR/${dprId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(patch),
         }
       );
       const data = await res.json();
       if (res.ok && (data.ok || data.success)) {
         toast.success("DPR updated successfully");
+        initialDpr.current = { ...initialDpr.current, ...currentDpr };
       } else {
         toast.error(data.message || "Failed to update DPR");
-
       }
     } catch (e) {
       console.error(e);
@@ -254,14 +320,7 @@ function DprUpdateSubmit() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
-  }
-
+  // #region helpers
   function EditableTable({
     title,
     rows,
@@ -307,9 +366,7 @@ function DprUpdateSubmit() {
                   </td>
                   <td className="pr-2 py-2">
                     <input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
+                      type="text"
                       value={r.right ?? ""}
                       onChange={(e) => onChangeRight(i, e.target.value)}
                       className="w-full bg-transparent border-b border-gray-600 outline-none text-right"
@@ -320,9 +377,10 @@ function DprUpdateSubmit() {
                     <button
                       type="button"
                       onClick={() => onRemove(i)}
-                      className="text-red-400 hover:text-red-500 text-sm"
+                      className="text-red-400 hover:text-red-500 hover:cursor-pointer"
+                      title="Delete row"
                     >
-                      Remove
+                      <span className="material-icons text-md">delete</span>
                     </button>
                   </td>
                 </tr>
@@ -378,9 +436,10 @@ function DprUpdateSubmit() {
                 <button
                   type="button"
                   onClick={() => onRemove(i)}
-                  className="text-red-400 hover:text-red-500 text-sm"
+                  className="text-red-400 hover:text-red-500 hover:cursor-pointer"
+                  title="Delete row"
                 >
-                  Remove
+                  <span className="material-icons text-md">delete</span>
                 </button>
               </div>
             ))
@@ -395,56 +454,47 @@ function DprUpdateSubmit() {
 
   // ---- Today handlers ----
   const addTodayRow = () =>
-    setTodayProg((p) => ({
-      progress: [...p.progress, ""],
-      qty: [...p.qty, ""],
-    }));
+    setTodayProg((p) => [...p, { left: "", right: "" }]);
 
   const removeTodayRow = (i) =>
-    setTodayProg((p) => ({
-      progress: p.progress.filter((_, idx) => idx !== i),
-      qty: p.qty.filter((_, idx) => idx !== i),
-    }));
+    setTodayProg((p) => p.filter((_, idx) => idx !== i));
 
   const setTodayProgress = (i, val) =>
     setTodayProg((p) => {
-      const next = [...p.progress];
-      next[i] = val;
-      return { ...p, progress: next };
+      const next = [...p];
+      next[i] = { ...next[i], left: val };
+      return next;
     });
 
   const setTodayQty = (i, val) =>
     setTodayProg((p) => {
-      const next = [...p.qty];
-      next[i] = val;
-      return { ...p, qty: next };
+      const next = [...p];
+      next[i] = { ...next[i], right: val };
+      return next;
     });
 
   // ---- Tomorrow handlers ----
   const addTomorrowRow = () =>
-    setTomorrowPlan((p) => ({ plan: [...p.plan, ""], qty: [...p.qty, ""] }));
+    setTomorrowPlan((p) => [...p, { left: "", right: "" }]);
 
   const removeTomorrowRow = (i) =>
-    setTomorrowPlan((p) => ({
-      plan: p.plan.filter((_, idx) => idx !== i),
-      qty: p.qty.filter((_, idx) => idx !== i),
-    }));
+    setTomorrowPlan((p) => p.filter((_, idx) => idx !== i));
 
   const setTomorrowPlanText = (i, val) =>
     setTomorrowPlan((p) => {
-      const next = [...p.plan];
-      next[i] = val;
-      return { ...p, plan: next };
+      const next = [...p];
+      next[i] = { ...next[i], left: val };
+      return next;
     });
 
   const setTomorrowQty = (i, val) =>
     setTomorrowPlan((p) => {
-      const next = [...p.qty];
-      next[i] = val;
-      return { ...p, qty: next };
+      const next = [...p];
+      next[i] = { ...next[i], right: val };
+      return next;
     });
 
-  // ---- Events & Remarks handlers ----
+  // ---- Events & Remarks handlers ---- (unchanged)
   const addEvent = () => setEventsRemarks((p) => [...p, ""]);
   const removeEvent = (i) =>
     setEventsRemarks((p) => p.filter((_, idx) => idx !== i));
@@ -465,7 +515,7 @@ function DprUpdateSubmit() {
       return next;
     });
 
-  // ---- Distribute handlers ----
+  // ---- Distribute handlers ---- (unchanged)
   const addDistributor = () => setDistribute((p) => [...p, ""]);
   const removeDistributor = (i) =>
     setDistribute((p) => p.filter((_, idx) => idx !== i));
@@ -476,13 +526,22 @@ function DprUpdateSubmit() {
       return next;
     });
 
+  //#endregion
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-6 py-8 md:px-12 lg:px-20">
       {/* Toast */}
       <ToastContainer position="top-right" autoClose={2500} />
 
       {/* Page Header */}
-      {/* Header with Title + Report Date */}
       <div className="flex justify-between items-center border-b border-gray-700 pb-4 mb-8">
         <h1 className="text-3xl font-bold">Daily Progress Report — Update</h1>
         <div className="bg-gray-800 px-4 py-2 rounded-lg text-sm text-gray-300 shadow">
@@ -643,6 +702,7 @@ function DprUpdateSubmit() {
                     }}
                   />
                   <button
+                    type="button"
                     onClick={() =>
                       setSiteCondition((s) => ({
                         ...s,
@@ -651,9 +711,10 @@ function DprUpdateSubmit() {
                         ),
                       }))
                     }
-                    className="text-red-400"
+                    className="text-red-400 hover:text-red-500 hover:cursor-pointer relative top-1    "
+                    title="Delete row"
                   >
-                    Remove
+                    <span className="material-icons text-[18px]">delete</span>
                   </button>
                 </div>
               );
@@ -696,7 +757,7 @@ function DprUpdateSubmit() {
                         pattern="[0-9]*"
                         value={labourReport[c]?.[i] ?? ""}
                         onChange={(e) => setCell(c, i, e.target.value)}
-                        className="w-20 text-right bg-gray-900/50 border border-gray-600 rounded px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                        className="w-20 text-center bg-gray-900/50 border border-gray-600 rounded px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                       />
                     </td>
                   ))}
@@ -730,37 +791,29 @@ function DprUpdateSubmit() {
         </div>
       </div>
 
-      {/* Today / Tomorrow */}
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         <EditableTable
           title="Today's Progress"
-          rows={todayProg.progress.map((t, i) => ({
-            left: t,
-            right: todayProg.qty[i],
-          }))}
+          rows={todayProg}
           leftPlaceholder="Task"
           rightPlaceholder="Quantity"
           onAdd={() => addTodayRow()}
-          onRemove={(i) => removeTodayRow(i)}
-          onChangeLeft={(i, v) => setTodayProgress(i, v)}
-          onChangeRight={(i, v) => setTodayQty(i, v)}
+          onRemove={removeTodayRow}
+          onChangeLeft={setTodayProgress}
+          onChangeRight={setTodayQty}
         />
         <EditableTable
           title="Tomorrow's Planning"
-          rows={tomorrowPlan.plan.map((t, i) => ({
-            left: t,
-            right: tomorrowPlan.qty[i],
-          }))}
+          rows={tomorrowPlan}
           leftPlaceholder="Task"
           rightPlaceholder="Quantity"
-          onAdd={() => addTomorrowRow()}
-          onRemove={(i) => removeTomorrowRow(i)}
-          onChangeLeft={(i, v) => setTomorrowPlanText(i, v)}
-          onChangeRight={(i, v) => setTomorrowQty(i, v)}
+          onAdd={addTomorrowRow}
+          onRemove={removeTomorrowRow}
+          onChangeLeft={setTomorrowPlanText}
+          onChangeRight={setTomorrowQty}
         />
       </div>
 
-      {/* Events & Remarks */}
       <div className="grid md:grid-cols-3 gap-6 mb-8">
         <EditableList
           className="md:col-span-2"
