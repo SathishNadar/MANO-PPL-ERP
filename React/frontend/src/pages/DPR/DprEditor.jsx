@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
+import { ToastContainer,toast } from "react-toastify";
 
 const API_URI = import.meta.env.VITE_API_URI;
 const PORT = import.meta.env.VITE_BACKEND_PORT;
@@ -232,9 +233,9 @@ function DprEditor() {
 
       const data = await res.json();
       if (res.ok && (data.ok || data.success)) {
-        alert("Project details & metadata saved successfully!");
+       toast.success("Project details & metadata saved successfully!");
       } else {
-        alert(data.message || "Failed to save project data");
+        toast.error(data.message || "Failed to save project data");
       }
     } catch (e) {
       console.error("Error saving project:", e);
@@ -340,6 +341,7 @@ function DprEditor() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-6 py-8 md:px-16 lg:px-28">
+      <ToastContainer></ToastContainer>
       <h1 className="text-3xl font-extrabold mb-8 text-white text-center">
         Daily Progress Report Editor
       </h1>
