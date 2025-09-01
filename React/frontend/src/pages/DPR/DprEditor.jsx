@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 
 const API_URI = import.meta.env.VITE_API_URI;
@@ -20,6 +20,9 @@ function DprEditor() {
   const [loading, setLoading] = useState(true);
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingMetadata, setSavingMetadata] = useState(false);
+
+  const agencyInputRef = useRef(null);
+  const labourInputRef = useRef(null);
 
   const agencyDict = [
     "A TO Z GRILL FABRICATION",
@@ -121,33 +124,32 @@ function DprEditor() {
     "YASH ENTERPRISE",
   ];
   const labourDict = [
-    "Mason",
-    "Electrical",
-    "Painter",
-    "Welder",
-    "Carp",
-    "Fitter",
-    "Gypsum",
-    "Plumber",
-    "Helper",
-    "Staff",
+    "mason",
+    "electrical",
+    "painter",
+    "welder",
+    "carp",
+    "fitter",
+    "gypsum",
+    "plumber",
+    "helper",
+    "staff",
   ];
+
+  const [availableAgencies, setAvailableAgencies] = useState(agencyDict);
+  const [availableLabourTypes, setAvailableLabourTypes] = useState(labourDict);
 
   // Fetch project and metadata
   useEffect(() => {
     if (!projectId) return;
-
     async function fetchProject() {
       setLoading(true);
       try {
         const res = await fetch(
           `http://${API_URI}:${PORT}/project/getProject/${projectId}`,
-          {
-            credentials: "include",
-          }
+          { credentials: "include" }
         );
         const data = await res.json();
-        console.log(data);
         if (res.ok && data.success) {
           setProject(data.data);
           setProjectName(data.data.project_name || "");
@@ -156,7 +158,6 @@ function DprEditor() {
           setProjectCode(data.data.project_code || "");
           setProjectDescription(data.data.project_description || "");
 
-          //it is a temporary change do not touch start and end date here
           setStartDate(
             data.data.start_date
               ? new Date(
@@ -168,7 +169,6 @@ function DprEditor() {
                   .split("T")[0]
               : ""
           );
-
           setEndDate(
             data.data.end_date
               ? new Date(
@@ -186,15 +186,19 @@ function DprEditor() {
               agency: data.data.metadata.agency || [],
               labour_type: data.data.metadata.labour_type || [],
             });
-          } else {
-            setMetadata({ agency: [], labour_type: [] });
+            // remove already-selected items from available lists
+            setAvailableAgencies((prev) =>
+              prev.filter((a) => !(data.data.metadata.agency || []).includes(a))
+            );
+            setAvailableLabourTypes((prev) =>
+              prev.filter(
+                (b) => !(data.data.metadata.labour_type || []).includes(b)
+              )
+            );
           }
-        } else {
-          alert(data.message || "Failed to fetch project data");
         }
       } catch (e) {
         console.error("Error fetching project:", e);
-        alert("Error fetching project data");
       } finally {
         setLoading(false);
       }
@@ -203,7 +207,7 @@ function DprEditor() {
   }, [projectId]);
 
   // Save project details
-  async function saveProjectDetails() {
+  async function saveProject() {
     setSavingDetails(true);
     try {
       const res = await fetch(
@@ -221,115 +225,82 @@ function DprEditor() {
             project_description: projectDescription,
             start_date: startDate || null,
             end_date: endDate || null,
+            metadata, // merge metadata into the same payload
           }),
         }
       );
+
       const data = await res.json();
-      if (res.ok && data.ok) {
-        alert("Project details saved!");
+      if (res.ok && (data.ok || data.success)) {
+        alert("Project details & metadata saved successfully!");
       } else {
-        alert(data.message || "Failed to save project details");
+        alert(data.message || "Failed to save project data");
       }
     } catch (e) {
-      alert("Error saving project details");
+      console.error("Error saving project:", e);
+      alert("Error saving project");
     }
     setSavingDetails(false);
   }
 
   // Add / remove agency (row)
-  function addAgency() {
-    setMetadata((prev) => ({ ...prev, agency: [...prev.agency, ""] }));
-  }
-  function removeAgency(idx) {
-    setMetadata((prev) => ({
-      ...prev,
-      agency: prev.agency.filter((_, i) => i !== idx),
-    }));
+  function handleAddAgency(val, inputRef) {
+    const trimmed = (val || "").toString().trim();
+    if (
+      trimmed &&
+      !metadata.agency.includes(trimmed) &&
+      availableAgencies.includes(trimmed)
+    ) {
+      setMetadata((prev) => ({ ...prev, agency: [...prev.agency, trimmed] }));
+      setAvailableAgencies((prev) => prev.filter((a) => a !== trimmed));
+    }
+    if (inputRef) {
+      inputRef.value = "";
+      inputRef.focus();
+    }
   }
 
-  function updateAgency(idx, val) {
+  function removeAgency(idx) {
     setMetadata((prev) => {
-      const newAgency = [...prev.agency];
-      newAgency[idx] = val;
+      const removed = prev.agency[idx];
+      const newAgency = prev.agency.filter((_, i) => i !== idx);
+      setAvailableAgencies((list) =>
+        list.includes(removed) ? list : [...list, removed]
+      );
       return { ...prev, agency: newAgency };
     });
   }
 
   // Add / remove labour_type (col)
-  function addLabourType() {
-    setMetadata((prev) => ({
-      ...prev,
-      labour_type: [...prev.labour_type, ""],
-    }));
-  }
-  function removeLabourType(idx) {
-    setMetadata((prev) => ({
-      ...prev,
-      labour_type: prev.labour_type.filter((_, i) => i !== idx),
-    }));
-  }
-  function updateLabourType(idx, val) {
-    setMetadata((prev) => {
-      const newLabour = [...prev.labour_type];
-      newLabour[idx] = val;
-      return { ...prev, labour_type: newLabour };
-    });
-  }
 
-  // Save metadata (you can extend to call backend update API for metadata)
-  // Save metadata
-  async function saveMetadata() {
-    setSavingMetadata(true);
-    try {
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/project/updateMetadata`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            project_id: projectId,
-            metadata, // already in { agency: [...], labour_type: [...] }
-          }),
-        }
-      );
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        alert("Metadata saved successfully!");
-      } else {
-        alert(data.message || "Failed to save metadata");
-      }
-    } catch (e) {
-      console.error("Error saving metadata:", e);
-      alert("Error saving metadata");
-    }
-    setSavingMetadata(false);
-  }
-
-  // Handle adding agency from input
-  function handleAddAgency(e) {
-    const val = e.target.value.trim();
-    if (val && !metadata.agency.includes(val) && agencyDict.includes(val)) {
-      setMetadata((prev) => ({ ...prev, agency: [...prev.agency, val] }));
-    }
-    e.target.value = "";
-  }
-
-  // Handle adding labour type from input
-  function handleAddLabourType(e) {
-    const val = e.target.value.trim();
+  function handleAddLabourType(val, inputRef) {
+    const trimmed = (val || "").toString().trim();
     if (
-      val &&
-      !metadata.labour_type.includes(val) &&
-      labourDict.includes(val)
+      trimmed &&
+      !metadata.labour_type.includes(trimmed) &&
+      availableLabourTypes.includes(trimmed)
     ) {
       setMetadata((prev) => ({
         ...prev,
-        labour_type: [...prev.labour_type, val],
+        labour_type: [...prev.labour_type, trimmed],
       }));
+      setAvailableLabourTypes((prev) => prev.filter((b) => b !== trimmed));
     }
-    e.target.value = "";
+    if (inputRef) {
+      inputRef.value = "";
+      inputRef.focus();
+    }
+  }
+
+  function removeLabourType(idx) {
+    setMetadata((prev) => {
+      const removed = prev.labour_type[idx];
+      const newLabour = prev.labour_type.filter((_, i) => i !== idx);
+      setAvailableLabourTypes((list) =>
+        list.includes(removed) ? list : [...list, removed]
+      );
+      return { ...prev, labour_type: newLabour };
+    });
   }
 
   // Drag and drop handlers
@@ -346,18 +317,15 @@ function DprEditor() {
   function onDrop(e, dropIndex, dropType) {
     e.preventDefault();
     const data = JSON.parse(e.dataTransfer.getData("text/plain"));
-    if (data.type !== dropType) return; // only reorder within same type
-
+    if (data.type !== dropType) return;
     if (dropType === "row") {
-      if (data.index === dropIndex) return;
       setMetadata((prev) => {
         const newAgency = [...prev.agency];
         const [moved] = newAgency.splice(data.index, 1);
         newAgency.splice(dropIndex, 0, moved);
         return { ...prev, agency: newAgency };
       });
-    } else if (dropType === "col") {
-      if (data.index === dropIndex) return;
+    } else {
       setMetadata((prev) => {
         const newLabour = [...prev.labour_type];
         const [moved] = newLabour.splice(data.index, 1);
@@ -496,18 +464,6 @@ function DprEditor() {
               />
             </div>
           </div>
-          <button
-            type="button"
-            onClick={saveProjectDetails}
-            disabled={savingDetails}
-            className={`mt-6 w-full px-5 py-2 rounded font-semibold ${
-              savingDetails
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {savingDetails ? "Saving..." : "Save Project Details"}
-          </button>
         </form>
       </div>
 
@@ -526,21 +482,18 @@ function DprEditor() {
               Add Agency
             </label>
             <input
+              ref={agencyInputRef}
               id="agencyInput"
               list="agency-list"
               placeholder="Select or type agency"
-              onBlur={handleAddAgency}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddAgency(e);
-                }
-              }}
+              onChange={(e) =>
+                handleAddAgency(e.target.value, agencyInputRef.current)
+              }
               className="bg-gray-700 text-white rounded px-3 py-1 w-64 outline-none"
             />
             <datalist id="agency-list">
-              {agencyDict.map((agency, idx) => (
-                <option key={idx} value={agency} />
+              {availableAgencies.map((a) => (
+                <option key={a} value={a} />
               ))}
             </datalist>
           </div>
@@ -553,21 +506,18 @@ function DprEditor() {
                 Add Labour Type
               </label>
               <input
+                ref={labourInputRef}
                 id="labourInput"
                 list="labour-list"
                 placeholder="Select or type labour type"
-                onBlur={handleAddLabourType}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddLabourType(e);
-                  }
-                }}
+                onChange={(e) =>
+                  handleAddLabourType(e.target.value, labourInputRef.current)
+                }
                 className="bg-gray-700 text-white rounded px-3 py-1 w-64 outline-none"
               />
               <datalist id="labour-list">
-                {labourDict.map((labour, idx) => (
-                  <option key={idx} value={labour} />
+                {availableLabourTypes.map((l) => (
+                  <option key={l} value={l} />
                 ))}
               </datalist>
             </div>
@@ -686,18 +636,14 @@ function DprEditor() {
           </table>
         </div>
 
-        <button
-          onClick={saveMetadata}
-          disabled={savingMetadata}
-          className={`mt-4 px-6 py-2 rounded font-semibold ${
-            savingMetadata
-              ? "bg-blue-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {savingMetadata ? "Saving..." : "Save Metadata"}
-        </button>
       </div>
+        <button
+          onClick={saveProject}
+          disabled={savingDetails}
+          className="px-4 py-2 mt-4 bg-blue-600 hover:bg-blue-700 rounded text-white w-[100%] hover:cursor-pointer"
+        >
+          {savingDetails ? "Saving..." : "Save Project"}
+        </button>
     </div>
   );
 }
