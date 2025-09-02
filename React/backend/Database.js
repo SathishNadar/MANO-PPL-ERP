@@ -1018,6 +1018,3 @@ async function patchProjectRoles(project_id, changes) {
 
 
 // #endregion
-
-const t = await submitDPR(65, 8);
-console.log(t)
