@@ -6,7 +6,7 @@ const router = express.Router();
 
 export async function checkUserProjectRole(user_id, project_id) {
   try {
-    const role = await DB.r_getUserRoleForProject(user_id, project_id);
+    const role = await DB.getUserRoleForProject(user_id, project_id);
 
     if (!role) {
       return { ok: false, message: 'Forbidden: No access to this project.', role: null };
@@ -34,10 +34,7 @@ router.post("/insertDPR", authenticateJWT, async (req, res) => {
       cumulative_manpower = 0,
       today_prog = null,
       tomorrow_plan = null,
-      events_remarks = null,
-      general_remarks = null,
-      report_footer = null,
-      created_at = new Date()
+      report_footer = null
     } = req.body || {};
 
     const user_id = req.user.user_id;
@@ -62,7 +59,8 @@ router.post("/insertDPR", authenticateJWT, async (req, res) => {
     }
 
     // Insert the DPR data in the database
-    const result = await DB.r_insertDPR({
+    const result = await DB.insertDPR({
+      user_id,
       project_id,
       report_date,
       site_condition,
@@ -70,10 +68,7 @@ router.post("/insertDPR", authenticateJWT, async (req, res) => {
       cumulative_manpower,
       today_prog,
       tomorrow_plan,
-      events_remarks,
-      general_remarks,
-      report_footer,
-      created_at
+      report_footer
     });
 
     if (!result.ok) {
@@ -108,7 +103,7 @@ router.get("/initDPR/:project_id", authenticateJWT, async (req, res) => {
     }
 
     const project_data = await DB.r_getProjectById(project_id);
-    const prev_dpr = await DB.r_fetchLastDPR(project_id);
+    const prev_dpr = await DB.fetchLastDPR(project_id);
 
     const init_data = {
       ...project_data,
@@ -133,7 +128,7 @@ router.get("/getDPR/:id", authenticateJWT, async (req, res) => {
     }
 
     const user_id = req.user.user_id;
-    const DprData = await DB.r_getDPRById(dpr_id);
+    const DprData = await DB.getDPRById(dpr_id);
     
     if (!DprData) {
       return res.status(404).json({ message: "DPR not found" });
@@ -172,7 +167,7 @@ router.get("/allDPR/:project_id", authenticateJWT, async (req, res) => {
       return res.status(403).json({ message: "Forbidden: You do not have permission to view this DPR." });
     }
 
-    const projects = await DB.r_fetchDPRsByProject(project_id, limit);
+    const projects = await DB.fetchDPRsByProject(project_id, limit);
     if (!projects) {
       return res.status(404).json({ message: "Projects not found" });
     }
@@ -189,8 +184,6 @@ router.post("/updateDPR/:dpr_id", authenticateJWT, async (req, res) => {
   try {
     // Extract fields without default values so undefined means "not provided"
     const {
-      project_id,
-      report_date,
       site_condition,
       labour_report,
       cumulative_manpower,
@@ -200,6 +193,7 @@ router.post("/updateDPR/:dpr_id", authenticateJWT, async (req, res) => {
     } = req.body || {};
 
     const dpr_id = parseInt(req.params.dpr_id, 10);
+    const project_id = await DB.getProject_idByDpr_id(dpr_id);
     const user_id = req.user.user_id;
 
     // Permission check
@@ -223,19 +217,16 @@ router.post("/updateDPR/:dpr_id", authenticateJWT, async (req, res) => {
     }
 
     // Validate IDs
-    if (!dpr_id || !project_id || !report_date) {
+    if (!dpr_id) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: dpr_id, project_id or report_date",
+        message: "Missing required fields: dpr_id",
         data: null
       });
     }
 
     // Build update data object; properties undefined if not sent
     const updateData = {
-      dpr_id,
-      project_id,
-      report_date,
       site_condition,
       labour_report,
       cumulative_manpower,
@@ -244,7 +235,7 @@ router.post("/updateDPR/:dpr_id", authenticateJWT, async (req, res) => {
       report_footer
     };
 
-    const affectedRows = await DB.r_updateDPR(updateData);
+    const affectedRows = await DB.updateDPR(dpr_id, updateData);
 
     if (affectedRows === 0) {
       return res.status(404).json({ message: "No DPR found to update" });
@@ -258,9 +249,40 @@ router.post("/updateDPR/:dpr_id", authenticateJWT, async (req, res) => {
   }
 });
 
+// Get call to submit a DPR
+router.get("/submit/:dpr_id", authenticateJWT, async (req, res) => {
+  try {
+    const user_id = req.user.user_id;
+    console.log(user_id)
+    const dpr_id = parseInt(req.params.dpr_id, 10);
+
+    // Call the DPR submit function
+    const result = await DB.submitDPR(dpr_id, user_id);
+    
+    res.json({ success: true, message: "DPR submitted successfully", data: result });
+  } catch (error) {
+    // Permission or state errors
+    if (error.message === "DPR not found") {
+      res.status(404).json({ success: false, message: "DPR not found" });
+    } else if (
+      error.message === "You are not the current handler for this DPR" ||
+      error.message === "Only the reporter can submit at this stage" ||
+      error.message === "Only the approver can submit at this stage" ||
+      error.message === "Only the final approver can submit at this stage"
+    ) {
+      res.status(403).json({ success: false, message: error.message });
+    } else if (error.message === "DPR already approved or in invalid state") {
+      res.status(400).json({ success: false, message: error.message });
+    } else {
+      console.error("❌ API error in Submit DPR:", error.message);
+      res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  }
+});
 
 
-
+// const t = await DB.submitDPR(6, 75);
+// console.log(t)
 
 export default router;
 

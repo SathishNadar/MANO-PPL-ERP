@@ -57,15 +57,15 @@ router.post("/insertProject", authenticateJWT, async (req, res) => {
 }); 
 
 // Post call to update an existing Project
-router.post("/updateProject", authenticateJWT, async (req, res) => {
+router.post("/updateProject/:project_id", authenticateJWT, async (req, res) => {
     try {
-        const { project_id } = req.body;
+        const project_id = parseInt(req.params.project_id);
 
         if (!project_id) {
             return res.status(400).json({ ok: false, message: "Missing project_id" });
         }
 
-        const updated = await DB.r_updateProject(req.body);
+        const updated = await DB.r_updateProject(project_id, req.body);
 
         if (updated === 0) {
             return res.status(404).json({ ok: false, message: "No project fields updated" });

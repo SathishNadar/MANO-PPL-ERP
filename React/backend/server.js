@@ -42,6 +42,7 @@ app.use('/project', ProjectRoutes);
 app.use("/report", ReportRoutes); 
 app.use("/vendor_api", VendorRoutes);
 app.use("/tasks", TaskRoutes);
+app.use("/tasks", TaskRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');

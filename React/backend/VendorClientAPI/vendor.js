@@ -17,7 +17,7 @@ router.post("/", async (req, res) => {
             jobNatureIds = []
         } = req.body || {};
 
-        const vendors = await DB.r_fetchVendors({
+        const vendors = await DB.fetchVendors({
             queryString,
             category,
             limit,

@@ -1,4 +1,5 @@
 import mysql from 'mysql2';
+import Fuse from "fuse.js";
 import './config.js';
 
 // Create a MySQL pool with connection details
@@ -86,7 +87,6 @@ export async function insertUser(username, email, hashedPassword, phone) {
 // #endregion
 
 // #region ✅ TASKS ─────────────────────────────────────────────
-
 
 // Function to fetch task by task_id
 export async function fetchTaskById(task_id) {
@@ -344,9 +344,8 @@ export async function r_insertProject(data) {
 }
 
 // Function to update Project
-export async function r_updateProject(data) {
+export async function r_updateProject(project_id, data) {
     const {
-        project_id,
         user_roles,
         ...fields
     } = data;
@@ -422,7 +421,7 @@ export async function r_updateProjectMetadata({ project_id, metadata }) {
 // #region 🏷️ VENDOR ─────────────────────────────────────────────
 
 // Fetch vendors with pagination, filtering and search
-export async function r_fetchVendors({
+export async function fetchVendors({
   queryString = "",
   category = 0,
   limit = 11,
@@ -578,7 +577,7 @@ export async function r_fetchVendorsAllLocations() {
 // #region 📝 DPR  ─────────────────────────────────────────────
 
 // Fetch DPR by ID
-export async function r_getDPRById(dpr_id) {
+export async function getDPRById(dpr_id) {
     if (!dpr_id) {
         throw new Error("DPR ID is required");
     }
@@ -618,7 +617,7 @@ export async function getCurrentHandlerForDpr(dpr_id) {
 }
 
 // Insert DPR
-export async function r_insertDPR(dprData) {
+export async function insertDPR(dprData) {
   if (!dprData.project_id || !dprData.report_date) {
     throw new Error("Missing required fields: project_id or report_date");
   }
@@ -632,16 +631,15 @@ export async function r_insertDPR(dprData) {
   if (existing.length > 0) {
     return { ok: false, message: "DPR already exists for this date.", data: null };
   }
-
+  console.log(dprData.user_id);
   // Step 2: Insert new DPR
   const insertQuery = `
     INSERT INTO dpr (
       project_id, report_date, site_condition, labour_report,
       cumulative_manpower, today_prog, tomorrow_plan,
-      events_remarks, general_remarks,
-      report_footer, created_at
+      report_footer, created_by, current_handler
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
   `;
 
   const values = [
@@ -652,10 +650,9 @@ export async function r_insertDPR(dprData) {
     dprData.cumulative_manpower ?? 0,
     dprData.today_prog ? JSON.stringify(dprData.today_prog) : null,
     dprData.tomorrow_plan ? JSON.stringify(dprData.tomorrow_plan) : null,
-    dprData.events_remarks ? JSON.stringify(dprData.events_remarks) : null,
-    dprData.general_remarks ? JSON.stringify(dprData.general_remarks) : null,
     dprData.report_footer ? JSON.stringify(dprData.report_footer) : null,
-    dprData.created_at ?? new Date()
+    dprData.user_id,
+    dprData.user_id
   ];
 
   try {
@@ -672,14 +669,13 @@ export async function r_insertDPR(dprData) {
 }
 
 // Update DPR
-export async function r_updateDPR(dprData) {
-  if (!dprData.dpr_id || !dprData.project_id) {
-    throw new Error("Missing required field: dpr_id or project_id");
+export async function updateDPR(dpr_id, dprData) {
+  if (!dpr_id) {
+    throw new Error("Missing required field: dpr_id");
   }
 
   // Allowed updatable columns (remove user_roles if desired)
   const allowedColumns = new Set([
-    'project_id',
     'report_date',
     'site_condition',
     'labour_report',
@@ -687,6 +683,11 @@ export async function r_updateDPR(dprData) {
     'today_prog',
     'tomorrow_plan',
     'report_footer',
+    'created_by',
+    'approved_by',
+    'final_approved_by',
+    'current_handler',
+    'dpr_status'
   ]);
 
   const jsonColumns = new Set([
@@ -734,7 +735,7 @@ export async function r_updateDPR(dprData) {
     WHERE dpr_id = ?;
   `;
 
-  values.push(dprData.dpr_id);
+  values.push(dpr_id);
 
   try {
     const [result] = await pool.query(query, values);
@@ -745,10 +746,8 @@ export async function r_updateDPR(dprData) {
   }
 }
 
-
-
 // Fetch the last DPR of a project
-export async function r_fetchLastDPR(project_id) {
+export async function fetchLastDPR(project_id) {
     const query = `
         SELECT * FROM dpr
         WHERE project_id = ?
@@ -766,7 +765,7 @@ export async function r_fetchLastDPR(project_id) {
 }
 
 // Fetch all DPR under a specific Project
-export async function r_fetchDPRsByProject(project_id, limit = 20) {
+export async function fetchDPRsByProject(project_id, limit = 20) {
     const query = `
     SELECT 
       dpr_id,
@@ -790,7 +789,7 @@ export async function r_fetchDPRsByProject(project_id, limit = 20) {
 }
 
 // Fetch project_id from 
-export async function r_getProjByDprID(dpr_id) {
+export async function getProjByDprID(dpr_id) {
     const query = `SELECT project_id FROM dpr WHERE dpr_id = ?`;
     try {
         const [rows] = await pool.query(query, [dpr_id]);
@@ -804,13 +803,80 @@ export async function r_getProjByDprID(dpr_id) {
     }
 }
 
+// Submit DPR
+export async function submitDPR(dpr_id, user_id) {
+  // 1. Get the DPR row
+  const dpr = await getDPRById(dpr_id);
+  if (!dpr) throw new Error("DPR not found");
+
+  // 2. Initial check: dpr_status and current_handler
+  if (dpr.dpr_status === "approved") throw new Error("DPR is already approved");
+  if (dpr.current_handler !== user_id) throw new Error("You are not the current handler for this DPR");
+
+  // 3. Get user role and users involved
+  const project_id = await getProject_idByDpr_id(dpr_id);
+  const userRole = await getUserRoleForProject(user_id, project_id);
+  const users_involved = await getUsersInvolvedInProject(project_id);
+
+  let next_handler = null;
+  let new_status = "";
+  let fieldsToUpdate = {};
+
+  // 4. Workflow logic with skip option
+  if (dpr.dpr_status === "in_progress") {
+    if (userRole.role_name !== "reporter") throw new Error("Only the reporter can submit at this stage");
+    
+    // If neither approver nor final_approver, mark as approved directly
+    if (!users_involved.approver && !users_involved.final_approver) {
+      next_handler = null;
+      new_status = "approved";
+    }
+    // If only approver exists
+    else if (users_involved.approver) {
+      next_handler = users_involved.approver;
+      new_status = "under_review";
+    }
+  } else if (dpr.dpr_status === "under_review") {
+    if (userRole.role_name !== "approver") throw new Error("Only the approver can submit at this stage");
+
+    fieldsToUpdate.approved_by = user_id;
+
+    // If no final approver, directly approve
+    if (!users_involved.final_approver) {
+      next_handler = null;
+      new_status = "approved";
+    }
+    // Otherwise, assign to final approver
+    else {
+      next_handler = users_involved.final_approver;
+      new_status = "final_review";
+    }
+  } else if (dpr.dpr_status === "final_review") {
+    if (userRole.role_name !== "final_approver") throw new Error("Only the final approver can submit at this stage");
+    fieldsToUpdate.final_approved_by = user_id;
+    // Approve and end flow
+    next_handler = null;
+    new_status = "approved";
+  } else {
+    throw new Error("DPR in invalid state");
+  }
+
+  // 5. Compose update
+  fieldsToUpdate.current_handler = next_handler;
+  fieldsToUpdate.dpr_status = new_status;
+  await updateDPR(dpr_id, fieldsToUpdate);
+
+  return { ok: true, new_status, next_handler };
+}
+
+
 
 // #endregion
 
 // #region 🧬 CROSS MODULE ─────────────────────────────────────────────
 
 // Fetches user roles for a user in a given project
-export async function r_getUserRoleForProject(user_id, project_id) {
+export async function getUserRoleForProject(user_id, project_id) {
     const query = `
         SELECT r.*
         FROM project_user_roles upr
@@ -821,7 +887,6 @@ export async function r_getUserRoleForProject(user_id, project_id) {
 
     try {
         const [[rows]] = await pool.query(query, params);
-        console.log(rows)
         return rows
     } catch (error) {
         console.error("Error fetching vendors:", error);
@@ -830,7 +895,7 @@ export async function r_getUserRoleForProject(user_id, project_id) {
 }
 
 // Fetch users involved in project and their role
-export async function r_getUsersInvolvedInProject(project_id) {
+export async function getUsersInvolvedInProject(project_id) {
     const query = `
         SELECT upr.user_id, r.role_name
         FROM project_user_roles upr
@@ -850,12 +915,40 @@ export async function r_getUsersInvolvedInProject(project_id) {
             roleMap[role_name].push(user_id);
         }
 
+        roleMap.approver = roleMap.approver[0];
+        roleMap.final_approver = roleMap.final_approver[0];
+
         return roleMap
     } catch (error) {
         console.error("Error fetching vendors:", error);
         throw error;
     }
 }
+
+// Fetch users involved in project and their role
+export async function getProject_idByDpr_id(dpr_id) {
+  const query = `
+    SELECT project_id
+    FROM dpr
+    WHERE dpr_id = ?;
+  `;
+
+  try {
+    const [rows] = await pool.query(query, [dpr_id]);
+
+    if (rows.length === 0) {
+      // No matching record found
+      return null;
+    }
+
+    // Return project_id as a number
+    return rows[0].project_id;
+  } catch (error) {
+    console.error("Error fetching project_id by dpr_id:", error);
+    throw error;
+  }
+}
+
 
 // Update the roles of users for a project
 async function patchProjectRoles(project_id, changes) {
@@ -926,3 +1019,5 @@ async function patchProjectRoles(project_id, changes) {
 
 // #endregion
 
+const t = await submitDPR(65, 8);
+console.log(t)
