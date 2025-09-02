@@ -212,13 +212,12 @@ function DprEditor() {
     setSavingDetails(true);
     try {
       const res = await fetch(
-        `http://${API_URI}:${PORT}/project/updateProject`,
+        `http://${API_URI}:${PORT}/project/updateProject/${projectId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            project_id: projectId,
             project_name: projectName,
             Employer: employer,
             location,

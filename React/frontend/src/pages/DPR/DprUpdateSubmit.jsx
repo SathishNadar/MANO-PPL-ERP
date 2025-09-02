@@ -22,17 +22,28 @@ function DprUpdateSubmit() {
     remarks: [],
   });
 
-  const [todayProg, setTodayProg] = useState([{ left: "", right: "" }]);
-  const [tomorrowPlan, setTomorrowPlan] = useState([{ left: "", right: "" }]);
-  const [eventsRemarks, setEventsRemarks] = useState([]);
-  const [bottomRemarks, setBottomRemarks] = useState([]);
-  const [preparedBy, setPreparedBy] = useState("");
-  const [distribute, setDistribute] = useState([]);
+  const [todayProg, setTodayProg] = useState([
+    { id: crypto.randomUUID(), left: "", right: "" },
+  ]);
+  const [tomorrowPlan, setTomorrowPlan] = useState([
+    { id: crypto.randomUUID(), left: "", right: "" },
+  ]);
+  const [eventsRemarks, setEventsRemarks] = useState([
+    { id: crypto.randomUUID(), text: "" },
+  ]);
+  const [bottomRemarks, setBottomRemarks] = useState([
+    { id: crypto.randomUUID(), text: "" },
+  ]);
+  const [distribute, setDistribute] = useState([
+    { id: crypto.randomUUID(), text: "" },
+  ]);
 
+  const [preparedBy, setPreparedBy] = useState("");
   const initialDpr = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const isoToYMD = (iso) => (typeof iso === "string" ? iso.split("T")[0] : "");
 
@@ -83,6 +94,7 @@ function DprUpdateSubmit() {
   // Fetch data
   useEffect(() => {
     let mounted = true;
+
     async function fetchProject() {
       const res = await fetch(
         `http://${API_URI}:${PORT}/project/getProject/${projectId}`,
@@ -112,6 +124,7 @@ function DprUpdateSubmit() {
           : [],
       });
 
+      // ---- Labour report ----
       const lr = data?.labour_report || {};
       const safe = {
         agency: Array.isArray(lr.agency) ? lr.agency : [],
@@ -124,39 +137,55 @@ function DprUpdateSubmit() {
       });
       setLabourReport(safe);
 
-      // Map array data to object-arrays for EditableTable
+      // ---- Today Progress ----
       setTodayProg(
         Array.isArray(data?.today_prog?.progress)
           ? data.today_prog.progress.map((left, i) => ({
+              id: crypto.randomUUID(),
               left,
               right: data.today_prog.qty?.[i] ?? "",
             }))
-          : [{ left: "", right: "" }]
+          : [{ id: crypto.randomUUID(), left: "", right: "" }]
       );
 
       setTomorrowPlan(
         Array.isArray(data?.tomorrow_plan?.plan)
           ? data.tomorrow_plan.plan.map((left, i) => ({
+              id: crypto.randomUUID(),
               left,
               right: data.tomorrow_plan.qty?.[i] ?? "",
             }))
-          : [{ left: "", right: "" }]
+          : [{ id: crypto.randomUUID(), left: "", right: "" }]
       );
 
       setEventsRemarks(
-        Array.isArray(data?.events_remarks) ? data.events_remarks : []
+        Array.isArray(data?.events_remarks)
+          ? data.events_remarks.map((text) => ({
+              id: crypto.randomUUID(),
+              text,
+            }))
+          : [{ id: crypto.randomUUID(), text: "" }]
       );
+
       setBottomRemarks(
         Array.isArray(data?.report_footer?.bottom_remarks)
-          ? data.report_footer.bottom_remarks
-          : []
+          ? data.report_footer.bottom_remarks.map((text) => ({
+              id: crypto.randomUUID(),
+              text,
+            }))
+          : [{ id: crypto.randomUUID(), text: "" }]
       );
-      setPreparedBy(data?.report_footer?.prepared_by || "");
+
       setDistribute(
         Array.isArray(data?.report_footer?.distribute)
-          ? data.report_footer.distribute
-          : []
+          ? data.report_footer.distribute.map((text) => ({
+              id: crypto.randomUUID(),
+              text,
+            }))
+          : [{ id: crypto.randomUUID(), text: "" }]
       );
+
+      setPreparedBy(data?.report_footer?.prepared_by || "");
     }
 
     (async () => {
@@ -215,8 +244,6 @@ function DprUpdateSubmit() {
     return totals;
   }, [labourCols, labourReport]);
 
-  // Deep diff function unchanged...
-
   const normalize = (dpr) => ({
     site_condition: {
       is_rainy: Boolean(dpr?.site_condition?.is_rainy),
@@ -225,6 +252,7 @@ function DprUpdateSubmit() {
         ? dpr.site_condition.rain_timing
         : [],
     },
+
     // labour_report is ALWAYS an object
     labour_report: (() => {
       const lr = dpr?.labour_report || {};
@@ -239,6 +267,7 @@ function DprUpdateSubmit() {
       });
       return safe;
     })(),
+
     today_prog: {
       progress: Array.isArray(dpr?.today_prog?.progress)
         ? dpr.today_prog.progress
@@ -310,12 +339,12 @@ function DprUpdateSubmit() {
           plan: tomorrowPlan.map((row) => row.left),
           qty: tomorrowPlan.map((row) => row.right),
         },
-        events_remarks: eventsRemarks,
+        events_remarks: eventsRemarks.map((e) => e.text),
         report_footer: {
-          distribute,
+          distribute: distribute.map((d) => d.text),
           prepared_by: preparedBy,
-          bottom_remarks: bottomRemarks,
-          events_visit: [], // add if you have events_visit editing
+          bottom_remarks: bottomRemarks.map((b) => b.text),
+          events_visit: [],
         },
       };
 
@@ -335,7 +364,6 @@ function DprUpdateSubmit() {
       }
 
       console.log("FINAL PATCH SENT:", JSON.stringify(patch, null, 2));
-
 
       const res = await fetch(
         `http://${API_URI}:${PORT}/report/updateDPR/${dprId}`,
@@ -395,13 +423,13 @@ function DprUpdateSubmit() {
           </thead>
           <tbody className="text-white">
             {rows.length ? (
-              rows.map((r, i) => (
-                <tr key={i}>
+              rows.map((r) => (
+                <tr key={r.id}>
                   <td className="pl-2 py-2">
                     <input
                       type="text"
                       value={r.left}
-                      onChange={(e) => onChangeLeft(i, e.target.value)}
+                      onChange={(e) => onChangeLeft(r.id, e.target.value)}
                       className="w-full bg-transparent border-b border-gray-600 outline-none"
                       placeholder={leftPlaceholder}
                     />
@@ -409,8 +437,8 @@ function DprUpdateSubmit() {
                   <td className="pr-2 py-2">
                     <input
                       type="text"
-                      value={r.right ?? ""}
-                      onChange={(e) => onChangeRight(i, e.target.value)}
+                      value={r.right}
+                      onChange={(e) => onChangeRight(r.id, e.target.value)}
                       className="w-full bg-transparent border-b border-gray-600 outline-none text-right"
                       placeholder={rightPlaceholder}
                     />
@@ -418,7 +446,7 @@ function DprUpdateSubmit() {
                   <td className="py-2 text-right">
                     <button
                       type="button"
-                      onClick={() => onRemove(i)}
+                      onClick={() => onRemove(r.id)}
                       className="text-red-400 hover:text-red-500 hover:cursor-pointer"
                       title="Delete row"
                     >
@@ -466,18 +494,18 @@ function DprUpdateSubmit() {
         </div>
         <div className="flex flex-col gap-3">
           {items.length ? (
-            items.map((t, i) => (
-              <div key={i} className="flex items-center gap-2">
+            items.map((r) => (
+              <div key={r.id} className="flex items-center gap-2">
                 <input
                   type="text"
-                  value={t}
-                  onChange={(e) => onChange(i, e.target.value)}
+                  value={r.text}
+                  onChange={(e) => onChange(r.id, e.target.value)}
                   className="flex-1 bg-transparent border-b border-gray-600 outline-none"
                   placeholder={placeholder}
                 />
                 <button
                   type="button"
-                  onClick={() => onRemove(i)}
+                  onClick={() => onRemove(r.id)}
                   className="text-red-400 hover:text-red-500 text-sm"
                 >
                   <span className="material-icons text-md">delete</span>
@@ -495,77 +523,78 @@ function DprUpdateSubmit() {
 
   // ---- Today handlers ----
   const addTodayRow = () =>
-    setTodayProg((p) => [...p, { left: "", right: "" }]);
+    setTodayProg((p) => [
+      ...p,
+      { id: crypto.randomUUID(), left: "", right: "" },
+    ]);
 
-  const removeTodayRow = (i) =>
-    setTodayProg((p) => p.filter((_, idx) => idx !== i));
+  const removeTodayRow = (id) =>
+    setTodayProg((p) => p.filter((row) => row.id !== id));
 
-  const setTodayProgress = (i, val) =>
-    setTodayProg((p) => {
-      const next = [...p];
-      next[i] = { ...next[i], left: val };
-      return next;
-    });
+  const setTodayProgress = (id, val) =>
+    setTodayProg((p) =>
+      p.map((row) => (row.id === id ? { ...row, left: val } : row))
+    );
 
-  const setTodayQty = (i, val) =>
-    setTodayProg((p) => {
-      const next = [...p];
-      next[i] = { ...next[i], right: val };
-      return next;
-    });
+  const setTodayQty = (id, val) =>
+    setTodayProg((p) =>
+      p.map((row) => (row.id === id ? { ...row, right: val } : row))
+    );
 
   // ---- Tomorrow handlers ----
   const addTomorrowRow = () =>
-    setTomorrowPlan((p) => [...p, { left: "", right: "" }]);
+    setTomorrowPlan((p) => [
+      ...p,
+      { id: crypto.randomUUID(), left: "", right: "" },
+    ]);
 
-  const removeTomorrowRow = (i) =>
-    setTomorrowPlan((p) => p.filter((_, idx) => idx !== i));
+  const removeTomorrowRow = (id) =>
+    setTomorrowPlan((p) => p.filter((row) => row.id !== id));
 
-  const setTomorrowPlanText = (i, val) =>
-    setTomorrowPlan((p) => {
-      const next = [...p];
-      next[i] = { ...next[i], left: val };
-      return next;
-    });
+  const setTomorrowPlanText = (id, val) =>
+    setTomorrowPlan((p) =>
+      p.map((row) => (row.id === id ? { ...row, left: val } : row))
+    );
 
-  const setTomorrowQty = (i, val) =>
-    setTomorrowPlan((p) => {
-      const next = [...p];
-      next[i] = { ...next[i], right: val };
-      return next;
-    });
+  const setTomorrowQty = (id, val) =>
+    setTomorrowPlan((p) =>
+      p.map((row) => (row.id === id ? { ...row, right: val } : row))
+    );
 
   // ---- Events & Remarks handlers ---- (unchanged)
-  const addEvent = () => setEventsRemarks((p) => [...p, ""]);
-  const removeEvent = (i) =>
-    setEventsRemarks((p) => p.filter((_, idx) => idx !== i));
-  const setEvent = (i, val) =>
-    setEventsRemarks((p) => {
-      const next = [...p];
-      next[i] = val;
-      return next;
-    });
+  const addEvent = () =>
+    setEventsRemarks((p) => [...p, { id: crypto.randomUUID(), text: "" }]);
 
-  const addBottomRemark = () => setBottomRemarks((p) => [...p, ""]);
-  const removeBottomRemark = (i) =>
-    setBottomRemarks((p) => p.filter((_, idx) => idx !== i));
-  const setBottomRemark = (i, val) =>
-    setBottomRemarks((p) => {
-      const next = [...p];
-      next[i] = val;
-      return next;
-    });
+  const removeEvent = (id) =>
+    setEventsRemarks((p) => p.filter((row) => row.id !== id));
+
+  const setEvent = (id, val) =>
+    setEventsRemarks((p) =>
+      p.map((row) => (row.id === id ? { ...row, text: val } : row))
+    );
+
+  const addBottomRemark = () =>
+    setBottomRemarks((p) => [...p, { id: crypto.randomUUID(), text: "" }]);
+
+  const removeBottomRemark = (id) =>
+    setBottomRemarks((p) => p.filter((row) => row.id !== id));
+
+  const setBottomRemark = (id, val) =>
+    setBottomRemarks((p) =>
+      p.map((row) => (row.id === id ? { ...row, text: val } : row))
+    );
 
   // ---- Distribute handlers ---- (unchanged)
-  const addDistributor = () => setDistribute((p) => [...p, ""]);
-  const removeDistributor = (i) =>
-    setDistribute((p) => p.filter((_, idx) => idx !== i));
-  const setDistributor = (i, val) =>
-    setDistribute((p) => {
-      const next = [...p];
-      next[i] = val;
-      return next;
-    });
+  const addDistributor = () =>
+    setDistribute((p) => [...p, { id: crypto.randomUUID(), text: "" }]);
+
+  const removeDistributor = (id) =>
+    setDistribute((p) => p.filter((row) => row.id !== id));
+
+  const setDistributor = (id, val) =>
+    setDistribute((p) =>
+      p.map((row) => (row.id === id ? { ...row, text: val } : row))
+    );
 
   //#endregion
 
@@ -576,6 +605,33 @@ function DprUpdateSubmit() {
       </div>
     );
   }
+
+  // Submit
+  const SubmitDPR = async () => {
+    const confirmSubmit = window.confirm(
+      "Are you sure you want to submit the DPR? This action cannot be undone."
+    );
+
+    if (!confirmSubmit) return;
+
+    try {
+      setSubmitting(true);
+
+      const response = await fetch(`http://${API_URI}:${PORT}/report/submit/${dprId}`, {
+        credentials:"include"
+      });
+
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+
+      toast.success("Success:", await response.json());
+    } catch (error) {
+      toast.error("Error:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-6 py-8 md:px-12 lg:px-20">
@@ -899,17 +955,17 @@ function DprUpdateSubmit() {
                 </button>
               </div>
               <div className="flex flex-col gap-2">
-                {distribute.map((d, i) => (
-                  <div key={i} className="flex items-center gap-2">
+                {distribute.map((d) => (
+                  <div key={d.id} className="flex items-center gap-2">
                     <input
                       type="text"
-                      value={d}
-                      onChange={(e) => setDistributor(i, e.target.value)}
+                      value={d.text}
+                      onChange={(e) => setDistributor(d.id, e.target.value)}
                       className="flex-1 bg-transparent border-b border-gray-600 outline-none"
                     />
                     <button
                       type="button"
-                      onClick={() => removeDistributor(i)}
+                      onClick={() => removeDistributor(d.id)}
                       className="text-red-400 hover:text-red-500 text-sm"
                     >
                       <div className="material-icons"> delete </div>
@@ -940,13 +996,25 @@ function DprUpdateSubmit() {
           type="button"
           onClick={onSave}
           disabled={saving}
-          className={`px-5 py-2 rounded font-semibold ${
+          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
             saving
               ? "bg-blue-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
           {saving ? "Saving..." : "Save Changes"}
+        </button>
+        <button
+          type="button"
+          onClick={SubmitDPR}
+          disabled={submitting}
+          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
+            submitting
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {submitting ? "Submitting..." : "Submit"}
         </button>
       </div>
     </div>

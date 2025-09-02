@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ToastContainer,toast } from "react-toastify";
 import "./DprFetchViewer.css";
 
 const DprFetchViewer = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const API_URI = import.meta.env.VITE_API_URI;
   const PORT = import.meta.env.VITE_BACKEND_PORT;
 
   const { projectId, dprId } = useParams();
   const [projectData, setProjectData] = useState(null);
+
+  const [submitting, setSubmitting] = useState(false);
   const [dprData, setDprData] = useState(null);
   let projectStart = null;
   let projectEnd = null;
@@ -335,8 +338,39 @@ const DprFetchViewer = () => {
     };
   };
 
+  // Submit
+  const SubmitDPR = async () => {
+    const confirmSubmit = window.confirm(
+      "Are you sure you want to submit the DPR? This action cannot be undone."
+    );
+
+    if (!confirmSubmit) return;
+
+    try {
+      setSubmitting(true);
+
+      const response = await fetch(
+        `http://${API_URI}:${PORT}/report/submit/${dprId}`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+
+      toast.success("Success:", await response.json());
+    } catch (error) {
+      toast.error("Error:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="bg-gray-900 text-white font-sans min-h-screen p-6">
+      <ToastContainer></ToastContainer>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center border-b border-gray-700 pb-4">
@@ -562,6 +596,18 @@ const DprFetchViewer = () => {
             className="bg-blue-500 hover:bg-blue-600 cursor-pointer text-white px-4 py-2 rounded"
           >
             Edit
+          </button>
+          <button
+            type="button"
+            onClick={SubmitDPR}
+            disabled={submitting}
+            className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
+              submitting
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {submitting ? "Submitting..." : "Submit"}
           </button>
         </div>
 
