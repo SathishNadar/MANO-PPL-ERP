@@ -9,28 +9,38 @@ const PORT = import.meta.env.VITE_BACKEND_PORT;
 const WorkInProgress = () => {
   const [tasks, setTasks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTask, setNewTask] = useState({
+    task_name: "",
+    task_description: "",
+    assigned_to: 6,
+    assigned_date: new Date().toISOString().split("T")[0],
+    due_date: "",
+    status: "pending",
+  });
 
   const UserId = JSON.parse(localStorage.getItem("session")).user_id;
 
   // Fetch tasks
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const res = await fetch(
-          `http://${API_URI}:${PORT}/tasks/user/${UserId}`,
-          { credentials: "include" }
-        );
-        const data = await res.json();
-        if (data.ok) {
-          setTasks(data.data);
-        } else {
-          toast.error("Failed to load tasks");
-        }
-      } catch (err) {
-        toast.error("Error fetching tasks");
-        console.error(err);
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch(
+        `http://${API_URI}:${PORT}/tasks/user/${UserId}`,
+        { credentials: "include" }
+      );
+      const data = await res.json();
+      if (data.ok) {
+        setTasks(data.data);
+      } else {
+        toast.error("Failed to load tasks");
       }
-    };
+    } catch (err) {
+      toast.error("Error fetching tasks");
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
     fetchTasks();
   }, [UserId]);
 
@@ -53,6 +63,39 @@ const WorkInProgress = () => {
     }
   };
 
+  // Create task
+  const onCreate = async (e) => {
+    console.log(newTask);
+    e.preventDefault();
+    try {
+      const res = await fetch(`http://${API_URI}:${PORT}/tasks/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(newTask),
+      });
+      if (res.ok) {
+        toast.success("Task created successfully");
+        setShowCreateModal(false);
+        setNewTask({
+          task_name: "",
+          task_description: "",
+          // *nikalna hai isko
+          assigned_to: 6, 
+          assigned_date: "",
+          due_date: "",
+          status: "pending",
+        });
+        fetchTasks();
+      } else {
+        toast.error("Failed to create task");
+      }
+    } catch (err) {
+      toast.error("Error creating task");
+      console.error(err);
+    }
+  };
+
   // Fuzzy search config
   const fuse = new Fuse(tasks, {
     keys: ["task_name", "task_description"],
@@ -67,10 +110,11 @@ const WorkInProgress = () => {
   const formatDate = (dateString) => {
     const d = new Date(dateString);
     const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0"); // months are 0-based
+    const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
     return `${day}/${month}/${year}`;
   };
+
   return (
     <div className="flex h-screen bg-[var(--background-color)]">
       <ToastContainer />
@@ -109,7 +153,10 @@ const WorkInProgress = () => {
                     />
                   </div>
                   {/* Create Task Button */}
-                  <button className="bg-[var(--button-background)] text-[var(--button-text)] rounded-md px-6 py-3 inline-flex items-center justify-center gap-2 whitespace-nowrap hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="bg-blue-600  rounded-md px-6 py-3 inline-flex items-center justify-center gap-2 whitespace-nowrap hover:bg-blue-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                  >
                     <svg
                       className="h-5 w-5"
                       fill="none"
@@ -185,7 +232,6 @@ const WorkInProgress = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                 {formatDate(task.due_date)}
                               </td>
-
                               <td className="px-6 py-4 text-center">
                                 <button
                                   type="button"
@@ -220,6 +266,116 @@ const WorkInProgress = () => {
           </main>
         </div>
       </div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-[#1e242c] rounded-lg p-8 w-full max-w-lg shadow-2xl">
+            {/* Header */}
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-2xl font-bold text-gray-200">
+                Create New Work
+              </h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-gray-400 hover:text-gray-200 cursor-pointer transition-colors duration-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={onCreate} className="space-y-5">
+              {/* Task Title */}
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">
+                  Task Title
+                </label>
+                <input
+                  type="text"
+                  value={newTask.task_name}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, task_name: e.target.value })
+                  }
+                  placeholder="e.g., Design the new dashboard"
+                  className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 border border-transparent placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={newTask.task_description}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, task_description: e.target.value })
+                  }
+                  placeholder="Add a more detailed description..."
+                  className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 border border-transparent placeholder-gray-500 h-28 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+
+              {/* Due Date + Status */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newTask.due_date}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, due_date: e.target.value })
+                    }
+                    className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={newTask.status}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, status: e.target.value })
+                    }
+                    className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  >
+                    <option value="pending">To Do</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-end gap-4 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-6 py-2 rounded-md border border-gray-500 text-gray-300 
+                       hover:bg-gray-700 cursor-pointer hover:text-white 
+                       transition duration-200 ease-in-out"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 rounded-md bg-blue-600 text-white font-medium 
+                       hover:bg-blue-500 cursor-pointer hover:scale-105 
+                       transition duration-200 ease-in-out"
+                >
+                  Create
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
