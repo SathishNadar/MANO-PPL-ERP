@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { ToastContainer, toast } from "react-toastify";
-import Fuse from "fuse.js"; // fuzzy search
+import Fuse from "fuse.js";
+import { CreateTaskModal, EditTaskModal, DeleteTaskModal } from "./TaskModals";
 
 const API_URI = import.meta.env.VITE_API_URI;
 const PORT = import.meta.env.VITE_BACKEND_PORT;
@@ -10,13 +11,15 @@ const WorkInProgress = () => {
   const [tasks, setTasks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(null);
   const [newTask, setNewTask] = useState({
     task_name: "",
     task_description: "",
     assigned_to: 6,
     assigned_date: new Date().toISOString().split("T")[0],
     due_date: "",
-    status: "pending",
+    status: "",
   });
 
   const UserId = JSON.parse(localStorage.getItem("session")).user_id;
@@ -74,6 +77,12 @@ const WorkInProgress = () => {
         credentials: "include",
         body: JSON.stringify(newTask),
       });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "Something went wrong");
+      }
+
       if (res.ok) {
         toast.success("Task created successfully");
         setShowCreateModal(false);
@@ -81,10 +90,10 @@ const WorkInProgress = () => {
           task_name: "",
           task_description: "",
           // *nikalna hai isko
-          assigned_to: 6, 
+          assigned_to: 6,
           assigned_date: "",
           due_date: "",
-          status: "pending",
+          status: "",
         });
         fetchTasks();
       } else {
@@ -96,11 +105,59 @@ const WorkInProgress = () => {
     }
   };
 
+  // Update task
+  const onUpdate = async (task) => {
+    try {
+      const res = await fetch(
+        `http://${API_URI}:${PORT}/tasks/${task.task_id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            task_name: task.task_name,
+            task_description: task.task_description,
+            assigned_to: task.assigned_to,
+            assigned_date: task.assigned_date, // should already be in YYYY-MM-DD
+            due_date: task.due_date,
+            status: task.status,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "Something went wrong");
+      }
+
+      if (res.ok) {
+        toast.success("Task updated successfully");
+
+        // update tasks in state
+        setTasks((prev) =>
+          prev.map((t) => (t.task_id === task.task_id ? task : t))
+        );
+
+        setShowEditModal(null);
+      } else {
+        const errData = await res.json();
+        toast.error(errData.message || "Failed to update task");
+      }
+    } catch (err) {
+      toast.error("Error updating task");
+      console.error(err);
+    }
+  };
+
   // Fuzzy search config
-  const fuse = new Fuse(tasks, {
-    keys: ["task_name", "task_description"],
-    threshold: 0.4, // lower = stricter, higher = fuzzier
-  });
+  const fuse = useMemo(
+    () =>
+      new Fuse(tasks, {
+        keys: ["task_name", "task_description"],
+        threshold: 0.4,
+      }),
+    [tasks]
+  );
 
   const filteredTasks =
     searchQuery.trim() === ""
@@ -117,7 +174,7 @@ const WorkInProgress = () => {
 
   return (
     <div className="flex h-screen bg-[var(--background-color)]">
-      <ToastContainer />
+      <ToastContainer autoClose={1200} />
       <Sidebar />
 
       {/* Main Content */}
@@ -207,13 +264,16 @@ const WorkInProgress = () => {
                           filteredTasks.map((task) => (
                             <tr
                               key={task.task_id}
-                              className="hover:bg-gray-800/30 transition-colors"
+                              className="hover:bg-gray-800/30 transition-colors cursor-pointer"
+                              onClick={() => setShowEditModal(task)}
                             >
                               <td className="px-6 py-4 whitespace-nowrap text-lg font-medium text-[var(--text-primary)]">
                                 {task.task_name}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
-                                {task.task_description}
+                                {task.task_description.length > 100
+                                  ? task.task_description.slice(0, 90) + "..."
+                                  : task.task_description}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span
@@ -235,7 +295,10 @@ const WorkInProgress = () => {
                               <td className="px-6 py-4 text-center">
                                 <button
                                   type="button"
-                                  onClick={() => onRemove(task.task_id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowDeleteModal(task.task_id);
+                                  }}
                                   className="text-red-400 hover:text-red-500 hover:cursor-pointer"
                                   title="Delete row"
                                 >
@@ -261,121 +324,36 @@ const WorkInProgress = () => {
                   </div>
                 </div>
               </div>
-              {/* End Employee Tasks */}
             </div>
           </main>
         </div>
       </div>
 
-      {showCreateModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-[#1e242c] rounded-lg p-8 w-full max-w-lg shadow-2xl">
-            {/* Header */}
-            <div className="flex justify-between items-start mb-6">
-              <h2 className="text-2xl font-bold text-gray-200">
-                Create New Work
-              </h2>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-200 cursor-pointer transition-colors duration-200"
-              >
-                ✕
-              </button>
-            </div>
+      {/* Edit Modal */}
+      <CreateTaskModal
+        show={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={onCreate}
+        newTask={newTask}
+        setNewTask={setNewTask}
+      />
 
-            {/* Form */}
-            <form onSubmit={onCreate} className="space-y-5">
-              {/* Task Title */}
-              <div>
-                <label className="block text-gray-400 text-sm mb-2">
-                  Task Title
-                </label>
-                <input
-                  type="text"
-                  value={newTask.task_name}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, task_name: e.target.value })
-                  }
-                  placeholder="e.g., Design the new dashboard"
-                  className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 border border-transparent placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                  required
-                />
-              </div>
+      <EditTaskModal
+        show={!!showEditModal}
+        onClose={() => setShowEditModal(null)}
+        onSubmit={onUpdate}
+        task={showEditModal}
+        setTask={setShowEditModal}
+      />
 
-              {/* Description */}
-              <div>
-                <label className="block text-gray-400 text-sm mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={newTask.task_description}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, task_description: e.target.value })
-                  }
-                  placeholder="Add a more detailed description..."
-                  className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 border border-transparent placeholder-gray-500 h-28 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                  required
-                />
-              </div>
-
-              {/* Due Date + Status */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">
-                    Due Date
-                  </label>
-                  <input
-                    type="date"
-                    value={newTask.due_date}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, due_date: e.target.value })
-                    }
-                    className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={newTask.status}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, status: e.target.value })
-                    }
-                    className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                  >
-                    <option value="pending">To Do</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Buttons */}
-              <div className="flex justify-end gap-4 pt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-6 py-2 rounded-md border border-gray-500 text-gray-300 
-                       hover:bg-gray-700 cursor-pointer hover:text-white 
-                       transition duration-200 ease-in-out"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 rounded-md bg-blue-600 text-white font-medium 
-                       hover:bg-blue-500 cursor-pointer hover:scale-105 
-                       transition duration-200 ease-in-out"
-                >
-                  Create
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <DeleteTaskModal
+        show={!!showDeleteModal}
+        onClose={() => setShowDeleteModal(null)}
+        onConfirm={() => {
+          onRemove(showDeleteModal);
+          setShowDeleteModal(null);
+        }}
+      />
     </div>
   );
 };
