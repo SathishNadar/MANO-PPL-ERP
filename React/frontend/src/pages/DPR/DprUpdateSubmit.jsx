@@ -635,8 +635,6 @@ function DprUpdateSubmit() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-6 py-8 md:px-12 lg:px-20">
-      {/* Toast */}
-      <ToastContainer position="top-right" autoClose={2500} />
 
       {/* Page Header */}
       <div className="flex justify-between items-center border-b border-gray-700 pb-4 mb-8">

@@ -340,7 +340,6 @@ function DprEditor() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-6 py-8 md:px-16 lg:px-28">
-      <ToastContainer></ToastContainer>
       <h1 className="text-3xl font-extrabold mb-8 text-white text-center">
         Daily Progress Report Editor
       </h1>

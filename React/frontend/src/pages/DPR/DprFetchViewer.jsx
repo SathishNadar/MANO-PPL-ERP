@@ -370,7 +370,6 @@ const DprFetchViewer = () => {
 
   return (
     <div className="bg-gray-900 text-white font-sans min-h-screen p-6">
-      <ToastContainer></ToastContainer>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center border-b border-gray-700 pb-4">
