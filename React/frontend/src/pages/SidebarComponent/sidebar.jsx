@@ -68,14 +68,14 @@ function Sidebar({ onCategoryChange }) {
         { label: "Suppliers", category: "3" },
       ],
     },
+    {
+      icon: "wysiwyg",
+      path: "/dashboard/work-in-progress",
+      id: "work",
+      label: "Work In Progress",
+      roles: [2],
+    },
     // { icon: "summarize", id: "summary", label: "Summary", roles: [2] },
-    // {
-    //   icon: "wysiwyg",
-    //   path: "/dashboard/work-in-progress",
-    //   id: "work",
-    //   label: "Work In Progress",
-    //   roles: [2],
-    // },
   ];
 
   // Filter menu items based on titleId

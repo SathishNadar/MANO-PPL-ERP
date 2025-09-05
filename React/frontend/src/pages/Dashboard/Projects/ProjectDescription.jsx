@@ -283,14 +283,6 @@ function ProjectDescription() {
                         ? "Yesterday"
                         : `${diffDays} days ago`;
 
-                    const userId = JSON.parse(localStorage.getItem("session")).user_id;
-                    console.log("us",userId)
-                    const isHandler =
-                      dpr.current_handler?.toString() === userId?.toString();
-                    const borderClass = isHandler
-                      ? "border-green-500"
-                      : "border-gray-700";
-
                     //different colors for progress tracking
                     const getStatusClasses = (status) => {
                       switch (status) {
@@ -307,6 +299,16 @@ function ProjectDescription() {
                       }
                     };
 
+                    const userId = JSON.parse(
+                      localStorage.getItem("session")
+                    ).user_id;
+                    // console.log("us",userId)
+                    const isHandler =
+                      dpr.current_handler?.toString() === userId?.toString();
+                    const borderClass = isHandler
+                      ? "bg-gray-900 border border-gray-700 border-l-4 border-l-green-500"
+                      : "bg-gray-900 border border-gray-700";
+
                     return (
                       <a
                         key={dpr.dpr_id}
@@ -314,7 +316,7 @@ function ProjectDescription() {
                         href={`/dashboard/project-description/${projectId}/${dpr.dpr_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`flex justify-between items-center p-4 bg-gray-900 rounded-lg border ${borderClass} hover:border-[var(--accent-blue)] transition-all cursor-pointer`}
+                        className={`flex justify-between items-center p-4 rounded-lg transition-all cursor-pointer hover:border-[var(--accent-blue)] ${borderClass}`}
                       >
                         <div>
                           <div className="flex items-center space-x-2">
