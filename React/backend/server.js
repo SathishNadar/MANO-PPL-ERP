@@ -16,7 +16,8 @@ const PORT = 5001;
 const public_ip = process.env.URI;
 
 const allowedOrigins = [
-  'http://localhost:5173',
+  `http://localhost:5173`,
+  `http://127.0.0.1:5173`,
   `http://${public_ip}:5173`,
   // 'https://my-frontend-domain.com'
 ];

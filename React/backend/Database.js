@@ -816,7 +816,7 @@ export async function submitDPR(dpr_id, user_id) {
   // 3. Get user role and users involved
   const project_id = await getProject_idByDpr_id(dpr_id);
   const userRole = await getUserRoleForProject(user_id, project_id);
-  const users_involved = await getUsersInvolvedInProject(project_id);
+  const { data: users_involved = {} } = await getUsersInvolvedInProject(project_id);
 
   let next_handler = null;
   let new_status = "";
@@ -896,33 +896,46 @@ export async function getUserRoleForProject(user_id, project_id) {
 
 // Fetch users involved in project and their role
 export async function getUsersInvolvedInProject(project_id) {
-    const query = `
-        SELECT upr.user_id, r.role_name
-        FROM project_user_roles upr
-        JOIN roles r ON upr.role_id = r.role_id
-        WHERE upr.project_id = 1;
-    `;
-    const params = [project_id];
+  const query = `
+    SELECT upr.user_id, r.role_name
+    FROM project_user_roles upr
+    JOIN roles r ON upr.role_id = r.role_id
+    WHERE upr.project_id = ?;
+  `;
+  const params = [project_id];
 
-    try {
-        const [rows] = await pool.query(query, params);
-        const roleMap = {};
+  try {
+    const [rows] = await pool.query(query, params);
 
-        for (const { user_id, role_name } of rows) {
-            if (!roleMap[role_name]) {
-                roleMap[role_name] = [];
-            }
-            roleMap[role_name].push(user_id);
-        }
-
-        roleMap.approver = roleMap.approver[0];
-        roleMap.final_approver = roleMap.final_approver[0];
-
-        return roleMap
-    } catch (error) {
-        console.error("Error fetching vendors:", error);
-        throw error;
+    if (!rows || rows.length === 0) {
+      return { ok: false, message: "No users involved in this project." };
     }
+
+    // Map role names to user_id lists
+    const roleMap = {};
+
+    for (const { user_id, role_name } of rows) {
+      if (!roleMap[role_name]) {
+        roleMap[role_name] = [];
+      }
+      roleMap[role_name].push(user_id);
+    }
+
+    // For roles with only one user allowed, set as number if present
+    ["approver", "final_approver"].forEach(role => {
+      if (roleMap[role] && roleMap[role].length > 0) {
+        roleMap[role] = roleMap[role][0];
+      } else {
+        delete roleMap[role];
+      }
+    });
+
+    return { ok: true, data: roleMap };
+
+  } catch (error) {
+    console.error("Error fetching users involved in project:", error);
+    throw error;
+  }
 }
 
 // Fetch users involved in project and their role
@@ -1018,3 +1031,4 @@ async function patchProjectRoles(project_id, changes) {
 
 
 // #endregion
+
