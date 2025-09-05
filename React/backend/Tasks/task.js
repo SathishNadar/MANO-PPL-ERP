@@ -38,6 +38,18 @@ router.get("/user/:user_id", authenticateJWT, async (req, res) => {
     }
 });
 
+router.get("/controlled_users/:user_id", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    const controlledUsers = await DB.getControlledUsers(user_id); // Your DB function from earlier
+    res.json({ ok: true, data: controlledUsers });
+  } catch (err) {
+    console.error("❌ API error:", err.message);
+    res.status(500).json({ ok: false, message: "Internal server error" });
+  }
+});
+
+
 // Post call to assign task to a user
 router.post("/", authenticateJWT, async (req, res) => {
     try {
@@ -158,6 +170,7 @@ router.delete("/:task_id", authenticateJWT, async (req, res) => {
         res.status(500).json({ ok: false, message: "Internal server error" });
     }
 });
+
 
 
 export default router;

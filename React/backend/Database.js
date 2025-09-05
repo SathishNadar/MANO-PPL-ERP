@@ -207,6 +207,25 @@ export async function getControlType(controller_id, controlled_id) {
     }
 }
 
+// Function to get all controlled user_id and user_name
+export async function getControlledUsers(controller_id) {
+  const sql = `
+    SELECT tc.controlled_id, u.user_name
+    FROM task_control tc
+    JOIN users u ON tc.controlled_id = u.user_id
+    WHERE tc.controller_id = ?;
+  `;
+  try {
+    const [rows] = await pool.query(sql, [controller_id]);
+    // rows will be an array of objects { controlled_id, user_name }
+    return rows;
+  } catch (err) {
+    console.error("❌ Error fetching controlled users:", err.message);
+    throw err;
+  }
+}
+
+
 // export async function getAssignedTo() {
     
 // }
@@ -1031,4 +1050,3 @@ async function patchProjectRoles(project_id, changes) {
 
 
 // #endregion
-
