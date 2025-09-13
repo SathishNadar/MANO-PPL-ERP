@@ -2,7 +2,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
 import Fuse from "fuse.js";
-import { CreateTaskModal, EditTaskModal, DeleteTaskModal } from "./TaskModals";
+import { CreateTaskModal, EditTaskModal, DeleteTaskModal,control_access } from "./TaskModals";
+
 
 const API_URI = import.meta.env.VITE_API_URI;
 const PORT = import.meta.env.VITE_BACKEND_PORT;
@@ -18,6 +19,10 @@ const WorkInProgress = () => {
 
   const session = JSON.parse(localStorage.getItem("session"));
   const UserId = session.user_id;
+
+  const currentUser = users.find((u) => u.controlled_id === selectedUser);
+  const role = currentUser?.control_type || "viewer";
+  const permissions = control_access[role];
 
   const [newTask, setNewTask] = useState({
     task_name: "",
@@ -38,7 +43,11 @@ const WorkInProgress = () => {
       const data = await res.json();
       if (data.ok) {
         const allUsers = [
-          { controlled_id: UserId, user_name: "Myself" },
+          {
+            controlled_id: UserId,
+            user_name: "Myself",
+            control_type: "manager",
+          },
           ...data.data,
         ];
         setUsers(allUsers);
@@ -241,8 +250,14 @@ const WorkInProgress = () => {
 
                   {/* Create Task Button */}
                   <button
+                    disabled={!permissions.create}
                     onClick={() => setShowCreateModal(true)}
-                    className="bg-blue-600 rounded-md px-6 py-3 inline-flex items-center justify-center gap-2 whitespace-nowrap hover:bg-blue-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                    className={`rounded-md px-6 py-3 inline-flex items-center justify-center gap-2 whitespace-nowrap
+                            ${
+                              !permissions.create
+                                ? "bg-gray-600 cursor-not-allowed opacity-50"
+                                : "bg-blue-600 hover:bg-blue-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                            }`}
                   >
                     <svg
                       className="h-5 w-5"
@@ -360,9 +375,9 @@ const WorkInProgress = () => {
         newTask={newTask}
         setNewTask={setNewTask}
         users={users}
+        role={role}
       />
 
-      {/* Edit Modal */}
       <EditTaskModal
         show={!!showEditModal}
         onClose={() => setShowEditModal(null)}
@@ -370,9 +385,9 @@ const WorkInProgress = () => {
         task={showEditModal}
         setTask={setShowEditModal}
         users={users}
+        role={role}
       />
 
-      {/* Delete Modal */}
       <DeleteTaskModal
         show={!!showDeleteModal}
         onClose={() => setShowDeleteModal(null)}
@@ -380,6 +395,7 @@ const WorkInProgress = () => {
           onRemove(showDeleteModal);
           setShowDeleteModal(null);
         }}
+        role={role}
       />
     </div>
   );
