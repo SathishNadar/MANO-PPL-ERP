@@ -89,8 +89,8 @@ function Sidebar({ onCategoryChange }) {
       <img
         alt="Company logo"
         className="w-12 h-12 mb-6"
-        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYqC4QedXgsQ36OpYtKvw2u3RQPZYjuKva5zvxhp1XXmjHo-pvNPPQ9RibgZoE_2d5L92HBZU76yv7YtL6qvkme3XVjo-jtVfUa7HczOkcw1A9yCYwlOAPlAOrlyT5KLe0f1G_k9rKeAQHW8M5kU3KU8zUSsveuJJNy4HVehGl_VVapT9ztvcVvuiY8f07VLwaF33NpgBWumDplhw5dNWrowPiQsFJVGQ51bJZR6mzeNYOnVR0SCsWQI05YxNftU4e2qKBshCIA75I"
-      />
+        src="/mano-logo.svg"
+        />
 
       <nav className="flex flex-col space-y-8">
         {filteredMenuItems.map(({ icon, path, id, children, label }, idx) => (
