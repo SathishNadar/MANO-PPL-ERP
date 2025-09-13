@@ -10,6 +10,8 @@ const DprFetchViewer = () => {
 
   const { projectId, dprId } = useParams();
   const [projectData, setProjectData] = useState(null);
+  const [user, setUser] = useState(null)
+  
 
   const [submitting, setSubmitting] = useState(false);
   const [dprData, setDprData] = useState(null);
@@ -312,7 +314,9 @@ const DprFetchViewer = () => {
   useEffect(() => {
     fetchandUpdateDprdata();
     fetchandUpdateProjectData();
-  }, []);
+    const session = localStorage.getItem('session');
+    setUser(session ? JSON.parse(session) : null);
+  }, []); 
 
   const loadPdf = () => {
     localStorage.setItem("dprData", JSON.stringify(dprData));
@@ -337,6 +341,7 @@ const DprFetchViewer = () => {
       }, 500);
     };
   };
+
 
   // Submit
   const SubmitDPR = async () => {
@@ -586,28 +591,32 @@ const DprFetchViewer = () => {
           >
             Print PDF
           </button>
-          <button
-            onClick={() =>
-              navigate(
-                `/dashboard/project-description/dprUpdate/${projectId}/${dprId}`
-              )
-            }
-            className="bg-blue-500 hover:bg-blue-600 cursor-pointer text-white px-4 py-2 rounded"
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={SubmitDPR}
-            disabled={submitting}
-            className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
-              submitting
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {submitting ? "Submitting..." : "Submit"}
-          </button>
+          {user && dprData && user.user_id == dprData.current_handler && (
+            <>
+              <button
+                onClick={() =>
+                  navigate(
+                    `/dashboard/project-description/dprUpdate/${projectId}/${dprId}`
+                  )
+                }
+                className="bg-blue-500 hover:bg-blue-600 cursor-pointer text-white px-4 py-2 rounded"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={SubmitDPR}
+                disabled={submitting}
+                className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
+                  submitting
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {submitting ? "Submitting..." : "Submit"}
+              </button>
+            </>
+          )}
         </div>
 
         <div className="mt-5 border border-gray-300 p-3 invisible">
