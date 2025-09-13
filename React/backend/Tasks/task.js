@@ -38,6 +38,7 @@ router.get("/user/:user_id", authenticateJWT, async (req, res) => {
     }
 });
 
+
 router.get("/controlled_users/:user_id", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.params;
@@ -48,7 +49,6 @@ router.get("/controlled_users/:user_id", authenticateJWT, async (req, res) => {
     res.status(500).json({ ok: false, message: "Internal server error" });
   }
 });
-
 
 // Post call to assign task to a user
 router.post("/", authenticateJWT, async (req, res) => {
@@ -109,6 +109,7 @@ router.put("/:task_id", authenticateJWT, async (req, res) => {
                 return res.status(403).json({ ok: false, message: "You do not have permission to update tasks for this user." });
             }
             const perms = control_access[control_type];
+            console.log(perms)
             hasEditPermission = perms ? perms.edit : false;
         }
 
