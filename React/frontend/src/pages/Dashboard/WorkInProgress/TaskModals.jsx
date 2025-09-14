@@ -20,7 +20,6 @@ export const CreateTaskModal = ({
   const permissions = control_access[role] || control_access.viewer;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
       <div className="bg-[#1e242c] rounded-lg p-8 w-full max-w-lg shadow-2xl">
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
@@ -182,7 +181,6 @@ export const CreateTaskModal = ({
           </form>
         )}
       </div>
-    </div>
   );
 };
 
@@ -200,7 +198,6 @@ export const EditTaskModal = ({
   const readOnly = !permissions.edit;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
       <div className="bg-[#1e242c] rounded-lg p-8 w-full max-w-lg shadow-2xl">
         <div className="flex justify-between items-start mb-6">
           <h2 className="text-2xl font-bold text-gray-200">
@@ -325,7 +322,6 @@ export const EditTaskModal = ({
           </div>
         </form>
       </div>
-    </div>
   );
 };
 

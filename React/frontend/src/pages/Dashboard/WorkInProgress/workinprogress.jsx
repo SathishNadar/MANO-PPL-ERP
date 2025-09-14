@@ -2,8 +2,13 @@ import React, { useEffect, useState, useMemo } from "react";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
 import Fuse from "fuse.js";
-import { CreateTaskModal, EditTaskModal, DeleteTaskModal,control_access } from "./TaskModals";
 
+import {
+  CreateTaskModal,
+  EditTaskModal,
+  DeleteTaskModal,
+  control_access,
+} from "./TaskModals";
 
 const API_URI = import.meta.env.VITE_API_URI;
 const PORT = import.meta.env.VITE_BACKEND_PORT;
@@ -368,25 +373,45 @@ const WorkInProgress = () => {
       </div>
 
       {/* Create Modal */}
-      <CreateTaskModal
-        show={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={onCreate}
-        newTask={newTask}
-        setNewTask={setNewTask}
-        users={users}
-        role={role}
-      />
 
-      <EditTaskModal
-        show={!!showEditModal}
-        onClose={() => setShowEditModal(null)}
-        onSubmit={onUpdate}
-        task={showEditModal}
-        setTask={setShowEditModal}
-        users={users}
-        role={role}
-      />
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div
+            className="relative w-full max-w-xl bg-[var(--card-background)] rounded-lg shadow-lg 
+                    p-6 m-4 max-h-[100vh] overflow-y-auto
+                    scrollbar-hide"
+          >
+            <CreateTaskModal
+              show={showCreateModal}
+              onClose={() => setShowCreateModal(false)}
+              onSubmit={onCreate}
+              newTask={newTask}
+              setNewTask={setNewTask}
+              users={users}
+              role={role}
+            />
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div
+            className="relative w-full max-w-xl bg-[var(--card-background)] rounded-lg shadow-lg 
+                 p-6 m-4 max-h-[90vh] overflow-y-auto scrollbar-hide"
+          >
+            <EditTaskModal
+              show={!!showEditModal}
+              onClose={() => setShowEditModal(null)}
+              onSubmit={onUpdate}
+              task={showEditModal}
+              setTask={setShowEditModal}
+              users={users}
+              role={role}
+            />
+          </div>
+        </div>
+      )}
 
       <DeleteTaskModal
         show={!!showDeleteModal}

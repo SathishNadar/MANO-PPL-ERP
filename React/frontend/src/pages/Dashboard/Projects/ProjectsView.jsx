@@ -109,77 +109,76 @@ const ProjectsView = () => {
         </header>
 
         <div className="relative overflow-hidden mb-8 mt-8 pt-4">
-          <div
-            className="flex gap-8 transition-transform duration-300 scrollbar-hide"
-            style={{ overflowX: "auto", scrollbarWidth: "none" }}
-          >
-            {projects.length === 0 && (
-              <div className="text-secondary text-lg mt-8 ml-4">
-                🚧 No projects at the moment.
-              </div>
-            )}
-            {projects.length > 0 &&
-              projects.map((project, index) => {
-                const progress = Math.floor(Math.random() * 100);
-                return (
-                  <div key={index} className="pt-2">
-                    <div
-                      onClick={() =>
-                        navigate(
-                          `/dashboard/project-description/${project.project_id}`
-                        )
-                      }
-                      className="bg-card p-6 rounded-2xl shadow-md hover:shadow-2xl transform transition-transform hover:-translate-y-2 hover:cursor-pointer"
-                      style={{
-                        minWidth: "600px", // or use a Tailwind class like min-w-[300px]
-                        minHeight: "280px",
-                        maxHeight: "320px",
-                      }}
-                    >
-                      <h2 className="text-2xl font-bold text-primary mb-2">
-                        {project.project_name}
-                      </h2>
-                      <p className="text-secondary mb-4">
-                        {project.project_description}
-                      </p>
-                      <div className="flex justify-between text-sm text-secondary mb-4">
-                        <div>
-                          <span className="font-semibold">Start Date:</span>{" "}
-                          {new Date(project.start_date).toLocaleDateString()}
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-8 transition-transform duration-300">
+              {projects.length === 0 && (
+                <div className="text-secondary text-lg mt-8 ml-4">
+                  🚧 No projects at the moment.
+                </div>
+              )}
+              {projects.length > 0 &&
+                projects.map((project, index) => {
+                  const progress = Math.floor(Math.random() * 100);
+                  return (
+                    <div key={index} className="pt-2">
+                      <div
+                        onClick={() =>
+                          navigate(
+                            `/dashboard/project-description/${project.project_id}`
+                          )
+                        }
+                        className="bg-card p-6 rounded-2xl shadow-md hover:shadow-2xl transform transition-transform hover:-translate-y-2 hover:cursor-pointer"
+                        style={{
+                          minWidth: "600px",
+                          minHeight: "280px",
+                          maxHeight: "320px",
+                        }}
+                      >
+                        <h2 className="text-2xl font-bold text-primary mb-2">
+                          {project.project_name}
+                        </h2>
+                        <p className="text-secondary mb-4">
+                          {project.project_description}
+                        </p>
+                        <div className="flex justify-between text-sm text-secondary mb-4">
+                          <div>
+                            <span className="font-semibold">Start Date:</span>{" "}
+                            {new Date(project.start_date).toLocaleDateString()}
+                          </div>
+                          <div>
+                            <span className="font-semibold">End Date:</span>{" "}
+                            {new Date(project.end_date).toLocaleDateString()}
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-semibold">End Date:</span>{" "}
-                          {new Date(project.end_date).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div className="flex items-center mb-4">
-                        <span className="font-semibold mr-2 text-primary">
-                          Status:
-                        </span>
-                        <span className="bg-blue-900 text-blue-light text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                          In Progress
-                        </span>
-                      </div>
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm font-medium text-primary">
-                            Progress
+                        <div className="flex items-center mb-4">
+                          <span className="font-semibold mr-2 text-primary">
+                            Status:
                           </span>
-                          <span className="text-sm font-medium text-blue-light">
-                            {progress}%
+                          <span className="bg-blue-900 text-blue-light text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                            In Progress
                           </span>
                         </div>
-                        <div className="w-full bg-gray-700 rounded-full h-2.5">
-                          <div
-                            className="bg-blue h-2.5 rounded-full"
-                            style={{ width: `${progress}%` }}
-                          ></div>
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-primary">
+                              Progress
+                            </span>
+                            <span className="text-sm font-medium text-blue-light">
+                              {progress}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-700 rounded-full h-2.5">
+                            <div
+                              className="bg-blue h-2.5 rounded-full"
+                              style={{ width: `${progress}%` }}
+                            ></div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+            </div>
           </div>
         </div>
 
