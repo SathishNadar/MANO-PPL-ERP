@@ -67,6 +67,30 @@ function ProjectDescription() {
     return `${percent}%`;
   };
 
+  //#region  helpers
+  const getStatusClasses = (status) => {
+    switch (status) {
+      case "approved":
+        return "bg-green-900 text-green-300";
+      case "under_review":
+        return "bg-yellow-900 text-yellow-300";
+      case "final_review":
+        return "bg-blue-900 text-blue-300";
+      case "in_progress":
+        return "bg-orange-900 text-orange-300";
+      default:
+        return "bg-gray-700 text-gray-300";
+    }
+  };
+
+  const totitlecase = (input) => {
+    return input
+      .split(/[_\s-]+/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  };
+  //#endregion
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -295,25 +319,9 @@ function ProjectDescription() {
                         ? "Yesterday"
                         : `${diffDays} days ago`;
 
-                    const getStatusClasses = (status) => {
-                      switch (status) {
-                        case "approved":
-                          return "bg-green-900 text-green-300";
-                        case "under_review":
-                          return "bg-yellow-900 text-yellow-300";
-                        case "final_review":
-                          return "bg-blue-900 text-blue-300";
-                        case "in_progress":
-                          return "bg-orange-900 text-orange-300";
-                        default:
-                          return "bg-gray-700 text-gray-300";
-                      }
-                    };
-
                     const userId = JSON.parse(
                       localStorage.getItem("session")
                     ).user_id;
-                    // console.log("us",userId)
                     const isHandler =
                       dpr.current_handler?.toString() === userId?.toString();
                     const borderClass = isHandler
@@ -347,9 +355,7 @@ function ProjectDescription() {
                               dpr.dpr_status
                             )}`}
                           >
-                            {dpr.dpr_status
-                              ? dpr.dpr_status.replace("_", " ")
-                              : "N/A"}
+                            {totitlecase(dpr.dpr_status)}
                           </span>
                           <span className="material-icons text-base">
                             today
