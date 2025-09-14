@@ -14,6 +14,7 @@ function ProjectDescription() {
   useEffect(() => {
     if (!projectId) return;
 
+    // fetch project
     fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`, {
       credentials: "include",
     })
@@ -23,18 +24,29 @@ function ProjectDescription() {
       })
       .catch((err) => console.error("Failed to load project:", err));
 
+    // fetch DPRs + role
     fetch(`http://${API_URI}:${PORT}/report/Alldpr/${projectId}`, {
       credentials: "include",
     })
       .then((res) => res.json())
-      .then((dprs2) => {
-        if (!Array.isArray(dprs2)) {
-          console.error("Unexpected DPRs response:", dprs2);
+      .then((data) => {
+        if (!data || !data.projects) {
+          console.error("Unexpected DPRs response:", data);
           return;
         }
 
-        dprs2.sort((a, b) => new Date(b.report_date) - new Date(a.report_date));
-        setDprs(dprs2);
+        let dprsList = data.projects;
+        const role = data.role?.role.role_name || "";
+
+        // special case for client
+        if (role.toLowerCase() === "client") {
+          dprsList = dprsList.filter((d) => d.dpr_status === "approved");
+        }
+
+        dprsList.sort(
+          (a, b) => new Date(b.report_date) - new Date(a.report_date)
+        );
+        setDprs(dprsList);
       })
       .catch((err) => console.error("Failed to load DPRs:", err));
   }, [projectId]);
@@ -283,7 +295,6 @@ function ProjectDescription() {
                         ? "Yesterday"
                         : `${diffDays} days ago`;
 
-                    //different colors for progress tracking
                     const getStatusClasses = (status) => {
                       switch (status) {
                         case "approved":

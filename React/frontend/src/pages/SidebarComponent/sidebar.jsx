@@ -88,8 +88,8 @@ function Sidebar({ onCategoryChange }) {
     <aside className="w-20 bg-sidebar shadow-lg flex flex-col items-center py-5 relative">
       <img
         alt="Company logo"
-        className="w-12 h-12 mb-6"
-        src="/mano-logo.svg"
+        className="w-7 h-12 mb-6 hover:cursor-pointer"
+        src="/mano.svg"
         />
 
       <nav className="flex flex-col space-y-8">

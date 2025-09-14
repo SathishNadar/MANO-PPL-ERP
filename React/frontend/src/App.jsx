@@ -23,7 +23,6 @@ import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import StudentTable from './pages/backchodi.jsx'
 
 function App() {
   return (

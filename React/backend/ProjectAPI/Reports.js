@@ -19,9 +19,6 @@ export async function checkUserProjectRole(user_id, project_id) {
   }
 }
 
-
-
-
 // Post call to Insert DPR
 router.post("/insertDPR", authenticateJWT, async (req, res) => {
   try {
@@ -172,7 +169,12 @@ router.get("/allDPR/:project_id", authenticateJWT, async (req, res) => {
       return res.status(404).json({ message: "Projects not found" });
     }
 
-    res.json(projects);
+    const data = {
+      projects,
+      role
+    }
+
+    res.json(data);
   } catch (error) {
     console.error("❌ API error in getDPR:", error.message);
     res.status(500).json({ message: "Internal server error" });
@@ -281,8 +283,6 @@ router.get("/submit/:dpr_id", authenticateJWT, async (req, res) => {
 });
 
 
-// const t = await DB.submitDPR(6, 75);
-// console.log(t)
 
 export default router;
 
