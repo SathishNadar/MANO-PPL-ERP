@@ -23,13 +23,12 @@ function DprEditor() {
   const [savingMetadata, setSavingMetadata] = useState(false);
 
   const [userRoles, setUserRoles] = useState({
-  reporter: [],
-  client: [],
-  final_approver: null,
-  approver: null,
-});
+    reporter: [],
+    client: [],
+    final_approver: null,
+    approver: null,
+  });
   const [eligibleUsers, setEligibleUsers] = useState([]);
-
 
   const agencyInputRef = useRef(null);
   const labourInputRef = useRef(null);
@@ -148,7 +147,7 @@ function DprEditor() {
 
   const [availableAgencies, setAvailableAgencies] = useState(agencyDict);
   const [availableLabourTypes, setAvailableLabourTypes] = useState(labourDict);
- 
+  const [initialRoles, setInitialRoles] = useState(null);
   // Fetch project and metadata
   useEffect(() => {
     if (!projectId) return;
@@ -215,67 +214,99 @@ function DprEditor() {
     }
     fetchProject();
 
-     async function fetchRoles() {
-    try {
-      const [rolesRes, usersRes] = await Promise.all([
-        fetch(`http://${API_URI}:${PORT}/project/getuserroles/${projectId}`, {
-          credentials: "include",
-        }),
-        fetch(`http://${API_URI}:${PORT}/Project/eligibleUsers`, {
-          credentials: "include",
-        }),
-      ]);
+    async function fetchRoles() {
+      try {
+        const [rolesRes, usersRes] = await Promise.all([
+          fetch(`http://${API_URI}:${PORT}/project/getuserroles/${projectId}`, {
+            credentials: "include",
+          }),
+          fetch(`http://${API_URI}:${PORT}/Project/eligibleUsers`, {
+            credentials: "include",
+          }),
+        ]);
 
-      const rolesData = await rolesRes.json();
-      const usersData = await usersRes.json();
+        const rolesData = await rolesRes.json();
+        const usersData = await usersRes.json();
 
-      if (rolesData.ok && usersData.ok) {
-        setEligibleUsers(usersData.users);
+        if (rolesData.ok && usersData.ok) {
+          setEligibleUsers(usersData.users);
 
-        const usersMap = new Map(usersData.users.map(u => [u.user_id, u]));
-        const mapUser = (id) =>
-          usersMap.get(id) || { user_id: id, name: `Unknown (${id})` };
+          const usersMap = new Map(usersData.users.map((u) => [u.user_id, u]));
+          const mapUser = (id) =>
+            usersMap.get(id) || { user_id: id, name: `Unknown (${id})` };
 
-        setUserRoles({
-          reporter: (rolesData.data.reporter || []).map(mapUser),
-          client: (rolesData.data.client || []).map(mapUser),
-          final_approver: rolesData.data.final_approver
-            ? mapUser(rolesData.data.final_approver)
-            : null,
-          approver: rolesData.data.approver
-            ? mapUser(rolesData.data.approver)
-            : null,
-        });
+          const loadedRoles = {
+            reporter: (rolesData.data?.reporter || []).map(mapUser),
+            client: (rolesData.data?.client || []).map(mapUser),
+            approver: rolesData.data?.approver
+              ? mapUser(rolesData.data.approver)
+              : null,
+            final_approver: rolesData.data?.final_approver
+              ? mapUser(rolesData.data.final_approver)
+              : null,
+          };
+
+          // 👇 don’t wrap in { loadedRoles: ... }
+          setUserRoles(loadedRoles);
+          setInitialRoles(loadedRoles);
+        }
+      } catch (err) {
+        console.error("Error fetching roles:", err);
       }
-    } catch (err) {
-      console.error("Error fetching roles:", err);
     }
-  }
 
     fetchRoles();
   }, [projectId]);
 
-  function handleRoleChange(role, target, isMulti = false) {
-  if (isMulti) {
-    // Collect all selected options
-    const selected = Array.from(target.selectedOptions, (opt) => parseInt(opt.value, 10));
-    setUserRoles((prev) => ({
-      ...prev,
-      [role]: eligibleUsers.filter((u) => selected.includes(u.user_id)),
-    }));
-  } else {
-    const val = parseInt(target.value, 10);
-    setUserRoles((prev) => ({
-      ...prev,
-      [role]: val ? eligibleUsers.find((u) => u.user_id === val) : null,
-    }));
-  }
-}
+  function buildUserRoleUpdatePayload(initialRoles, userRoles) {
+    if (!initialRoles) return {};
 
+    const ids = (arr) => arr.map((u) => u.user_id);
+
+    const oldReporters = ids(initialRoles.reporter);
+    const newReporters = ids(userRoles.reporter);
+
+    const oldClients = ids(initialRoles.client);
+    const newClients = ids(userRoles.client);
+
+    return {
+      reporter: {
+        insert: newReporters.filter((id) => !oldReporters.includes(id)),
+        delete: oldReporters.filter((id) => !newReporters.includes(id)),
+      },
+      client: {
+        insert: newClients.filter((id) => !oldClients.includes(id)),
+        delete: oldClients.filter((id) => !newClients.includes(id)),
+      },
+      approver: userRoles.approver?.user_id || null,
+      final_approver: userRoles.final_approver?.user_id || null,
+    };
+  }
+
+  function handleRoleChange(role, target, isMulti = false) {
+    if (isMulti) {
+      // Collect all selected options
+      const selected = Array.from(target.selectedOptions, (opt) =>
+        parseInt(opt.value, 10)
+      );
+      setUserRoles((prev) => ({
+        ...prev,
+        [role]: eligibleUsers.filter((u) => selected.includes(u.user_id)),
+      }));
+    } else {
+      const val = parseInt(target.value, 10);
+      setUserRoles((prev) => ({
+        ...prev,
+        [role]: val ? eligibleUsers.find((u) => u.user_id === val) : null,
+      }));
+    }
+  }
 
   // Save project details
   async function saveProject() {
     setSavingDetails(true);
+    const userRoleChanges = buildUserRoleUpdatePayload(initialRoles, userRoles);
+
     try {
       const res = await fetch(
         `http://${API_URI}:${PORT}/project/updateProject/${projectId}`,
@@ -291,7 +322,8 @@ function DprEditor() {
             project_description: projectDescription,
             start_date: startDate || null,
             end_date: endDate || null,
-            metadata, // merge metadata into the same payload
+            metadata,
+            user_roles: userRoleChanges, // merge metadata into the same payload
           }),
         }
       );
@@ -299,6 +331,7 @@ function DprEditor() {
       const data = await res.json();
       if (res.ok && (data.ok || data.success)) {
         toast.success("Project details & metadata saved successfully!");
+        setInitialRoles(userRoles);
       } else {
         toast.error(data.message || "Failed to save project data");
       }
@@ -534,7 +567,7 @@ function DprEditor() {
       </div>
 
       {/* Metadata Editor */}
-      <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg mb">
+      <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg mb-8">
         <h2 className="text-xl font-semibold mb-4 text-[#BBDEFB]">
           Agency & Labour Type Metadata
         </h2>
@@ -709,7 +742,70 @@ function DprEditor() {
           User Roles
         </h2>
 
-        
+        {/* Reporters -multi selct */}
+        <div className="mb-4">
+          <label className="block text-gray-300 mb-1 font-semibold">
+            Reporter(s)
+          </label>
+
+          {/* Add Reporter Dropdown */}
+          <select
+            className="bg-gray-700 text-white rounded px-3 py-2 w-full mb-2"
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10);
+              if (val) {
+                const selectedUser = eligibleUsers.find(
+                  (u) => u.user_id === val
+                );
+                setUserRoles((prev) => ({
+                  ...prev,
+                  reporter: [...prev.reporter, selectedUser].filter(
+                    (v, i, arr) =>
+                      arr.findIndex((x) => x.user_id === v.user_id) === i // avoid duplicates
+                  ),
+                }));
+              }
+              e.target.value = ""; // reset dropdown
+            }}
+          >
+            <option value="">+ Add Reporter</option>
+            {eligibleUsers
+              .filter(
+                (u) => !userRoles.reporter.some((r) => r.user_id === u.user_id)
+              )
+              .map((u) => (
+                <option key={u.user_id} value={u.user_id}>
+                  {u.name}
+                </option>
+              ))}
+          </select>
+
+          {/* Selected Reporters */}
+          <div className="space-y-1">
+            {userRoles.reporter.map((user) => (
+              <div
+                key={user.user_id}
+                className="flex items-center justify-between bg-gray-800 px-3 py-1 rounded"
+              >
+                <span>{user.name}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setUserRoles((prev) => ({
+                      ...prev,
+                      reporter: prev.reporter.filter(
+                        (u) => u.user_id !== user.user_id
+                      ),
+                    }))
+                  }
+                  className="text-red-400 hover:text-red-200"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Approver (single select) */}
         <div className="mb-4">
@@ -747,6 +843,71 @@ function DprEditor() {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Clients Multi select */}
+        <div className="mb-4">
+          <label className="block text-gray-300 mb-1 font-semibold">
+            Client(s)
+          </label>
+
+          {/* Add Client Dropdown */}
+          <select
+            className="bg-gray-700 text-white rounded px-3 py-2 w-full mb-2"
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10);
+              if (val) {
+                const selectedUser = eligibleUsers.find(
+                  (u) => u.user_id === val
+                );
+                setUserRoles((prev) => ({
+                  ...prev,
+                  client: [...prev.client, selectedUser].filter(
+                    (v, i, arr) =>
+                      arr.findIndex((x) => x.user_id === v.user_id) === i
+                  ),
+                }));
+              }
+              e.target.value = "";
+            }}
+          >
+            <option value="">+ Add Client</option>
+            {eligibleUsers
+              .filter(
+                (u) => !userRoles.client.some((c) => c.user_id === u.user_id)
+              )
+              .map((u) => (
+                <option key={u.user_id} value={u.user_id}>
+                  {u.name}
+                </option>
+              ))}
+          </select>
+
+          {/* Selected Clients */}
+          <div className="space-y-1">
+            {userRoles.client.map((user) => (
+              <div
+                key={user.user_id}
+                className="flex items-center justify-between bg-gray-800 px-3 py-1 rounded"
+              >
+                <span>{user.name}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setUserRoles((prev) => ({
+                      ...prev,
+                      client: prev.client.filter(
+                        (u) => u.user_id !== user.user_id
+                      ),
+                    }))
+                  }
+                  className="text-red-400 hover:text-red-200"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
