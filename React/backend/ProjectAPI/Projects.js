@@ -12,7 +12,7 @@ router.get("/eligibleUsers", authenticateJWT, async (req, res) => {
         console.error("❌ Error fetching eligible users:", err.message);
         res.status(500).json({ ok: false, message: err.message });
     }
-});
+}); 
 
 // Get call to fetch Project Detail
 router.get("/getProject/:id", authenticateJWT, async (req, res) => {
