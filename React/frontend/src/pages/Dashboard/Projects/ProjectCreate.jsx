@@ -7,7 +7,7 @@ function ProjectCreate({ onClose }) {
   const [approver, setApprover] = React.useState("");
   const [finalApprover, setFinalApprover] = React.useState("");
   const [clients, setClients] = React.useState([]);
-  const [reporterName, setReporterName] = React.useState("");
+  const [reporters, setReporters] = React.useState([]);
 
   React.useEffect(() => {
     fetch(`http://${API_URI}:${PORT}/project/eligibleUsers`, { 
@@ -17,12 +17,6 @@ function ProjectCreate({ onClose }) {
       .then(data => {
         if (data.ok) setUsers(data.users);
       });
-
-    const sessionStr = localStorage.getItem('session');
-    const sessionData = JSON.parse(sessionStr);
-    if (sessionData?.username) {
-      setReporterName(sessionData.username);
-    }
   }, []);
 
   // Handles project creation
@@ -33,7 +27,7 @@ function ProjectCreate({ onClose }) {
       "description",
       "location",
       "employer",
-      "start-date",
+      "start-date", 
       "end-date"
     ];
     for (let id of requiredFields) {
@@ -53,13 +47,15 @@ function ProjectCreate({ onClose }) {
     }
 
     const user_roles = {
-      reporter: userId,
+      reporter: {
+        insert: reporters
+      },
       approver: approver || null,
       final_approver: finalApprover || null,
       client: {
         insert: clients
       }
-    };
+    }; 
 
     const data = {
       project_name: document.getElementById("project-name").value,
@@ -188,14 +184,49 @@ function ProjectCreate({ onClose }) {
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-400 mb-1">
-                Reporter
+                Reporters
               </label>
-              <input
-                type="text"
-                value={reporterName}
-                disabled
-                className="w-full bg-gray-600 border border-gray-500 rounded-md py-2 px-3 text-white"
-              />
+
+              {/* Dropdown for selecting one reporter at a time */}
+              <select
+                value=""
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  if (selectedId && !reporters.includes(selectedId)) {
+                    setReporters([...reporters, selectedId]);
+                  }
+                }}
+                className="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white"
+              >
+                <option value="">Select Reporter</option>
+                {users.map((user) => (
+                  <option key={user.user_id} value={user.user_id}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Display selected reporters */}
+              <div className="mt-2 space-y-1">
+                {reporters.map((reporterId) => {
+                  const reporterUser = users.find((u) => u.user_id === parseInt(reporterId));
+                  return (
+                    <div
+                      key={reporterId}
+                      className="flex items-center justify-between bg-gray-800 px-3 py-1 rounded"
+                    >
+                      <span>{reporterUser ? reporterUser.name : reporterId}</span>
+                      <button
+                        type="button"
+                        onClick={() => setReporters(reporters.filter((r) => r !== reporterId))}
+                        className="text-red-400 hover:text-red-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <div>
