@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { ToastContainer,toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 
 const API_URI = import.meta.env.VITE_API_URI;
 const PORT = import.meta.env.VITE_BACKEND_PORT;
@@ -21,6 +21,15 @@ function DprEditor() {
   const [loading, setLoading] = useState(true);
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingMetadata, setSavingMetadata] = useState(false);
+
+  const [userRoles, setUserRoles] = useState({
+  reporter: [],
+  client: [],
+  final_approver: null,
+  approver: null,
+});
+  const [eligibleUsers, setEligibleUsers] = useState([]);
+
 
   const agencyInputRef = useRef(null);
   const labourInputRef = useRef(null);
@@ -139,7 +148,7 @@ function DprEditor() {
 
   const [availableAgencies, setAvailableAgencies] = useState(agencyDict);
   const [availableLabourTypes, setAvailableLabourTypes] = useState(labourDict);
-
+ 
   // Fetch project and metadata
   useEffect(() => {
     if (!projectId) return;
@@ -205,7 +214,64 @@ function DprEditor() {
       }
     }
     fetchProject();
+
+     async function fetchRoles() {
+    try {
+      const [rolesRes, usersRes] = await Promise.all([
+        fetch(`http://${API_URI}:${PORT}/project/getuserroles/${projectId}`, {
+          credentials: "include",
+        }),
+        fetch(`http://${API_URI}:${PORT}/Project/eligibleUsers`, {
+          credentials: "include",
+        }),
+      ]);
+
+      const rolesData = await rolesRes.json();
+      const usersData = await usersRes.json();
+
+      if (rolesData.ok && usersData.ok) {
+        setEligibleUsers(usersData.users);
+
+        const usersMap = new Map(usersData.users.map(u => [u.user_id, u]));
+        const mapUser = (id) =>
+          usersMap.get(id) || { user_id: id, name: `Unknown (${id})` };
+
+        setUserRoles({
+          reporter: (rolesData.data.reporter || []).map(mapUser),
+          client: (rolesData.data.client || []).map(mapUser),
+          final_approver: rolesData.data.final_approver
+            ? mapUser(rolesData.data.final_approver)
+            : null,
+          approver: rolesData.data.approver
+            ? mapUser(rolesData.data.approver)
+            : null,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching roles:", err);
+    }
+  }
+
+    fetchRoles();
   }, [projectId]);
+
+  function handleRoleChange(role, target, isMulti = false) {
+  if (isMulti) {
+    // Collect all selected options
+    const selected = Array.from(target.selectedOptions, (opt) => parseInt(opt.value, 10));
+    setUserRoles((prev) => ({
+      ...prev,
+      [role]: eligibleUsers.filter((u) => selected.includes(u.user_id)),
+    }));
+  } else {
+    const val = parseInt(target.value, 10);
+    setUserRoles((prev) => ({
+      ...prev,
+      [role]: val ? eligibleUsers.find((u) => u.user_id === val) : null,
+    }));
+  }
+}
+
 
   // Save project details
   async function saveProject() {
@@ -232,7 +298,7 @@ function DprEditor() {
 
       const data = await res.json();
       if (res.ok && (data.ok || data.success)) {
-       toast.success("Project details & metadata saved successfully!");
+        toast.success("Project details & metadata saved successfully!");
       } else {
         toast.error(data.message || "Failed to save project data");
       }
@@ -468,7 +534,7 @@ function DprEditor() {
       </div>
 
       {/* Metadata Editor */}
-      <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
+      <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg mb">
         <h2 className="text-xl font-semibold mb-4 text-[#BBDEFB]">
           Agency & Labour Type Metadata
         </h2>
@@ -635,15 +701,62 @@ function DprEditor() {
             </tbody>
           </table>
         </div>
-
       </div>
-        <button
-          onClick={saveProject}
-          disabled={savingDetails}
-          className="px-4 py-2 mt-4 bg-blue-600 hover:bg-blue-700 rounded text-white w-[100%] hover:cursor-pointer"
-        >
-          {savingDetails ? "Saving..." : "Save Project"}
-        </button>
+
+      {/* User Roles Editor */}
+      <div className="bg-gray-800 rounded-xl p-6 mb-8 border border-gray-700 shadow-lg">
+        <h2 className="text-xl font-semibold mb-4 text-[#BBDEFB]">
+          User Roles
+        </h2>
+
+        
+
+        {/* Approver (single select) */}
+        <div className="mb-4">
+          <label className="block text-gray-300 mb-1 font-semibold">
+            Approver
+          </label>
+          <select
+            className="bg-gray-700 text-white rounded px-3 py-2 w-full"
+            value={userRoles.approver?.user_id || ""}
+            onChange={(e) => handleRoleChange("approver", e.target)}
+          >
+            <option value="">-- Select --</option>
+            {eligibleUsers.map((u) => (
+              <option key={u.user_id} value={u.user_id}>
+                {u.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Final Approver (single select) */}
+        <div className="mb-2">
+          <label className="block text-gray-300 mb-1 font-semibold">
+            Final Approver
+          </label>
+          <select
+            className="bg-gray-700 text-white rounded px-3 py-2 w-full"
+            value={userRoles.final_approver?.user_id || ""}
+            onChange={(e) => handleRoleChange("final_approver", e.target)}
+          >
+            <option value="">-- Select --</option>
+            {eligibleUsers.map((u) => (
+              <option key={u.user_id} value={u.user_id}>
+                {u.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <button
+        onClick={saveProject}
+        disabled={savingDetails}
+        className="px-4 py-2 mt-4 bg-blue-600 hover:bg-blue-700 rounded text-white w-[100%] hover:cursor-pointer"
+      >
+        {savingDetails ? "Saving..." : "Save Project"}
+      </button>
     </div>
   );
 }
