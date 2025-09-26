@@ -75,6 +75,13 @@ function Sidebar({ onCategoryChange }) {
       label: "Work In Progress",
       roles: [2],
     },
+    {
+      icon: "admin_panel_settings",
+      path: "/dashboard/admin",
+      id: "admin",
+      label: "Admin",
+      roles: [2],
+    },
     // { icon: "summarize", id: "summary", label: "Summary", roles: [2] },
   ];
 
@@ -153,7 +160,7 @@ function Sidebar({ onCategoryChange }) {
           </div>
         ))}
       </nav>
-
+      
       <div className="mt-auto relative" ref={containerRef}>
         <img
           alt="User avatar"

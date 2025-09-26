@@ -19,6 +19,7 @@ import ProjectDescription from "./pages/Dashboard/Projects/ProjectDescription.js
 import DprFetchViewer from "./pages/DPR/DprFetchViewer.jsx";
 import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
 import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
+import Admin from "./pages/admin/admin.jsx";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -108,6 +109,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DprUpdateSubmit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
             </ProtectedRoute>
           }
         />
