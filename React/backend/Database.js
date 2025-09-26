@@ -4,64 +4,101 @@ import './config.js';
 
 // Create a MySQL pool with connection details
 const pool = mysql.createPool({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE,
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
 }).promise();
 
 
 // #region 🛠️ HELP FUNCTIONS ─────────────────────────────────────────────
 
 function safeParse(jsonField) {
-    if (!jsonField) return {};
-    if (typeof jsonField === "object") return jsonField;
-    try {
-        return JSON.parse(jsonField);
-    } catch (err) {
-        console.error("❌ Failed to parse JSON field:", jsonField);
-        return {};
-    }
+  if (!jsonField) return {};
+  if (typeof jsonField === "object") return jsonField;
+  try {
+    return JSON.parse(jsonField);
+  } catch (err) {
+    console.error("❌ Failed to parse JSON field:", jsonField);
+    return {};
+  }
 }
 
 // #endregion
 
 // #region 🧑‍💼 USERS ─────────────────────────────────────────────
 
+export const ALLOWED_UPDATE_FIELDS = new Set([
+  "user_name",
+  "user_password",
+  "email",
+  "phone_no",
+  "title_id",
+]);
+
 // Function to fetch User by user_name
 export async function r_fetchUserByName(name) {
-    const query = "SELECT * FROM users WHERE user_name = ?"
-    try {
-        const [row] = await pool.query(query, [name]);
-        return row[0] || null;
-    } catch (error) {
-        console.error("Error fetching user by name:", error);
-        throw error;
-    }
+  const query = `SELECT 
+      u.user_id, 
+      u.user_name, 
+      u.user_password, 
+      u.email, 
+      t.title_name AS title_name
+    FROM users u
+    JOIN titles t ON u.title_id = t.title_id
+    WHERE u.user_name = ?;
+    `;
+  try {
+    const [row] = await pool.query(query, [name]);
+    return row[0] || null;
+  } catch (error) {
+    console.error("Error fetching user by name:", error);
+    throw error;
+  }
+}
+
+// Function to fetch all users
+export async function getAllUsers() {
+  const Query = `SELECT 
+      u.user_id, 
+      u.user_name,
+      u.email, 
+      t.title_name AS title_name
+    FROM users u
+    JOIN titles t ON u.title_id = t.title_id`;
+
+  try {
+    const [Rows] = await pool.query(Query);
+
+    return { ok: true, users: Rows};
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    return { ok: false, message: 'Database error' };
+  }
 }
 
 // Function to fetch User by email
 export async function r_fetchUserByEmail(email) {
-    const query = "SELECT * FROM users WHERE email = ?"
-    try {
-        const [row] = await pool.query(query, [email]);
-        return row[0] || null;
-    } catch (error) {
-        console.error("Error fetching user by name:", error);
-        throw error;
-    }
+  const query = "SELECT * FROM users WHERE email = ?"
+  try {
+    const [row] = await pool.query(query, [email]);
+    return row[0] || null;
+  } catch (error) {
+    console.error("Error fetching user by name:", error);
+    throw error;
+  }
 }
 
 // Function to update user password
 export async function updateUserPassword(email, hashedPassword) {
-    const query = "UPDATE users SET user_password = ? WHERE email = ?";
-    try {
-        const [result] = await pool.query(query, [hashedPassword, email]);
-        return result.affectedRows > 0;
-    } catch (error) {
-        console.error("Error updating user password:", error);
-        throw error;
-    }
+  const query = "UPDATE users SET user_password = ? WHERE email = ?";
+  try {
+    const [result] = await pool.query(query, [hashedPassword, email]);
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error("Error updating user password:", error);
+    throw error;
+  }
 }
 
 export async function checkUserExists(email, phone) {
@@ -73,15 +110,108 @@ export async function checkUserExists(email, phone) {
 }
 
 export async function insertUser(username, email, hashedPassword, phone) {
-    try {
-        const userInsertQuery = `INSERT INTO users (user_name, email, user_password, phone_no, title_id) VALUES (?, ?, ?, ?, ?)`;
-        const [userResult] = await pool.query(userInsertQuery, [username, email, hashedPassword, phone, 1]);
-        return !!userResult.insertId;
-    } catch (error) {
+  try {
+    const userInsertQuery = `INSERT INTO users (user_name, email, user_password, phone_no, title_id) VALUES (?, ?, ?, ?, ?)`;
+    const [userResult] = await pool.query(userInsertQuery, [username, email, hashedPassword, phone, 1]);
+    return !!userResult.insertId;
+  } catch (error) {
     console.error('Error inserting user:', error);
     return false;
   }
 }
+
+export async function updateUserById(user_id, updates) {
+  const fields = [];
+  const values = [];
+
+  for (const key in updates) {
+    if (ALLOWED_UPDATE_FIELDS.has(key)) {
+      fields.push(`${key} = ?`);
+      values.push(updates[key]);
+    }
+  }
+
+  if (fields.length === 0) {
+    return { ok: false, message: "No valid fields to update" };
+  }
+
+  values.push(user_id);
+  const query = `UPDATE users SET ${fields.join(", ")} WHERE user_id = ?`;
+
+  try {
+    const [result] = await pool.query(query, values);
+    if (result.affectedRows === 0) {
+      return { ok: false, message: "User not found" };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return { ok: false, message: "Database error" };
+  }
+}
+
+export async function updateUserByMail(email, updates) {
+  const fields = [];
+  const values = [];
+
+  for (const key in updates) {
+    if (ALLOWED_UPDATE_FIELDS.has(key)) {
+      fields.push(`${key} = ?`);
+      values.push(updates[key]);
+    }
+  }
+
+  if (fields.length === 0) {
+    return { ok: false, message: "No valid fields to update" };
+  }
+
+  values.push(email);
+  const query = `UPDATE users SET ${fields.join(", ")} WHERE email = ?`;
+
+  try {
+    const [result] = await pool.query(query, values);
+    if (result.affectedRows === 0) {
+      return { ok: false, message: "User not found" };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return { ok: false, message: "Database error" };
+  }
+}
+
+export async function deleteUserById(user_id) {
+  const query = 'DELETE FROM users WHERE user_id = ?';
+  try {
+    const [result] = await pool.query(query, [user_id]);
+    if (result.affectedRows === 0) {
+      return { ok: false, message: "User not found" };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return { ok: false, message: "Database error" };
+  }
+}
+
+export async function getTitles() {
+  const query = `SELECT title_id, title_name FROM titles;`;
+  try {
+    const [rows] = await pool.query(query, []);
+    
+    const titlesObj = rows.reduce((acc, item) => {
+      acc[item.title_id] = item.title_name;
+      return acc;
+    }, {});
+
+    return { ok: true, titles: titlesObj };
+  } catch (error) {
+    console.error('Error fetching titles:', error);
+    return { ok: false, message: 'Database error' };
+  }
+}
+
+
 
 
 // #endregion
@@ -90,121 +220,121 @@ export async function insertUser(username, email, hashedPassword, phone) {
 
 // Function to fetch task by task_id
 export async function fetchTaskById(task_id) {
-    const sql = "SELECT * FROM tasks WHERE task_id = ?";
-    try {
-        const [[result]] = await pool.query(sql, [task_id])
-        return result;
-    } catch (err) {
-        console.error("❌ Error fetching tasks:", err);
-        throw err;
-    }
+  const sql = "SELECT * FROM tasks WHERE task_id = ?";
+  try {
+    const [[result]] = await pool.query(sql, [task_id])
+    return result;
+  } catch (err) {
+    console.error("❌ Error fetching tasks:", err);
+    throw err;
+  }
 }
 
 // Function to fetch all task of people under the user control
 export async function fetchTasksOfControlled(user_id) {
-    const sql = "SELECT controlled_id FROM task_control WHERE controller_id = ?";
-    try {
-        const [result] = await pool.query(sql, [user_id])
-        const ids = result.map(item => item.controlled_id);
-        let allTask = []
-        for (const id of ids) {
-            const tasks = await fetchTasks(id);
-            allTask.push(...tasks)
-        }
-        return allTask;
-    } catch (err) {
-        console.error("❌ Error fetching tasks:", err);
-        throw err;
+  const sql = "SELECT controlled_id FROM task_control WHERE controller_id = ?";
+  try {
+    const [result] = await pool.query(sql, [user_id])
+    const ids = result.map(item => item.controlled_id);
+    let allTask = []
+    for (const id of ids) {
+      const tasks = await fetchTasks(id);
+      allTask.push(...tasks)
     }
+    return allTask;
+  } catch (err) {
+    console.error("❌ Error fetching tasks:", err);
+    throw err;
+  }
 }
 
 // Function to fetch all task under a user
 export async function fetchTasks(user_id) {
-    const sql = "SELECT * FROM tasks WHERE assigned_to = ?";
-    try {
-        const [result] = await pool.query(sql, [user_id])
-        return result;
-    } catch (err) {
-        console.error("❌ Error fetching tasks:", err);
-        throw err;
-    }
+  const sql = "SELECT * FROM tasks WHERE assigned_to = ?";
+  try {
+    const [result] = await pool.query(sql, [user_id])
+    return result;
+  } catch (err) {
+    console.error("❌ Error fetching tasks:", err);
+    throw err;
+  }
 }
 
 // Function to add new task
-export async function insertTask({ 
-    task_name, 
-    task_description = null, 
-    assigned_to = null, 
-    assigned_date = null, 
-    due_date = null, 
-    status = null 
+export async function insertTask({
+  task_name,
+  task_description = null,
+  assigned_to = null,
+  assigned_date = null,
+  due_date = null,
+  status = null
 }) {
-    const sql = `
+  const sql = `
         INSERT INTO tasks (task_name, task_description, assigned_to, assigned_date, due_date, status)
         VALUES (?, ?, ?, ?, ?, ?)
     `;
-    try {
-        const [result] = await pool.query(sql, [
-            task_name, task_description, assigned_to, assigned_date, due_date, status
-        ]);
-        return result.insertId;
-    } catch (err) {
-        console.error("❌ Error inserting task:", err.message);
-        throw err;
-    }
+  try {
+    const [result] = await pool.query(sql, [
+      task_name, task_description, assigned_to, assigned_date, due_date, status
+    ]);
+    return result.insertId;
+  } catch (err) {
+    console.error("❌ Error inserting task:", err.message);
+    throw err;
+  }
 }
 
 // Function to update task
-export async function updateTask(task_id, { 
-    task_name, 
-    task_description, 
-    assigned_to, 
-    assigned_date,
-    due_date, status }) {
-        
-    try {
-        const allowed = ["task_name", "task_description", "assigned_to", "assigned_date", "due_date", "status"];
-        const updates = [];
-        const values = [];
-        for (const k of allowed) {
-            if (typeof arguments[1][k] !== "undefined") {
-                updates.push(`${k} = ?`);
-                values.push(arguments[1][k]);
-            }
-        }
-        if (updates.length === 0) return 0;
-        const sql = `UPDATE tasks SET ${updates.join(", ")} WHERE task_id = ?`;
-        values.push(task_id);
-        const [result] = await pool.query(sql, values);
-        return result.affectedRows;
-    } catch (err) {
-        console.error("❌ Error updating task:", err.message);
-        throw err;
+export async function updateTask(task_id, {
+  task_name,
+  task_description,
+  assigned_to,
+  assigned_date,
+  due_date, status }) {
+
+  try {
+    const allowed = ["task_name", "task_description", "assigned_to", "assigned_date", "due_date", "status"];
+    const updates = [];
+    const values = [];
+    for (const k of allowed) {
+      if (typeof arguments[1][k] !== "undefined") {
+        updates.push(`${k} = ?`);
+        values.push(arguments[1][k]);
+      }
     }
+    if (updates.length === 0) return 0;
+    const sql = `UPDATE tasks SET ${updates.join(", ")} WHERE task_id = ?`;
+    values.push(task_id);
+    const [result] = await pool.query(sql, values);
+    return result.affectedRows;
+  } catch (err) {
+    console.error("❌ Error updating task:", err.message);
+    throw err;
+  }
 }
 
 // Function to delete task
 export async function deleteTask(task_id) {
-    const sql = `DELETE FROM tasks WHERE task_id = ?`;
-    try {
-        const [result] = await pool.query(sql, [task_id]);
-        return result.affectedRows;
-    } catch (err) {
-        console.error("❌ Error deleting task:", err.message);
-        throw err;
-    }
+  const sql = `DELETE FROM tasks WHERE task_id = ?`;
+  try {
+    const [result] = await pool.query(sql, [task_id]);
+    return result.affectedRows;
+  } catch (err) {
+    console.error("❌ Error deleting task:", err.message);
+    throw err;
+  }
 }
 
 // Function to get control_type
 export async function getControlType(controller_id, controlled_id) {
-    const sql = `SELECT control_type FROM task_control WHERE controller_id = ? AND controlled_id = ?;`;
-    try {
-        const [[result]] = await pool.query(sql, [controller_id, controlled_id]);
-        return result ? result.control_type : null;
-    } catch (err) {
-        console.error("❌ Error fetching control type:", err.message);
-        throw err;
-    }
+  const sql = `SELECT control_type FROM task_control WHERE controller_id = ? AND controlled_id = ?;`;
+  try {
+    const [[result]] = await pool.query(sql, [controller_id, controlled_id]);
+    return result ? result.control_type : null;
+  } catch (err) {
+    console.error("❌ Error fetching control type:", err.message);
+    throw err;
+  }
 }
 
 // Function to get all controlled user_id and user_name
@@ -227,7 +357,7 @@ export async function getControlledUsers(controller_id) {
 
 
 // export async function getAssignedTo() {
-    
+
 // }
 
 
@@ -238,28 +368,28 @@ export async function getControlledUsers(controller_id) {
 
 // Function to fetch Project by ID
 export async function r_getProjectById(project_id) {
-    if (!project_id) throw new Error("Project ID is required");
+  if (!project_id) throw new Error("Project ID is required");
 
-    const query = `SELECT * FROM projects WHERE project_id = ?`;
+  const query = `SELECT * FROM projects WHERE project_id = ?`;
 
-    try {
-        const [rows] = await pool.query(query, [project_id]);
-        if (rows.length === 0) return null;
+  try {
+    const [rows] = await pool.query(query, [project_id]);
+    if (rows.length === 0) return null;
 
-        const row = rows[0];
-        return {
-            ...row,
-            user_roles: typeof row.user_roles === "string" ? JSON.parse(row.user_roles) : row.user_roles
-        };
-    } catch (error) {
-        console.error("❌ Error fetching project by ID:", error.message);
-        throw error;
-    }
+    const row = rows[0];
+    return {
+      ...row,
+      user_roles: typeof row.user_roles === "string" ? JSON.parse(row.user_roles) : row.user_roles
+    };
+  } catch (error) {
+    console.error("❌ Error fetching project by ID:", error.message);
+    throw error;
+  }
 }
 
 // Function to fetch all projects a user is involved
 export async function r_fetchProjectsByUser(user_id) {
-    const query = `
+  const query = `
     SELECT 
       p.project_id,
       p.project_name,
@@ -271,50 +401,50 @@ export async function r_fetchProjectsByUser(user_id) {
     WHERE pur.user_id = ?;
   `;
 
-    try {
-        const [rows] = await pool.query(query, [user_id]);
-        return rows || [];
-    } catch (error) {
-        console.error("❌ Error fetching projects for user:", error);
-        throw error;
-    }
+  try {
+    const [rows] = await pool.query(query, [user_id]);
+    return rows || [];
+  } catch (error) {
+    console.error("❌ Error fetching projects for user:", error);
+    throw error;
+  }
 }
 
 // Exported function to get eligible users (title_id < 6)
 export async function r_getEligibleUsers() {
-    try {
-        const [rows] = await pool.query(
-            `SELECT user_id, user_name AS name, title_id FROM users WHERE title_id < 6`
-        );
-        return rows;
-    } catch (error) {
-        console.error("❌ Error fetching eligible users:", error.message);
-        throw error;
-    }
+  try {
+    const [rows] = await pool.query(
+      `SELECT user_id, user_name AS name, title_id FROM users WHERE title_id < 6`
+    );
+    return rows;
+  } catch (error) {
+    console.error("❌ Error fetching eligible users:", error.message);
+    throw error;
+  }
 }
 
 // Function to insert Project
 export async function r_insertProject(data) {
-    const {
-        project_name,
-        created_by,
-        project_description = null,
-        start_date = null,
-        end_date = null,
-        location = null,
-        project_code = null,
-        Employer = null,
-        metadata = null,
-        user_roles = {}
-    } = data;
+  const {
+    project_name,
+    created_by,
+    project_description = null,
+    start_date = null,
+    end_date = null,
+    location = null,
+    project_code = null,
+    Employer = null,
+    metadata = null,
+    user_roles = {}
+  } = data;
 
-    if (!project_name || !created_by) {
-        throw new Error("Missing required field: project_name or created_by");
-    }
+  if (!project_name || !created_by) {
+    throw new Error("Missing required field: project_name or created_by");
+  }
 
-    const metadataValue = metadata ? JSON.stringify(metadata) : null;
+  const metadataValue = metadata ? JSON.stringify(metadata) : null;
 
-    const insertSQL = `
+  const insertSQL = `
         INSERT INTO projects (
             project_name,
             project_description,
@@ -328,104 +458,104 @@ export async function r_insertProject(data) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
-    const values = [
-        project_name,
-        project_description,
-        start_date,
-        end_date,
-        location,
-        project_code,
-        Employer,
-        metadataValue,
-        created_by
-    ];
+  const values = [
+    project_name,
+    project_description,
+    start_date,
+    end_date,
+    location,
+    project_code,
+    Employer,
+    metadataValue,
+    created_by
+  ];
 
-    try {
-        const [projResult] = await pool.query(insertSQL, values);
-        const newProjectId = projResult.insertId;
+  try {
+    const [projResult] = await pool.query(insertSQL, values);
+    const newProjectId = projResult.insertId;
 
-        // Always set reporter to creator if not already set
-        if (!user_roles.reporter) {
-          user_roles.reporter = { insert: [created_by] }; // Wrap as insert array
-        }
-        if (user_roles && typeof user_roles === 'object' && Object.keys(user_roles).length > 0) {
-            const roleUpdateResult = await patchProjectRoles(newProjectId, user_roles);
-            if (!roleUpdateResult.ok) {
-                throw new Error(`Project created but failed to set roles: ${roleUpdateResult.msg}`);
-            }
-        }
-
-        return { ok: true, project_id: newProjectId };
-    } catch (error) {
-        console.error("❌ Error inserting project:", error.message);
-        throw error;
+    // Always set reporter to creator if not already set
+    if (!user_roles.reporter) {
+      user_roles.reporter = { insert: [created_by] }; // Wrap as insert array
     }
+    if (user_roles && typeof user_roles === 'object' && Object.keys(user_roles).length > 0) {
+      const roleUpdateResult = await patchProjectRoles(newProjectId, user_roles);
+      if (!roleUpdateResult.ok) {
+        throw new Error(`Project created but failed to set roles: ${roleUpdateResult.msg}`);
+      }
+    }
+
+    return { ok: true, project_id: newProjectId };
+  } catch (error) {
+    console.error("❌ Error inserting project:", error.message);
+    throw error;
+  }
 }
 
 // Function to update Project
 export async function r_updateProject(project_id, data) {
-    const {
-        user_roles,
-        ...fields
-    } = data;
+  const {
+    user_roles,
+    ...fields
+  } = data;
 
-    if (!project_id) {
-        throw new Error("Missing required field: project_id");
+  if (!project_id) {
+    throw new Error("Missing required field: project_id");
+  }
+
+  const allowedColumns = new Set([
+    'project_name',
+    'project_description',
+    'start_date',
+    'end_date',
+    'location',
+    'project_code',
+    'Employer',
+    'metadata'
+  ]);
+
+  const setClauses = [];
+  const values = [];
+
+  for (const [key, value] of Object.entries(fields)) {
+    if (!allowedColumns.has(key)) continue;
+    if (typeof value === "undefined") continue;
+
+    if (key === "metadata") {
+      setClauses.push(`\`${key}\` = ?`);
+      values.push(JSON.stringify(value)); // store as stringified JSON
+    } else {
+      setClauses.push(`\`${key}\` = ?`);
+      values.push(value); // normal value
     }
+  }
 
-    const allowedColumns = new Set([
-        'project_name',
-        'project_description',
-        'start_date',
-        'end_date',
-        'location',
-        'project_code',
-        'Employer',
-        'metadata'
-    ]);
+  let affectedRows = 0;
 
-    const setClauses = [];
-    const values = [];
-
-    for (const [key, value] of Object.entries(fields)) {
-        if (!allowedColumns.has(key)) continue;
-        if (typeof value === "undefined") continue;
-
-        if (key === "metadata") {
-            setClauses.push(`\`${key}\` = ?`);
-            values.push(JSON.stringify(value)); // store as stringified JSON
-        } else {
-            setClauses.push(`\`${key}\` = ?`);
-            values.push(value); // normal value
-        }
-    }
-
-    let affectedRows = 0;
-
-    if (setClauses.length > 0) {
-        const sql = `
+  if (setClauses.length > 0) {
+    const sql = `
             UPDATE projects
             SET ${setClauses.join(', ')}
             WHERE project_id = ?;
         `;
-        values.push(project_id);
-        try {
-            const [result] = await pool.query(sql, values);
-            affectedRows = result.affectedRows;
-        } catch (error) {
-            console.error("❌ Error updating project:", error.message);
-            throw error;
-        }
+    values.push(project_id);
+    try {
+      const [result] = await pool.query(sql, values);
+      affectedRows = result.affectedRows;
+    } catch (error) {
+      console.error("❌ Error updating project:", error.message);
+      throw error;
     }
+  }
 
-    if (user_roles && typeof user_roles === 'object' && Object.keys(user_roles).length > 0) {
-        const roleUpdateResult = await patchProjectRoles(project_id, user_roles);
-        if (!roleUpdateResult.ok) {
-            throw new Error(`Project updated but failed to update roles: ${roleUpdateResult.msg}`);
-        }
+  if (user_roles && typeof user_roles === 'object' && Object.keys(user_roles).length > 0) {
+    const roleUpdateResult = await patchProjectRoles(project_id, user_roles);
+    if (!roleUpdateResult.ok) {
+      throw new Error(`Project updated but failed to update roles: ${roleUpdateResult.msg}`);
     }
+  }
 
-    return affectedRows;
+  return affectedRows;
 }
 
 // Function to update Project
@@ -433,7 +563,8 @@ export async function r_updateProjectMetadata({ project_id, metadata }) {
   const [result] = await pool.execute(
     `UPDATE projects SET metadata = ? WHERE project_id = ?`,
     [metadata, project_id]
-  )};
+  )
+};
 
 // #endregion
 
@@ -451,144 +582,144 @@ export async function fetchVendors({
 } = {}) {
   const offset = (page - 1) * limit;
 
-    let baseQuery = "FROM vendors WHERE 1=1";
-    const params = [];
+  let baseQuery = "FROM vendors WHERE 1=1";
+  const params = [];
 
-    if (category !== 0) {
-        baseQuery += " AND category_id = ?";
-        params.push(category);
-    }
-    if (locationIds.length > 0) {
-        baseQuery += ` AND location_id IN (${locationIds.map(() => '?').join(',')})`;
-        params.push(...locationIds);
-    }
-    if (jobNatureIds.length > 0) {
-        baseQuery += ` AND job_nature_id IN (${jobNatureIds.map(() => '?').join(',')})`;
-        params.push(...jobNatureIds);
-    }
+  if (category !== 0) {
+    baseQuery += " AND category_id = ?";
+    params.push(category);
+  }
+  if (locationIds.length > 0) {
+    baseQuery += ` AND location_id IN (${locationIds.map(() => '?').join(',')})`;
+    params.push(...locationIds);
+  }
+  if (jobNatureIds.length > 0) {
+    baseQuery += ` AND job_nature_id IN (${jobNatureIds.map(() => '?').join(',')})`;
+    params.push(...jobNatureIds);
+  }
 
-    // If no search string, fetch paginated results directly from DB
-    if (!queryString.trim()) {
-        const countQuery = `SELECT COUNT(*) AS total ${baseQuery}`;
-        const [[{ total }]] = await pool.query(countQuery, params);
+  // If no search string, fetch paginated results directly from DB
+  if (!queryString.trim()) {
+    const countQuery = `SELECT COUNT(*) AS total ${baseQuery}`;
+    const [[{ total }]] = await pool.query(countQuery, params);
 
-        const fetchQuery = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`;
-        const fetchParams = [...params, limit, offset];
-        const [vendors] = await pool.query(fetchQuery, fetchParams);
-
-        return {
-            vendors,
-            vendorCount: total,
-        };
-    }
-
-    // With search, fetch ALL matching vendors (no limit, no offset)
-    const fullFetchQuery = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'}`;
-    const [allVendors] = await pool.query(fullFetchQuery, params);
-
-    const fuse = new Fuse(allVendors, {
-        keys: [
-            { name: "name", weight: 0.5 },
-            { name: "remarks", weight: 0.2 },
-            { name: "email", weight: 0.1 },
-            { name: "website", weight: 0.1 },
-            { name: "telephone", weight: 0.05 },
-            { name: "mobile", weight: 0.05 },
-            { name: "reference", weight: 0.025 },
-            { name: "contact_person", weight: 0.025 },
-        ],
-        threshold: 0.4,
-    });
-    const results = fuse.search(queryString).map(r => r.item);
-
-    const paginatedResults = results.slice(offset, offset + limit);
+    const fetchQuery = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`;
+    const fetchParams = [...params, limit, offset];
+    const [vendors] = await pool.query(fetchQuery, fetchParams);
 
     return {
-        vendors: paginatedResults,
-        vendorCount: results.length,
+      vendors,
+      vendorCount: total,
     };
+  }
+
+  // With search, fetch ALL matching vendors (no limit, no offset)
+  const fullFetchQuery = `SELECT * ${baseQuery} ORDER BY name ${order === 'DESC' ? 'DESC' : 'ASC'}`;
+  const [allVendors] = await pool.query(fullFetchQuery, params);
+
+  const fuse = new Fuse(allVendors, {
+    keys: [
+      { name: "name", weight: 0.5 },
+      { name: "remarks", weight: 0.2 },
+      { name: "email", weight: 0.1 },
+      { name: "website", weight: 0.1 },
+      { name: "telephone", weight: 0.05 },
+      { name: "mobile", weight: 0.05 },
+      { name: "reference", weight: 0.025 },
+      { name: "contact_person", weight: 0.025 },
+    ],
+    threshold: 0.4,
+  });
+  const results = fuse.search(queryString).map(r => r.item);
+
+  const paginatedResults = results.slice(offset, offset + limit);
+
+  return {
+    vendors: paginatedResults,
+    vendorCount: results.length,
+  };
 }
 
 // Insert a new vendor
 export async function r_insertVendor(data) {
-    const query = `
+  const query = `
         INSERT INTO vendors (
             name, job_nature_id, contact_person, telephone_no, mobile,
             location_id, email, address, gst_no, constitution,
             website, reference, remarks, category_id
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const params = [
-        data.name, data.job_nature_id, data.contact_person, data.telephone_no, data.mobile,
-        data.location_id, data.email, data.address, data.gst_no, data.constitution,
-        data.website, data.reference, data.remarks, data.category_id
-    ];
+  const params = [
+    data.name, data.job_nature_id, data.contact_person, data.telephone_no, data.mobile,
+    data.location_id, data.email, data.address, data.gst_no, data.constitution,
+    data.website, data.reference, data.remarks, data.category_id
+  ];
 
-    const [result] = await pool.query(query, params);
-    return { id: result.insertId };
+  const [result] = await pool.query(query, params);
+  return { id: result.insertId };
 }
 
 // Update existing vendor
 export async function r_updateVendor(id, data) {
-    const query = `
+  const query = `
         UPDATE vendors SET
             name = ?, job_nature_id = ?, contact_person = ?, telephone_no = ?, mobile = ?,
             location_id = ?, email = ?, address = ?, gst_no = ?, constitution = ?,
             website = ?, reference = ?, remarks = ?, category_id = ?
         WHERE id = ?
     `;
-    const params = [
-        data.name, data.job_nature_id, data.contact_person, data.telephone_no, data.mobile,
-        data.location_id, data.email, data.address, data.gst_no, data.constitution,
-        data.website, data.reference, data.remarks, data.category_id,
-        id
-    ];
+  const params = [
+    data.name, data.job_nature_id, data.contact_person, data.telephone_no, data.mobile,
+    data.location_id, data.email, data.address, data.gst_no, data.constitution,
+    data.website, data.reference, data.remarks, data.category_id,
+    id
+  ];
 
-    const [result] = await pool.query(query, params);
-    return { affectedRows: result.affectedRows };
+  const [result] = await pool.query(query, params);
+  return { affectedRows: result.affectedRows };
 }
 
 // Delete vendor
 export async function r_deleteVendor(id) {
-    const query = `DELETE FROM vendors WHERE id = ?`;
-    const [result] = await pool.query(query, [id]);
-    return { affectedRows: result.affectedRows };
+  const query = `DELETE FROM vendors WHERE id = ?`;
+  const [result] = await pool.query(query, [id]);
+  return { affectedRows: result.affectedRows };
 }
 
 // Fetch Count of vendors in table
 export async function r_fetchVendorsCount() {
-    const query = "SELECT COUNT(*) AS count FROM vendors";
-    try {
-        const [[result]] = await pool.query(query);
-        return result.count;
-    } catch (error) {
-        console.error("Error fetching vendor count:", error);
-        throw error;
-    }
+  const query = "SELECT COUNT(*) AS count FROM vendors";
+  try {
+    const [[result]] = await pool.query(query);
+    return result.count;
+  } catch (error) {
+    console.error("Error fetching vendor count:", error);
+    throw error;
+  }
 }
 
 // Fetch all Job Natures in table
 export async function r_fetchVendorsAllJobNatures() {
-    const query = `SELECT job_id, job_name FROM job_nature`;
-    try {
-        const [rows] = await pool.query(query);
-        return Object.fromEntries(rows.map(row => [row.job_name, row.job_id]));
-    } catch (error) {
-        console.error(`Error fetching data from job_nature:`, error);
-        throw error;
-    }
+  const query = `SELECT job_id, job_name FROM job_nature`;
+  try {
+    const [rows] = await pool.query(query);
+    return Object.fromEntries(rows.map(row => [row.job_name, row.job_id]));
+  } catch (error) {
+    console.error(`Error fetching data from job_nature:`, error);
+    throw error;
+  }
 }
 
 // Fetch all Locations in table
 export async function r_fetchVendorsAllLocations() {
-    const query = `SELECT loc_id, loc_name FROM locations`;
-    try {
-        const [rows] = await pool.query(query);
-        return Object.fromEntries(rows.map(row => [row.loc_name, row.loc_id]));
-    } catch (error) {
-        console.error(`Error fetching data from locations:`, error);
-        throw error;
-    }
+  const query = `SELECT loc_id, loc_name FROM locations`;
+  try {
+    const [rows] = await pool.query(query);
+    return Object.fromEntries(rows.map(row => [row.loc_name, row.loc_id]));
+  } catch (error) {
+    console.error(`Error fetching data from locations:`, error);
+    throw error;
+  }
 }
 
 // #endregion
@@ -597,42 +728,42 @@ export async function r_fetchVendorsAllLocations() {
 
 // Fetch DPR by ID
 export async function getDPRById(dpr_id) {
-    if (!dpr_id) {
-        throw new Error("DPR ID is required");
-    }
+  if (!dpr_id) {
+    throw new Error("DPR ID is required");
+  }
 
-    const query = `SELECT * FROM dpr WHERE dpr_id = ?`;
+  const query = `SELECT * FROM dpr WHERE dpr_id = ?`;
 
-    try {
-        const [rows] = await pool.query(query, [dpr_id]);
-        if (rows.length === 0) return null;
+  try {
+    const [rows] = await pool.query(query, [dpr_id]);
+    if (rows.length === 0) return null;
 
-        const row = rows[0];
+    const row = rows[0];
 
-        return {
-            ...row,
-            site_condition: safeParse(row.site_condition),
-            labour_report: safeParse(row.labour_report),
-            today_prog: safeParse(row.today_prog),
-            tomorrow_plan: safeParse(row.tomorrow_plan),
-            user_roles: safeParse(row.user_roles),
-            events_remarks: safeParse(row.events_remarks),
-            general_remarks: safeParse(row.general_remarks),
-            report_footer: safeParse(row.report_footer)
-        };
-    } catch (error) {
-        console.error("❌ Error fetching DPR by ID:", error.message);
-        throw error;
-    }
+    return {
+      ...row,
+      site_condition: safeParse(row.site_condition),
+      labour_report: safeParse(row.labour_report),
+      today_prog: safeParse(row.today_prog),
+      tomorrow_plan: safeParse(row.tomorrow_plan),
+      user_roles: safeParse(row.user_roles),
+      events_remarks: safeParse(row.events_remarks),
+      general_remarks: safeParse(row.general_remarks),
+      report_footer: safeParse(row.report_footer)
+    };
+  } catch (error) {
+    console.error("❌ Error fetching DPR by ID:", error.message);
+    throw error;
+  }
 }
 
 // Fetch PDR current handler
 export async function getCurrentHandlerForDpr(dpr_id) {
-    const [rows] = await pool.query(
-        'SELECT current_handler FROM dpr WHERE dpr_id = ?',
-        [dpr_id]
-    );
-    return rows[0] ? rows[0].current_handler : null;
+  const [rows] = await pool.query(
+    'SELECT current_handler FROM dpr WHERE dpr_id = ?',
+    [dpr_id]
+  );
+  return rows[0] ? rows[0].current_handler : null;
 }
 
 // Insert DPR
@@ -767,25 +898,25 @@ export async function updateDPR(dpr_id, dprData) {
 
 // Fetch the last DPR of a project
 export async function fetchLastDPR(project_id) {
-    const query = `
+  const query = `
         SELECT * FROM dpr
         WHERE project_id = ?
         ORDER BY report_date DESC
         LIMIT 1;
     `;
 
-    try {
-        const [rows] = await pool.query(query, [project_id]);
-        return rows[0] || null;
-    } catch (error) {
-        console.error("❌ Error fetching last DPR:", error);
-        throw error;
-    }
+  try {
+    const [rows] = await pool.query(query, [project_id]);
+    return rows[0] || null;
+  } catch (error) {
+    console.error("❌ Error fetching last DPR:", error);
+    throw error;
+  }
 }
 
 // Fetch all DPR under a specific Project
 export async function fetchDPRsByProject(project_id, limit = 20) {
-    const query = `
+  const query = `
     SELECT 
       dpr_id,
       report_date,
@@ -797,29 +928,29 @@ export async function fetchDPRsByProject(project_id, limit = 20) {
     LIMIT ?;
   `;
 
-    try {
-        const [results] = await pool.query(query, [project_id, Number(limit)]);
+  try {
+    const [results] = await pool.query(query, [project_id, Number(limit)]);
 
-        return results;
-    } catch (error) {
-        console.error("❌ Error fetching DPRs for project:", error);
-        throw error;
-    }
+    return results;
+  } catch (error) {
+    console.error("❌ Error fetching DPRs for project:", error);
+    throw error;
+  }
 }
 
 // Fetch project_id from 
 export async function getProjByDprID(dpr_id) {
-    const query = `SELECT project_id FROM dpr WHERE dpr_id = ?`;
-    try {
-        const [rows] = await pool.query(query, [dpr_id]);
-        if (!rows.length) {
-            return { ok: false, message: "No DPR found for that ID.", project_id: null };
-        }
-        return { ok: true, project_id: rows[0].project_id };
-    } catch (error) {
-        console.error("❌ Error fetching DPR by ID:", error.message);
-        throw error;
+  const query = `SELECT project_id FROM dpr WHERE dpr_id = ?`;
+  try {
+    const [rows] = await pool.query(query, [dpr_id]);
+    if (!rows.length) {
+      return { ok: false, message: "No DPR found for that ID.", project_id: null };
     }
+    return { ok: true, project_id: rows[0].project_id };
+  } catch (error) {
+    console.error("❌ Error fetching DPR by ID:", error.message);
+    throw error;
+  }
 }
 
 // Submit DPR
@@ -844,7 +975,7 @@ export async function submitDPR(dpr_id, user_id) {
   // 4. Workflow logic with skip option
   if (dpr.dpr_status === "in_progress") {
     if (userRole.role_name !== "reporter") throw new Error("Only the reporter can submit at this stage");
-    
+
     // If neither approver nor final_approver, mark as approved directly
     if (!users_involved.approver && !users_involved.final_approver) {
       next_handler = null;
@@ -896,21 +1027,21 @@ export async function submitDPR(dpr_id, user_id) {
 
 // Fetches user roles for a user in a given project
 export async function getUserRoleForProject(user_id, project_id) {
-    const query = `
+  const query = `
         SELECT r.*
         FROM project_user_roles upr
         JOIN roles r ON upr.role_id = r.role_id
         WHERE upr.user_id = ? AND upr.project_id = ?;
     `;
-    const params = [user_id, project_id];
+  const params = [user_id, project_id];
 
-    try {
-        const [[rows]] = await pool.query(query, params);
-        return rows
-    } catch (error) {
-        console.error("Error fetching vendors:", error);
-        throw error;
-    }
+  try {
+    const [[rows]] = await pool.query(query, params);
+    return rows
+  } catch (error) {
+    console.error("Error fetching vendors:", error);
+    throw error;
+  }
 }
 
 // Fetch users involved in project and their role
@@ -1065,3 +1196,6 @@ async function patchProjectRoles(project_id, changes) {
 
 // #endregion
 
+
+// const t = await getTitles();
+// console.log(t);
