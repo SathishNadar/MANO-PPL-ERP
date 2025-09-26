@@ -6,7 +6,7 @@ import Fuse from "fuse.js";
 import {
   CreateTaskModal,
   EditTaskModal,
-  DeleteTaskModal,
+  DeleteModal,
   control_access,
 } from "./TaskModals";
 
@@ -15,8 +15,8 @@ const PORT = import.meta.env.VITE_BACKEND_PORT;
 
 const WorkInProgress = () => {
   const [tasks, setTasks] = useState([]);
-  const [users, setUsers] = useState([]); // self + controlled
-  const [selectedUser, setSelectedUser] = useState(null); // dropdown filter
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(null);
@@ -167,7 +167,6 @@ const WorkInProgress = () => {
     }
   };
 
-  // Fuzzy search config
   const fuse = useMemo(
     () =>
       new Fuse(tasks, {
@@ -413,7 +412,7 @@ const WorkInProgress = () => {
         </div>
       )}
 
-      <DeleteTaskModal
+      <DeleteModal
         show={!!showDeleteModal}
         onClose={() => setShowDeleteModal(null)}
         onConfirm={() => {
@@ -421,6 +420,7 @@ const WorkInProgress = () => {
           setShowDeleteModal(null);
         }}
         role={role}
+        entityName="task"
       />
     </div>
   );

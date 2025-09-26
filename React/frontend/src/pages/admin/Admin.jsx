@@ -1,53 +1,53 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../SidebarComponent/sidebar";
+import { DeleteModal } from "../Dashboard/WorkInProgress/TaskModals";
+import { toast } from "react-toastify";
 
-const usersData = [
-  { id: 1, name: "Latika", email: "latikasc11@gmail.com", role: "Admin", phone: "1213123" },
-  { id: 2, name: "Test", email: "test@gmail.com", role: "Viewer", phone: "1213123" },
-  { id: 3, name: "Mano", email: "manobharathi169@gmail.com", role: "Custom", phone: "9876543210" },
-  { id: 4, name: "New User", email: "new_user@gmail.com", role: "Custom", phone: "1122334455" },
-  { id: 5, name: "Nice Bike", email: "nice@bike.com", role: "Accounts", phone: "9988776655" },
-];
-
-// ✅ Reusable Delete Modal (same design style as your DeleteTaskModal)
-const DeleteUserModal = ({ show, onClose, onConfirm, user }) => {
-  if (!show) return null;
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-      <div className="bg-[#1e242c] rounded-lg p-8 w-full max-w-md shadow-2xl">
-        <h2 className="text-xl font-bold text-gray-200 mb-4">Confirm Deletion</h2>
-        <p className="text-gray-400 mb-6">
-          Are you sure you want to delete{" "}
-          <span className="font-semibold text-gray-200">{user?.name}</span>?  
-          This action cannot be undone.
-        </p>
-        <div className="flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2 rounded-md border border-gray-500 text-gray-300 hover:bg-gray-700"
-          >
-            Close
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="px-6 py-2 rounded-md bg-red-600 text-white font-medium hover:bg-red-500"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+const API_URI = import.meta.env.VITE_API_URI;
+const PORT = import.meta.env.VITE_BACKEND_PORT;
 
 const Admin = () => {
-  const [users, setUsers] = useState(usersData);
+  const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  const [editingUser, setEditingUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch(`http://${API_URI}:${PORT}/admin/users`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.users)) {
+          setUsers(data.users);
+        } else {
+          toast.error("Failed to load users.");
+        }
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const filteredUsers = users.filter((user) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      user.user_name.toLowerCase().includes(q) ||
+      user.email.toLowerCase().includes(q) ||
+      user.phone_no.toLowerCase().includes(q) ||
+      user.title_name.toLowerCase().includes(q)
+    );
+  });
+
+  // Delete user
   const openDeleteModal = (user) => {
     setSelectedUser(user);
     setDeleteModalOpen(true);
@@ -58,69 +58,282 @@ const Admin = () => {
     setDeleteModalOpen(false);
   };
 
-  const confirmDelete = () => {
-    setUsers(users.filter((u) => u.id !== selectedUser.id));
-    closeDeleteModal();
+  const confirmDelete = async () => {
+    try {
+      await fetch(
+        `http://${API_URI}:${PORT}/admin/user/${selectedUser.user_id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      setUsers(users.filter((u) => u.user_id !== selectedUser.user_id));
+      toast.success(`User "${selectedUser.user_name}" deleted.`);
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      toast.error("Error deleting user.");
+    } finally {
+      closeDeleteModal();
+    }
+  };
+
+  const startEdit = (user) => {
+    setEditingUser({ ...user });
+  };
+
+  const cancelEdit = () => {
+    setEditingUser(null);
+  };
+
+  // Save edited user
+  const saveUser = async (userId) => {
+    try {
+      const res = await fetch(
+        `http://${API_URI}:${PORT}/admin/user/${userId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(editingUser),
+        }
+      );
+
+      if (res.ok) {
+        setUsers(users.map((u) => (u.user_id === userId ? editingUser : u)));
+        toast.success(`User "${editingUser.user_name}" updated successfully!`);
+        setEditingUser(null);
+      } else {
+        toast.error("Failed to update user.");
+      }
+    } catch (error) {
+      console.error("Failed to update user:", error);
+      toast.error("Error updating user.");
+    }
   };
 
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 bg-background-dark text-text-dark">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-text-dark">
-              Admin: User Management
-            </h1>
-            <button className="mt-4 sm:mt-0 flex items-center bg-primary text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
-              <span className="material-icons-outlined mr-2">add</span> Add User
-            </button>
-          </div>
+      <div className="relative flex size-full min-h-screen flex-col bg-[var(--background-color)] overflow-x-hidden">
+        <div className="layout-container flex h-full grow flex-col mt-10">
+          <main className="main_container">
+            <div className="layout-content-container flex flex-col max-w-7xl mx-auto flex-1">
+              {/* Header Section */}
+              <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
+                <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+                  Admin: User Management
+                </h1>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="search"
+                    placeholder="Search users..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="form-input block w-full md:w-64 px-4 py-3 rounded-lg text-[var(--text-primary)] bg-[var(--card-background)] border-gray-700 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] placeholder:text-[var(--text-secondary)]"
+                  />
+                  <button
+                    onClick={() => toast.info("TODO: Add user modal")}
+                    className="rounded-md px-6 py-3 inline-flex items-center justify-center gap-2 whitespace-nowrap
+                            bg-blue-600 hover:bg-blue-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <line x1="12" x2="12" y1="5" y2="19"></line>
+                      <line x1="5" x2="19" y1="12" y2="12"></line>
+                    </svg>
+                    <span>Add User</span>
+                  </button>
+                </div>
+              </div>
 
-          {/* Table */}
-          <div className="bg-card-dark rounded-lg shadow-md overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-gray-700">
-                  <tr>
-                    <th className="p-4 font-semibold text-text-secondary-dark uppercase text-sm tracking-wider">Username</th>
-                    <th className="p-4 font-semibold text-text-secondary-dark uppercase text-sm tracking-wider">Email</th>
-                    <th className="p-4 font-semibold text-text-secondary-dark uppercase text-sm tracking-wider">Phone</th>
-                    <th className="p-4 font-semibold text-text-secondary-dark uppercase text-sm tracking-wider">Role</th>
-                    <th className="p-4 font-semibold text-text-secondary-dark uppercase text-sm tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-dark">
-                  {users.map((user) => (
-                    <tr key={user.id}>
-                      <td className="p-4 whitespace-nowrap">{user.name}</td>
-                      <td className="p-4 whitespace-nowrap text-text-secondary-dark">{user.email}</td>
-                      <td className="p-4 whitespace-nowrap text-text-secondary-dark">{user.phone}</td>
-                      <td className="p-4 whitespace-nowrap text-text-secondary-dark">{user.role}</td>
-                      <td className="p-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => openDeleteModal(user)}
-                          className="text-red-400 hover:text-red-300 flex items-center bg-red-900/50 px-3 py-1 rounded-md transition duration-300"
-                        >
-                          <span className="material-icons-outlined mr-1 text-sm">delete</span>
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* Users Table */}
+              <div className="space-y-12">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">
+                    Users
+                  </h2>
+                  <div className="overflow-x-auto rounded-lg border border-gray-800 bg-[var(--card-background)]">
+                    {loading ? (
+                      <p className="p-6 text-center text-[var(--text-secondary)]">
+                        Loading users...
+                      </p>
+                    ) : (
+                      <table className="w-full text-left">
+                        <thead className="bg-gray-800/50">
+                          <tr>
+                            <th className="px-6 py-4">Username</th>
+                            <th className="px-6 py-4">Email</th>
+                            <th className="px-6 py-4">Phone</th>
+                            <th className="px-6 py-4">Role</th>
+                            <th className="px-6 py-4 text-center">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-800">
+                          {filteredUsers.length > 0 ? (
+                            filteredUsers.map((user) => (
+                              <tr
+                                key={user.user_id}
+                                className="hover:bg-gray-800/30 transition-colors"
+                              >
+                                <td className="px-6 py-4 whitespace-nowrap text-lg font-medium text-[var(--text-primary)]">
+                                  {editingUser?.user_id === user.user_id ? (
+                                    <input
+                                      type="text"
+                                      value={editingUser.user_name}
+                                      onChange={(e) =>
+                                        setEditingUser({
+                                          ...editingUser,
+                                          user_name: e.target.value,
+                                        })
+                                      }
+                                      className="bg-gray-900 text-white px-2 py-1 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                  ) : (
+                                    user.user_name
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
+                                  {editingUser?.user_id === user.user_id ? (
+                                    <input
+                                      type="email"
+                                      value={editingUser.email}
+                                      onChange={(e) =>
+                                        setEditingUser({
+                                          ...editingUser,
+                                          email: e.target.value,
+                                        })
+                                      }
+                                      className="bg-gray-900 text-white px-2 py-1 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                  ) : (
+                                    user.email
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
+                                  {editingUser?.user_id === user.user_id ? (
+                                    <input
+                                      type="text"
+                                      value={editingUser.phone_no}
+                                      onChange={(e) =>
+                                        setEditingUser({
+                                          ...editingUser,
+                                          phone_no: e.target.value,
+                                        })
+                                      }
+                                      className="bg-gray-900 text-white px-2 py-1 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                  ) : (
+                                    user.phone_no
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
+                                  {editingUser?.user_id === user.user_id ? (
+                                    <input
+                                      type="text"
+                                      value={editingUser.title_name}
+                                      onChange={(e) =>
+                                        setEditingUser({
+                                          ...editingUser,
+                                          title_name: e.target.value,
+                                        })
+                                      }
+                                      className="bg-gray-900 text-white px-2 py-1 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                  ) : (
+                                    user.title_name
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 text-center flex justify-center gap-4">
+                                  {editingUser?.user_id === user.user_id ? (
+                                    <>
+                                      {/* Save button */}
+                                      <button
+                                        type="button"
+                                        onClick={() => saveUser(user.user_id)}
+                                        className="text-green-400 hover:text-green-500"
+                                        title="Save changes"
+                                      >
+                                        <span className="material-icons text-md">
+                                          save
+                                        </span>
+                                      </button>
+
+                                      {/* Cancel button */}
+                                      <button
+                                        type="button"
+                                        onClick={cancelEdit}
+                                        className="text-gray-400 hover:text-gray-500"
+                                        title="Cancel edit"
+                                      >
+                                        <span className="material-icons text-md">
+                                          close
+                                        </span>
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      {/* Edit button */}
+                                      <button
+                                        type="button"
+                                        onClick={() => startEdit(user)}
+                                        className="text-blue-400 hover:text-blue-500"
+                                        title="Edit user"
+                                      >
+                                        <span className="material-icons text-md">
+                                          edit
+                                        </span>
+                                      </button>
+
+                                      {/* Delete button (unchanged) */}
+                                      <button
+                                        type="button"
+                                        onClick={() => openDeleteModal(user)}
+                                        className="text-red-400 hover:text-red-500 hover:cursor-pointer"
+                                        title="Delete user"
+                                      >
+                                        <span className="material-icons text-md">
+                                          delete
+                                        </span>
+                                      </button>
+                                    </>
+                                  )}
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan="5"
+                                className="px-6 py-6 text-center text-[var(--text-secondary)]"
+                              >
+                                No users found.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </main>
         </div>
 
         {/* Delete Modal */}
-        <DeleteUserModal
+        <DeleteModal
           show={deleteModalOpen}
           onClose={closeDeleteModal}
           onConfirm={confirmDelete}
-          user={selectedUser}
+          entityName="user"
         />
       </div>
     </div>

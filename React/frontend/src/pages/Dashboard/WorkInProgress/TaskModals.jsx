@@ -325,20 +325,30 @@ export const EditTaskModal = ({
   );
 };
 
-export const DeleteTaskModal = ({ show, onClose, onConfirm, role }) => {
+export const DeleteModal = ({ 
+  show, 
+  onClose, 
+  onConfirm, 
+  role, 
+  entityName = "item"
+}) => {
   if (!show) return null;
-  const permissions = control_access[role] || control_access.viewer;
+
+  // ✅ If role is passed → use permissions, otherwise default to allow delete
+  const permissions = role 
+    ? control_access[role] || control_access.viewer 
+    : { delete: true };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
       <div className="bg-[#1e242c] rounded-lg p-8 w-full max-w-md shadow-2xl">
         <h2 className="text-xl font-bold text-gray-200 mb-4">
-          {permissions.delete ? "Confirm Deletion" : "View Task"}
+          {permissions.delete ? `Confirm Delete ${entityName}` : `View ${entityName}`}
         </h2>
         <p className="text-gray-400 mb-6">
           {permissions.delete
-            ? "Are you sure you want to delete this task? This action cannot be undone."
-            : "You don’t have permission to delete tasks."}
+            ? `Are you sure you want to delete this ${entityName}? This action cannot be undone.`
+            : `You don’t have permission to delete ${entityName}s.`}
         </p>
         <div className="flex justify-end gap-4">
           <button
@@ -362,5 +372,7 @@ export const DeleteTaskModal = ({ show, onClose, onConfirm, role }) => {
     </div>
   );
 };
+
+
 
 export {control_access};
