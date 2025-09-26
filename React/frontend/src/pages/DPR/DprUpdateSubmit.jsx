@@ -7,9 +7,22 @@ const PORT = import.meta.env.VITE_BACKEND_PORT;
 
 function DprUpdateSubmit() {
   const { projectId, dprId } = useParams();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
 
   const [project, setProject] = useState(null);
+  const [eventsVisit, setEventsVisit] = useState([{ id: crypto.randomUUID(), text: "" }]);
+  const [generalRemark, setGeneralRemark] = useState("");
+
+const addEventVisit = () =>
+  setEventsVisit((p) => [...p, { id: crypto.randomUUID(), text: "" }]);
+
+const removeEventVisit = (id) =>
+  setEventsVisit((p) => p.filter((row) => row.id !== id));
+
+const setEventVisit = (id, val) =>
+  setEventsVisit((p) =>
+    p.map((row) => (row.id === id ? { ...row, text: val } : row))
+  );
 
   const [reportDate, setReportDate] = useState(""); // read-only later
   const [siteCondition, setSiteCondition] = useState({
@@ -158,23 +171,20 @@ function DprUpdateSubmit() {
           : [{ id: crypto.randomUUID(), left: "", right: "" }]
       );
 
-      setEventsRemarks(
-        Array.isArray(data?.events_remarks)
-          ? data.events_remarks.map((text) => ({
+      setEventsVisit(
+        Array.isArray(data?.report_footer?.events_visit)
+          ? data.report_footer.events_visit.map((text) => ({
               id: crypto.randomUUID(),
               text,
             }))
           : [{ id: crypto.randomUUID(), text: "" }]
       );
 
-      setBottomRemarks(
-        Array.isArray(data?.report_footer?.bottom_remarks)
-          ? data.report_footer.bottom_remarks.map((text) => ({
-              id: crypto.randomUUID(),
-              text,
-            }))
-          : [{ id: crypto.randomUUID(), text: "" }]
-      );
+      setGeneralRemark(
+    typeof data?.report_footer?.bottom_remarks === "string"
+      ? data.report_footer.bottom_remarks
+      : ""
+    );
 
       setDistribute(
         Array.isArray(data?.report_footer?.distribute)
@@ -291,9 +301,10 @@ function DprUpdateSubmit() {
       events_visit: Array.isArray(dpr?.report_footer?.events_visit)
         ? dpr.report_footer.events_visit
         : [],
-      bottom_remarks: Array.isArray(dpr?.report_footer?.bottom_remarks)
-        ? dpr.report_footer.bottom_remarks
-        : [],
+      bottom_remarks:
+      typeof dpr?.report_footer?.bottom_remarks === "string"
+      ? dpr.report_footer.bottom_remarks
+      : "",
     },
   });
 
@@ -343,8 +354,8 @@ function DprUpdateSubmit() {
         report_footer: {
           distribute: distribute.map((d) => d.text),
           prepared_by: preparedBy,
-          bottom_remarks: bottomRemarks.map((b) => b.text),
-          events_visit: [],
+          bottom_remarks: generalRemark,   
+          events_visit: eventsVisit.map((e) => e.text),  
         },
       };
 
@@ -913,72 +924,34 @@ function DprUpdateSubmit() {
         <EditableList
           className="md:col-span-2"
           title="Events & Remarks"
-          items={eventsRemarks}
-          onAdd={addEvent}
-          onRemove={removeEvent}
-          onChange={setEvent}
+          items={eventsVisit}
+          onAdd={addEventVisit}
+          onRemove={removeEventVisit}
+          onChange={setEventVisit}
           placeholder="Enter event or remark"
         />
-        <EditableList
-          title="General Remarks"
-          items={bottomRemarks}
-          onAdd={addBottomRemark}
-          onRemove={removeBottomRemark}
-          onChange={setBottomRemark}
-          placeholder="Enter general remark"
-        >
-          <div className="mt-4 border-t border-gray-700 pt-4 grid grid-cols-1 gap-3">
-            <div>
-              <label className="block text-sm text-gray-300 mb-1">
-                Prepared By
-              </label>
-              <input
-                type="text"
-                value={preparedBy}
-                onChange={(e) => setPreparedBy(e.target.value)}
-                className="w-full bg-transparent border-b border-gray-600 outline-none"
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm text-gray-300">
-                  Distribute
-                </label>
-                <button
-                  type="button"
-                  onClick={addDistributor}
-                  className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600"
-                >
-                  + Add
-                </button>
-              </div>
-              <div className="flex flex-col gap-2">
-                {distribute.map((d) => (
-                  <div key={d.id} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={d.text}
-                      onChange={(e) => setDistributor(d.id, e.target.value)}
-                      className="flex-1 bg-transparent border-b border-gray-600 outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeDistributor(d.id)}
-                      className="text-red-400 hover:text-red-500 text-sm"
-                    >
-                      <div className="material-icons"> delete </div>
-                    </button>
-                  </div>
-                ))}
-                {!distribute.length && (
-                  <div className="text-gray-500 text-sm">
-                    No recipients yet.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </EditableList>
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
+  <h2 className="text-lg font-semibold mb-3">General Remarks</h2>
+  <textarea
+    rows={4}
+    value={generalRemark}
+    onChange={(e) => setGeneralRemark(e.target.value)}
+    className="w-full bg-transparent border border-gray-600 rounded px-3 py-2 outline-none resize-y text-gray-100"
+    placeholder="Enter general remarks"
+  />
+  <div className="mt-4 border-t border-gray-700 pt-4 grid grid-cols-1 gap-3">
+    <div>
+      <label className="block text-sm text-gray-300 mb-1">Prepared By</label>
+      <input
+        type="text"
+        value="Mano Projects Pvt. Ltd."
+        readOnly
+        className="w-full bg-transparent border-b border-gray-600 outline-none text-gray-400"
+      />
+    </div>
+    {/* Distribute stays same */}
+  </div>
+</div>
       </div>
 
       {/* Actions */}

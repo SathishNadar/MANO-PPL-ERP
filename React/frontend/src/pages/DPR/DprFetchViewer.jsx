@@ -82,7 +82,15 @@ const DprFetchViewer = () => {
 
       const arr = Array.isArray(items) ? items : [items];
       container.innerHTML = arr
-        .map((item) => `<div class="remarks-item">${item || "--"}</div>`)
+        .map((item) => {
+          if (typeof item === "string") {
+            return `<div class="remarks-item">${item}</div>`;
+          }
+          if (typeof item === "object" && item !== null) {
+            return `<div class="remarks-item">${item.text || "--"}</div>`;
+          }
+          return `<div class="remarks-item">--</div>`;
+        })
         .join("");
     };
 
@@ -284,11 +292,10 @@ const DprFetchViewer = () => {
       );
 
       // EVENTS & REMARKS
-      renderList("events-container", data.events_remarks);
-      renderList(
-        "remarks-content-container",
-        data.report_footer?.bottom_remarks
-      );
+      // EVENTS & REMARKS
+      renderList("events-container", data.report_footer?.events_visit);
+      document.getElementById("remarks-content-container").textContent =
+      data.report_footer?.bottom_remarks || "--";
 
       // FOOTER DETAILS
       document.getElementById("prepared-by").textContent =
