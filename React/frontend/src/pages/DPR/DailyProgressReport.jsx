@@ -1,4 +1,40 @@
 import React, { useState, useEffect } from "react";
+// EditableList component: Simple editable list of strings with add, remove, and change handlers.
+// EditableList now expects items as array of {id, text}
+function EditableList({ items, onAdd, onRemove, onChange, placeholder, addButtonLabel }) {
+  return (
+    <div>
+      <ul className="flex flex-col gap-2">
+        {items.map((item, idx) => (
+          <li key={item.id ?? idx} className="flex items-center gap-2">
+            <input
+              type="text"
+              className="flex-1 bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={item.text}
+              onChange={e => onChange(idx, e.target.value)}
+              placeholder={placeholder}
+            />
+            <button
+              type="button"
+              className="text-red-400 hover:text-red-600 transition-colors"
+              title="Delete"
+              onClick={() => onRemove(idx)}
+            >
+              <span className="material-icons align-middle">close</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button
+        className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-4 py-1 w-full mt-2"
+        type="button"
+        onClick={onAdd}
+      >
+        {addButtonLabel || "Add"}
+      </button>
+    </div>
+  );
+}
 import { useParams } from "react-router-dom";
 import Sidebar from "../SidebarComponent/sidebar";
 
@@ -13,12 +49,22 @@ function DailyProgressReport() {
     { from: "", to: "" },
     { from: "", to: "" },
     { from: "", to: "" },
-  ]);
+  ]); 
   const [labourReport, setLabourReport] = React.useState([]); // dynamic labour report rows
   const [eventsEnabled, setEventsEnabled] = useState(true);
   const [eventsList, setEventsList] = useState([]);
   const [eventInput, setEventInput] = useState("");
   const [remarksEnabled, setRemarksEnabled] = useState(true);
+
+  // --- New state variables for redesigned Events & Remarks section ---
+  // Helper for unique IDs for list items
+  function generateListId() {
+    return Math.random().toString(36).substr(2, 9) + Date.now();
+  }
+  const [eventsRemarks, setEventsRemarks] = useState([]);
+  const [generalRemark, setGeneralRemark] = useState("");
+  const [preparedBy, setPreparedBy] = useState("");
+  const [distribute, setDistribute] = useState([]);
 
   // --- New states for today's progress and tomorrow's plan ---
   const [todaysProgress, setTodaysProgress] = useState([]);
@@ -236,32 +282,97 @@ function DailyProgressReport() {
 
   // Function to post DPR to backend
   async function postDPRToBackend() {
-    try {
-      const dprObj = generateCompleteDPRObject();
-      const response = await fetch(
-        `http://${API_URI}:${PORT}/report/insertDPR`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(dprObj),
-        }
-      );
-      const data = await response.json();
-      if (response.ok && data.success) {
-        alert("DPR generated and submitted successfully!");
-      } else {
-        alert(
-          `Failed to generate DPR: ${
-            data?.message || response.statusText || "Unknown error"
-          }`
-        );
+  try {
+    const dprObj = generateCompleteDPRObject();
+
+    const report_footer = {
+      distribute: distribute.map((d) => d.text),
+      prepared_by: "Mano Projects Pvt. Ltd.",
+      events_visit: eventsRemarks.map((e) => e.text),
+      bottom_remarks: generalRemark || "",
+    };
+
+    const fullPayload = {
+      pr_id: null, // or generate if required
+      ...dprObj,
+      report_footer,
+      created_at: getMySQLDateTime(),
+      created_by: "system", // fill according to your auth
+      approved_by: null,
+      final_approved_by: null,
+      current_handler: null,
+      dpr_status: "pending", // or your default
+    };
+
+    const response = await fetch(
+      `http://${API_URI}:${PORT}/report/insertDPR`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(fullPayload),
       }
-    } catch (err) {
-      alert(`Error submitting DPR: ${err.message}`);
+    );
+
+    const data = await response.json();
+    if (response.ok && data.success) {
+      alert("DPR generated and submitted successfully!");
+    } else {
+      alert(
+        `Failed to generate DPR: ${
+          data?.message || response.statusText || "Unknown error"
+        }`
+      );
     }
+  } catch (err) {
+    alert(`Error submitting DPR: ${err.message}`);
+  }
+}
+
+  // --- EditableList handler functions for Events, Bottom Remarks, Distribute ---
+  // Events
+  function addEvent() {
+    setEventsRemarks(prev => [...prev, { id: generateListId(), text: "" }]);
+  }
+  function removeEvent(idx) {
+    setEventsRemarks(prev => prev.filter((_, i) => i !== idx));
+  }
+  function setEvent(idx, value) {
+    setEventsRemarks(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], text: value };
+      return updated;
+    });
+  }
+  // Bottom Remarks
+  function addBottomRemark() {
+    setBottomRemarks(prev => [...prev, { id: generateListId(), text: "" }]);
+  }
+  function removeBottomRemark(idx) {
+    setBottomRemarks(prev => prev.filter((_, i) => i !== idx));
+  }
+  function setBottomRemark(idx, value) {
+    setBottomRemarks(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], text: value };
+      return updated;
+    });
+  }
+  // Distribute
+  function addDistributor() {
+    setDistribute(prev => [...prev, { id: generateListId(), text: "" }]);
+  }
+  function removeDistributor(idx) {
+    setDistribute(prev => prev.filter((_, i) => i !== idx));
+  }
+  function setDistributor(idx, value) {
+    setDistribute(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], text: value };
+      return updated;
+    });
   }
 
   return (
@@ -926,135 +1037,60 @@ function DailyProgressReport() {
             </div>
           </div>
 
-          {/* Events & Remarks Section in grid */}
+          {/* --- Redesigned Events & Remarks Section using EditableList --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
-            {/* Events Section */}
+            {/* Events & Visits Section */}
             <div className="bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-800">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                <h2 className="text-lg font-medium mb-4 text-[#E0E0E0] mb-2 md:mb-0">
-                  Events
-                </h2>
-                <div className="flex items-center space-x-4">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={eventsEnabled}
-                      onChange={() => setEventsEnabled(true)}
-                      name="event-occurred"
-                      className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block mr-2 checked:border-blue-500 checked:bg-blue-500"
-                    />
-                    <span className="ml-2 text-gray-200">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={!eventsEnabled}
-                      onChange={() => {
-                        setEventsEnabled(false);
-                        setEventsList([]);
-                      }}
-                      name="event-occurred"
-                      className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block mr-2 checked:border-blue-500 checked:bg-blue-500"
-                    />
-                    <span className="ml-2 text-gray-200">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="flex flex-col md:flex-row md:items-center gap-4">
-                <input
-                  type="text"
-                  placeholder="Describe event..."
-                  value={eventInput}
-                  onChange={(e) => setEventInput(e.target.value)}
-                  disabled={!eventsEnabled}
-                  className="bg-gray-700 border border-gray-700 text-[#E0E0E0] px-3 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={() => {
-                    if (eventInput.trim() !== "") {
-                      setEventsList((prev) => [...prev, eventInput]);
-                      setEventInput("");
-                    }
-                  }}
-                  disabled={!eventsEnabled}
-                  className="bg-blue-500 text-white hover:bg-blue-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full md:w-auto"
-                >
-                  Add Event
-                </button>
-              </div>
-              {/* Render events as a list or placeholder below the Add Event button */}
-              {eventsEnabled && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold mb-2 text-blue-300">
-                    Event List
-                  </h3>
-                  {eventsList.length > 0 ? (
-                    <div className="space-y-2">
-                      {eventsList.map((ev, idx) => (
-                        <div
-                          key={idx}
-                          className="flex justify-between items-center bg-gray-700 p-2 rounded"
-                        >
-                          <span>{ev}</span>
-                          <button
-                            onClick={() =>
-                              setEventsList((prev) =>
-                                prev.filter((_, i) => i !== idx)
-                              )
-                            }
-                          >
-                            <span className="material-icons text-red-400">
-                              close
-                            </span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-400 text-sm">
-                      No events added yet.
-                    </p>
-                  )}
-                </div>
-              )}
+              <h2 className="text-lg font-medium mb-4 text-[#E0E0E0]">
+                Events &amp; Visits
+              </h2>
+              <EditableList
+                items={eventsRemarks}
+                onAdd={addEvent}
+                onRemove={removeEvent}
+                onChange={setEvent}
+                placeholder="Add event or visit..."
+                addButtonLabel="Add Event/Visit"
+              />
             </div>
-            {/* Remarks Section */}
-            <div className="bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-800">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                <h2 className="text-lg font-medium mb-4 text-[#E0E0E0] mb-2 md:mb-0">
-                  Remarks
-                </h2>
-                <div className="flex items-center space-x-4">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block relative cursor-pointer mr-2 checked:border-blue-500 checked:bg-blue-500"
-                      name="remarks-required"
-                      checked={remarksEnabled}
-                      onChange={() => setRemarksEnabled(true)}
-                    />
-                    <span className="ml-2 text-gray-200">Yes</span>
+            {/* General Remarks, Prepared By, Distribute Section */}
+            <div className="bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-800 flex flex-col gap-4">
+              <div>
+                <h2 className="text-lg font-medium mb-4 text-[#E0E0E0]">General Remarks</h2>
+                <textarea
+                  rows={4}
+                  className="w-full bg-gray-700 text-gray-100 rounded px-3 py-2 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                  placeholder="Enter general remarks..."
+                  value={generalRemark}
+                  onChange={(e) => setGeneralRemark(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col md:flex-row gap-4 mt-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Prepared By
                   </label>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block relative cursor-pointer mr-2 checked:border-blue-500 checked:bg-blue-500"
-                      name="remarks-required"
-                      checked={!remarksEnabled}
-                      onChange={() => setRemarksEnabled(false)}
-                    />
-                    <span className="ml-2 text-gray-200">No</span>
+                  <input
+                    type="text"
+                    className="w-full bg-gray-700 text-gray-400 rounded px-3 py-2 border border-gray-700"
+                    value="Mano Projects Pvt. Ltd."
+                    disabled
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Distribute
                   </label>
+                  <EditableList
+                    items={distribute}
+                    onAdd={addDistributor}
+                    onRemove={removeDistributor}
+                    onChange={setDistributor}
+                    placeholder="Add recipient..."
+                    addButtonLabel="Add Recipient"
+                  />
                 </div>
               </div>
-              <textarea
-                rows={3}
-                placeholder="Add remarks..."
-                className="bg-gray-700 border border-gray-700 text-[#E0E0E0] px-3 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-                disabled={!remarksEnabled}
-              ></textarea>
             </div>
           </div>
           {/* Generate & Close Button */}
