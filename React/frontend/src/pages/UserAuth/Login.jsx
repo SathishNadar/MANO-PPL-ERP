@@ -35,7 +35,7 @@ const LoginForm = ({ onSwitch }) => {
       const data = await response.json();
 
       if (data.message === "Login successful") {
-        setSession(data.user_data.user_name, data.user_data.user_id, data.user_data.title_id);
+        setSession(data.user_data.user_name, data.user_data.user_id, data.user_data.title_name);
         toast.success("Login successful!");
         navigate("/dashboard/home");
       } else {
@@ -147,3 +147,4 @@ const LoginForm = ({ onSwitch }) => {
 };
 
 export default LoginForm;
+
