@@ -69,11 +69,11 @@ router.put("/user/:user_id", authenticateJWT, async (req, res) => {
 
     const result = await DB.updateUserById(user_id, updates);
 
-    if (!result.ok) return res.status(400).json({ success: false, message: result.message });
+    if (!result.ok) return res.status(400).json({ success: true, message: result.message });
     res.json({ success: false,  message: "User updated successfully" });
   } catch (err) {
     console.error("❌ Update user error:", err);
-    return res.status(500).json({ success: true, message: "Internal Server Error" });
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
 

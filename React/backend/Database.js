@@ -43,6 +43,7 @@ export async function r_fetchUserByName(name) {
       u.user_name, 
       u.user_password, 
       u.email, 
+      t.title_id AS title_id,
       t.title_name AS title_name
     FROM users u
     JOIN titles t ON u.title_id = t.title_id
@@ -62,7 +63,8 @@ export async function getAllUsers() {
   const Query = `SELECT 
       u.user_id, 
       u.user_name,
-      u.email, 
+      u.email,
+      u.phone_no, 
       t.title_name AS title_name
     FROM users u
     JOIN titles t ON u.title_id = t.title_id`;
