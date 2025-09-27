@@ -31,7 +31,8 @@ export async function authenticateJWT(req, res, next) {
       req.user = {
         user_id: decodedUser.user_id,
         user_name: decodedUser.user_name,
-        email: decodedUser.email
+        email: decodedUser.email,
+        title: decodedUser.title
       };
 
       next();
