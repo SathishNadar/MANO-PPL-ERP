@@ -8,13 +8,12 @@ const router = express.Router();
 
 // GET all users
 router.get("/users", authenticateJWT, async (req, res) => {
-  // console.log(req.user);
   try {
-    // if (req.user.title_name !== 'admin') {
-    //   return res
-    //     .status(403)
-    //     .json({ success: false, message: "Only admin can access user Data" });
-    // }
+    if (req.user.title !== 'admin') {
+      return res
+        .status(403)
+        .json({ success: false, message: "Only admin can access user Data" });
+    }
 
     const data = await DB.getAllUsers();
     if (!data.ok) {
@@ -46,9 +45,9 @@ router.get("/users", authenticateJWT, async (req, res) => {
 // UPDATE user by user_id
 router.put("/user/:user_id", authenticateJWT, async (req, res) => {
   try {
-    // if (req.user.title !== "admin") {
-    //   return res.status(403).json({ success: false, message: "Only admin can update user data" });
-    // }
+    if (req.user.title !== "admin") {
+      return res.status(403).json({ success: false, message: "Only admin can update user data" });
+    }
 
     const { user_id } = req.params;
     const updates = {};
@@ -81,9 +80,9 @@ router.put("/user/:user_id", authenticateJWT, async (req, res) => {
 // DELETE user by user_id
 router.delete("/user/:user_id", authenticateJWT, async (req, res) => {
   try {
-    // if (req.user.title !== "admin") {
-    //   return res.status(403).json({ success: false, message: "Only admin can delete users" });
-    // }
+    if (req.user.title !== "admin") {
+      return res.status(403).json({ success: false, message: "Only admin can delete users" });
+    }
 
     const { user_id } = req.params;
     const result = await DB.deleteUserById(user_id);
