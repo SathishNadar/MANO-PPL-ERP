@@ -1,37 +1,72 @@
-import { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+const API_URI = import.meta.env.VITE_API_URI;
+const PORT = import.meta.env.VITE_BACKEND_PORT;
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Load user from localStorage
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setUser(JSON.parse(userData)); // Can decode if needed
+  // Move fetchUser definition OUTSIDE useEffect
+  const fetchUser = async () => {
+    try {
+      const res = await fetch(`http://${API_URI}:${PORT}/auth/me`, { credentials: "include" });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setAuthChecked(true);
     }
-  }, []);
-
-  const login = (token, userData) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  useEffect(() => {
+    fetchUser();
+    // Only called on mount
+  }, []);
+
+  const login = async (username, password, rememberMe = false) => {
+    const response = await fetch(`http://${API_URI}:${PORT}/auth/login/`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_name: username,
+        user_password: password,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`Network error: ${response.status}`);
+    const data = await response.json();
+    if (!data.message === "Login successful") throw new Error(`Login Failed`);
+    console.log("Login success")
+    
+    navigate("/dashboard/home");
+
+    await fetchUser();
+
+  };  
+
+  const logout = async () => {
+    await fetch(`http://${API_URI}:${PORT}/auth/logout/`, { method: "POST", credentials: "include" });
     setUser(null);
+    navigate("/")
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, authChecked }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook for using context
 export const useAuth = () => useContext(AuthContext);

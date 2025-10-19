@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {toast, ToastContainer} from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
 
 const API_URI = import.meta.env.VITE_API_URI;
 const PORT = import.meta.env.VITE_BACKEND_PORT;
+
 const LoginForm = ({ onSwitch }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginData, setLoginData] = useState({
@@ -11,39 +13,18 @@ const LoginForm = ({ onSwitch }) => {
     password: "",
   });
   const navigate = useNavigate();
-
-  const setSession = (username, user_id, title_id) => {
-    const expiryTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
-    const sessionData = { user_id, username, title_id, expiry: expiryTime };
-    localStorage.setItem("session", JSON.stringify(sessionData));
-  };
+  const [LoggingIn ,setLoggingIn] = useState(false);
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://${API_URI}:${PORT}/auth/login/`, {
-        method: "POST",
-        credentials: 'include',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_name: loginData.username,
-          user_password: loginData.password,
-        }),
-      }); 
-
-      if (!response.ok) throw new Error(`Network error: ${response.status}`);
-      const data = await response.json();
-
-      if (data.message === "Login successful") {
-        setSession(data.user_data.user_name, data.user_data.user_id, data.user_data.title_id);
-        toast.success("Login successful!");
-        navigate("/dashboard/home");
-      } else {
-        toast.error(data.message || "Login failed");
-      }
+      const response = await login(loginData.username, loginData.password);
+      toast.success("Login successful!");
     } catch (err) {
-      console.error("Login error:", err);
-      toast.error("Login failed. Try again.");
+      toast.error("Login failed. Check credentials and try again.");
+    } finally {
+      setLoggingIn(false);
     }
   };
 

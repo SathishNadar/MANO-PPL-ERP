@@ -31,7 +31,8 @@ export async function authenticateJWT(req, res, next) {
       req.user = {
         user_id: decodedUser.user_id,
         user_name: decodedUser.user_name,
-        email: decodedUser.email
+        email: decodedUser.email,
+        title: decodedUser.title,  
       };
 
       next();
@@ -48,8 +49,16 @@ export async function generateJWT(user_data) {
     return jwt.sign(user_data, process.env.JWT_SECRET, { expiresIn: tokenExpirePeriod});
 }
 
+// Post call to Log out
+router.post('/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: false, // true if HTTPS in production
+    sameSite: 'lax',
+  });
+  res.json({ message: 'Logged out' });
+});
 
- 
 // Login route
 router.post("/login", async (req, res) => {
   try {
@@ -68,11 +77,13 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
+    const title_data = await DB.getTitlePermissions(user_data.title_id);
+
     const response_data = {
       user_id: user_data.user_id,
       user_name: user_data.user_name,
       email: user_data.email,
-      title_id:user_data.title_id
+      title: title_data,
     };
 
     const token = await generateJWT(response_data);
@@ -96,5 +107,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
+// Get call to authenticate the user
+router.get('/me', authenticateJWT, (req, res) => {
+  res.json(req.user);
+});
 
 export default router;

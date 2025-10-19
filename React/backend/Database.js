@@ -83,6 +83,17 @@ export async function insertUser(username, email, hashedPassword, phone) {
   }
 }
 
+// Function to get permission and clearance of a title
+export async function getTitlePermissions(title_id) {
+    const query = "SELECT * FROM titles WHERE title_id = ?"
+    try {
+        const [row] = await pool.query(query, [title_id]);
+        return row[0] || null;
+    } catch (error) {
+        console.error("Error fetching user by name:", error);
+        throw error;
+    }
+}
 
 // #endregion
 
@@ -1064,4 +1075,8 @@ async function patchProjectRoles(project_id, changes) {
 
 
 // #endregion
+
+
+// const t =  await getTitlePermissions(1);
+// console.log(t)
 
