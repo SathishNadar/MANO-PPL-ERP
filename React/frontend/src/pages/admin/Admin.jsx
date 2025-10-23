@@ -8,6 +8,9 @@ const PORT = import.meta.env.VITE_BACKEND_PORT;
 
 const Admin = () => {
   const [users, setUsers] = useState([]);
+  const [originalTaskControl, setOriginalTaskControl] = useState([]);
+  const [editingUser, setEditingUser] = useState(null);
+
   const [titles, setTitles] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -17,7 +20,6 @@ const Admin = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [editingUser, setEditingUser] = useState(null);
   const [passwordInputs, setPasswordInputs] = useState({
     password: "",
     confirmPassword: "",
@@ -91,7 +93,11 @@ const Admin = () => {
 
   // -------- Edit User --------
   const openEditModal = (user) => {
-    setEditingUser({ ...user });
+    setEditingUser({
+      ...user,
+      task_control: user.controls ? [...user.controls] : [], // array of {controlled_id, control_type}
+    });
+    setOriginalTaskControl(user.controls ? [...user.controls] : []);
     setEditModalOpen(true);
   };
 
@@ -109,7 +115,7 @@ const Admin = () => {
       return;
     }
 
-    const phoneRegex = /^\+\d{1,3}\d{10,}$/; // must be +countrycode + at least 10 digits
+    const phoneRegex = /^\+\d{1,3}\d{10,}$/;
     if (editingUser.phone_no && !phoneRegex.test(editingUser.phone_no)) {
       toast.error("Phone number must be in format +[countrycode][number].");
       return;
@@ -117,11 +123,15 @@ const Admin = () => {
 
     const originalUser = users.find((u) => u.user_id === editingUser.user_id);
     const payload = {};
+
+    // Check field changes
     if (trimmedName !== originalUser.user_name) payload.user_name = trimmedName;
     if (editingUser.email !== originalUser.email)
       payload.email = editingUser.email;
     if (editingUser.phone_no !== originalUser.phone_no)
       payload.phone_no = editingUser.phone_no;
+
+    // Check title change
     if (editingUser.title_name !== originalUser.title_name) {
       const entry = Object.entries(titles).find(
         ([, value]) => value === editingUser.title_name
@@ -129,6 +139,52 @@ const Admin = () => {
       if (entry) payload.title_id = parseInt(entry[0]);
     }
 
+    // ✅ NEW: Build task_control diff payload
+    const oldControls = originalTaskControl || [];
+    const newControls = editingUser.task_control || [];
+
+    const add = [];
+    const remove = [];
+
+    // find added items
+    for (const nc of newControls) {
+      if (
+        !oldControls.some(
+          (oc) =>
+            oc.controlled_id === nc.controlled_id &&
+            oc.control_type === nc.control_type
+        )
+      ) {
+        add.push({
+          controlled_id: nc.controlled_id,
+          control_type: nc.control_type,
+        });
+      }
+    }
+
+    // find removed items
+    for (const oc of oldControls) {
+      if (
+        !newControls.some(
+          (nc) =>
+            nc.controlled_id === oc.controlled_id &&
+            nc.control_type === oc.control_type
+        )
+      ) {
+        remove.push({
+          controlled_id: oc.controlled_id,
+          control_type: oc.control_type,
+        });
+      }
+    }
+
+    if (add.length > 0 || remove.length > 0) {
+      payload.task_control = {};
+      if (add.length > 0) payload.task_control.add = add;
+      if (remove.length > 0) payload.task_control.remove = remove;
+    }
+
+    // If nothing changed
     if (Object.keys(payload).length === 0) {
       toast.info("No changes to save.");
       closeEditModal();
@@ -136,6 +192,7 @@ const Admin = () => {
     }
 
     try {
+      console.log(JSON.stringify(payload));
       const res = await fetch(
         `http://${API_URI}:${PORT}/admin/user/${editingUser.user_id}`,
         {
@@ -160,50 +217,6 @@ const Admin = () => {
     } catch (error) {
       console.error("Failed to update user:", error);
       toast.error("Error updating user.");
-    }
-  };
-
-  // -------- Password Modal --------
-  const openPasswordModal = (user) => {
-    setSelectedUser(user);
-    setPasswordInputs({ password: "", confirmPassword: "" });
-    setPasswordModalOpen(true);
-  };
-  const closePasswordModal = () => {
-    setPasswordModalOpen(false);
-    setSelectedUser(null);
-  };
-
-  const savePassword = async () => {
-    if (passwordInputs.password !== passwordInputs.confirmPassword) {
-      toast.error("Passwords do not match.");
-      return;
-    }
-    if (passwordInputs.password.length < 6) {
-      toast.error("Password must be at least 6 characters.");
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/admin/user/${selectedUser.user_id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ user_password: passwordInputs.password }),
-        }
-      );
-
-      if (res.ok) {
-        toast.success(`Password updated for "${selectedUser.user_name}".`);
-        closePasswordModal();
-      } else {
-        toast.error("Failed to update password.");
-      }
-    } catch (error) {
-      console.error("Error updating password:", error);
-      toast.error("Error updating password.");
     }
   };
 
@@ -435,6 +448,101 @@ const Admin = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+                {/* Task Control */}
+                <div
+                  className="bg-[#232b38] rounded-lg p-4 mt-4 max-h-64 overflow-y-auto shadow"
+                  style={{ minHeight: "120px" }}
+                >
+                  {editingUser.task_control.map((c, idx) => (
+                    <div
+                      key={c.controlled_id}
+                      className="flex items-center justify-between mb-2 px-2 py-1"
+                      style={{
+                        minWidth: "320px",
+                        borderRadius: "6px",
+                        background: "#202632",
+                      }}
+                    >
+                      {/* Static Username - left */}
+                      <span className="block font-medium truncate text-white w-1/2">
+                        {users.find((u) => u.user_id === c.controlled_id)
+                          ?.user_name || c.controlled_id}
+                      </span>
+
+                      {/* Static Role dropdown - right */}
+                      <div className="flex items-center justify-end min-w-[120px]">
+                        <select
+                          value={c.control_type}
+                          onChange={(e) => {
+                            const upd = [...editingUser.task_control];
+                            upd[idx].control_type = e.target.value;
+                            setEditingUser({
+                              ...editingUser,
+                              task_control: upd,
+                            });
+                          }}
+                          className="bg-gray-800 text-white rounded px-2 py-1 mr-2 w-[100px]"
+                        >
+                          <option value="manager">manager</option>
+                          <option value="viewer">viewer</option>
+                          <option value="editor">editor</option>
+                          <option value="admin">admin</option>
+                          <option value="assigner">assigner</option>
+                          <option value="deleter">deleter</option>
+                        </select>
+                        {/* Remove button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingUser({
+                              ...editingUser,
+                              task_control: editingUser.task_control.filter(
+                                (_, i) => i !== idx
+                              ),
+                            });
+                          }}
+                          className="text-red-400 hover:text-red-500"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add User dropdown */}
+                  <div className="mt-2">
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const id = parseInt(e.target.value);
+                        if (!id) return;
+                        setEditingUser({
+                          ...editingUser,
+                          task_control: [
+                            ...editingUser.task_control,
+                            { controlled_id: id, control_type: "manager" },
+                          ],
+                        });
+                      }}
+                      className="bg-gray-900 text-white rounded px-2 py-1 w-full"
+                    >
+                      <option value="">+ Add user to control</option>
+                      {users
+                        .filter(
+                          (u) =>
+                            u.user_id !== editingUser.user_id &&
+                            !editingUser.task_control.some(
+                              (c) => c.controlled_id === u.user_id
+                            )
+                        )
+                        .map((u) => (
+                          <option key={u.user_id} value={u.user_id}>
+                            {u.user_name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Footer Buttons */}

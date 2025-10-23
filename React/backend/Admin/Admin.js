@@ -29,9 +29,31 @@ router.get("/users", authenticateJWT, async (req, res) => {
         .json({ success: false, message: "Failed to fetch titles", details: titles.message });
     }
 
+    const ctrlData = await DB.getAllUserTaskControls();
+    if (!ctrlData.ok) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch controls", details: ctrlData.message });
+    }
+
+    // Merge: add .controls to each user (array of {controlled_id, control_type, controlled_name})
+    const controlMap = {};
+    for (const row of ctrlData.taskControls) {
+      if (!controlMap[row.controller_id]) controlMap[row.controller_id] = [];
+      controlMap[row.controller_id].push({
+        controlled_id: row.controlled_id,
+        control_type: row.control_type,
+        controlled_name: row.controlled_name
+      });
+    }
+    const usersWithControls = data.users.map(u => ({
+      ...u,
+      controls: controlMap[u.user_id] || []
+    }));
+
     res.json({
       success: true,
-      users: data.users,
+      users: usersWithControls,
       titles: titles.titles,
     });
 
@@ -45,6 +67,7 @@ router.get("/users", authenticateJWT, async (req, res) => {
 // UPDATE user by user_id
 router.put("/user/:user_id", authenticateJWT, async (req, res) => {
   try {
+    // console.log(req.body)
     if (req.user.title !== "admin") {
       return res.status(403).json({ success: false, message: "Only admin can update user data" });
     }
@@ -62,20 +85,28 @@ router.put("/user/:user_id", authenticateJWT, async (req, res) => {
         }
       }
     }
-    
-    if (Object.keys(updates).length === 0) {
+
+    if (Object.keys(updates).length === 0 && !req.body.task_control) {
       return res.status(400).json({ message: "No valid fields to update." });
     }
 
-    const result = await DB.updateUserById(user_id, updates);
+    if (Object.keys(updates).length > 0) {
+      const result = await DB.updateUserById(user_id, updates);
+      if (!result.ok) return res.status(400).json({ success: false, message: result.message });
+    }
 
-    if (!result.ok) return res.status(400).json({ success: true, message: result.message });
-    res.json({ success: false,  message: "User updated successfully" });
+    if (req.body.task_control) {
+      const { add = [], remove = [] } = req.body.task_control;
+      await DB.updateTaskControl(user_id, add, remove);
+    }
+
+    res.json({ success: true, message: "User updated successfully" });
   } catch (err) {
     console.error("❌ Update user error:", err);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
+
 
 // DELETE user by user_id
 router.delete("/user/:user_id", authenticateJWT, async (req, res) => {

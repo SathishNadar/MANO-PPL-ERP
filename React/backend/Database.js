@@ -72,7 +72,7 @@ export async function getAllUsers() {
   try {
     const [Rows] = await pool.query(Query);
 
-    return { ok: true, users: Rows};
+    return { ok: true, users: Rows };
   } catch (error) {
     console.error('Error fetching all users:', error);
     return { ok: false, message: 'Database error' };
@@ -200,7 +200,7 @@ export async function getTitles() {
   const query = `SELECT title_id, title_name FROM titles;`;
   try {
     const [rows] = await pool.query(query, []);
-    
+
     const titlesObj = rows.reduce((acc, item) => {
       acc[item.title_id] = item.title_name;
       return acc;
@@ -212,9 +212,6 @@ export async function getTitles() {
     return { ok: false, message: 'Database error' };
   }
 }
-
-
-
 
 // #endregion
 
@@ -356,6 +353,71 @@ export async function getControlledUsers(controller_id) {
     throw err;
   }
 }
+
+// Function to update controlled for a controller
+export async function updateTaskControl(controller_id, add = [], remove = []) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Remove entries
+    if (remove.length > 0) {
+      for (const { controlled_id } of remove) {
+        let sql = `
+          DELETE FROM task_control
+          WHERE controller_id = ? AND controlled_id = ?
+        `;
+        let params = [controller_id, controlled_id];
+        await connection.query(sql, params);
+      }
+    }
+
+    // Add entries
+    if (add.length > 0) {
+      for (const obj of add) {
+        const controlled_id = obj.controlled_id;
+        const control_type = obj.control_type || "manager";
+        await connection.query(`
+      INSERT INTO task_control (controller_id, controlled_id, control_type)
+      VALUES (?, ?, ?)
+      ON DUPLICATE KEY UPDATE control_type = VALUES(control_type)
+    `, [controller_id, controlled_id, control_type]);
+      }
+    }
+
+
+    await connection.commit();
+    connection.release();
+    return { ok: true };
+  } catch (err) {
+    await connection.rollback();
+    connection.release();
+    console.error("❌ Error updating task control:", err);
+    return { ok: false, message: err.message };
+  }
+}
+
+// db.js or relevant file
+export async function getAllUserTaskControls() {
+  const sql = `
+    SELECT 
+      tc.controller_id, 
+      tc.controlled_id, 
+      tc.control_type, 
+      u.user_name as controlled_name
+    FROM task_control tc
+    JOIN users u ON tc.controlled_id = u.user_id
+  `;
+  try {
+    const [rows] = await pool.query(sql);
+    // Returns array of { controller_id, controlled_id, control_type, controlled_name }
+    return { ok: true, taskControls: rows };
+  } catch (err) {
+    console.error("❌ Error fetching user task controls:", err.message);
+    return { ok: false, message: err.message };
+  }
+}
+
 
 
 // export async function getAssignedTo() {
