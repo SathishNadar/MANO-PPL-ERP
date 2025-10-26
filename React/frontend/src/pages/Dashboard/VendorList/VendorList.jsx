@@ -22,6 +22,9 @@ function VendorList() {
   const [showVendorForm, setShowVendorForm] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [totalVendorCount, setTotalVendorCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedJobNatureIds, setSelectedJobNatureIds] = useState([]);
+  const [selectedLocationIds, setSelectedLocationIds] = useState([]);
   const itemsPerPage = 11;
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -46,35 +49,44 @@ function VendorList() {
   };
 
   const fetchVendors = async () => {
-      try {
-        const res = await fetch(`http://${API_URI}:${PORT}/vendor_api/`, {
-          method: "POST",
-          headers: {"Content-Type": "application/json",},
-          credentials: 'include',
-          body: JSON.stringify({
-            order: "ASC",
-            locationIds: [],
-            jobNatureIds: [],
-            category: categoryFromQuery,
-            limit: itemsPerPage,
-            page: currentPage
-          }),
-        });
-        const data = await res.json();
-        console.log(data)
-        const { vendors: vendorList = [], vendorCount = 0 } = data;
-        const enrichedVendors = vendorList.map(vendor => ({
-          ...vendor,
-          job_nature_name: jobNatures[vendor.job_nature_id] || "--",
-          location_name: locations[vendor.location_id] || "--",
-          category_name: CategoryDict[vendor.category_id] || "-"
-        }));
-        setVendors(enrichedVendors);
-        setTotalVendorCount(vendorCount);
-      } catch (err) {
-        console.error("Error fetching vendors", err);
-      }
-    };
+    try {
+      const res = await fetch(`http://${API_URI}:${PORT}/vendor_api/`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json",},
+        credentials: 'include',
+        body: JSON.stringify({
+          order: "ASC",
+          locationIds: selectedLocationIds,
+          jobNatureIds: selectedJobNatureIds,
+          category: categoryFromQuery,
+          limit: itemsPerPage,
+          page: currentPage,
+          queryString: searchTerm
+        }),
+      });
+      const data = await res.json();
+      console.log(data)
+      const { vendors: vendorList = [], vendorCount = 0 } = data;
+      const enrichedVendors = vendorList.map(vendor => ({
+        ...vendor,
+        job_nature_name: jobNatures[vendor.job_nature_id] || "--",
+        location_name: locations[vendor.location_id] || "--",
+        category_name: CategoryDict[vendor.category_id] || "-"
+      }));
+      setVendors(enrichedVendors);
+      setTotalVendorCount(vendorCount);
+    } catch (err) {
+      console.error("Error fetching vendors", err);
+    }
+  };
+
+  // Handle filter application from VendorFilter
+  const handleApplyFilters = ({ jobNatureIds, locationIds }) => {
+    setSelectedJobNatureIds(jobNatureIds);
+    setSelectedLocationIds(locationIds);
+    setShowFilter(false);
+    // fetchVendors will be triggered by useEffect as state changes
+  };
 
   useEffect(() => {
     fetchMetadata();
@@ -84,8 +96,22 @@ function VendorList() {
     if (Object.keys(jobNatures).length && Object.keys(locations).length) {
       fetchVendors();
     }
-  }, [categoryFromQuery, jobNatures, locations, currentPage]);
-  
+  }, [
+    categoryFromQuery,
+    jobNatures,
+    locations,
+    currentPage,
+    selectedJobNatureIds,
+    selectedLocationIds
+  ]);
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      fetchVendors();
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm]);
+
   console.log("Pagination Pages:", Math.ceil(totalVendorCount / itemsPerPage));
 
   return (
@@ -96,12 +122,14 @@ function VendorList() {
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">
             Vendor List
-          </h1>
+          </h1> 
           <div className="flex items-center space-x-4">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-gray-800 border border-gray-700 rounded-full py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <span className="material-icons absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -334,7 +362,10 @@ function VendorList() {
             <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[2px] z-40" />
             <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-8">
               <div className="relative w-full max-w-4xl bg-transparent">
-                <VendorFilter onClose={() => setShowFilter(false)} />
+                <VendorFilter
+                  onClose={() => setShowFilter(false)}
+                  onApplyFilters={handleApplyFilters}
+                />
               </div>
             </div>
           </>
