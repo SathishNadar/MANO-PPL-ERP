@@ -10,18 +10,18 @@ function DprUpdateSubmit() {
   const navigate = useNavigate(); 
 
   const [project, setProject] = useState(null);
-  const [eventsVisit, setEventsVisit] = useState([{ id: crypto.randomUUID(), text: "" }]);
+  const [eventsVisit, setEventsVisit] = useState([{ text: "" }]);
   const [generalRemark, setGeneralRemark] = useState("");
 
 const addEventVisit = () =>
-  setEventsVisit((p) => [...p, { id: crypto.randomUUID(), text: "" }]);
+  setEventsVisit((p) => [...p, { text: "" }]);
 
-const removeEventVisit = (id) =>
-  setEventsVisit((p) => p.filter((row) => row.id !== id));
+const removeEventVisit = (idx) =>
+  setEventsVisit((p) => p.filter((_, i) => i !== idx));
 
-const setEventVisit = (id, val) =>
+const setEventVisit = (idx, val) =>
   setEventsVisit((p) =>
-    p.map((row) => (row.id === id ? { ...row, text: val } : row))
+    p.map((row, i) => (i === idx ? { ...row, text: val } : row))
   );
 
   const [reportDate, setReportDate] = useState(""); // read-only later
@@ -36,19 +36,19 @@ const setEventVisit = (id, val) =>
   });
 
   const [todayProg, setTodayProg] = useState([
-    { id: crypto.randomUUID(), left: "", right: "" },
+    { left: "", right: "" },
   ]);
   const [tomorrowPlan, setTomorrowPlan] = useState([
-    { id: crypto.randomUUID(), left: "", right: "" },
+    { left: "", right: "" },
   ]);
   const [eventsRemarks, setEventsRemarks] = useState([
-    { id: crypto.randomUUID(), text: "" },
+    { text: "" },
   ]);
   const [bottomRemarks, setBottomRemarks] = useState([
-    { id: crypto.randomUUID(), text: "" },
+    { text: "" },
   ]);
   const [distribute, setDistribute] = useState([
-    { id: crypto.randomUUID(), text: "" },
+    { text: "" },
   ]);
 
   const [preparedBy, setPreparedBy] = useState("");
@@ -154,45 +154,41 @@ const setEventVisit = (id, val) =>
       setTodayProg(
         Array.isArray(data?.today_prog?.progress)
           ? data.today_prog.progress.map((left, i) => ({
-              id: crypto.randomUUID(),
               left,
               right: data.today_prog.qty?.[i] ?? "",
             }))
-          : [{ id: crypto.randomUUID(), left: "", right: "" }]
+          : [{ left: "", right: "" }]
       );
 
       setTomorrowPlan(
         Array.isArray(data?.tomorrow_plan?.plan)
           ? data.tomorrow_plan.plan.map((left, i) => ({
-              id: crypto.randomUUID(),
               left,
               right: data.tomorrow_plan.qty?.[i] ?? "",
             }))
-          : [{ id: crypto.randomUUID(), left: "", right: "" }]
+          : [{ left: "", right: "" }]
       );
 
       setEventsVisit(
         Array.isArray(data?.report_footer?.events_visit)
           ? data.report_footer.events_visit.map((text) => ({
-              id: crypto.randomUUID(),
               text,
             }))
-          : [{ id: crypto.randomUUID(), text: "" }]
+          : [{ text: "" }]
       );
 
       setGeneralRemark(
-    typeof data?.report_footer?.bottom_remarks === "string"
-      ? data.report_footer.bottom_remarks
-      : ""
-    );
+        typeof data?.report_footer?.bottom_remarks === "string"
+          ? data.report_footer.bottom_remarks
+          : ""
+      );
 
       setDistribute(
         Array.isArray(data?.report_footer?.distribute)
           ? data.report_footer.distribute.map((text) => ({
-              id: crypto.randomUUID(),
               text,
             }))
-          : [{ id: crypto.randomUUID(), text: "" }]
+          : [{ text: "" }]
       );
 
       setPreparedBy(data?.report_footer?.prepared_by || "");
@@ -261,7 +257,7 @@ const setEventVisit = (id, val) =>
       rain_timing: Array.isArray(dpr?.site_condition?.rain_timing)
         ? dpr.site_condition.rain_timing
         : [],
-    },
+    }, 
 
     // labour_report is ALWAYS an object
     labour_report: (() => {
@@ -434,13 +430,13 @@ const setEventVisit = (id, val) =>
           </thead>
           <tbody className="text-white">
             {rows.length ? (
-              rows.map((r) => (
-                <tr key={r.id}>
+              rows.map((r, idx) => (
+                <tr key={`row-${idx}`}>
                   <td className="pl-2 py-2">
                     <input
                       type="text"
                       value={r.left}
-                      onChange={(e) => onChangeLeft(r.id, e.target.value)}
+                      onChange={(e) => onChangeLeft(idx, e.target.value)}
                       className="w-full bg-transparent border-b border-gray-600 outline-none"
                       placeholder={leftPlaceholder}
                     />
@@ -449,7 +445,7 @@ const setEventVisit = (id, val) =>
                     <input
                       type="text"
                       value={r.right}
-                      onChange={(e) => onChangeRight(r.id, e.target.value)}
+                      onChange={(e) => onChangeRight(idx, e.target.value)}
                       className="w-full bg-transparent border-b border-gray-600 outline-none text-right"
                       placeholder={rightPlaceholder}
                     />
@@ -457,7 +453,7 @@ const setEventVisit = (id, val) =>
                   <td className="py-2 text-right">
                     <button
                       type="button"
-                      onClick={() => onRemove(r.id)}
+                      onClick={() => onRemove(idx)}
                       className="text-red-400 hover:text-red-500 hover:cursor-pointer"
                       title="Delete row"
                     >
@@ -505,18 +501,18 @@ const setEventVisit = (id, val) =>
         </div>
         <div className="flex flex-col gap-3">
           {items.length ? (
-            items.map((r) => (
-              <div key={r.id} className="flex items-center gap-2">
+            items.map((r, idx) => (
+              <div key={`item-${idx}`} className="flex items-center gap-2">
                 <input
                   type="text"
                   value={r.text}
-                  onChange={(e) => onChange(r.id, e.target.value)}
+                  onChange={(e) => onChange(idx, e.target.value)}
                   className="flex-1 bg-transparent border-b border-gray-600 outline-none"
                   placeholder={placeholder}
                 />
                 <button
                   type="button"
-                  onClick={() => onRemove(r.id)}
+                  onClick={() => onRemove(idx)}
                   className="text-red-400 hover:text-red-500 text-sm"
                 >
                   <span className="material-icons text-md">delete</span>
@@ -536,75 +532,75 @@ const setEventVisit = (id, val) =>
   const addTodayRow = () =>
     setTodayProg((p) => [
       ...p,
-      { id: crypto.randomUUID(), left: "", right: "" },
+      { left: "", right: "" },
     ]);
 
-  const removeTodayRow = (id) =>
-    setTodayProg((p) => p.filter((row) => row.id !== id));
+  const removeTodayRow = (idx) =>
+    setTodayProg((p) => p.filter((_, i) => i !== idx));
 
-  const setTodayProgress = (id, val) =>
+  const setTodayProgress = (idx, val) =>
     setTodayProg((p) =>
-      p.map((row) => (row.id === id ? { ...row, left: val } : row))
+      p.map((row, i) => (i === idx ? { ...row, left: val } : row))
     );
 
-  const setTodayQty = (id, val) =>
+  const setTodayQty = (idx, val) =>
     setTodayProg((p) =>
-      p.map((row) => (row.id === id ? { ...row, right: val } : row))
+      p.map((row, i) => (i === idx ? { ...row, right: val } : row))
     );
 
   // ---- Tomorrow handlers ----
   const addTomorrowRow = () =>
     setTomorrowPlan((p) => [
       ...p,
-      { id: crypto.randomUUID(), left: "", right: "" },
+      { left: "", right: "" },
     ]);
 
-  const removeTomorrowRow = (id) =>
-    setTomorrowPlan((p) => p.filter((row) => row.id !== id));
+  const removeTomorrowRow = (idx) =>
+    setTomorrowPlan((p) => p.filter((_, i) => i !== idx));
 
-  const setTomorrowPlanText = (id, val) =>
+  const setTomorrowPlanText = (idx, val) =>
     setTomorrowPlan((p) =>
-      p.map((row) => (row.id === id ? { ...row, left: val } : row))
+      p.map((row, i) => (i === idx ? { ...row, left: val } : row))
     );
 
-  const setTomorrowQty = (id, val) =>
+  const setTomorrowQty = (idx, val) =>
     setTomorrowPlan((p) =>
-      p.map((row) => (row.id === id ? { ...row, right: val } : row))
+      p.map((row, i) => (i === idx ? { ...row, right: val } : row))
     );
 
-  // ---- Events & Remarks handlers ---- (unchanged)
+  // ---- Events & Remarks handlers ----
   const addEvent = () =>
-    setEventsRemarks((p) => [...p, { id: crypto.randomUUID(), text: "" }]);
+    setEventsRemarks((p) => [...p, { text: "" }]);
 
-  const removeEvent = (id) =>
-    setEventsRemarks((p) => p.filter((row) => row.id !== id));
+  const removeEvent = (idx) =>
+    setEventsRemarks((p) => p.filter((_, i) => i !== idx));
 
-  const setEvent = (id, val) =>
+  const setEvent = (idx, val) =>
     setEventsRemarks((p) =>
-      p.map((row) => (row.id === id ? { ...row, text: val } : row))
+      p.map((row, i) => (i === idx ? { ...row, text: val } : row))
     );
 
   const addBottomRemark = () =>
-    setBottomRemarks((p) => [...p, { id: crypto.randomUUID(), text: "" }]);
+    setBottomRemarks((p) => [...p, { text: "" }]);
 
-  const removeBottomRemark = (id) =>
-    setBottomRemarks((p) => p.filter((row) => row.id !== id));
+  const removeBottomRemark = (idx) =>
+    setBottomRemarks((p) => p.filter((_, i) => i !== idx));
 
-  const setBottomRemark = (id, val) =>
+  const setBottomRemark = (idx, val) =>
     setBottomRemarks((p) =>
-      p.map((row) => (row.id === id ? { ...row, text: val } : row))
+      p.map((row, i) => (i === idx ? { ...row, text: val } : row))
     );
 
-  // ---- Distribute handlers ---- (unchanged)
+  // ---- Distribute handlers ----
   const addDistributor = () =>
-    setDistribute((p) => [...p, { id: crypto.randomUUID(), text: "" }]);
+    setDistribute((p) => [...p, { text: "" }]);
 
-  const removeDistributor = (id) =>
-    setDistribute((p) => p.filter((row) => row.id !== id));
+  const removeDistributor = (idx) =>
+    setDistribute((p) => p.filter((_, i) => i !== idx));
 
-  const setDistributor = (id, val) =>
+  const setDistributor = (idx, val) =>
     setDistribute((p) =>
-      p.map((row) => (row.id === id ? { ...row, text: val } : row))
+      p.map((row, i) => (i === idx ? { ...row, text: val } : row))
     );
 
   //#endregion
@@ -829,7 +825,7 @@ const setEventVisit = (id, val) =>
         </div>
       </div>
 
-      {/* Labour Report */}
+      {/* Labour Report - new design with arrow key navigation */}
       <div className="bg-gray-800/60 p-6 rounded-xl mb-10 shadow-lg border border-gray-700">
         <h2 className="text-2xl font-semibold mb-4 text-blue-400">
           Labour Report
@@ -839,42 +835,85 @@ const setEventVisit = (id, val) =>
             <thead>
               <tr className="bg-gray-700/60 text-gray-300 uppercase text-xs tracking-wider">
                 <th className="px-3 py-2 text-left">Agency</th>
-                {labourCols.map((c) => (
-                  <th key={c} className="px-3 py-2 text-center">
-                    {c}
-                  </th>
+                {project?.metadata?.labour_type?.map((type, colIdx) => (
+                  <th key={type} className="px-3 py-2 text-center">{type}</th>
                 ))}
                 <th className="px-3 py-2 text-center">Total</th>
                 <th className="px-3 py-2 text-left">Remarks</th>
               </tr>
             </thead>
             <tbody>
-              {labourReport.agency.map((a, i) => (
+              {project?.metadata?.agency?.map((agency, rowIdx) => (
                 <tr
-                  key={`${a}-${i}`}
+                  key={`${agency}-${rowIdx}`}
                   className="even:bg-gray-700/40 hover:bg-gray-700/60 transition"
                 >
-                  <td className="px-3 py-2 font-medium">{a}</td>
-                  {labourCols.map((c) => (
-                    <td key={c} className="px-3 py-2 text-center">
+                  <td className="px-3 py-2 font-medium">{agency}</td>
+                  {project?.metadata?.labour_type?.map((type, colIdx) => (
+                    <td key={type} className="px-3 py-2 text-center">
                       <input
                         type="text"
-                        inputMode="number"
+                        inputMode="numeric"
                         pattern="[0-9]*"
-                        value={labourReport[c]?.[i] ?? ""}
-                        onChange={(e) => setCell(c, i, e.target.value)}
+                        value={
+                          (labourReport[type] &&
+                            labourReport[type][rowIdx] !== undefined)
+                            ? labourReport[type][rowIdx]
+                            : ""
+                        }
+                        onChange={e => {
+                          setLabourReport(prev => {
+                            const next = { ...prev, [type]: [...(prev[type] || [])] };
+                            const n = Number(e.target.value);
+                            next[type][rowIdx] = Number.isFinite(n) && n >= 0 ? n : 0;
+                            return next;
+                          });
+                        }}
                         className="w-20 text-center bg-gray-900/50 border border-gray-600 rounded px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                        data-labour-row={rowIdx}
+                        data-labour-col={colIdx}
+                        onKeyDown={e => {
+                          const totalRows = project?.metadata?.agency?.length ?? 0;
+                          const totalCols = project?.metadata?.labour_type?.length ?? 0;
+                          let nextRow = rowIdx, nextCol = colIdx;
+                          if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+                            if (e.key === "ArrowUp") nextRow = Math.max(0, rowIdx - 1);
+                            if (e.key === "ArrowDown") nextRow = Math.min(totalRows - 1, rowIdx + 1);
+                            if (e.key === "ArrowLeft") nextCol = Math.max(0, colIdx - 1);
+                            if (e.key === "ArrowRight") nextCol = Math.min(totalCols - 1, colIdx + 1);
+                            // Only move if not same as current
+                            if (nextRow !== rowIdx || nextCol !== colIdx) {
+                              e.preventDefault();
+                              const sel = document.querySelector(
+                                `input[data-labour-row="${nextRow}"][data-labour-col="${nextCol}"]`
+                              );
+                              if (sel) sel.focus();
+                            }
+                          }
+                        }}
                       />
                     </td>
                   ))}
                   <td className="px-3 py-2 text-center font-semibold">
-                    {rowTotal(i)}
+                    {
+                      project?.metadata?.labour_type?.reduce(
+                        (sum, type) =>
+                          sum + (Number(labourReport[type]?.[rowIdx]) || 0),
+                        0
+                      )
+                    }
                   </td>
                   <td className="px-3 py-2">
                     <input
                       type="text"
-                      value={labourReport.remarks?.[i] || ""}
-                      onChange={(e) => setRemark(i, e.target.value)}
+                      value={labourReport.remarks?.[rowIdx] || ""}
+                      onChange={e => {
+                        setLabourReport(prev => {
+                          const next = { ...prev, remarks: [...(prev.remarks || [])] };
+                          next.remarks[rowIdx] = e.target.value;
+                          return next;
+                        });
+                      }}
                       className="w-full bg-gray-900/50 border border-gray-600 rounded px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     />
                   </td>
@@ -882,13 +921,28 @@ const setEventVisit = (id, val) =>
               ))}
               <tr className="bg-gray-900/70 font-semibold">
                 <td className="px-3 py-2">Total</td>
-                {labourCols.map((c) => (
-                  <td key={c} className="px-3 py-2 text-center">
-                    {colTotals[c] || 0}
+                {project?.metadata?.labour_type?.map((type, colIdx) => (
+                  <td key={type} className="px-3 py-2 text-center">
+                    {
+                      (labourReport[type] || []).reduce(
+                        (s, v) => s + (Number(v) || 0),
+                        0
+                      )
+                    }
                   </td>
                 ))}
                 <td className="px-3 py-2 text-center text-blue-400 font-bold">
-                  {colTotals.total || 0}
+                  {
+                    project?.metadata?.labour_type?.reduce(
+                      (total, type) =>
+                        total +
+                        (labourReport[type] || []).reduce(
+                          (s, v) => s + (Number(v) || 0),
+                          0
+                        ),
+                      0
+                    )
+                  }
                 </td>
                 <td></td>
               </tr>
@@ -920,6 +974,7 @@ const setEventVisit = (id, val) =>
         />
       </div>
 
+      {/* General Remarks section with new layout */}
       <div className="grid md:grid-cols-3 gap-6 mb-8">
         <EditableList
           className="md:col-span-2"
@@ -930,28 +985,45 @@ const setEventVisit = (id, val) =>
           onChange={setEventVisit}
           placeholder="Enter event or remark"
         />
-        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
-  <h2 className="text-lg font-semibold mb-3">General Remarks</h2>
-  <textarea
-    rows={4}
-    value={generalRemark}
-    onChange={(e) => setGeneralRemark(e.target.value)}
-    className="w-full bg-transparent border border-gray-600 rounded px-3 py-2 outline-none resize-y text-gray-100"
-    placeholder="Enter general remarks"
-  />
-  <div className="mt-4 border-t border-gray-700 pt-4 grid grid-cols-1 gap-3">
-    <div>
-      <label className="block text-sm text-gray-300 mb-1">Prepared By</label>
-      <input
-        type="text"
-        value="Mano Projects Pvt. Ltd."
-        readOnly
-        className="w-full bg-transparent border-b border-gray-600 outline-none text-gray-400"
-      />
-    </div>
-    {/* Distribute stays same */}
-  </div>
-</div>
+        {/* General Remarks - new layout */}
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg flex flex-col h-full">
+          <div className="grid grid-cols-2 gap-3">
+            {/* General Remarks textarea spanning two columns */}
+            <div className="col-span-2">
+              <h2 className="text-lg font-semibold mb-3">General Remarks</h2>
+              <textarea
+                rows={4}
+                value={generalRemark}
+                onChange={(e) => setGeneralRemark(e.target.value)}
+                className="w-full bg-transparent border border-gray-600 rounded px-3 py-2 outline-none resize-y text-gray-100"
+                placeholder="Enter general remarks"
+              />
+            </div>
+            {/* Prepared By and Distribute side by side */}
+            <div>
+              <label className="block text-sm text-gray-300 mb-1 mt-4">Prepared By</label>
+              <input
+                type="text"
+                value={preparedBy}
+                onChange={e => setPreparedBy(e.target.value)}
+                className="w-full bg-transparent border-b border-gray-600 outline-none text-gray-100"
+                placeholder="Prepared By"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-300 mb-1 mt-4">Distribute</label>
+              <EditableList
+                title=""
+                items={distribute}
+                onAdd={addDistributor}
+                onRemove={removeDistributor}
+                onChange={setDistributor}
+                placeholder="Add recipient"
+                className="p-0 border-0 shadow-none bg-transparent"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Actions */}
