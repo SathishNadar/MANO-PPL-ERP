@@ -3,7 +3,7 @@
 // import viteLogo from '/vite.svg'
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
-import ProtectedRoute from "./context/protection.jsx";
+import { ProtectedRoute, PublicRoute } from "./context/protection.jsx";
 
 import UserAuth from "./pages/UserAuth/UserAuth.jsx";
 
@@ -28,9 +28,8 @@ function App() {
   return (
     <div>
       <Routes>
-        <Route exact path="/" element={<UserAuth />} /> // default route set to
-        login
-        <Route path="/auth" element={<UserAuth />} />
+        <Route exact path="/" element={<PublicRoute> <UserAuth /> </PublicRoute>} />
+        <Route path="/auth" element={<PublicRoute> <UserAuth /> </PublicRoute>} />
         <Route
           path="/dashboard/home"
           element={
@@ -42,7 +41,7 @@ function App() {
         <Route
           path="/dashboard/projects"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <ProjectsView />
             </ProtectedRoute>
           }

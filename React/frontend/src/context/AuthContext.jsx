@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
     const data = await response.json();
     if (!data.message === "Login successful") throw new Error(`Login Failed`);
     console.log("Login success")
-    
+
     navigate("/dashboard/home");
 
     await fetchUser();
