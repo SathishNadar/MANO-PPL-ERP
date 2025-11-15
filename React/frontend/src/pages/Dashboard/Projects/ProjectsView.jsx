@@ -13,6 +13,22 @@ const ProjectsView = () => {
   const API_URI = import.meta.env.VITE_API_URI;
   const PORT = import.meta.env.VITE_BACKEND_PORT;
 
+  // returns progress percent as a NUMBER (0-100) based on elapsed/total days
+  const getProgressPercentage = (project) => {
+    if (!project?.start_date || !project?.end_date) return 0;
+    const start = new Date(project.start_date);
+    const end = new Date(project.end_date);
+    const today = new Date();
+
+    if (today < start) return 0;
+    if (today > end) return 100;
+
+    const total = end.getTime() - start.getTime();
+    const elapsed = today.getTime() - start.getTime();
+    const percent = Math.floor((elapsed / total) * 100);
+    return Number.isFinite(percent) ? Math.max(0, Math.min(100, percent)) : 0;
+  };
+
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -27,7 +43,32 @@ const ProjectsView = () => {
         setProjects(data);
 
         const projectNames = data.map((p) => p.project_name);
-        const progressValues = data.map(() => Math.floor(Math.random() * 100));
+        // Calculate elapsed days for each project to use in chart
+        const elapsedValues = data.map((project) => {
+          if (!project?.start_date || !project?.end_date) return 0;
+          const start = new Date(project.start_date);
+          const end = new Date(project.end_date);
+          const today = new Date();
+
+          if (today < start) return 0;
+          if (today > end) return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          return Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        });
+
+        const barColors = data.map((project, idx) => {
+          if (!project?.start_date || !project?.end_date) return "rgba(59, 130, 246, 0.6)";
+
+          const start = new Date(project.start_date);
+          const end = new Date(project.end_date);
+          const today = new Date();
+
+          // If project completed, mark green
+          if (today >= end) return "rgba(34,197,94,0.8)";
+
+          return "rgba(59,130,246,0.6)";
+        });
+
+        const maxElapsed = Math.max(365, ...(elapsedValues.length ? elapsedValues : [0]));
 
         const ctx = document.getElementById("projectChart");
         if (ctx) {
@@ -40,9 +81,9 @@ const ProjectsView = () => {
               labels: projectNames,
               datasets: [
                 {
-                  label: "Progress %",
-                  data: progressValues,
-                  backgroundColor: "rgba(59, 130, 246, 0.5)",
+                  label: "Progress Days",
+                  data: elapsedValues,
+                  backgroundColor: barColors,
                   borderColor: "rgba(59, 130, 246, 1)",
                   borderWidth: 1,
                   borderRadius: 8,
@@ -58,7 +99,7 @@ const ProjectsView = () => {
               scales: {
                 y: {
                   beginAtZero: true,
-                  max: 100,
+                  suggestedMax: maxElapsed,
                   ticks: { color: "#9CA3AF" },
                   grid: { color: "#374151" },
                 },
@@ -118,7 +159,7 @@ const ProjectsView = () => {
               )}
               {projects.length > 0 &&
                 projects.map((project, index) => {
-                  const progress = Math.floor(Math.random() * 100);
+                  const progress = getProgressPercentage(project);
                   return (
                     <div key={index} className="pt-2">
                       <div
