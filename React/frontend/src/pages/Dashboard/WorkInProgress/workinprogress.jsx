@@ -3,12 +3,7 @@ import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
 import Fuse from "fuse.js";
 
-import {
-  CreateTaskModal,
-  EditTaskModal,
-  DeleteModal,
-  control_access,
-} from "./TaskModals";
+import { CreateTaskModal, EditTaskModal, DeleteModal } from "./TaskModals";
 
 const API_URI = import.meta.env.VITE_API_URI;
 const PORT = import.meta.env.VITE_BACKEND_PORT;
@@ -26,10 +21,7 @@ const WorkInProgress = () => {
   const session = sessionRaw ? JSON.parse(sessionRaw) : null;
   const UserId = session?.user_id;
 
-  const currentUser = users.find((u) => u.controlled_id === selectedUser);
-  const role = currentUser?.control_type || "viewer";
-  const permissions = control_access[role];
-
+  // newTask default
   const [newTask, setNewTask] = useState({
     task_name: "",
     task_description: "",
@@ -43,8 +35,7 @@ const WorkInProgress = () => {
   const [statusSort, setStatusSort] = useState("none");
   const statusSequence = ["none", "not_started", "in_progress", "completed"];
 
-  // ---------- New: compute displayTasks (mark & sort) ----------
-
+  // cycle status filter
   const cycleStatusSort = () => {
     const idx = statusSequence.indexOf(statusSort);
     const next = statusSequence[(idx + 1) % statusSequence.length];
@@ -55,8 +46,8 @@ const WorkInProgress = () => {
   const toggleDateOrder = () =>
     setDateOrder((o) => (o === "asc" ? "desc" : "asc"));
 
+  // compute display tasks (star + sorting + filtering)
   const displayTasks = useMemo(() => {
-    // enrich with assigned-by-other marker
     const enriched = tasks.map((t) => {
       const hasAssignedBy =
         t.assigned_by !== null &&
@@ -67,19 +58,17 @@ const WorkInProgress = () => {
       return { ...t, __assignedByOther: !!assignedByOther };
     });
 
-    // helper: due time number (fallback to +inf)
     const dueTime = (item) =>
       item.due_date
         ? new Date(item.due_date).getTime()
         : Number.POSITIVE_INFINITY;
 
-    // comparator for date using dateOrder
     const compareByDate = (a, b) => {
       const diff = dueTime(a) - dueTime(b);
       return dateOrder === "asc" ? diff : -diff;
     };
 
-    // If a status is selected, show ONLY that status (ignore star), sorted by dateOrder
+    // If a status is selected, show ONLY tasks with that status (ignore star)
     if (statusSort && statusSort !== "none") {
       const only = enriched.filter(
         (t) => String(t.status) === String(statusSort)
@@ -88,7 +77,7 @@ const WorkInProgress = () => {
       return only;
     }
 
-    // statusSort === "none": show all, but starred tasks first, then date order
+    // otherwise show all, starred first then by date
     enriched.sort((a, b) => {
       if (a.__assignedByOther !== b.__assignedByOther) {
         return a.__assignedByOther ? -1 : 1;
@@ -99,7 +88,6 @@ const WorkInProgress = () => {
     return enriched;
   }, [tasks, dateOrder, statusSort]);
 
-  // ---------- Fetch controlled users ----------
   const fetchUsers = async () => {
     try {
       const res = await fetch(
@@ -107,19 +95,27 @@ const WorkInProgress = () => {
         { credentials: "include" }
       );
       const data = await res.json();
+
       if (data.ok) {
         const allUsers = [
-          {
-            controlled_id: UserId,
-            user_name: "Myself",
-            control_type: "manager",
-          },
-          ...data.data,
+          { controlled_id: String(UserId), user_name: "Myself" },
+          ...data.data.map((u, i) => ({
+            controlled_id: String(u.user_id ?? u.id ?? `user-${i}`),
+            user_name: u.user_name ?? u.name ?? `User ${i + 1}`,
+
+            ...u,
+          })),
         ];
+
         setUsers(allUsers);
-        setSelectedUser(UserId); // default to self
+
+        // only set default selected if none already set (avoids overwriting user choice)
+        setSelectedUser((prev) => (prev ? prev : String(UserId)));
+      } else {
+        toast.error("Failed to fetch controlled users");
       }
     } catch (err) {
+      console.error("fetchUsers error:", err);
       toast.error("Error fetching users");
     }
   };
@@ -127,10 +123,22 @@ const WorkInProgress = () => {
   // Fetch tasks for selected user
   const fetchTasks = async (uid) => {
     try {
+      const uidNum = Number(uid);
+      console.log(
+        "[fetchTasks] loading tasks for uid:",
+        uid,
+        "-> uidNum:",
+        uidNum,
+        typeof uidNum
+      );
       const res = await fetch(`http://${API_URI}:${PORT}/tasks/user/${uid}`, {
         credentials: "include",
       });
+
+      console.log("[fetchTasks] response status:", res.status, res.statusText);
       const data = await res.json();
+
+      console.log(data);
       if (data.ok) setTasks(data.data);
       else toast.error("Failed to load tasks");
     } catch (err) {
@@ -144,10 +152,10 @@ const WorkInProgress = () => {
       return;
     }
     fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [UserId]);
 
   useEffect(() => {
+    console.log("selectedUser changed ->", selectedUser, typeof selectedUser);
     if (selectedUser) {
       fetchTasks(selectedUser);
     }
@@ -156,11 +164,12 @@ const WorkInProgress = () => {
   // Create task
   const onCreate = async (task) => {
     try {
+      const payload = { ...task, assigned_to: Number(task.assigned_to) };
       const res = await fetch(`http://${API_URI}:${PORT}/tasks/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(task),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -185,20 +194,17 @@ const WorkInProgress = () => {
   // Update task
   const onUpdate = async (task) => {
     try {
+      const payload = {
+        ...task,
+        assigned_to: Number(task.assigned_to),
+      };
       const res = await fetch(
         `http://${API_URI}:${PORT}/tasks/${task.task_id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({
-            task_name: task.task_name,
-            task_description: task.task_description,
-            assigned_to: task.assigned_to,
-            assigned_date: task.assigned_date,
-            due_date: task.due_date,
-            status: task.status,
-          }),
+          body: JSON.stringify(payload),
         }
       );
 
@@ -233,7 +239,7 @@ const WorkInProgress = () => {
     }
   };
 
-  // ---------- Search (Fuse) — run against displayTasks ----------
+  // Search (Fuse) — run against displayTasks
   const fuse = useMemo(
     () =>
       new Fuse(displayTasks, {
@@ -293,20 +299,20 @@ const WorkInProgress = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="form-input block w-full md:w-64 px-4 py-3 rounded-lg text-[var(--text-primary)] bg-[var(--card-background)] border-gray-700 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] placeholder:text-[var(--text-secondary)]"
                   />
-
                   {/* User Filter */}
                   <select
-                    value={selectedUser || ""}
-                    onChange={(e) => setSelectedUser(Number(e.target.value))}
-                    className="px-4 py-3 rounded-lg 
-             bg-[#1e242c] text-white 
-             border border-gray-700 
-             focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={selectedUser ?? ""}
+                    onChange={(e) => {
+                      const val = e?.target?.value;
+                      if (!val) return; // defensive
+                      setSelectedUser(val);
+                    }}
+                    className="px-4 py-3 rounded-lg bg-[#1e242c] text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {users.map((u) => (
+                    {users.map((u, idx) => (
                       <option
-                        key={u.controlled_id}
-                        value={u.controlled_id}
+                        key={String(u.controlled_id ?? `user-${idx}`)}
+                        value={String(u.controlled_id ?? `user-${idx}`)}
                         className="bg-[#1e242c] text-white"
                       >
                         {u.user_name}
@@ -314,16 +320,9 @@ const WorkInProgress = () => {
                     ))}
                   </select>
 
-                  {/* Create Task Button */}
                   <button
-                    disabled={!permissions.create}
                     onClick={() => setShowCreateModal(true)}
-                    className={`rounded-md px-6 py-3 inline-flex items-center justify-center gap-2 whitespace-nowrap
-                            ${
-                              !permissions.create
-                                ? "bg-gray-600 cursor-not-allowed opacity-50"
-                                : "bg-blue-600 hover:bg-blue-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                            }`}
+                    className="rounded-md px-6 py-3 inline-flex items-center justify-center gap-2 whitespace-nowrap bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                   >
                     <svg
                       className="h-5 w-5"
@@ -352,14 +351,14 @@ const WorkInProgress = () => {
                     <table className="w-full text-left">
                       <thead className="bg-gray-800/50">
                         <tr>
-                          <th className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)]">
+                          <th className="pl-13 py-4 text-sm font-semibold text-[var(--text-primary)] w-1/5 ">
                             Task
                           </th>
-                          <th className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)]">
+                          <th className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)] w-2/5">
                             Task Description
                           </th>
                           <th
-                            className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)] text-center"
+                            className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)] text-center w-1/5"
                             onClick={cycleStatusSort}
                           >
                             {statusSort === "none"
@@ -367,7 +366,7 @@ const WorkInProgress = () => {
                               : `Status: ${statusSort}`}
                           </th>
                           <th
-                            className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)]"
+                            className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)] w-1/5"
                             onClick={toggleDateOrder}
                           >
                             {dateOrder === "asc" ? "Deadline ↑" : "Deadline ↓"}
@@ -401,7 +400,7 @@ const WorkInProgress = () => {
                                 <span>{task.task_name}</span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
-                                {task.task_description.length > 90
+                                {task.task_description?.length > 90
                                   ? task.task_description.slice(0, 90) + "..."
                                   : task.task_description}
                               </td>
@@ -418,21 +417,6 @@ const WorkInProgress = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                 {formatDate(task.due_date)}
                               </td>
-                              {/* <td className="px-6 py-4 text-center">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowDeleteModal(task.task_id);
-                                  }}
-                                  className="text-red-400 hover:text-red-500 hover:cursor-pointer"
-                                  title="Delete row"
-                                >
-                                  <span className="material-icons text-md">
-                                    delete
-                                  </span>
-                                </button>
-                              </td> */}
                             </tr>
                           ))
                         ) : (
@@ -456,7 +440,6 @@ const WorkInProgress = () => {
       </div>
 
       {/* Create Modal */}
-
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
@@ -471,12 +454,12 @@ const WorkInProgress = () => {
               newTask={newTask}
               setNewTask={setNewTask}
               users={users}
-              role={role}
             />
           </div>
         </div>
       )}
 
+      {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
@@ -490,7 +473,6 @@ const WorkInProgress = () => {
               task={showEditModal}
               setTask={setShowEditModal}
               users={users}
-              role={role}
             />
           </div>
         </div>
@@ -503,7 +485,6 @@ const WorkInProgress = () => {
           onRemove(showDeleteModal);
           setShowDeleteModal(null);
         }}
-        role={role}
         entityName="task"
       />
     </div>
