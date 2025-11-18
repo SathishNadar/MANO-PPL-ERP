@@ -786,7 +786,8 @@ export async function fetchDPRsByProject(project_id, limit = 20) {
       dpr_id,
       report_date,
       dpr_status,
-      current_handler
+      current_handler,
+      created_by, approved_by, final_approved_by
     FROM dpr
     WHERE project_id = ?
     ORDER BY report_date DESC

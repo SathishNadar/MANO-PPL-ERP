@@ -7,6 +7,7 @@ function ProjectDescription() {
   const { projectId } = useParams();
   const [project, setProject] = useState(null);
   const [dprs, setDprs] = useState([]);
+  const [usersMap, setUsersMap] = useState({});
 
   const API_URI = import.meta.env.VITE_API_URI;
   const PORT = import.meta.env.VITE_BACKEND_PORT;
@@ -49,7 +50,35 @@ function ProjectDescription() {
         setDprs(dprsList);
       })
       .catch((err) => console.error("Failed to load DPRs:", err));
-  }, [projectId]);
+
+    // fetch users for mapping ids -> names (if permitted)
+    const fetchUsers = async () => {
+    try {
+      const res = await fetch(`http://${API_URI}:${PORT}/admin/users`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.users)) {
+        const map = {};
+        data.users.forEach((u) => {
+          // prefer the explicit user_id and user_name columns; fall back to common alternatives
+          const id = u.user_id ?? u.id ?? u.userId;
+          const name = u.user_name ?? u.userName ?? u.name ?? u.full_name ?? `${id}`;
+          if (id !== undefined && id !== null) map[id] = name;
+        });
+        setUsersMap(map);
+      } else {
+        // likely not permitted for this user (non-admin) or unexpected shape
+        console.info("Users fetch returned no users or not permitted.", data);
+      }
+    } catch (err) {
+      // non-admins will likely get a 403 — that's fine, we'll just show Unknown
+      console.info("Users fetch skipped or failed:", err);
+    }
+  };
+
+  fetchUsers();
+}, [projectId]);
 
   // Calculate project progress percentage
   const getProgressPercentage = () => {
@@ -88,6 +117,56 @@ function ProjectDescription() {
       .split(/[_\s-]+/)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(" ");
+  };
+
+  // Given DPR status, return the label to display
+  const getActorLabelForStatus = (status) => {
+    switch (status) {
+      case "in_progress":
+        return "Created by";
+      case "under_review":
+        return "Submitted by";
+      case "final_review":
+        return "Reviewed by";
+      case "approved":
+        return "Approved by";
+      default:
+        return "Submitted by";
+    }
+  };
+
+  // Given DPR object and status, try to pick the correct user id field
+  const getActorIdFromDpr = (dpr, status) => {
+    // Preferential order of fields to check (best-effort)
+    const fieldPriority = {
+      in_progress: ["created_by", "createdBy", "creator_id", "user_id"],
+      under_review: ["submitted_by", "submittedBy", "submitted_id", "created_by"],
+      final_review: ["final_approved_by", "reviewed_by", "finalApprovedBy", "final_approved_id", "submitted_by"],
+      approved: ["approved_by", "approvedBy", "approver_id", "final_approved_by", "reviewed_by"],
+    };
+
+    const candidates = fieldPriority[status] || [
+      "submitted_by",
+      "created_by",
+      "approved_by",
+    ];
+
+    for (const f of candidates) {
+      if (dpr[f] !== undefined && dpr[f] !== null && dpr[f] !== "") {
+        return dpr[f];
+      }
+    }
+    // fallback: check common numeric fields
+    if (dpr.created_by) return dpr.created_by;
+    if (dpr.approved_by) return dpr.approved_by;
+    return null;
+  };
+
+  const getUserNameById = (id) => {
+    if (!id && id !== 0) return "Unknown";
+    // usersMap keys might be numbers or strings depending on API; normalize to string first
+    const key = id;
+    return usersMap[key] || usersMap[String(key)] || "Unknown";
   };
   //#endregion
 
@@ -328,6 +407,11 @@ function ProjectDescription() {
                       ? "bg-gray-900 border border-gray-700 border-l-4 border-l-green-500"
                       : "bg-gray-900 border border-gray-700";
 
+                    // dynamic actor label + name
+                    const actorLabel = getActorLabelForStatus(dpr.dpr_status);
+                    const actorId = getActorIdFromDpr(dpr, dpr.dpr_status);
+                    const actorName = getUserNameById(actorId);
+
                     return (
                       <a
                         key={dpr.dpr_id}
@@ -345,7 +429,7 @@ function ProjectDescription() {
                             </p>
                           </div>
                           <p className="text-sm text-[var(--text-secondary)]">
-                            Submitted by {dpr.username || "Unknown"}
+                            {actorLabel} {actorName}
                           </p>
                         </div>
                         <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)]">
