@@ -33,7 +33,7 @@ const WorkInProgress = () => {
 
   const [dateOrder, setDateOrder] = useState("asc");
   const [statusSort, setStatusSort] = useState("none");
-  const statusSequence = ["none", "not_started", "in_progress", "completed"];
+  const statusSequence = ["none", "Not Started", "In progress", "Completed"];
 
   // cycle status filter
   const cycleStatusSort = () => {
@@ -58,14 +58,43 @@ const WorkInProgress = () => {
       return { ...t, __assignedByOther: !!assignedByOther };
     });
 
-    const dueTime = (item) =>
-      item.due_date
+    const todayStart = (() => {
+      const n = new Date();
+      return new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+    })();
+
+    // safe due timestamp (missing due_date => +inf)
+    const dueTs = (item) =>
+      item?.due_date
         ? new Date(item.due_date).getTime()
         : Number.POSITIVE_INFINITY;
 
+    /**
+     * Compare tasks by "deadline proximity" with rule:
+     * - Tasks with future (or today) deadlines come first.
+     * - Among future/today tasks: sort by absolute distance to today (nearest first)
+     * - Past deadlines (due < today) are placed after future tasks, but among themselves
+     *   they're also ordered by proximity to today (so yesterday appears above last week).
+     * - If dateOrder === 'desc' we invert the proximity ordering.
+     */
     const compareByDate = (a, b) => {
-      const diff = dueTime(a) - dueTime(b);
-      return dateOrder === "asc" ? diff : -diff;
+      const aTs = dueTs(a);
+      const bTs = dueTs(b);
+
+      const aIsPast = aTs < todayStart;
+      const bIsPast = bTs < todayStart;
+
+      // If one is past and the other is not, past goes after
+      if (aIsPast !== bIsPast) {
+        return aIsPast ? 1 : -1;
+      }
+
+      // both same side (both future/today OR both past)
+      const aDist = Math.abs(aTs - todayStart);
+      const bDist = Math.abs(bTs - todayStart);
+
+      // asc => nearest first, desc => farthest first
+      return dateOrder === "asc" ? aDist - bDist : bDist - aDist;
     };
 
     // If a status is selected, show ONLY tasks with that status (ignore star)
@@ -155,7 +184,6 @@ const WorkInProgress = () => {
   }, [UserId]);
 
   useEffect(() => {
-    console.log("selectedUser changed ->", selectedUser, typeof selectedUser);
     if (selectedUser) {
       fetchTasks(selectedUser);
     }
@@ -268,6 +296,7 @@ const WorkInProgress = () => {
     default: "bg-gray-500/10 text-gray-400",
     in_progress: "bg-yellow-500/10 text-yellow-400",
     completed: "bg-green-500/10 text-green-400",
+    failed: "bg-red-700/10 text-red-500",
   };
 
   const statusLabels = {
