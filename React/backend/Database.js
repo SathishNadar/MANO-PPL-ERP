@@ -1,5 +1,6 @@
 import mysql from 'mysql2';
 import Fuse from "fuse.js";
+import knex from 'knex';
 import './config.js';
 
 // Create a MySQL pool with connection details
@@ -9,6 +10,19 @@ const pool = mysql.createPool({
   password: process.env.MYSQL_PASSWORD,
   database: process.env.MYSQL_DATABASE,
 }).promise();
+
+
+export const knexDB = knex({
+  client: 'mysql2',
+  connection: {
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+  },
+  pool: { min: 2, max: 10 },
+});
+
 
 
 // #region 🛠️ HELP FUNCTIONS ─────────────────────────────────────────────
@@ -212,219 +226,6 @@ export async function getTitles() {
     return { ok: false, message: 'Database error' };
   }
 }
-
-// #endregion
-
-// #region ✅ TASKS ─────────────────────────────────────────────
-
-// Function to fetch task by task_id
-export async function fetchTaskById(task_id) {
-  const sql = "SELECT * FROM tasks WHERE task_id = ?";
-  try {
-    const [[result]] = await pool.query(sql, [task_id])
-    return result;
-  } catch (err) {
-    console.error("❌ Error fetching tasks:", err);
-    throw err;
-  }
-}
-
-// Function to fetch all task of people under the user control
-export async function fetchTasksOfControlled(user_id) {
-  const sql = "SELECT controlled_id FROM task_control WHERE controller_id = ?";
-  try {
-    const [result] = await pool.query(sql, [user_id])
-    const ids = result.map(item => item.controlled_id);
-    let allTask = []
-    for (const id of ids) {
-      const tasks = await fetchTasks(id);
-      allTask.push(...tasks)
-    }
-    return allTask;
-  } catch (err) {
-    console.error("❌ Error fetching tasks:", err);
-    throw err;
-  }
-}
-
-// Function to fetch all task under a user
-export async function fetchTasks(user_id) {
-  const sql = "SELECT * FROM tasks WHERE assigned_to = ?";
-  try {
-    const [result] = await pool.query(sql, [user_id])
-    return result;
-  } catch (err) {
-    console.error("❌ Error fetching tasks:", err);
-    throw err;
-  }
-}
-
-// Function to add new task
-export async function insertTask({
-  task_name,
-  task_description = null,
-  assigned_to = null,
-  assigned_date = null,
-  due_date = null,
-  status = null
-}) {
-  const sql = `
-        INSERT INTO tasks (task_name, task_description, assigned_to, assigned_date, due_date, status)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `;
-  try {
-    const [result] = await pool.query(sql, [
-      task_name, task_description, assigned_to, assigned_date, due_date, status
-    ]);
-    return result.insertId;
-  } catch (err) {
-    console.error("❌ Error inserting task:", err.message);
-    throw err;
-  }
-}
-
-// Function to update task
-export async function updateTask(task_id, {
-  task_name,
-  task_description,
-  assigned_to,
-  assigned_date,
-  due_date, status }) {
-
-  try {
-    const allowed = ["task_name", "task_description", "assigned_to", "assigned_date", "due_date", "status"];
-    const updates = [];
-    const values = [];
-    for (const k of allowed) {
-      if (typeof arguments[1][k] !== "undefined") {
-        updates.push(`${k} = ?`);
-        values.push(arguments[1][k]);
-      }
-    }
-    if (updates.length === 0) return 0;
-    const sql = `UPDATE tasks SET ${updates.join(", ")} WHERE task_id = ?`;
-    values.push(task_id);
-    const [result] = await pool.query(sql, values);
-    return result.affectedRows;
-  } catch (err) {
-    console.error("❌ Error updating task:", err.message);
-    throw err;
-  }
-}
-
-// Function to delete task
-export async function deleteTask(task_id) {
-  const sql = `DELETE FROM tasks WHERE task_id = ?`;
-  try {
-    const [result] = await pool.query(sql, [task_id]);
-    return result.affectedRows;
-  } catch (err) {
-    console.error("❌ Error deleting task:", err.message);
-    throw err;
-  }
-}
-
-// Function to get control_type
-export async function getControlType(controller_id, controlled_id) {
-  const sql = `SELECT control_type FROM task_control WHERE controller_id = ? AND controlled_id = ?;`;
-  try {
-    const [[result]] = await pool.query(sql, [controller_id, controlled_id]);
-    return result ? result.control_type : null;
-  } catch (err) {
-    console.error("❌ Error fetching control type:", err.message);
-    throw err;
-  }
-}
-
-// Function to get all controlled user_id and user_name
-export async function getControlledUsers(controller_id) {
-  const sql = `
-    SELECT tc.controlled_id,tc.control_type, u.user_name
-    FROM task_control tc
-    JOIN users u ON tc.controlled_id = u.user_id
-    WHERE tc.controller_id = ?;
-  `;
-  try {
-    const [rows] = await pool.query(sql, [controller_id]);
-    // rows will be an array of objects { controlled_id, control_type, user_name }
-    return rows;
-  } catch (err) {
-    console.error("❌ Error fetching controlled users:", err.message);
-    throw err;
-  }
-}
-
-// Function to update controlled for a controller
-export async function updateTaskControl(controller_id, add = [], remove = []) {
-  const connection = await pool.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    // Remove entries
-    if (remove.length > 0) {
-      for (const { controlled_id } of remove) {
-        let sql = `
-          DELETE FROM task_control
-          WHERE controller_id = ? AND controlled_id = ?
-        `;
-        let params = [controller_id, controlled_id];
-        await connection.query(sql, params);
-      }
-    }
-
-    // Add entries
-    if (add.length > 0) {
-      for (const obj of add) {
-        const controlled_id = obj.controlled_id;
-        const control_type = obj.control_type || "manager";
-        await connection.query(`
-      INSERT INTO task_control (controller_id, controlled_id, control_type)
-      VALUES (?, ?, ?)
-      ON DUPLICATE KEY UPDATE control_type = VALUES(control_type)
-    `, [controller_id, controlled_id, control_type]);
-      }
-    }
-
-
-    await connection.commit();
-    connection.release();
-    return { ok: true };
-  } catch (err) {
-    await connection.rollback();
-    connection.release();
-    console.error("❌ Error updating task control:", err);
-    return { ok: false, message: err.message };
-  }
-}
-
-// db.js or relevant file
-export async function getAllUserTaskControls() {
-  const sql = `
-    SELECT 
-      tc.controller_id, 
-      tc.controlled_id, 
-      tc.control_type, 
-      u.user_name as controlled_name
-    FROM task_control tc
-    JOIN users u ON tc.controlled_id = u.user_id
-  `;
-  try {
-    const [rows] = await pool.query(sql);
-    // Returns array of { controller_id, controlled_id, control_type, controlled_name }
-    return { ok: true, taskControls: rows };
-  } catch (err) {
-    console.error("❌ Error fetching user task controls:", err.message);
-    return { ok: false, message: err.message };
-  }
-}
-
-
-
-// export async function getAssignedTo() {
-
-// }
-
-
 
 // #endregion
 
