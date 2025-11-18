@@ -19,6 +19,7 @@
     "google-auth-library": "^10.2.0",
     "googleapis": "^154.1.0",
     "nodemailer": "^7.0.4",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "knex": "^3.1.0"
   }
 }
