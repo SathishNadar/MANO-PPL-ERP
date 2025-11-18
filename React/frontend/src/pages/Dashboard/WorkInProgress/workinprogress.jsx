@@ -22,8 +22,9 @@ const WorkInProgress = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(null);
   const [showEditModal, setShowEditModal] = useState(null);
 
-  const session = JSON.parse(localStorage.getItem("session"));
-  const UserId = session.user_id;
+  const sessionRaw = localStorage.getItem("session");
+  const session = sessionRaw ? JSON.parse(sessionRaw) : null;
+  const UserId = session?.user_id;
 
   const currentUser = users.find((u) => u.controlled_id === selectedUser);
   const role = currentUser?.control_type || "viewer";
@@ -38,7 +39,67 @@ const WorkInProgress = () => {
     status: "not_started",
   });
 
-  // Fetch controlled users
+  const [dateOrder, setDateOrder] = useState("asc");
+  const [statusSort, setStatusSort] = useState("none");
+  const statusSequence = ["none", "not_started", "in_progress", "completed"];
+
+  // ---------- New: compute displayTasks (mark & sort) ----------
+
+  const cycleStatusSort = () => {
+    const idx = statusSequence.indexOf(statusSort);
+    const next = statusSequence[(idx + 1) % statusSequence.length];
+    setStatusSort(next);
+  };
+
+  // toggle date order
+  const toggleDateOrder = () =>
+    setDateOrder((o) => (o === "asc" ? "desc" : "asc"));
+
+  const displayTasks = useMemo(() => {
+    // enrich with assigned-by-other marker
+    const enriched = tasks.map((t) => {
+      const hasAssignedBy =
+        t.assigned_by !== null &&
+        t.assigned_by !== undefined &&
+        t.assigned_by !== "";
+      const assignedByOther =
+        hasAssignedBy && String(t.assigned_by) !== String(t.assigned_to);
+      return { ...t, __assignedByOther: !!assignedByOther };
+    });
+
+    // helper: due time number (fallback to +inf)
+    const dueTime = (item) =>
+      item.due_date
+        ? new Date(item.due_date).getTime()
+        : Number.POSITIVE_INFINITY;
+
+    // comparator for date using dateOrder
+    const compareByDate = (a, b) => {
+      const diff = dueTime(a) - dueTime(b);
+      return dateOrder === "asc" ? diff : -diff;
+    };
+
+    // If a status is selected, show ONLY that status (ignore star), sorted by dateOrder
+    if (statusSort && statusSort !== "none") {
+      const only = enriched.filter(
+        (t) => String(t.status) === String(statusSort)
+      );
+      only.sort(compareByDate);
+      return only;
+    }
+
+    // statusSort === "none": show all, but starred tasks first, then date order
+    enriched.sort((a, b) => {
+      if (a.__assignedByOther !== b.__assignedByOther) {
+        return a.__assignedByOther ? -1 : 1;
+      }
+      return compareByDate(a, b);
+    });
+
+    return enriched;
+  }, [tasks, dateOrder, statusSort]);
+
+  // ---------- Fetch controlled users ----------
   const fetchUsers = async () => {
     try {
       const res = await fetch(
@@ -78,7 +139,12 @@ const WorkInProgress = () => {
   };
 
   useEffect(() => {
+    if (!UserId) {
+      toast.error("No session found. Please login.");
+      return;
+    }
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [UserId]);
 
   useEffect(() => {
@@ -167,18 +233,19 @@ const WorkInProgress = () => {
     }
   };
 
+  // ---------- Search (Fuse) — run against displayTasks ----------
   const fuse = useMemo(
     () =>
-      new Fuse(tasks, {
+      new Fuse(displayTasks, {
         keys: ["task_name", "task_description"],
         threshold: 0.4,
       }),
-    [tasks]
+    [displayTasks]
   );
 
   const filteredTasks =
     searchQuery.trim() === ""
-      ? tasks
+      ? displayTasks
       : fuse.search(searchQuery).map((result) => result.item);
 
   const formatDate = (dateString) => {
@@ -192,21 +259,16 @@ const WorkInProgress = () => {
 
   const statusClasses = {
     not_started: "bg-gray-500/10 text-gray-400",
+    default: "bg-gray-500/10 text-gray-400",
     in_progress: "bg-yellow-500/10 text-yellow-400",
-    under_review: "bg-blue-500/10 text-blue-400",
     completed: "bg-green-500/10 text-green-400",
-    canceled: "bg-red-500/10 text-red-400",
-    failed: "bg-red-700/10 text-red-500",
   };
 
   const statusLabels = {
     not_started: "Not Started",
     in_progress: "In Progress",
-    under_review: "Under Review",
     completed: "Completed",
-    canceled: "Canceled",
-    failed: "Failed",
-    default: "Unknown",
+    default: "Not Started",
   };
 
   return (
@@ -296,11 +358,19 @@ const WorkInProgress = () => {
                           <th className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)]">
                             Task Description
                           </th>
-                          <th className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)] text-center">
-                            Status
+                          <th
+                            className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)] text-center"
+                            onClick={cycleStatusSort}
+                          >
+                            {statusSort === "none"
+                              ? "Status"
+                              : `Status: ${statusSort}`}
                           </th>
-                          <th className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)]">
-                            Deadline
+                          <th
+                            className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)]"
+                            onClick={toggleDateOrder}
+                          >
+                            {dateOrder === "asc" ? "Deadline ↑" : "Deadline ↓"}
                           </th>
                           <th className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)] text-center"></th>
                         </tr>
@@ -313,8 +383,22 @@ const WorkInProgress = () => {
                               className="hover:bg-gray-800/30 transition-colors cursor-pointer"
                               onClick={() => setShowEditModal(task)}
                             >
-                              <td className="px-6 py-4 whitespace-nowrap text-lg font-medium text-[var(--text-primary)]">
-                                {task.task_name}
+                              <td className="px-6 py-4 whitespace-nowrap text-lg font-medium text-[var(--text-primary)] flex items-center gap-3">
+                                {/* Star marker (left) when assigned_by != assigned_to */}
+                                {task.__assignedByOther ? (
+                                  <svg
+                                    className="h-4 w-4 text-yellow-400"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                  >
+                                    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.169L12 18.896 4.664 23.166l1.402-8.169L.132 9.21l8.2-1.192z" />
+                                  </svg>
+                                ) : (
+                                  /* keep alignment consistent */
+                                  <span className="inline-block w-4" />
+                                )}
+
+                                <span>{task.task_name}</span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
                                 {task.task_description.length > 90
@@ -334,7 +418,7 @@ const WorkInProgress = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                 {formatDate(task.due_date)}
                               </td>
-                              <td className="px-6 py-4 text-center">
+                              {/* <td className="px-6 py-4 text-center">
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -348,7 +432,7 @@ const WorkInProgress = () => {
                                     delete
                                   </span>
                                 </button>
-                              </td>
+                              </td> */}
                             </tr>
                           ))
                         ) : (

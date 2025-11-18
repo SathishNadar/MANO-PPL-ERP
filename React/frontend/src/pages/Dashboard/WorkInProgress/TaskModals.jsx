@@ -7,6 +7,29 @@ const control_access = {
   admin:    { view: true, create: true,  edit: true,  delete: true },
 };
 
+const formatDateInputValue = (dateString) => {
+  if (!dateString) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return "";
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const isPastDeadline = (task) => {
+  if (!task?.due_date) return false; // no due date -> editable
+  const due = new Date(task.due_date);
+  if (Number.isNaN(due.getTime())) return false;
+  const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  return today.getTime() > dueDateOnly.getTime();
+};
+
 export const CreateTaskModal = ({
   show,
   onClose,
@@ -119,7 +142,7 @@ export const CreateTaskModal = ({
                 </label>
                 <input
                   type="date"
-                  value={newTask.assigned_date}
+                  value={newTask.assigned_date ?formatDateInputValue(newTask.assigned_date) :  formatDateInputValue(new Date())}
                   onChange={(e) =>
                     setNewTask({ ...newTask, assigned_date: e.target.value })
                   }
@@ -129,11 +152,11 @@ export const CreateTaskModal = ({
               </div>
               <div>
                 <label className="block text-gray-400 text-sm mb-2">
-                  Due Date
+                  Deadline
                 </label>
                 <input
                   type="date"
-                  value={newTask.due_date}
+                  value={newTask.due_date ? formatDateInputValue(newTask.due_date) : formatDateInputValue(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000))}
                   onChange={(e) =>
                     setNewTask({ ...newTask, due_date: e.target.value })
                   }
@@ -155,10 +178,7 @@ export const CreateTaskModal = ({
               >
                 <option value="in_progress">In Progress</option>
                 <option value="completed">Completed</option>
-                <option value="canceled">Canceled</option>
-                <option value="failed">Failed</option>
                 <option value="not_started">Not started</option>
-                <option value="under_review">Under Review</option>
               </select>
             </div>
 
@@ -190,140 +210,150 @@ export const EditTaskModal = ({
   onSubmit,
   task,
   setTask,
-  users,
   role,
 }) => {
   if (!show) return null;
   const permissions = control_access[role] || control_access.viewer;
-  const readOnly = !permissions.edit;
+
+  // if task is undefined or null, render nothing (safety)
+  if (!task) return null;
+
+  // compute whether the deadline is past (date-only) and set readOnly accordingly
+  const past = isPastDeadline(task);
+  const readOnly = !permissions.edit || past;
+
+  // prepare safe date values for date inputs
+  const assignedDateInput = formatDateInputValue(task.assigned_date);
+  const dueDateInput = formatDateInputValue(task.due_date);
 
   return (
-      <div className="bg-[#1e242c] rounded-lg p-8 w-full max-w-lg shadow-2xl">
-        <div className="flex justify-between items-start mb-6">
-          <h2 className="text-2xl font-bold text-gray-200">
-            {readOnly ? "View Task" : "Edit Task"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-200 cursor-pointer transition-colors"
-          >
-            ✕
-          </button>
+    <div className="bg-[#1e242c] rounded-lg p-8 w-full max-w-lg shadow-2xl">
+      <div className="flex justify-between items-start mb-6">
+        <h2 className="text-2xl font-bold text-gray-200">
+          {readOnly ? "View Task" : "Edit Task"}
+        </h2>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-200 cursor-pointer transition-colors"
+        >
+          ✕
+        </button>
+      </div>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (past) {
+            toast.error("This task is past its deadline and cannot be edited.");
+            return;
+          }
+          if (!permissions.edit) {
+            toast.error("You don't have permission to edit this task.");
+            return;
+          }
+          onSubmit(task);
+          onClose();
+        }}
+        className="space-y-5"
+      >
+        {/* Task Name */}
+        <div>
+          <label className="block text-gray-400 text-sm mb-2">Task Title</label>
+          <input
+            type="text"
+            value={task.task_name}
+            onChange={(e) => setTask({ ...task, task_name: e.target.value })}
+            readOnly={readOnly}
+            className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 disabled:opacity-60"
+          />
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (permissions.edit) {
-              onSubmit(task);
-              onClose();
+        {/* Description */}
+        <div>
+          <label className="block text-gray-400 text-sm mb-2">Description</label>
+          <textarea
+            value={task.task_description}
+            onChange={(e) =>
+              setTask({ ...task, task_description: e.target.value })
             }
-          }}
-          className="space-y-5"
-        >
-          {/* Task Name */}
+            readOnly={readOnly}
+            className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 h-28 resize-none disabled:opacity-60"
+          />
+        </div>
+
+        {/* Dates */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-gray-400 text-sm mb-2">
-              Task Title
+              Assigned Date
             </label>
             <input
-              type="text"
-              value={task.task_name}
-              onChange={(e) => setTask({ ...task, task_name: e.target.value })}
-              readOnly={readOnly}
-              className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 disabled:opacity-60"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-gray-400 text-sm mb-2">
-              Description
-            </label>
-            <textarea
-              value={task.task_description}
+              type="date"
+              value={assignedDateInput}
               onChange={(e) =>
-                setTask({ ...task, task_description: e.target.value })
+                setTask({ ...task, assigned_date: e.target.value })
               }
               readOnly={readOnly}
-              className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 h-28 resize-none disabled:opacity-60"
-            />
-          </div>
-
-          
-
-          {/* Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">
-                Assigned Date
-              </label>
-              <input
-                type="date"
-                value={task.assigned_date?.split("T")[0]}
-                onChange={(e) =>
-                  setTask({ ...task, assigned_date: e.target.value })
-                }
-                readOnly={readOnly}
-                disabled={readOnly}
-                className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 disabled:opacity-60"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">
-                Due Date
-              </label>
-              <input
-                type="date"
-                value={task.due_date?.split("T")[0]}
-                onChange={(e) => setTask({ ...task, due_date: e.target.value })}
-                readOnly={readOnly}
-                disabled={readOnly}
-                className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 disabled:opacity-60"
-              />
-            </div>
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-gray-400 text-sm mb-2">Status</label>
-            <select
-              value={task.status}
-              onChange={(e) => setTask({ ...task, status: e.target.value })}
               disabled={readOnly}
               className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 disabled:opacity-60"
-            >
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="canceled">Canceled</option>
-              <option value="failed">Failed</option>
-              <option value="not_started">Not started</option>
-              <option value="under_review">Under Review</option>
-            </select>
+            />
           </div>
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-4 pt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 rounded-md border border-gray-500 text-gray-300 hover:bg-gray-700"
-            >
-              Close
-            </button>
-            {permissions.edit && (
-              <button
-                type="submit"
-                className="px-6 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-500"
-              >
-                Save Changes
-              </button>
+          <div>
+            <label className="block text-gray-400 text-sm mb-2">Due Date</label>
+            <input
+              type="date"
+              value={dueDateInput}
+              onChange={(e) => setTask({ ...task, due_date: e.target.value })}
+              readOnly={readOnly}
+              disabled={readOnly}
+              className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 disabled:opacity-60"
+            />
+            {past && (
+              <div className="text-sm text-yellow-400 mt-2">
+                Deadline passed — this task is view-only.
+              </div>
             )}
           </div>
-        </form>
-      </div>
+        </div>
+
+        {/* Status */}
+        <div>
+          <label className="block text-gray-400 text-sm mb-2">Status</label>
+          <select
+            value={task.status}
+            onChange={(e) => setTask({ ...task, status: e.target.value })}
+            disabled={readOnly}
+            className="w-full bg-[#2b3440] text-gray-200 rounded-md py-3 px-4 disabled:opacity-60"
+          >
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="not_started">Not started</option>
+          </select>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-end gap-4 pt-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-2 rounded-md border border-gray-500 text-gray-300 hover:bg-gray-700"
+          >
+            Close
+          </button>
+          {!past && permissions.edit && (
+            <button
+              type="submit"
+              className="px-6 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-500"
+            >
+              Save Changes
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
   );
 };
+
 
 export const DeleteModal = ({ 
   show, 
