@@ -25,59 +25,56 @@ table, tr, td {
 }
 
 .dpr-pdf-container {
+    border: 3px solid #000 !important;
     height: auto;
     width: 97%;
-    border: 1px solid black;
     border-bottom: none;
     display: grid;
     justify-content: center;
 }
 
 .header {
-    border-bottom: 1px solid black;
     display: grid;
     grid-template-areas: "logo daily-progress";
     grid-template-columns: 1fr 1fr;
 }
 
 .logo {
+    border-bottom: 1px solid #000 !important ;
     grid-area: logo;
     height: 50px;
-    width: 150px;
 }
 
 .daily-progress-report {
     grid-area: daily-progress;
     text-align: center;
-    border-top:None;
-    border-left: 1px solid; 
-    
+    border-left: 1px solid black;
+    border-top: none !important;
+    border-bottom: none !important;
 }
 
 .daily-progress-report-table {
     width: 100%;
     height: 100%;
-    border-collapse: collapse;
-    border-color: white;
+    border-top: white;
+    border-bottom: none !important;
+}
+
+.daily-progress-report-table tr:first-child td,
+.daily-progress-report-table tr:first-child th {
+  border-top: none !important;
+}
+
+/* also ensure the table itself doesn't draw a top border */
+.daily-progress-report-table {
+  border-top: none !important;
+  border-collapse: collapse;
 }
 
 .inside-labour-table-cotainer .bottom-of-labour-table {
     border-left: none !important;
 }
 
-.daily-progress-report > .daily {  
-    border-right: 1px solid black;
-    border-bottom: 1px solid black;
-}
-.daily-progress-report > .dynamic-date {
-    border-right: 1px solid black;
-}
-.daily-progress-report > .report {
-    border-bottom: 1px solid black;
-}
-.daily, .report, .dynamic-date {
-    font-size: 16px;
-}
 
 .project-label {
     font-size: 16px;
@@ -87,7 +84,7 @@ table, tr, td {
     transform: rotate(180deg);
     border-bottom: 1px solid black;
     border-top: 1px black;
-    border-right: 1px black;
+    border-left: 1px solid black;
     padding-bottom: 10px;
     padding-top: 10px;
 }
@@ -97,13 +94,12 @@ table, tr, td {
     position: relative;
 }
 
-
-
 .project-table {
     table-layout: fixed;
     width: 100%;
     border-collapse: collapse;
 }
+
 .project-table td:first-child,
 .project-table th:first-child {
     width: var(--first-col-width, auto);
@@ -111,6 +107,165 @@ table, tr, td {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.project-bottom {
+    display: flex;
+    margin-left: 24px;
+    border-left: 1px solid;
+    border-top: 1px solid;
+    width: calc(100%-25px);
+}
+
+.project-bottom > div {
+    border-left: 1px solid black;
+    font-size: 14px;
+}
+.durr{
+    width: 15%; 
+    padding-left: 5px; 
+    border-bottom: 0px"
+}
+
+.total-value,
+.durr,
+.blank,.total,
+#days-passed,
+.balance{
+    /* border-right: 1px solid black; */
+}
+
+.total-value{
+    width: 13.12%; 
+    padding-left: 5px;
+    border-bottom: none;
+}
+
+.blank{
+    width: 30%; 
+    padding-left: 5px;
+    border-bottom: none;
+}
+
+/* site condition ---------------------------------------------------- */
+
+.site {
+    display: flex;
+    margin-top: 0;
+    width: 100%;
+    border: none;
+    margin-bottom: 6px;
+    border-collapse: collapse;
+    
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+}
+
+.site-label{
+    width: auto;
+    font-size: 16px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    padding-bottom: 10px;
+    padding-top: 10px;
+    box-sizing: border-box;
+}
+
+
+
+.site-condition {
+    border-right: 1px solid black;
+    border-left: 2px solid black;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    /* padding: 5px; */
+    font-size: 14px;
+    width: 36.8%;
+    gap: 25px;
+}
+
+
+.from-to {
+    margin-right: -1px;
+    font-size: 12px;
+    width: 29%;
+    padding-left: 0px;
+    
+}
+
+.time-slot {
+    display: flex;
+    border-bottom: 1px solid black;
+    height: 26px;
+    width: 100%;
+}
+
+.time-slot:last-child {
+    border-bottom: none;
+}
+
+.time-slot span {
+    flex: 1;
+    text-align: center;
+    border-right: 1px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.time-slot span:last-child {
+    border-right: none;
+}   
+
+.slushy-dry {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 0px;
+    border-bottom: 0px;
+    border-right: 0px;
+    padding: 5px;
+    font-size: 14px;
+    flex: 1;
+    width: auto;
+}
+
+.normal-day,
+.rainy-day,
+.slushy-day,
+.dry-day {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+.normal-day-checkbox,
+.rainy-day-checkbox,
+.slushy-day-checkbox,
+.dry-day-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 0.5px solid black;
+}
+
+
+.slushy-dry {
+    border-left: 1px solid black;
+}
+
+
+
+
+
+.labour-table-lable {
+    width: auto;
+    font-size: 16px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
 
 #displayTable {
     table-layout: fixed;
@@ -133,7 +288,7 @@ table, tr, td {
     border-top: 0px;
     border-left: 0px;
     border-right: 0px;
-    margin-top: 10px;
+    margin-top: 7px;
 }
 
 /* Table styling for 4-column layout */
@@ -258,115 +413,8 @@ table, tr, td {
     flex-direction: column;
     flex: 1;
 }
-.project-bottom {
-    display: flex;
-    margin-left: 25px;
-    border-bottom: 1px solid black;
-    width: calc(100%-25px);
-}
-.project-bottom > div {
-    border-bottom: 1px solid black;
-    border-left: 1px solid black;
-    font-size: 14px;
-}
-
-.site {
-    display: flex;
-    margin-top: 0;
-    width: 100%;
-    gap: 0px;
-    border: none;
-}
-
-.site-label,
-.labour-table-lable {
-    width: auto;
-    font-size: 16px;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    padding-bottom: 10px;
-    padding-top: 10px;
-}
-
-.site-label{
-    border-bottom: 1px solid black;
-    border-top: 1px solid black;
-}
-
-.site-condition {
-    border-right: 1px solid black;
-    border-top: 0px solid black;
-    border-left: 1px solid black;
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    padding: 5px;
-    font-size: 14px;
-    width: 30%;
-    gap: 25px;
-}
 
 
-.from-to {
-    
-    font-size: 12px;
-    width: 40%;
-    padding: 0;
-}
-
-.time-slot {
-    display: flex;
-    border-bottom: 1px solid black;
-    height: 20px;
-}
-
-.time-slot:last-child {
-    border-bottom: none;
-}
-
-.time-slot span {
-    flex: 1;
-    text-align: center;
-    border-right: 1px solid black;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.time-slot span:last-child {
-    border-right: none;
-}   
-
-.slushy-dry {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid black;
-    border-top: 0px;
-    border-bottom: 0px;
-    border-right: 0px;
-    padding: 5px;
-    font-size: 14px;
-    width: 30%;
-}
-
-.normal-day,
-.rainy-day,
-.slushy-day,
-.dry-day {
-    display: flex;
-    flex-direction: row;
-    gap: 5px;
-}
-
-.normal-day-checkbox,
-.rainy-day-checkbox,
-.slushy-day-checkbox,
-.dry-day-checkbox {
-    width: 20px;
-    height: 20px;
-    border: 0.5px solid black;
-}
 img {
     width: 150px;
     height: 50px;
@@ -687,35 +735,7 @@ button:active {
 }
 /* End of file */
 
-/* FIX 1px border misalignment in SITE row */
-.site,
-.site-label,
-.site-condition,
-.from-to,
-.slushy-dry {
-    border-top: 1px solid black;
-    border-bottom: 1px solid black;
-}
-
-.site-label {
-    border-left: 1px solid black;
-}
-
-.site-condition {
-    border-left: none;
-    border-right: 1px solid black;
-}
-
-.from-to {
-    border-left: none;
-    border-right: 1px solid black;
-}
 
 
-
-/* Make only the outer border darker */
-.dpr-pdf-container {
-    border: 3px solid #000 !important;
-}
 
 
