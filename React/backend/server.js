@@ -8,6 +8,7 @@ import ProjectRoutes from './ProjectAPI/Projects.js';
 import ReportRoutes from './ProjectAPI/Reports.js'
 import VendorRoutes from './VendorClientAPI/vendor.js'
 import TaskRoutes from './Tasks/task.js'
+import AttendanceRoutes from './Attendance/Attendance.js'
 import Admin from './Admin/Admin.js'
 import './config.js';
 import cookieParser from 'cookie-parser';
@@ -44,6 +45,7 @@ app.use('/project', ProjectRoutes);
 app.use("/report", ReportRoutes); 
 app.use("/vendor_api", VendorRoutes);
 app.use("/tasks", TaskRoutes);
+app.use("/attendance", AttendanceRoutes);
 app.use("/admin", Admin);
 
 app.get('/', (req, res) => {
