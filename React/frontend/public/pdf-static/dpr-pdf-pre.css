@@ -1,0 +1,721 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family:'Poppins', Arial, sans-serif;
+    border-collapse: collapse;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+table, tr, td {
+    border: 1px solid black;
+    border-right: none;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+#pdf-container {
+    width: 100%;
+}
+
+.dpr-pdf-container {
+    height: auto;
+    width: 97%;
+    border: 1px solid black;
+    border-bottom: none;
+    display: grid;
+    justify-content: center;
+}
+
+.header {
+    border-bottom: 1px solid black;
+    display: grid;
+    grid-template-areas: "logo daily-progress";
+    grid-template-columns: 1fr 1fr;
+}
+
+.logo {
+    grid-area: logo;
+    height: 50px;
+    width: 150px;
+}
+
+.daily-progress-report {
+    grid-area: daily-progress;
+    text-align: center;
+    border-top:None;
+    border-left: 1px solid; 
+    
+}
+
+.daily-progress-report-table {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    border-color: white;
+}
+
+.inside-labour-table-cotainer .bottom-of-labour-table {
+    border-left: none !important;
+}
+
+.daily-progress-report > .daily {  
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+}
+.daily-progress-report > .dynamic-date {
+    border-right: 1px solid black;
+}
+.daily-progress-report > .report {
+    border-bottom: 1px solid black;
+}
+.daily, .report, .dynamic-date {
+    font-size: 16px;
+}
+
+.project-label {
+    font-size: 16px;
+    text-align: center;
+    writing-mode: vertical-rl;
+    width: 30px;
+    transform: rotate(180deg);
+    border-bottom: 1px solid black;
+    border-top: 1px black;
+    border-right: 1px black;
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+.project-left {
+    display: flex;
+    position: relative;
+}
+
+
+
+.project-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+}
+.project-table td:first-child,
+.project-table th:first-child {
+    width: var(--first-col-width, auto);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#displayTable {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    flex: 1;
+}
+#displayTable th,
+#displayTable td {
+    padding: 4px;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+/* === Today/Tomorrow Planning Tables - FIXED COLUMN WIDTHS === */
+.today-tomorrow-table-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    margin-top: 10px;
+}
+
+/* Table styling for 4-column layout */
+#today-table,
+#tomorrow-table {
+    width: 50%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+#today-table {
+    border-right: 1px solid #000;
+}
+
+/* Header styling */
+.today-planning-header,
+.tomorrow-planning-header {
+    font-weight: bold;
+    padding: 8px;
+    border-bottom: 2px solid #000;
+    font-size: 14px;
+}
+
+/* Table cell sizing with consistent heights */
+#today-table th,
+#today-table td,
+#tomorrow-table th,
+#tomorrow-table td {
+    border: 1px solid #000;
+    padding: 4px;
+    text-align: center;
+    word-wrap: break-word;
+    overflow: hidden;
+    height: 45px; /* Consistent row height */
+    min-height: 45px;
+    max-height: 45px;
+    line-height: 1.2; /* Better text alignment */
+    vertical-align: middle;
+}
+
+/* FIXED: Specific column widths - 50% 25% 12.5% 12.5% */
+#today-table th:nth-child(1),
+#today-table td:nth-child(1),
+#tomorrow-table th:nth-child(1),
+#tomorrow-table td:nth-child(1) {
+    width: 50%; /* First column - 50% of table */
+    text-align: center;
+}
+#today-table th:nth-child(1),
+#today-table td:nth-child(1){
+    text-align: center;
+}
+
+#today-table th:nth-child(2),
+#today-table td:nth-child(2),
+#tomorrow-table th:nth-child(2),
+#tomorrow-table td:nth-child(2) {
+    width: 25%; /* Second column - 25% of table */
+}
+
+#today-table th:nth-child(3),
+#today-table td:nth-child(3),
+#tomorrow-table th:nth-child(3),
+#tomorrow-table td:nth-child(3) {
+    width: 12.5%; /* Third column - 12.5% of table */
+}
+
+#today-table th:nth-child(4),
+#today-table td:nth-child(4),
+#tomorrow-table th:nth-child(4),
+#tomorrow-table td:nth-child(4) {
+    width: 12.5%; /* Fourth column - 12.5% of table */
+    border-right-width: 0px;
+}
+
+/* Ensure table layout is fixed */
+#today-table,
+#tomorrow-table {
+    table-layout: fixed;
+}
+
+/* Responsive text for small columns - Smaller fonts for better fit */
+#today-table th,
+#tomorrow-table th {
+    font-size: 11px;
+    font-weight: bold;
+}
+
+#today-table td,
+#tomorrow-table td {
+    font-size: 14px;
+}
+
+#today-table td:nth-child(3),
+#today-table td:nth-child(4),
+#tomorrow-table td:nth-child(3),
+#tomorrow-table td:nth-child(4) {
+    font-size: 11px;
+    padding: 2px 1px;
+}
+
+/* Force consistent row heights for all rows */
+#today-table tbody tr,
+#tomorrow-table tbody tr {
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px;
+}
+
+/* === END of Today/Tomorrow Planning Tables Section === */
+
+.labour-table-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 200px;
+}
+.inside-labour-table-cotainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.project-bottom {
+    display: flex;
+    margin-left: 25px;
+    border-bottom: 1px solid black;
+    width: calc(100%-25px);
+}
+.project-bottom > div {
+    border-bottom: 1px solid black;
+    border-left: 1px solid black;
+    font-size: 14px;
+}
+
+.site {
+    display: flex;
+    margin-top: 0;
+    width: 100%;
+    gap: 0px;
+    border: none;
+}
+
+.site-label,
+.labour-table-lable {
+    width: auto;
+    font-size: 16px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+.site-label{
+    border-bottom: 1px solid black;
+    border-top: 1px solid black;
+}
+
+.site-condition {
+    border-right: 1px solid black;
+    border-top: 0px solid black;
+    border-left: 1px solid black;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    padding: 5px;
+    font-size: 14px;
+    width: 30%;
+    gap: 25px;
+}
+
+
+.from-to {
+    
+    font-size: 12px;
+    width: 40%;
+    padding: 0;
+}
+
+.time-slot {
+    display: flex;
+    border-bottom: 1px solid black;
+    height: 20px;
+}
+
+.time-slot:last-child {
+    border-bottom: none;
+}
+
+.time-slot span {
+    flex: 1;
+    text-align: center;
+    border-right: 1px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.time-slot span:last-child {
+    border-right: none;
+}   
+
+.slushy-dry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid black;
+    border-top: 0px;
+    border-bottom: 0px;
+    border-right: 0px;
+    padding: 5px;
+    font-size: 14px;
+    width: 30%;
+}
+
+.normal-day,
+.rainy-day,
+.slushy-day,
+.dry-day {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+.normal-day-checkbox,
+.rainy-day-checkbox,
+.slushy-day-checkbox,
+.dry-day-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 0.5px solid black;
+}
+img {
+    width: 150px;
+    height: 50px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    width: 100%;
+}
+button {
+    width: auto;
+    height: 50px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+button:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#labourTable,
+.bottom-of-labour-table {
+    margin-top: auto;
+    width: 100%;
+}
+
+#displayTable th:nth-child(1),
+#displayTable td:nth-child(1) {
+    width: 15%;
+    min-width: 15%;
+}
+#displayTable th:nth-child(12),
+#displayTable td:nth-child(12) {
+    width: 15%;
+    min-width: 15%;
+}
+#displayTable th:nth-child(n+2):nth-child(-n+11),
+#displayTable td:nth-child(n+2):nth-child(-n+11) {
+    white-space: nowrap;
+    padding: 0 8px;
+}
+
+.bottom-of-labour-table td:nth-child(1) { width: 22%; }
+.bottom-of-labour-table td:nth-child(2) { width: 14%; }
+.bottom-of-labour-table td:nth-child(3) { width: 35%; }
+.bottom-of-labour-table td:nth-child(4) { width: 14%; }
+.bottom-of-labour-table td:nth-child(5) { width: 15%; }
+
+.additional-remarks-container {
+    display: flex;
+    flex-direction: column;
+}
+.events-remarks {
+    display: flex;
+    flex-direction: row;
+    border: 2px solid black;
+}
+.remarks-content-container {
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+    flex: 6;
+}
+.remarks {
+    display: flex;
+    flex-direction: row;
+}
+.remarks-label {
+    border: 1px solid black;
+    flex: 0.1;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+.remarks-content {
+    border: 1px solid black;
+    background-color: #f9f9f9;
+}
+
+.prepared-by,.signature {
+    flex: 1;
+    border-left: 1px solid black;
+    border-right: 0px;
+    border-bottom: 1px solid black;
+    border-top: 0px;
+}
+.distribution {
+    border-left: 0px solid black;
+    flex: 1;
+    border-right: 0px;
+    border-bottom: 1px solid black;
+    border-top: 0px;
+    padding: 10px;
+}
+.events-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    border: 1px solid black;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    flex: 0.1;
+    text-align: center;
+}
+.events-container {
+    flex: 9.9;
+    border-left: 0px;
+    border-top: 0px;
+}
+.events-field {
+    border: 1px solid black;
+    display: flex;
+    justify-content: center;
+}
+.remarks-content-container {
+    display: flex;
+    flex-direction: column;
+}
+.remarks-content {
+    border: 1px solid #e0e0e0;
+    border: 1px solid black;
+    background-color: #f9f9f9;
+}
+.events-container {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+.events-content {
+    border: 1px solid black;
+    background-color: #f9f9f9;
+    padding: 0px;
+    margin-bottom: 0px;
+    min-height: 20px;
+}
+
+.daily-progress-report-table tr:nth-child(2) td:nth-child(2) {
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
+    box-sizing: border-box;
+}
+
+#displayTable th{
+    border: 1px solid black !important;
+}
+
+/* Print-specific adjustments */
+@media print {
+    /* Today/Tomorrow Tables Print Styles */
+    #today-table th,
+    #today-table td,
+    #tomorrow-table th,
+    #tomorrow-table td {
+        font-size: 10px !important;
+        height: 35px !important;
+        min-height: 35px !important;
+        max-height: 45px !important;
+        line-height: 1.1 !important;
+        padding: 2px 3px !important;
+        border: 1px solid #000 !important;
+    }
+
+    #today-table tbody tr,
+    #tomorrow-table tbody tr {
+        height: 20px !important;
+        min-height: 20px !important;
+        max-height: 20px !important;
+    }
+
+    .today-planning-header,
+    .tomorrow-planning-header {
+        font-size: 10px !important;
+        padding: 4px !important;
+    }
+
+    #today-table td:nth-child(3),
+    #today-table td:nth-child(4),
+    #tomorrow-table td:nth-child(3),
+    #tomorrow-table td:nth-child(4) {
+        font-size: 10px !important;
+        padding: 1px !important;
+    }
+
+    /* FIXED: Column widths for print - 50% 25% 12.5% 12.5% */
+    #today-table th:nth-child(1),
+    #today-table td:nth-child(1),
+    #tomorrow-table th:nth-child(1),
+    #tomorrow-table td:nth-child(1) {
+        width: 50% !important;
+        font-size: 10px;
+    }
+
+    #today-table th:nth-child(2),
+    #today-table td:nth-child(2),
+    #tomorrow-table th:nth-child(2),
+    #tomorrow-table td:nth-child(2) {
+        width: 25% !important;
+        font-size: 10px;
+    }
+
+    #today-table th:nth-child(3),
+    #today-table td:nth-child(3),
+    #tomorrow-table th:nth-child(3),
+    #tomorrow-table td:nth-child(3) {
+        width: 12.5% !important;
+    }
+
+    #today-table th:nth-child(4),
+    #today-table td:nth-child(4),
+    #tomorrow-table th:nth-child(4),
+    #tomorrow-table td:nth-child(4) {
+        width: 12.5% !important;
+    }
+
+    /* Ensure proper text wrapping in small columns */
+    #today-table td,
+    #tomorrow-table td {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+    }
+
+    /* Specific adjustments for quantity and unit columns */
+    #today-table td:nth-child(3),
+    #today-table td:nth-child(4),
+    #tomorrow-table td:nth-child(3),
+    #tomorrow-table td:nth-child(4) {
+        text-align: center;
+    }
+
+    .project-bottom{
+        margin-left: 3.58%;
+    }
+    .header{
+        border-bottom: none;
+    }
+    .commulative {
+        font-size: 7px;
+        width: auto;
+        white-space: nowrap;
+    }
+    .slushy-dry{
+        font-size: 10px;
+    }
+    .site-condition{
+        font-size: 10px;
+    }
+    .prepared-by,.signature,.distribution{
+        font-size: 10px;
+    }
+    .planning-table-header{
+        font-size: 5px;
+    }
+    #displayTable {
+        table-layout: fixed;
+        width: 100%;
+    }
+    #today-table th:nth-child(2),
+    #today-table td:nth-child(2),
+    #tomorrow-table th:nth-child(2),
+    #tomorrow-table td:nth-child(2) {
+        width: 25% !important;
+        min-width: 25% !important;
+        max-width: 25% !important;
+        text-align: center;
+    }
+    #today-table th:nth-child(1),
+    #today-table td:nth-child(1),
+    #tomorrow-table th:nth-child(1),
+    #tomorrow-table td:nth-child(1) {
+        width: 50% !important;
+        min-width: 50% !important;
+        max-width: 50% !important;
+        text-align: center;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+    #today-table {
+        border-right: none;
+    }
+    .labour-table-container{
+        min-height: unset;
+        height: auto;
+    }
+    .inside-labour-table-cotainer {
+        page-break-inside: avoid;
+    }
+    .project-start-date,.project-completion{
+        font-size: 10px;
+    }
+    
+    /* General print optimizations */
+    #displayTable th,
+    #displayTable td {
+        font-size: 10px;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        padding: 2px 4px;
+        line-height: 1.2;
+        border: 1px solid black !important;
+    }
+}
+/* End of file */
+
+/* FIX 1px border misalignment in SITE row */
+.site,
+.site-label,
+.site-condition,
+.from-to,
+.slushy-dry {
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+.site-label {
+    border-left: 1px solid black;
+}
+
+.site-condition {
+    border-left: none;
+    border-right: 1px solid black;
+}
+
+.from-to {
+    border-left: none;
+    border-right: 1px solid black;
+}
+
+
+
+/* Make only the outer border darker */
+.dpr-pdf-container {
+    border: 3px solid #000 !important;
+}
+
+
