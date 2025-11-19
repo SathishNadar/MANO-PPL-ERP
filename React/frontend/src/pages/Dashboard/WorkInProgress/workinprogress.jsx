@@ -33,7 +33,7 @@ const WorkInProgress = () => {
 
   const [dateOrder, setDateOrder] = useState("asc");
   const [statusSort, setStatusSort] = useState("none");
-  const statusSequence = ["none", "Not Started", "In progress", "Completed"];
+  const statusSequence = ["none", "not_started", "in_progress", "completed"];
 
   // cycle status filter
   const cycleStatusSort = () => {
