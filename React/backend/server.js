@@ -14,14 +14,16 @@ import './config.js';
 import cookieParser from 'cookie-parser';
 
 const app = express();
-const PORT = 5001;
-const public_ip = process.env.URI;
+const PORT = process.env.PORT;
+const public_ip = process.env.URI || '127.0.0.1';
 
 const allowedOrigins = [
   `http://localhost:5173`,
   `http://127.0.0.1:5173`,
   `http://${public_ip}:5173`,
-  // 'https://my-frontend-domain.com'
+  'https://erp.mano.co.in',
+  'https://mano.co.in',
+  'https://www.mano.co.in'
 ];
 
 app.use(cookieParser());
@@ -52,7 +54,7 @@ app.get('/', (req, res) => {
   res.send('Backend is running 🚀');
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Backend server listening on http://0.0.0.0:${PORT}`);
+app.listen(PORT, '127.0.0.1', () => {
+  console.log(`Backend server listening on http://127.0.0.1:${PORT}`);
 }); 
 
