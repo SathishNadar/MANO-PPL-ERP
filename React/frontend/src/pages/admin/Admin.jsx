@@ -3,8 +3,8 @@ import Sidebar from "../SidebarComponent/sidebar";
 import { DeleteModal } from "../Dashboard/WorkInProgress/TaskModals";
 import { toast } from "react-toastify";
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+
 
 const Admin = () => {
   const [users, setUsers] = useState([]);
@@ -30,7 +30,7 @@ const Admin = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch(`http://${API_URI}:${PORT}/admin/users`, {
+        const res = await fetch(`${API_BASE}/admin/users`, {
           credentials: "include",
         });
         const data = await res.json();
@@ -73,8 +73,7 @@ const Admin = () => {
 
   const confirmDelete = async () => {
     try {
-      await fetch(
-        `http://${API_URI}:${PORT}/admin/user/${selectedUser.user_id}`,
+      await fetch( `${API_BASE}/admin/user/${selectedUser.user_id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -193,8 +192,7 @@ const Admin = () => {
 
     try {
       console.log(JSON.stringify(payload));
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/admin/user/${editingUser.user_id}`,
+      const res = await fetch(`${API_BASE}/admin/user/${editingUser.user_id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
