@@ -10,7 +10,6 @@ export default defineConfig({
   hmr: {
     protocol: 'wss',
     host: 'erp.mano.co.in',
-    port: 443,
     clientPort: 443
   },
   cors: true
