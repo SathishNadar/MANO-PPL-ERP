@@ -1,3 +1,6 @@
+import { createServer } from 'http';
+import { Server as SocketIO } from 'socket.io';
+
 import express from 'express';
 import cors from 'cors'
 import LoginRoutes from './AuthAPI/LoginAPI.js'
@@ -54,7 +57,44 @@ app.get('/', (req, res) => {
   res.send('Backend is running 🚀');
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Backend server listening on http://0.0.0.0:${PORT}`);
-}); 
+const HTTP_PORT = Number(process.env.PORT) || 5001;
+// create http server wrapping express app
+const server = createServer(app);
 
+// create socket.io instance attached to that server
+const io = new SocketIO(server, {
+  path: '/socket.io/',                // must match nginx proxy location
+  cors: {
+    origin: [
+      'https://erp.mano.co.in',
+      'https://mano.co.in',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+    ],
+    credentials: true
+  },
+  // you can tune pingInterval/pingTimeout if needed
+});
+
+// basic connection handler
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id, 'from', socket.handshake.address);
+
+  // example: server -> client
+  socket.emit('welcome', { msg: 'welcome to socket server' });
+
+  // example: receive client message
+  socket.on('client-msg', (payload) => {
+    console.log('client-msg', payload);
+    // broadcast to others if required:
+    socket.broadcast.emit('msg-broadcast', payload);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('Socket disconnected', socket.id, reason);
+  });
+});
+
+server.listen(HTTP_PORT, '127.0.0.1', () => {
+  console.log(`Backend server listening at http://127.0.0.1:${HTTP_PORT}`);
+});

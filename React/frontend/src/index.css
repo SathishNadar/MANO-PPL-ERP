@@ -1,19 +1,18 @@
-@import "tailwindcss/preflight";
-@tailwind utilities;
 @import "tailwindcss";
 
+/* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1f2937; 
+  background: #1f2937;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #24395b; 
+  background-color: #24395b;
   border-radius: 10px;
-  border: 2px solid #1f2937; 
+  border: 2px solid #1f2937;
 }
 
 * {
@@ -30,4 +29,3 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
-
