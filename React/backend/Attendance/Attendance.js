@@ -5,7 +5,7 @@ import { authenticateJWT } from "../AuthAPI/LoginAPI.js";
 const router = express.Router();
 
 // POST /attendance/checkin
-router.post("/checkin", authenticateJWT, async (req, res) => {
+router.post("/timein", authenticateJWT, async (req, res) => {
   try {
     const user_id = req.user.user_id;
     const { latitude, longitude } = req.body;
@@ -40,7 +40,7 @@ router.post("/checkin", authenticateJWT, async (req, res) => {
 });
 
 // POST /attendance/checkout
-router.post("/checkout", authenticateJWT, async (req, res) => {
+router.post("/timeout", authenticateJWT, async (req, res) => {
   try {
     const user_id = req.user.user_id;
     const { latitude, longitude } = req.body;
