@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Calendar from "../../SmolComponents/calendar";
 import Sidebar from "../../SidebarComponent/sidebar";
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+
 function ProjectDescription() {
   const navigate = useNavigate();
   const { projectId } = useParams();
@@ -9,14 +12,12 @@ function ProjectDescription() {
   const [dprs, setDprs] = useState([]);
   const [usersMap, setUsersMap] = useState({});
 
-  const API_URI = import.meta.env.VITE_API_URI;
-  const PORT = import.meta.env.VITE_BACKEND_PORT;
 
   useEffect(() => {
     if (!projectId) return;
 
     // fetch project
-    fetch(`http://${API_URI}:${PORT}/project/getProject/${projectId}`, {
+    fetch(`${API_BASE}/project/getProject/${projectId}`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -26,7 +27,7 @@ function ProjectDescription() {
       .catch((err) => console.error("Failed to load project:", err));
 
     // fetch DPRs + role
-    fetch(`http://${API_URI}:${PORT}/report/Alldpr/${projectId}`, {
+    fetch(`${API_BASE}/report/Alldpr/${projectId}`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -54,7 +55,7 @@ function ProjectDescription() {
     // fetch users for mapping ids -> names (if permitted)
     const fetchUsers = async () => {
     try {
-      const res = await fetch(`http://${API_URI}:${PORT}/admin/users`, {
+      const res = await fetch(`${API_BASE}/admin/users`, {
         credentials: "include",
       });
       const data = await res.json();

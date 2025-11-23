@@ -4,8 +4,7 @@ import { useLocation } from "react-router-dom";
 import Sidebar from '../../SidebarComponent/sidebar'
 import VendorCreate from "./VendorCreate";
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 const CategoryDict = {
   2: "Contractor",
@@ -35,7 +34,7 @@ function VendorList() {
 
   const fetchMetadata = async () => {
     try {
-      const response = await fetch(`http://${API_URI}:${PORT}/vendor_api/metadata/`, {
+      const response = await fetch(`${API_BASE}/vendor_api/metadata/`, {
         credentials: 'include',});
       if (!response.ok) throw new Error("Network response was not ok");
 
@@ -50,7 +49,7 @@ function VendorList() {
 
   const fetchVendors = async () => {
     try {
-      const res = await fetch(`http://${API_URI}:${PORT}/vendor_api/`, {
+      const res = await fetch(`${API_BASE}/vendor_api/`, {
         method: "POST",
         headers: {"Content-Type": "application/json",},
         credentials: 'include',

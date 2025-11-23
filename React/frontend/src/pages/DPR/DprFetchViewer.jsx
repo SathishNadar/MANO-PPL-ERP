@@ -3,10 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ToastContainer,toast } from "react-toastify";
 import "./DprFetchViewer.css";
 
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+
 const DprFetchViewer = () => {
   const navigate = useNavigate();
-  const API_URI = import.meta.env.VITE_API_URI;
-  const PORT = import.meta.env.VITE_BACKEND_PORT;
 
   const { projectId, dprId } = useParams();
   const [projectData, setProjectData] = useState(null);
@@ -22,8 +22,7 @@ const DprFetchViewer = () => {
     const pid = projectId;
 
     try {
-      const response = await fetch(
-        `http://${API_URI}:${PORT}/project/getProject/${pid}`,
+      const response = await fetch(`${API_BASE}/project/getProject/${pid}`,
         {
           credentials: "include",
         }
@@ -235,8 +234,7 @@ const DprFetchViewer = () => {
     //#endregion
 
     try {
-      const response = await fetch(
-        `http://${API_URI}:${PORT}/report/getDPR/${dprId}`,
+      const response = await fetch(`${API_BASE}/report/getDPR/${dprId}`,
         { credentials: "include" }
       );
       const { data } = await response.json();
@@ -361,8 +359,7 @@ const DprFetchViewer = () => {
     try {
       setSubmitting(true);
 
-      const response = await fetch(
-        `http://${API_URI}:${PORT}/report/submit/${dprId}`,
+      const response = await fetch(`${API_BASE}/report/submit/${dprId}`,
         {
           credentials: "include",
         }

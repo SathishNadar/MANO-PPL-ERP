@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function DprEditor() {
   const { projectId } = useParams();
@@ -137,7 +136,7 @@ function DprEditor() {
     "electrical",
     "painter",
     "welder",
-    "carp",
+    "carpenter",
     "fitter",
     "gypsum",
     "plumber",
@@ -154,8 +153,7 @@ function DprEditor() {
     async function fetchProject() {
       setLoading(true);
       try {
-        const res = await fetch(
-          `http://${API_URI}:${PORT}/project/getProject/${projectId}`,
+        const res = await fetch(`${API_BASE}/project/getProject/${projectId}`,
           { credentials: "include" }
         );
         const data = await res.json();
@@ -217,10 +215,10 @@ function DprEditor() {
     async function fetchRoles() {
       try {
         const [rolesRes, usersRes] = await Promise.all([
-          fetch(`http://${API_URI}:${PORT}/project/getuserroles/${projectId}`, {
+          fetch(`${API_BASE}/project/getuserroles/${projectId}`, {
             credentials: "include",
           }),
-          fetch(`http://${API_URI}:${PORT}/Project/eligibleUsers`, {
+          fetch(`${API_BASE}/Project/eligibleUsers`, {
             credentials: "include",
           }),
         ]);
@@ -308,8 +306,7 @@ function DprEditor() {
     const userRoleChanges = buildUserRoleUpdatePayload(initialRoles, userRoles);
 
     try {
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/project/updateProject/${projectId}`,
+      const res = await fetch(`${API_BASE}/project/updateProject/${projectId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

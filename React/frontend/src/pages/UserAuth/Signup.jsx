@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
 
-const API_URI = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 
 const countryCodes = [

@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function DprUpdateSubmit() {
   const { projectId, dprId } = useParams();
@@ -109,8 +108,7 @@ const setEventVisit = (idx, val) =>
     let mounted = true;
 
     async function fetchProject() {
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/project/getProject/${projectId}`,
+      const res = await fetch(`${API_BASE}/project/getProject/${projectId}`,
         { credentials: "include" }
       );
       const { data } = await res.json();
@@ -119,8 +117,7 @@ const setEventVisit = (idx, val) =>
     }
 
     async function fetchDpr() {
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/report/getDPR/${dprId}`,
+      const res = await fetch(`${API_BASE}/report/getDPR/${dprId}`,
         { credentials: "include" }
       );
       const { data } = await res.json();
@@ -372,8 +369,7 @@ const setEventVisit = (idx, val) =>
 
       console.log("FINAL PATCH SENT:", JSON.stringify(patch, null, 2));
 
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/report/updateDPR/${dprId}`,
+      const res = await fetch(`${API_BASE}/report/updateDPR/${dprId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -624,7 +620,7 @@ const setEventVisit = (idx, val) =>
     try {
       setSubmitting(true);
 
-      const response = await fetch(`http://${API_URI}:${PORT}/report/submit/${dprId}`, {
+      const response = await fetch(`${API_BASE}/report/submit/${dprId}`, {
         credentials:"include"
       });
 

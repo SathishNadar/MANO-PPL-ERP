@@ -5,13 +5,15 @@ import Sidebar from "../../SidebarComponent/sidebar";
 import "material-icons/iconfont/material-icons.css";
 import "./ProjectsView.css";
 import ProjectCreate from "./ProjectCreate";
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+
 const ProjectsView = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [showCreateProject, setCreateProject] = useState(false);
   const userId = JSON.parse(localStorage.getItem("session"))?.user_id;
-  const API_URI = import.meta.env.VITE_API_URI;
-  const PORT = import.meta.env.VITE_BACKEND_PORT;
+
 
   // returns progress percent as a NUMBER (0-100) based on elapsed/total days
   const getProgressPercentage = (project) => {
@@ -33,7 +35,7 @@ const ProjectsView = () => {
     const fetchProjects = async () => {
       try {
         const response = await fetch(
-          `http://${API_URI}:${PORT}/project/userProjects/${userId}`,
+          `${API_BASE}/project/userProjects/${userId}`,
           {
             credentials: "include",
           }

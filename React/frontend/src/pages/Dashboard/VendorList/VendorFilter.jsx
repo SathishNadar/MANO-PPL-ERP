@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react'
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function VendorFilter({ onClose, onApplyFilters }) {
   const [jobNatures, setJobNatures] = useState([]);
@@ -13,7 +12,7 @@ function VendorFilter({ onClose, onApplyFilters }) {
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const response = await fetch(`http://${API_URI}:${PORT}/vendor_api/metadata/`, {
+        const response = await fetch(`${API_BASE}/vendor_api/metadata/`, {
           credentials: 'include',
           });
         if (!response.ok) throw new Error("Network response was not ok");

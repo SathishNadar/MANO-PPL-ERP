@@ -39,8 +39,7 @@ import { useParams } from "react-router-dom";
 import Sidebar from "../SidebarComponent/sidebar";
 
 function DailyProgressReport() {
-  const API_URI = import.meta.env.VITE_API_URI;
-  const PORT = import.meta.env.VITE_BACKEND_PORT;
+  const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
   const { projectId } = useParams();
   const [project, setProject] = useState(null);
@@ -78,8 +77,7 @@ function DailyProgressReport() {
     if (!projectId) return;
     const fetchProjectDetails = async () => {
       try {
-        const response = await fetch(
-          `http://${API_URI}:${PORT}/project/getProject/${projectId}`,
+        const response = await fetch(`${API_BASE}/project/getProject/${projectId}`,
           {
             credentials: "include",
           }
@@ -149,8 +147,7 @@ function DailyProgressReport() {
         }
         // --- Fetch last DPR for today's progress prefill ---
         try {
-          const dprResp = await fetch(
-            `http://${API_URI}:${PORT}/report/initDPR/${projectId}`,
+          const dprResp = await fetch(`${API_BASE}/report/initDPR/${projectId}`,
             {
               credentials: "include",
             }
@@ -304,8 +301,7 @@ function DailyProgressReport() {
       dpr_status: "pending", // or your default
     };
 
-    const response = await fetch(
-      `http://${API_URI}:${PORT}/report/insertDPR`,
+    const response = await fetch(`${API_BASE}/report/insertDPR`,
       {
         method: "POST",
         headers: {

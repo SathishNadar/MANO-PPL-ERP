@@ -5,8 +5,7 @@ import Fuse from "fuse.js";
 
 import { CreateTaskModal, EditTaskModal, DeleteModal } from "./TaskModals";
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 const WorkInProgress = () => {
   const [tasks, setTasks] = useState([]);
@@ -119,8 +118,7 @@ const WorkInProgress = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/tasks/controlled_users/${UserId}`,
+      const res = await fetch(`${API_BASE}/tasks/controlled_users/${UserId}`,
         { credentials: "include" }
       );
       const data = await res.json();
@@ -160,7 +158,7 @@ const WorkInProgress = () => {
         uidNum,
         typeof uidNum
       );
-      const res = await fetch(`http://${API_URI}:${PORT}/tasks/user/${uid}`, {
+      const res = await fetch(`${API_BASE}/tasks/user/${uid}`, {
         credentials: "include",
       });
 
@@ -193,7 +191,7 @@ const WorkInProgress = () => {
   const onCreate = async (task) => {
     try {
       const payload = { ...task, assigned_to: Number(task.assigned_to) };
-      const res = await fetch(`http://${API_URI}:${PORT}/tasks/`, {
+      const res = await fetch(`${API_BASE}/tasks/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -226,8 +224,7 @@ const WorkInProgress = () => {
         ...task,
         assigned_to: Number(task.assigned_to),
       };
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/tasks/${task.task_id}`,
+      const res = await fetch(`${API_BASE}/tasks/${task.task_id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -255,7 +252,7 @@ const WorkInProgress = () => {
   // Delete task
   const onRemove = async (taskId) => {
     try {
-      const res = await fetch(`http://${API_URI}:${PORT}/tasks/${taskId}`, {
+      const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
         method: "DELETE",
         credentials: "include",
       });

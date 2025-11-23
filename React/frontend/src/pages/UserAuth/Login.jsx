@@ -21,7 +21,7 @@ const LoginForm = ({ onSwitch }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_BASE}/auth/login/`, {
+      const response = await fetch(`${API_BASE}/auth/login/`, { 
         method: "POST",
         credentials: 'include',
         headers: { "Content-Type": "application/json" },

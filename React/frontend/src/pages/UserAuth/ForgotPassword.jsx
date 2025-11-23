@@ -46,7 +46,7 @@ const PasswordReset = () => {
     }
 
     // 1. Fetch email from backend
-    const emailRes = await fetch(`${API_BASE}/api/get-email`, {
+    const emailRes = await fetch(`${API_BASE}/api/get-email`, { 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: username.trim() }),

@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { ToastContainer, toast } from 'react-toastify';
 
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function VendorCreate({ onClose }) {
   // Add state for job natures and locations
@@ -32,7 +31,7 @@ function VendorCreate({ onClose }) {
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const response = await fetch(`http://${API_URI}:${PORT}/vendor_api/metadata/`, {
+        const response = await fetch(`${API_BASE}/vendor_api/metadata/`, {
           credentials: 'include',});
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
@@ -88,7 +87,7 @@ function VendorCreate({ onClose }) {
 
     try {
       console.log("Submitting vendor with payload:", payload);
-      const response = await fetch(`http://${API_URI}:${PORT}/vendor_api/add`, {
+      const response = await fetch(`${API_BASE}/vendor_api/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
