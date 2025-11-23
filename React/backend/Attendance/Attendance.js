@@ -74,10 +74,15 @@ router.post("/checkout", authenticateJWT, async (req, res) => {
   }
 });
 
-// GET /attendance/records (admin only)
-router.get("/records", authenticateJWT, async (req, res) => {
+
+// Admin attendance records with admin role check
+router.get("/records/admin", authenticateJWT, async (req, res) => {
   try {
-    const { user_id, date_from, date_to } = req.query;
+    if (req.user.title !== "admin") {
+      return res.status(403).json({ ok: false, message: "Access denied" });
+    }
+
+    const { user_id, date_from, date_to, limit = 50 } = req.query;
     let query = knexDB("attendance_records")
       .join("users", "attendance_records.user_id", "users.user_id")
       .select(
@@ -85,7 +90,8 @@ router.get("/records", authenticateJWT, async (req, res) => {
         "users.user_name",
         "users.email"
       )
-      .orderBy("check_in_time", "desc");
+      .orderBy("check_in_time", "desc")
+      .limit(Math.min(parseInt(limit), 100)); // max limit 100 to prevent abuse
 
     if (user_id) query = query.where("attendance_records.user_id", user_id);
     if (date_from) query = query.where("check_in_time", ">=", date_from);
@@ -98,5 +104,29 @@ router.get("/records", authenticateJWT, async (req, res) => {
     res.status(500).json({ ok: false, message: "Internal server error" });
   }
 });
+
+
+// Normal user fetch their own records with optional limit and date filter
+router.get("/records", authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const { date_from, date_to, limit = 50 } = req.query;
+
+    let query = knexDB("attendance_records")
+      .where("user_id", userId)
+      .orderBy("check_in_time", "desc")
+      .limit(Math.min(parseInt(limit), 100)); // max limit 100
+
+    if (date_from) query = query.where("check_in_time", ">=", date_from);
+    if (date_to) query = query.where("check_in_time", "<=", date_to);
+
+    const records = await query;
+    res.json({ ok: true, data: records });
+  } catch (err) {
+    console.error("User attendance records error:", err);
+    res.status(500).json({ ok: false, message: "Internal server error" });
+  }
+});
+
 
 export default router;
