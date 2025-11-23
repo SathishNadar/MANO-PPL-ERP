@@ -2,7 +2,10 @@
     padding: 0;
     margin: 0;
     box-sizing: border-box;
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+
     font-family:'Poppins', Arial, sans-serif;
+    font-size: 13px;
     border-collapse: collapse;
 }
 
@@ -16,7 +19,7 @@ table, tr, td {
     border: 1px solid black;
     border-right: none;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 20px;
 }
 
@@ -77,16 +80,17 @@ table, tr, td {
 
 
 .project-label {
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
     text-align: center;
     writing-mode: vertical-rl;
     width: 30px;
     transform: rotate(180deg);
     border-bottom: 1px solid black;
     border-top: 1px black;
-    border-left: 1px solid black;
     padding-bottom: 10px;
-    padding-top: 10px;
+    padding-left: 4px;
 }
 
 .project-left {
@@ -95,9 +99,11 @@ table, tr, td {
 }
 
 .project-table {
+    margin-left: -5px;
     table-layout: fixed;
     width: 100%;
     border-collapse: collapse;
+    border-left: 2px solid black;
 }
 
 .project-table td:first-child,
@@ -109,16 +115,16 @@ table, tr, td {
 }
 
 .project-bottom {
+    font-family:'Poppins', Arial, sans-serif;
     display: flex;
     margin-left: 24px;
     border-left: 1px solid;
     border-top: 1px solid;
-    width: calc(100%-25px);
+    width: calc(100%-24px);
 }
 
 .project-bottom > div {
     border-left: 1px solid black;
-    font-size: 14px;
 }
 .durr{
     width: 15%; 
@@ -153,21 +159,21 @@ table, tr, td {
     margin-top: 0;
     width: 100%;
     border: none;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     border-collapse: collapse;
-    
     border-top: 2px solid black;
     border-bottom: 2px solid black;
 }
 
 .site-label{
     width: auto;
-    font-size: 16px;
+    font-weight: 600;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    padding-bottom: 10px;
-    padding-top: 10px;
     box-sizing: border-box;
+    padding-right: 1px;
+    padding-top: 10px;
+    margin-right: 4px;
 }
 
 
@@ -179,7 +185,6 @@ table, tr, td {
     justify-content: space-evenly;
     align-items: center;
     /* padding: 5px; */
-    font-size: 14px;
     width: 36.8%;
     gap: 25px;
 }
@@ -225,7 +230,6 @@ table, tr, td {
     border-bottom: 0px;
     border-right: 0px;
     padding: 5px;
-    font-size: 14px;
     flex: 1;
     width: auto;
 }
@@ -258,12 +262,19 @@ table, tr, td {
 
 
 .labour-table-lable {
-    width: auto;
-    font-size: 16px;
+    /* position: relative;
+    top: 0.5px; */
+    display: flex;
+    width: 26px;
+    font-weight: 600;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    padding-bottom: 10px;
-    padding-top: 10px;
+    padding: 9px 1px 9px 0;
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+    border-left: 1px solid black;
+    align-items: center;
+    justify-content: center;
 }
 
 
@@ -273,6 +284,12 @@ table, tr, td {
     border-collapse: collapse;
     flex: 1;
 }
+
+#displayTable th{
+    border-left: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+
 #displayTable th,
 #displayTable td {
     padding: 4px;
@@ -280,15 +297,52 @@ table, tr, td {
     word-wrap: break-word;
 }
 
+#displayTable td:last-child,
+#displayTable th:last-child {
+    border-right: none !important;
+}
+
+
+.inside-labour-table-cotainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    border-top: 1px solid black ;
+    /* border-left: 1px solid black ; */
+    border-right: none;
+}
+
+
+.labour-table-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 200px;
+}
+
+.bottom-of-labour-table{
+    border-top: 1px solid black;
+    border-bottom: 2px solid black;
+    border-left: none;
+    margin-top: 3px;
+}
+
+.bottom-of-labour-table td:nth-child(1) { width: 35%; font-size: 11px;}
+.bottom-of-labour-table td:nth-child(2) { width: 15%; }
+.bottom-of-labour-table td:nth-child(3) { width: 35%; font-size: 11px;}
+.bottom-of-labour-table td:nth-child(4) { width: 15%; }
+
 /* === Today/Tomorrow Planning Tables - FIXED COLUMN WIDTHS === */
 .today-tomorrow-table-container {
     width: 100%;
     display: flex;
     flex-direction: row;
-    border-top: 0px;
+    border-top: 1px solid black;
     border-left: 0px;
     border-right: 0px;
-    margin-top: 7px;
+    margin-top: 8px;
 }
 
 /* Table styling for 4-column layout */
@@ -309,6 +363,7 @@ table, tr, td {
     font-weight: bold;
     padding: 8px;
     border-bottom: 2px solid #000;
+    border-top: 2px solid #000;
     font-size: 14px;
 }
 
@@ -322,9 +377,9 @@ table, tr, td {
     text-align: center;
     word-wrap: break-word;
     overflow: hidden;
-    height: 45px; /* Consistent row height */
-    min-height: 45px;
-    max-height: 45px;
+    height: 24px; 
+    /* min-height: 45px;
+    max-height: 45px; */
     line-height: 1.2; /* Better text alignment */
     vertical-align: middle;
 }
@@ -370,6 +425,9 @@ table, tr, td {
     table-layout: fixed;
 }
 
+#today-table{
+    border-left: 2px solid black;
+}
 /* Responsive text for small columns - Smaller fonts for better fit */
 #today-table th,
 #tomorrow-table th {
@@ -400,19 +458,7 @@ table, tr, td {
 
 /* === END of Today/Tomorrow Planning Tables Section === */
 
-.labour-table-container {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    min-height: 200px;
-}
-.inside-labour-table-cotainer {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
+
 
 
 img {
@@ -427,31 +473,9 @@ img {
     margin-top: 20px;
     width: 100%;
 }
-button {
-    width: auto;
-    height: 50px;
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-button:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-}
-button:active {
-    transform: scale(0.95);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
 
-#labourTable,
-.bottom-of-labour-table {
+
+#labourTable{
     margin-top: auto;
     width: 100%;
 }
@@ -472,11 +496,7 @@ button:active {
     padding: 0 8px;
 }
 
-.bottom-of-labour-table td:nth-child(1) { width: 22%; }
-.bottom-of-labour-table td:nth-child(2) { width: 14%; }
-.bottom-of-labour-table td:nth-child(3) { width: 35%; }
-.bottom-of-labour-table td:nth-child(4) { width: 14%; }
-.bottom-of-labour-table td:nth-child(5) { width: 15%; }
+
 
 .additional-remarks-container {
     display: flex;
@@ -487,12 +507,7 @@ button:active {
     flex-direction: row;
     border: 2px solid black;
 }
-.remarks-content-container {
-    display: flex;
-    flex-direction: column;
-    width: 70%;
-    flex: 6;
-}
+
 .remarks {
     display: flex;
     flex-direction: row;
@@ -502,36 +517,48 @@ button:active {
     flex: 0.1;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
+    font-weight: 600;
+    padding: 10px 5px 10px 0;
+
 }
 .remarks-content {
+    padding-left: 5px ;
     border: 1px solid black;
     background-color: #f9f9f9;
 }
 
-.prepared-by,.signature {
+.prepared-by{
     flex: 1;
-    border-left: 1px solid black;
-    border-right: 0px;
-    border-bottom: 1px solid black;
-    border-top: 0px;
+    /* border-bottom: 1px solid black; */
+    border-top: 1px solid;
+    border-right: 1px solid;
+}
+
+.signature{
+    flex: 1;
+    border-top: 1px solid;
 }
 .distribution {
-    border-left: 0px solid black;
     flex: 1;
-    border-right: 0px;
-    border-bottom: 1px solid black;
-    border-top: 0px;
+    /* border-bottom: 1px solid black; */
+    border-top: 1px solid;
+    border-right: 1px solid;
+    border-left: 2px solid;
     padding: 10px;
 }
+
 .events-label {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    border: 1px solid black;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    border-left: 1px solid black;
+    padding: 10px 5px 10px 0;
     flex: 0.1;
     text-align: center;
+    font-weight: 600;
 }
+
 .events-container {
     flex: 9.9;
     border-left: 0px;
@@ -545,23 +572,40 @@ button:active {
 .remarks-content-container {
     display: flex;
     flex-direction: column;
+    border-top:none;
+    border-right: 1px solid;
+    /* border-left: 1px solid; */
+    border-bottom: none !important;
+    width: 70%;
+    height: 100%;
+    flex: 6;
 }
+
+
 .remarks-content {
-    border: 1px solid #e0e0e0;
     border: 1px solid black;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
     background-color: #f9f9f9;
 }
 .events-container {
     display: flex;
     flex-direction: column;
     margin: 0;
+    border-right: none !important;
+    /* border-top: 1px solid black; */
+    border-bottom: 1px solid black;
+    /* border-left: 1px solid black; */
 }
 .events-content {
-    border: 1px solid black;
+    border: 1px solid;
+    border-bottom: none !important;
+    border-right: none !important;
     background-color: #f9f9f9;
-    padding: 0px;
+    padding-left: 5px;
     margin-bottom: 0px;
-    min-height: 20px;
+    min-height: 18px;
 }
 
 .daily-progress-report-table tr:nth-child(2) td:nth-child(2) {
@@ -571,16 +615,13 @@ button:active {
     box-sizing: border-box;
 }
 
-#displayTable th{
-    border: 1px solid black !important;
-}
+
 
 /* Print-specific adjustments */
 @media print {
     /* Today/Tomorrow Tables Print Styles */
-    #today-table th,
+    
     #today-table td,
-    #tomorrow-table th,
     #tomorrow-table td {
         font-size: 10px !important;
         height: 35px !important;
@@ -600,8 +641,23 @@ button:active {
 
     .today-planning-header,
     .tomorrow-planning-header {
+        border: 1px solid #000;
+        height: 25px !important; 
         font-size: 10px !important;
         padding: 4px !important;
+    }
+
+    .tommorrow-planning-header{
+        border-top: 1px solid #000;
+        padding: 4px;
+        text-align: center;
+        word-wrap: break-word;
+        overflow: hidden;
+        height: 45px; /* Consistent row height */
+        min-height: 45px;
+        max-height: 45px;
+        line-height: 1.2; /* Better text alignment */
+        vertical-align: middle;
     }
 
     #today-table td:nth-child(3),
@@ -644,6 +700,7 @@ button:active {
     }
 
     /* Ensure proper text wrapping in small columns */
+    
     #today-table td,
     #tomorrow-table td {
         word-break: break-word;
@@ -665,11 +722,7 @@ button:active {
     .header{
         border-bottom: none;
     }
-    .commulative {
-        font-size: 7px;
-        width: auto;
-        white-space: nowrap;
-    }
+    
     .slushy-dry{
         font-size: 10px;
     }

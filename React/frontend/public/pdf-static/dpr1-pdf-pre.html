@@ -13,6 +13,7 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+    
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
@@ -27,7 +28,9 @@
           <table class="daily-progress-report-table">
             <!--the table at the top right corner of the PDF page-->
             <tr>
-              <td style="border-right: none;" colspan="2">DAILY PROGRESS REPORT</td>
+              <td style="border-right: none; font-weight: 600; font-size: 15px;" colspan="2">
+                DAILY PROGRESS REPORT
+              </td>
             </tr>
             <tr>
               <td>REPORT DATE</td>
@@ -54,45 +57,68 @@
             <td style="padding-left: 5px" id="project_code"></td>
           </tr>
           <tr>
-            <td style="padding-left: 5px">LOCATION</td>
+            <td style="padding-left: 5px">Location</td>
             <td style="padding-left: 5px" id="location"></td>
           </tr>
         </table>
-        <table class="top-right-date-table" style="width: 25%; border-right: 0px; border-left: 0px">
+        <table
+          class="top-right-date-table"
+          style="width: 25%; border-right: 0px; border-left: 0px"
+        >
           <tr>
-            <td class="project-start-date" style="padding-left: 5px; border-left: 0px">PROJECT START DATE</td>
             <td
-              style="padding-left: 5px; border-right: 0px;width: 90px; min-width: 90px;max-width: 90px;"
+              class="project-start-date"
+              style="padding-left: 5px; border-left: 0px"
+            >
+              PROJECT START DATE
+            </td>
+            <td
+              style="
+                padding-left: 5px;
+                border-right: 0px;
+                width: 90px;
+                min-width: 90px;
+                max-width: 90px;
+              "
               id="start_date"
             ></td>
           </tr>
           <tr>
-            <td class="project-completion" style="padding-left: 5px">PROJECT COMPLETION</td>
+            <td class="project-completion" style="padding-left: 5px">
+              PROJECT COMPLETION
+            </td>
             <td style="padding-left: 5px" id="end_date">Dynamic</td>
           </tr>
         </table>
       </div>
       <div class="project-bottom">
-        <div
-          class="durr">
-          Dur. in Days
-        </div>
-        <div
-          class="total"
-          style="width: 10%; padding-left: 5px;"
-        >
-          Total
-        </div>
+        <div class="durr">Dur. in Days</div>
+        <div class="total" style="width: 10%; padding-left: 5px">Total</div>
         <div class="total-value">Dy</div>
         <div class="blank">Elapsed Days</div>
-        <div id="days-passed" class="balance-left" style="width: 8.1%; padding-left: 5px;border-bottom: none;">Dyoooo</div>
-        <div class="balance" style="width: 10.2%; padding-left: 5px;border-bottom: none;">Balance</div>
-        <div id="remaining-days" class="balance-right" style="width: 10%; padding-left: 5px;border-bottom: none;">
+        <div
+          id="days-passed"
+          class="balance-left"
+          style="width: 8.1%; padding-left: 5px; border-bottom: none"
+        >
+          Dyoooo
+        </div>
+        <div
+          class="balance"
+          style="width: 10.2%; padding-left: 5px; border-bottom: none"
+        >
+          Balance
+        </div>
+        <div
+          id="remaining-days"
+          class="balance-right"
+          style="width: 10%; padding-left: 5px; border-bottom: none"
+        >
           Dyn
         </div>
       </div>
       <div class="site">
-        <div class="site-label">Site</div>
+        <div class="site-label">SITE</div>
         <div class="site-condition">
           <div id="normal-day" class="normal-day">
             <div id="normal-day-checkbox" class="normal-day-checkbox"></div>
@@ -141,8 +167,12 @@
           </table>
           <table class="bottom-of-labour-table">
             <tr>
-              <td class="commulative" style="text-align: left;border-left:none;">
-                commulative man power upto last date
+              <td
+                class="commulative"
+                style="text-align: center; 
+                border-left: none"
+              >
+                cumulative man power upto last date
               </td>
               <td
                 style="text-align: center"
@@ -150,68 +180,101 @@
               >
                 --
               </td>
-              <td style="text-align: center"></td>
-              <td style="text-align: center" class="commulative">Cumlative manpower up to today</td>
-              <td style="text-align: center;" id="cumulative-manpower-4"></td>
+              <td style="text-align: center;">Cumlative manpower up to today</td>
+              <td style="text-align: center" id="cumulative-manpower-4"></td>
             </tr>
           </table>
         </div>
       </div>
       <div class="today-tomorrow-table-container">
         <div style="border-left: 0px; border-right: 0px" class="events-label">
-            PROGRESS/PROGRAMME
-          </div>
-    <table id="today-table" style="width: 50%; table-layout: fixed; border-collapse: collapse;">
-        <!-- ADDED COLGROUP FOR TODAY TABLE -->
-        <colgroup>
-            <col style="width: 50%">
-            <col style="width: 25%">
-            <col style="width: 12.5%">
-            <col style="width: 12.5%">
-        </colgroup>
-        <thead>
+          PROGRESS/PROGRAMME
+        </div>
+        <table
+          id="today-table"
+          style="width: 50%; table-layout: fixed; border-collapse: collapse"
+        >
+          <!-- ADDED COLGROUP FOR TODAY TABLE -->
+          <colgroup>
+            <col style="width: 37.5%" />
+            <col style="width: 37.5%" />
+            <col style="width: 12.5%" />
+            <col style="width: 12.5%" />
+          </colgroup>
+          <thead>
             <tr>
-                <th class="today-planning-header" colspan="4" style="text-align: center; border: 1px solid #000;">
-                    TODAY'S PROGRESS
-                </th>
+              <th
+                class="today-planning-header"
+                colspan="4"
+                style="text-align: center; border: 1px solid #000;"
+              >
+                TODAY'S PROGRESS
+              </th>
             </tr>
-            <tr>
-                <th style="text-align: center; border: 1px solid #000;">Item</th>
-                <th style="text-align: center; border: 1px solid #000;">Remarks</th>
-                <th style="text-align: center; border: 1px solid #000;">Unit</th>
-                <th style="text-align: center; border: 1px solid #000; border-right-width: 0px;">Qty</th>
+            <tr">
+              <th style="text-align: center; border: 1px solid #000">Item</th>
+              <th style="text-align: center; border: 1px solid #000">
+                Remarks
+              </th>
+              <th style="text-align: center; border: 1px solid #000">Unit</th>
+              <th
+                style="
+                  text-align: center;
+                  border: 1px solid #000;
+                "
+              >
+                Qty
+              </th>
             </tr>
-        </thead>
-        <tbody style="border: 1px solid #000;">
+          </thead>
+          <tbody style="border: 1px solid #000">
             <!-- Data rows will be inserted here by JavaScript -->
-        </tbody>
-    </table>
-    <table id="tomorrow-table" style="width: 50%; table-layout: fixed; border-collapse: collapse;">
-        <!-- ADDED COLGROUP FOR TOMORROW TABLE -->
-        <colgroup>
-            <col style="width: 50%">
-            <col style="width: 25%">
-            <col style="width: 12.5%">
-            <col style="width: 12.5%">
-        </colgroup>
-        <thead>
+          </tbody>
+        </table>
+        <table
+          id="tomorrow-table"
+          style="width: 50%; table-layout: fixed; border-collapse: collapse; "
+        >
+          <!-- ADDED COLGROUP FOR TOMORROW TABLE -->
+          <colgroup>
+            <col style="width: 37.5%" />
+            <col style="width: 37.5%" />
+            <col style="width: 12.5%" />
+            <col style="width: 12.5%" />
+          </colgroup>
+          <thead>
             <tr>
-                <th class="tomorrow-planning-header" colspan="4" style="text-align: center; border: 1px solid #000;">
-                    TOMORROW'S PLANNING
-                </th>
+              <th
+                class="tomorrow-planning-header"
+                colspan="4"
+                style="text-align: center;
+                border-right: none !important;"
+              >
+                TOMORROW'S PLANNING
+              </th>
             </tr>
             <tr>
-                <th style="text-align: center; border: 1px solid #000;">Item</th>
-                <th style="text-align: center; border: 1px solid #000;">Remarks</th>
-                <th style="text-align: center; border: 1px solid #000;">Unit</th>
-                <th style="text-align: center; border: 1px solid #000; border-right-width: 0px;">Qtoty</th>
+              <th style="text-align: center; border: 1px solid #000">Item</th>
+              <th style="text-align: center; border: 1px solid #000">
+                Remarks
+              </th>
+              <th style="text-align: center; border: 1px solid #000">Unit</th>
+              <th
+                style="
+                  text-align: center;
+                  border: 1px solid #000;
+                  border-right: none !important;
+                "
+              >
+                Qty
+              </th>
             </tr>
-        </thead>
-        <tbody style="border: 1px solid #000;">
+          </thead>
+          <tbody style="border: 1px solid #000; border-right: none !important;">
             <!-- Data rows will be inserted here by JavaScript -->
-        </tbody>
-    </table>
-</div>
+          </tbody>
+        </table>
+      </div>
       <div class="additional-remarks-container">
         <div
           style="
@@ -222,12 +285,10 @@
           "
           class="events-remarks"
         >
-          <div style="border-left: 0px; border-right: 0px" class="events-label">
-            EVENTS/REMARKS
+          <div  class="events-label">
+            EVENTS
           </div>
           <div class="events-container" id="events-container">
-            <div class="events-content">--</div>
-            <div class="events-content">--</div>
             <div class="events-content">--</div>
             <div class="events-content">--</div>
             <div class="events-content">--</div>
@@ -236,7 +297,7 @@
         </div>
         <div style="border-left: 0px; border-right: 0px" class="remarks">
           <div
-            style="border-left: 0px; border-right: 0px"
+            style="border-right: 0px; border-left: 2px solid black"
             class="remarks-label"
           >
             REMARKS
@@ -246,9 +307,14 @@
             <div class="remarks-content">--</div>
             <div class="remarks-content">--</div>
           </div>
-          <div id="distribution" class="distribution"><div>distribution</div><div>GOYAL</div></div>
-          <div style="padding: 15px;" id="prepared-by" class="prepared-by"><span>Prepared by</span><span>GOYAL</span></div>
-          <div style="padding: 15px;" class="signature">MANO</div>
+          <div class="distribution">
+            <div>Distributed By</div>
+            <div id="distribution">GOYAL</div>
+          </div>
+          <div style="padding: 15px" id="prepared-by" class="prepared-by">
+            <span>Prepared by</span><span>GOYAL</span>
+          </div>
+          <div style="padding: 15px" class="signature">MANO</div>
         </div>
       </div>
     </div>

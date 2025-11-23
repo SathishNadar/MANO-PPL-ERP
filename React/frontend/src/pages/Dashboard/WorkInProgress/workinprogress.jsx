@@ -32,7 +32,7 @@ const WorkInProgress = () => {
 
   const [dateOrder, setDateOrder] = useState("asc");
   const [statusSort, setStatusSort] = useState("none");
-  const statusSequence = ["none", "not_started", "in_progress", "completed"];
+  const statusSequence = ["none", "not_started", "in_progress", "completed","failed"];
 
   // cycle status filter
   const cycleStatusSort = () => {
@@ -300,6 +300,7 @@ const WorkInProgress = () => {
     not_started: "Not Started",
     in_progress: "In Progress",
     completed: "Completed",
+    failed:"Failed",
     default: "Not Started",
   };
 
@@ -389,7 +390,7 @@ const WorkInProgress = () => {
                           >
                             {statusSort === "none"
                               ? "Status"
-                              : `Status: ${statusSort}`}
+                              : `Status: ${statusLabels[statusSort]}`}
                           </th>
                           <th
                             className="px-6 py-4 text-sm font-semibold text-[var(--text-primary)] w-1/5"

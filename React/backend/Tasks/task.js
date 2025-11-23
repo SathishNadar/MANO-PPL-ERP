@@ -7,10 +7,8 @@ const router = express.Router();
 const ALLOWED_STATUS = new Set([
   'in_progress',
   'completed',
-  'canceled',
   'failed',
   'not_started',
-  'under_review'
 ]);
 
 // Helper to check control relationship or self ownership
