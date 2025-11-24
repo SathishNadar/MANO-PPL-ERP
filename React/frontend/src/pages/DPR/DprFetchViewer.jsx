@@ -59,9 +59,51 @@ const DprFetchViewer = () => {
 
   const fetchandUpdateDprdata = async () => {
     //#region Helper Functions
-    const renderTable = (tableId, tasks = [], quantities = []) => {
+    const renderTable = (tableId, prog = {}) => {
       const table = document.getElementById(tableId);
       if (!table) return;
+
+      // New-style DPR shape: { items: [], unit: [], qty: [], remarks: [] }
+      if (
+        Array.isArray(prog.items) ||
+        Array.isArray(prog.unit) ||
+        Array.isArray(prog.qty) ||
+        Array.isArray(prog.remarks)
+      ) {
+        const items = Array.isArray(prog.items) ? prog.items : [];
+        const units = Array.isArray(prog.unit) ? prog.unit : [];
+        const qtys = Array.isArray(prog.qty) ? prog.qty : [];
+        const remarks = Array.isArray(prog.remarks) ? prog.remarks : [];
+        const len = Math.max(items.length, units.length, qtys.length, remarks.length);
+
+        table.innerHTML = Array.from({ length: Math.max(1, len) })
+          .map((_, i) => {
+            const it = items[i] ?? "--";
+            const rm = remarks[i] ?? "--";
+            const un = units[i] ?? "--";
+            const qt = qtys[i] ?? "--";
+            return `
+              <tr class=" bg-gray-700 rounded">
+                <td class=" py-2 pl-4 text-left w-[35%]">${it || "--"}</td>
+                <td class=" py-2 pl-4 text-left w-[35%]">${rm || "--"}</td>
+                <td class="text-center w-[17%]">${un}</td>
+                <td class="text-center w-[13%]">${qt}</td>
+              </tr>
+            `;
+          })
+          .join("");
+        return;
+      }
+
+      // Backwards-compatible: old style { progress: [], qty: [] } or { plan: [], qty: [] }
+      const tasks = Array.isArray(prog.progress) ? prog.progress : Array.isArray(prog.plan) ? prog.plan : [];
+      const quantities = Array.isArray(prog.qty) ? prog.qty : [];
+
+      if (!tasks || tasks.length === 0) {
+        table.innerHTML = "";
+        return;
+      }
+
       table.innerHTML =
         tasks
           ?.map(
@@ -278,16 +320,8 @@ const DprFetchViewer = () => {
         yesterdayCumulative.toLocaleString();
 
       // TODAY / TOMORROW TABLES
-      renderTable(
-        "today-table",
-        data.today_prog?.progress,
-        data.today_prog?.qty
-      );
-      renderTable(
-        "tomorrow-table",
-        data.tomorrow_plan?.plan,
-        data.tomorrow_plan?.qty
-      );
+      renderTable("today-table", data.today_prog || {});
+      renderTable("tomorrow-table", data.tomorrow_plan || {});
 
       // EVENTS & REMARKS
       renderList("events-container", data.report_footer?.events_visit);
@@ -540,8 +574,10 @@ const DprFetchViewer = () => {
             <table className="w-full text-sm border-separate border-spacing-y-2">
               <thead className="text-gray-300 border-b border-gray-600">
                 <tr>
-                  <th className="py-2 pl-4 text-left text-[16px]">Task</th>
-                  <th className="text-center text-[16px]">Quantity</th>
+                  <th className="py-2 pl-4 text-left text-[16px] w-[35%]">Item</th>
+                  <th className="py-2 pl-4 text-left text-[16px] w-[35%]">Remarks</th>
+                  <th className="text-center text-[16px] w-[17%]">Unit</th>
+                  <th className="text-center text-[16px] w-[13%]">Qty</th>
                 </tr>
               </thead>
               <tbody className="text-white" id="today-table">
@@ -560,8 +596,10 @@ const DprFetchViewer = () => {
             <table className="w-full text-sm border-separate border-spacing-y-2">
               <thead className="text-gray-300 border-b border-gray-600">
                 <tr>
-                  <th className="py-2 pl-4 text-left ">Task</th>
-                  <th className="text-center text-[16px]">Quantity</th>
+                  <th className="py-2 pl-4 text-left text-[16px] w-[35%]">Item</th>
+                  <th className="py-2 pl-4 text-left text-[16px] w-[35%]">Remarks</th>
+                  <th className="text-center text-[16px] w-[17%]">Unit</th>
+                  <th className="text-center text-[16px] w-[13%]">Qty</th>
                 </tr>
               </thead>
               <tbody className="text-white" id="tomorrow-table">
