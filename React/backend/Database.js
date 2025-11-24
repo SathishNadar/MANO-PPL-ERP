@@ -260,7 +260,9 @@ export async function r_fetchProjectsByUser(user_id) {
       p.project_name,
       p.project_description,
       p.start_date,
-      p.end_date
+      p.end_date,
+      p.project_code,
+      p.location
     FROM projects p
     JOIN project_user_roles pur ON p.project_id = pur.project_id
     WHERE pur.user_id = ?;
