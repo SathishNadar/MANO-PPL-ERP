@@ -284,12 +284,17 @@ function DailyProgressReport() {
 
     // --- today_prog and tomorrow_plan ---
     const today_prog = {
-      progress: todaysProgress.map((row) => row.task),
-      qty: todaysProgress.map((row) => row.qty),
+      items: todaysProgress.map((row) => row.item || ""),
+      qty: todaysProgress.map((row) => row.qty || ""),
+      unit: todaysProgress.map((row) => row.unit || ""),
+      remarks: todaysProgress.map((row) => row.remarks || ""),
     };
+
     const tomorrow_plan = {
-      plan: tomorrowsPlan.map((row) => row.task),
-      qty: tomorrowsPlan.map((row) => row.qty),
+      items: tomorrowsPlan.map((row) => row.item || ""),
+      qty: tomorrowsPlan.map((row) => row.qty || ""),
+      unit: tomorrowsPlan.map((row) => row.unit || ""),
+      remarks: tomorrowsPlan.map((row) => row.remarks || ""),
     };
 
     // --- Compose object in required order ---
