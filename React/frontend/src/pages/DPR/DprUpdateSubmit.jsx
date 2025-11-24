@@ -1077,10 +1077,10 @@ export default DprUpdateSubmit;
         <table className="w-full text-sm border-separate border-spacing-y-2">
           <thead className="text-gray-300 border-b border-gray-600">
             <tr>
-              <th className="py-2 pl-2 text-left w-[40%]">Item</th>
-              <th className="py-2 pl-2 text-left w-[40%]">Remarks</th>
-              <th className="text-center w-[10%]">Unit</th>
-              <th className="text-right pr-2 w-[10%]">Qty</th>
+              <th className="py-2 pl-2 text-left w-[35%]">Item</th>
+              <th className="py-2 pl-2 text-left w-[35%]">Remarks</th>
+              <th className="py-2 pl-2 text-left w-[10%]">Unit</th>
+              <th className="py-2 pl-2 text-left w-[20%]">Qty</th>
               <th></th>
             </tr>
           </thead>
@@ -1088,7 +1088,7 @@ export default DprUpdateSubmit;
             {rows.length ? (
               rows.map((r, idx) => (
                 <tr key={r.id}>
-                  <td className="pl-2 py-2">
+                  <td className="px-3 py-2 w-[35%]">
                     <input
                       type="text"
                       value={r.item}
@@ -1097,7 +1097,7 @@ export default DprUpdateSubmit;
                       placeholder="Item"
                     />
                   </td>
-                  <td className="pl-2 py-2">
+                  <td className="px-3 py-2 w-[35%]">
                     <input
                       type="text"
                       value={r.remarks}
@@ -1106,11 +1106,11 @@ export default DprUpdateSubmit;
                       placeholder="Remarks"
                     />
                   </td>
-                  <td className="text-center py-2">
+                  <td className="px-3 py-2 w-[10%] text-left">
                     <select
                       value={r.unit}
                       onChange={(e) => onChangeUnit(idx, e.target.value)}
-                      className="bg-transparent border-b border-gray-600 outline-none"
+                      className="w-full text-left bg-transparent border-b border-gray-600 outline-none"
                     >
                       <option value="">Select</option>
                       {UNIT_OPTIONS_LOCAL.map((u) => (
@@ -1118,12 +1118,12 @@ export default DprUpdateSubmit;
                       ))}
                     </select>
                   </td>
-                  <td className="pr-2 py-2 text-right">
+                  <td className="px-3 py-2 w-[20%] text-left">
                     <input
                       type="text"
                       value={r.qty}
                       onChange={(e) => onChangeQty(idx, e.target.value)}
-                      className="w-full bg-transparent border-b border-gray-600 outline-none text-right"
+                      className="w-full bg-transparent border-b border-gray-600 outline-none text-left"
                       placeholder="Qty"
                     />
                   </td>
