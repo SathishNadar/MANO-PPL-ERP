@@ -61,7 +61,7 @@ function DailyProgressReport() {
     return Math.random().toString(36).substr(2, 9) + Date.now();
   }
   const [eventsRemarks, setEventsRemarks] = useState([]);
-  const [generalRemark, setGeneralRemark] = useState("");
+  const [generalRemark, setGeneralRemark] = useState([]);
   const [preparedBy, setPreparedBy] = useState("");
   const [distribute, setDistribute] = useState([]);
 
@@ -73,6 +73,8 @@ function DailyProgressReport() {
   // New state for remarks textarea
   const [remarks, setRemarks] = useState("");
   const today = new Date();
+
+    const UNIT_OPTIONS = ["No","Rmt","Sqm","Cum","Rft","Sft","Cft","MT","Kg","Lit","Day","Each","LS","Shift","Month","Hrs"];
   useEffect(() => {
     if (!projectId) return;
     const fetchProjectDetails = async () => {
@@ -145,37 +147,68 @@ function DailyProgressReport() {
             setLabourReport([]);
           }
         }
-        // --- Fetch last DPR for today's progress prefill ---
+                // --- Fetch last DPR for today's progress and tomorrow's plan prefill ---
         try {
-          const dprResp = await fetch(`${API_BASE}/report/initDPR/${projectId}`,
-            {
-              credentials: "include",
-            }
-          );
+          const dprResp = await fetch(`${API_BASE}/report/initDPR/${projectId}`, {
+            credentials: "include",
+          });
           const dprJson = await dprResp.json();
-          // Prefill today's progress directly from dprJson.todays_plan if available
-          if (
-            dprJson?.todays_plan &&
-            Array.isArray(dprJson.todays_plan.plan) &&
-            dprJson.todays_plan.plan.length > 0
-          ) {
-            setTodaysProgress(
-              dprJson.todays_plan.plan.map((task, idx) => ({
-                task: task || "",
-                qty:
-                  Array.isArray(dprJson.todays_plan.qty) &&
-                  typeof dprJson.todays_plan.qty[idx] !== "undefined"
-                    ? dprJson.todays_plan.qty[idx]
-                    : "",
-              }))
-            );
+
+          // Prefill today's progress
+          if (dprJson?.todays_plan) {
+            const tp = dprJson.todays_plan;
+            const items = Array.isArray(tp.items) ? tp.items : Array.isArray(tp.plan) ? tp.plan : [];
+            const qty = Array.isArray(tp.qty) ? tp.qty : [];
+            const unit = Array.isArray(tp.unit) ? tp.unit : [];
+            const remarks = Array.isArray(tp.remarks) ? tp.remarks : [];
+            const len = Math.max(items.length, qty.length, unit.length, remarks.length);
+            if (len > 0) {
+              const arr = [];
+              for (let i = 0; i < len; i++) {
+                arr.push({
+                  item: items[i] ?? "",
+                  qty: qty[i] ?? "",
+                  unit: unit[i] ?? "",
+                  remarks: remarks[i] ?? "",
+                });
+              }
+              setTodaysProgress(arr);
+            } else {
+              setTodaysProgress([]);
+            }
           } else {
             setTodaysProgress([]);
           }
+
+          // Prefill tomorrow's plan
+          if (dprJson?.tomorrow_plan) {
+            const tp2 = dprJson.tomorrow_plan;
+            const items2 = Array.isArray(tp2.items) ? tp2.items : Array.isArray(tp2.plan) ? tp2.plan : [];
+            const qty2 = Array.isArray(tp2.qty) ? tp2.qty : [];
+            const unit2 = Array.isArray(tp2.unit) ? tp2.unit : [];
+            const remarks2 = Array.isArray(tp2.remarks) ? tp2.remarks : [];
+            const len2 = Math.max(items2.length, qty2.length, unit2.length, remarks2.length);
+            if (len2 > 0) {
+              const arr2 = [];
+              for (let i = 0; i < len2; i++) {
+                arr2.push({
+                  item: items2[i] ?? "",
+                  qty: qty2[i] ?? "",
+                  unit: unit2[i] ?? "",
+                  remarks: remarks2[i] ?? "",
+                });
+              }
+              setTomorrowsPlan(arr2);
+            } else {
+              setTomorrowsPlan([]);
+            }
+          } else {
+            setTomorrowsPlan([]);
+          }
         } catch (err) {
           setTodaysProgress([]);
+          setTomorrowsPlan([]);
         }
-        setTomorrowsPlan([]);
       } catch (error) {
         console.error("Error fetching project details:", error);
       }
@@ -286,7 +319,7 @@ function DailyProgressReport() {
       distribute: distribute.map((d) => d.text),
       prepared_by: "Mano Projects Pvt. Ltd.",
       events_visit: eventsRemarks.map((e) => e.text),
-      bottom_remarks: generalRemark || "",
+      bottom_remarks: generalRemark ? [generalRemark] : [""],
     };
 
     const fullPayload = {
@@ -814,9 +847,7 @@ function DailyProgressReport() {
             {/* Today's Progress Table */}
             <div className="bg-gray-800 rounded-xl p-6 mb-6 border border-gray-800">
               <div className="flex items-center mb-4">
-                <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">
-                  Today's Progress
-                </h2>
+                <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">Today's Progress</h2>
                 <button
                   type="button"
                   className="ml-1 text-gray-400 hover:text-blue-400 transition-colors"
@@ -834,46 +865,74 @@ function DailyProgressReport() {
                 <table className="w-full border-separate border-spacing-0">
                   <thead>
                     <tr>
-                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">
-                        Task
-                      </th>
-                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">
-                        Quantity
-                      </th>
-                      {editToday && (
-                        <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>
-                      )}
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[35%]">Item</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[35%]">Remarks</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[17%]">Unit</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[13%]">Qty</th>
+                      {editToday && <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>}
                     </tr>
                   </thead>
                   <tbody>
                     {todaysProgress.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={editToday ? 3 : 2}
-                          className="text-center text-gray-400 px-4 py-2"
-                        >
-                          No tasks added yet.
-                        </td>
+                        <td colSpan={editToday ? 5 : 4} className="text-center text-gray-400 px-4 py-2">No tasks added yet.</td>
                       </tr>
                     )}
                     {todaysProgress.map((row, idx) => (
                       <tr key={idx} className="bg-gray-800">
-                        <td className="border-b border-gray-700 px-4 py-2">
+                        <td className="border-b border-gray-700 px-4 py-2 w-[35%]">
                           <input
                             className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Task"
-                            value={row.task}
+                            placeholder="Item"
+                            value={row.item}
                             onChange={(e) => {
                               const val = e.target.value;
                               setTodaysProgress((prev) => {
                                 const updated = [...prev];
-                                updated[idx] = { ...updated[idx], task: val };
+                                updated[idx] = { ...updated[idx], item: val };
                                 return updated;
                               });
                             }}
                           />
                         </td>
-                        <td className="border-b border-gray-700 px-4 py-2">
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[35%]">
+                          <input
+                            className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Remarks"
+                            value={row.remarks}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTodaysProgress((prev) => {
+                                const updated = [...prev];
+                                updated[idx] = { ...updated[idx], remarks: val };
+                                return updated;
+                              });
+                            }}
+                          />
+                        </td>
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[17%]">
+                          <select
+                            className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={row.unit}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTodaysProgress((prev) => {
+                                const updated = [...prev];
+                                updated[idx] = { ...updated[idx], unit: val };
+                                return updated;
+                              });
+                            }}
+                          >
+                            <option value="">Select Unit</option>
+                            {UNIT_OPTIONS.map((u) => (
+                              <option key={u} value={u}>{u}</option>
+                            ))}
+                          </select>
+                        </td>
+                        
+                        <td className="border-b border-gray-700 px-4 py-2 w-[13%]">
                           <input
                             className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Quantity"
@@ -888,21 +947,11 @@ function DailyProgressReport() {
                             }}
                           />
                         </td>
+
                         {editToday && (
                           <td className="border-b border-gray-700 px-2 py-2 text-center">
-                            <button
-                              type="button"
-                              className="text-red-400 hover:text-red-600 transition-colors"
-                              title="Delete"
-                              onClick={() =>
-                                setTodaysProgress((prev) =>
-                                  prev.filter((_, i) => i !== idx)
-                                )
-                              }
-                            >
-                              <span className="material-icons align-middle">
-                                close
-                              </span>
+                            <button type="button" className="text-red-400 hover:text-red-600 transition-colors" title="Delete" onClick={() => setTodaysProgress((prev) => prev.filter((_, i) => i !== idx))}>
+                              <span className="material-icons align-middle">close</span>
                             </button>
                           </td>
                         )}
@@ -911,28 +960,16 @@ function DailyProgressReport() {
                   </tbody>
                 </table>
               </div>
-              <button
-                className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4"
-                type="button"
-                onClick={() =>
-                  setTodaysProgress((prev) => [...prev, { task: "", qty: "" }])
-                }
-              >
+              <button className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4" type="button" onClick={() => setTodaysProgress((prev) => [...prev, { item: "", unit: "", qty: "", remarks: "" }])}>
                 Add Task
               </button>
             </div>
+
             {/* Tomorrow's Planning Table */}
             <div className="bg-gray-800 rounded-xl p-6 mb-6 border border-gray-800">
               <div className="flex items-center mb-4">
-                <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">
-                  Tomorrow's Planning
-                </h2>
-                <button
-                  type="button"
-                  className="ml-1 text-gray-400 hover:text-blue-400 transition-colors"
-                  title={editTomorrow ? "Done" : "Edit"}
-                  onClick={() => setEditTomorrow((e) => !e)}
-                >
+                <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">Tomorrow's Planning</h2>
+                <button type="button" className="ml-1 text-gray-400 hover:text-blue-400 transition-colors" title={editTomorrow ? "Done" : "Edit"} onClick={() => setEditTomorrow((e) => !e)}>
                   {!editTomorrow ? (
                     <span className="material-icons align-middle">edit</span>
                   ) : (
@@ -944,75 +981,46 @@ function DailyProgressReport() {
                 <table className="w-full border-separate border-spacing-0">
                   <thead>
                     <tr>
-                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">
-                        Task
-                      </th>
-                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">
-                        Quantity
-                      </th>
-                      {editTomorrow && (
-                        <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>
-                      )}
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[35%]">Item</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[35%]">Remarks</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[17%]">Unit</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[13%]">Qty</th>
+                      {editTomorrow && <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>}
                     </tr>
                   </thead>
                   <tbody>
                     {tomorrowsPlan.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={editTomorrow ? 3 : 2}
-                          className="text-center text-gray-400 px-4 py-2"
-                        >
-                          No plans added yet.
-                        </td>
+                        <td colSpan={editTomorrow ? 5 : 4} className="text-center text-gray-400 px-4 py-2">No plans added yet.</td>
                       </tr>
                     )}
                     {tomorrowsPlan.map((row, idx) => (
                       <tr key={idx} className="bg-gray-800">
-                        <td className="border-b border-gray-700 px-4 py-2">
-                          <input
-                            className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Task"
-                            value={row.task}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setTomorrowsPlan((prev) => {
-                                const updated = [...prev];
-                                updated[idx] = { ...updated[idx], task: val };
-                                return updated;
-                              });
-                            }}
-                          />
+                        <td className="border-b border-gray-700 px-4 py-2 w-[35%]">
+                          <input className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Item" value={row.item} onChange={(e) => { const val = e.target.value; setTomorrowsPlan((prev) => { const updated = [...prev]; updated[idx] = { ...updated[idx], item: val }; return updated; }); }} />
                         </td>
-                        <td className="border-b border-gray-700 px-4 py-2">
-                          <input
-                            className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Quantity"
-                            value={row.qty}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setTomorrowsPlan((prev) => {
-                                const updated = [...prev];
-                                updated[idx] = { ...updated[idx], qty: val };
-                                return updated;
-                              });
-                            }}
-                          />
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[35%]">
+                          <input className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Remarks" value={row.remarks} onChange={(e) => { const val = e.target.value; setTomorrowsPlan((prev) => { const updated = [...prev]; updated[idx] = { ...updated[idx], remarks: val }; return updated; }); }} />
                         </td>
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[17%]">
+                          <select className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" value={row.unit} onChange={(e) => { const val = e.target.value; setTomorrowsPlan((prev) => { const updated = [...prev]; updated[idx] = { ...updated[idx], unit: val }; return updated; }); }}>
+                            <option value="">Select Unit</option>
+                            {UNIT_OPTIONS.map((u) => (
+                              <option key={u} value={u}>{u}</option>
+                            ))}
+                          </select>
+                        </td>
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[13%]">
+                          <input className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Quantity" value={row.qty} onChange={(e) => { const val = e.target.value; setTomorrowsPlan((prev) => { const updated = [...prev]; updated[idx] = { ...updated[idx], qty: val }; return updated; }); }} />
+                        </td>
+
                         {editTomorrow && (
                           <td className="border-b border-gray-700 px-2 py-2 text-center">
-                            <button
-                              type="button"
-                              className="text-red-400 hover:text-red-600 transition-colors"
-                              title="Delete"
-                              onClick={() =>
-                                setTomorrowsPlan((prev) =>
-                                  prev.filter((_, i) => i !== idx)
-                                )
-                              }
-                            >
-                              <span className="material-icons align-middle">
-                                close
-                              </span>
+                            <button type="button" className="text-red-400 hover:text-red-600 transition-colors" title="Delete" onClick={() => setTomorrowsPlan((prev) => prev.filter((_, i) => i !== idx))}>
+                              <span className="material-icons align-middle">close</span>
                             </button>
                           </td>
                         )}
@@ -1021,13 +1029,7 @@ function DailyProgressReport() {
                   </tbody>
                 </table>
               </div>
-              <button
-                className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4"
-                type="button"
-                onClick={() =>
-                  setTomorrowsPlan((prev) => [...prev, { task: "", qty: "" }])
-                }
-              >
+              <button className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4" type="button" onClick={() => setTomorrowsPlan((prev) => [...prev, { item: "", unit: "", qty: "", remarks: "" }])}>
                 Add Plan
               </button>
             </div>
