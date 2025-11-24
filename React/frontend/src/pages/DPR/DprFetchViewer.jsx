@@ -290,10 +290,33 @@ const DprFetchViewer = () => {
       );
 
       // EVENTS & REMARKS
-      // EVENTS & REMARKS
       renderList("events-container", data.report_footer?.events_visit);
-      document.getElementById("remarks-content-container").textContent =
-      data.report_footer?.bottom_remarks || "--";
+      const remarksContainer = document.getElementById("remarks-content-container");
+      if (remarksContainer) {
+        const bottom = data.report_footer?.bottom_remarks;
+        remarksContainer.innerHTML = "";
+
+        const pushLine = (line) => {
+          const div = document.createElement("div");
+          div.className = "remarks-item";
+          div.textContent = line || "";
+          remarksContainer.appendChild(div);
+        };
+
+        if (Array.isArray(bottom)) {
+          bottom.forEach((item) => {
+            if (typeof item === "string") {
+              item.split("\n").forEach((ln) => pushLine(ln.trim()));
+            } else if (item && typeof item === "object") {
+              (item.text || "").split("\n").forEach((ln) => pushLine(ln.trim()));
+            }
+          });
+        } else if (typeof bottom === "string") {
+          bottom.split("\n").forEach((ln) => pushLine(ln.trim()));
+        } else {
+          pushLine("--");
+        }
+      }
 
       // FOOTER DETAILS
       document.getElementById("prepared-by").textContent =
@@ -551,7 +574,7 @@ const DprFetchViewer = () => {
         {/* Remarks Section */}
         <div className="grid md:grid-cols-3 gap-4">
           <div className="md:col-span-2 bg-gray-800 rounded-xl p-4">
-            <h2 className="text-lg font-semibold mb-2">Events & Remarks</h2>
+            <h2 className="text-lg font-semibold mb-2">Events & Visits</h2>
             <div
               className="space-y-2 text-l text-gray-300"
               id="events-container"

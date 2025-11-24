@@ -175,7 +175,9 @@ const setEventVisit = (idx, val) =>
       );
 
       setGeneralRemark(
-        typeof data?.report_footer?.bottom_remarks === "string"
+        Array.isArray(data?.report_footer?.bottom_remarks)
+          ? data.report_footer.bottom_remarks.join("\n")
+          : typeof data?.report_footer?.bottom_remarks === "string"
           ? data.report_footer.bottom_remarks
           : ""
       );
@@ -294,10 +296,11 @@ const setEventVisit = (idx, val) =>
       events_visit: Array.isArray(dpr?.report_footer?.events_visit)
         ? dpr.report_footer.events_visit
         : [],
-      bottom_remarks:
-      typeof dpr?.report_footer?.bottom_remarks === "string"
-      ? dpr.report_footer.bottom_remarks
-      : "",
+      bottom_remarks: Array.isArray(dpr?.report_footer?.bottom_remarks)
+        ? dpr.report_footer.bottom_remarks
+        : typeof dpr?.report_footer?.bottom_remarks === "string"
+        ? [dpr.report_footer.bottom_remarks]
+        : [],
     },
   });
 
@@ -327,6 +330,15 @@ const setEventVisit = (idx, val) =>
     try {
       setSaving(true);
 
+      const bottomRemarksArray = (() => {
+        if (!generalRemark) return [""];
+        const arr = generalRemark
+          .split("\n")
+          .map((s) => s.replace(/\r/g, "").trim());
+        const filtered = arr.filter((s) => s.length > 0);
+        return filtered.length ? filtered : [""];
+      })();
+
       const currentDpr = {
         report_date: reportDate,
         site_condition: {
@@ -347,7 +359,7 @@ const setEventVisit = (idx, val) =>
         report_footer: {
           distribute: distribute.map((d) => d.text),
           prepared_by: preparedBy,
-          bottom_remarks: generalRemark,   
+          bottom_remarks: bottomRemarksArray,
           events_visit: eventsVisit.map((e) => e.text),  
         },
       };
@@ -974,7 +986,7 @@ const setEventVisit = (idx, val) =>
       <div className="grid md:grid-cols-3 gap-6 mb-8">
         <EditableList
           className="md:col-span-2"
-          title="Events & Remarks"
+          title="Events & Visits"
           items={eventsVisit}
           onAdd={addEventVisit}
           onRemove={removeEventVisit}
