@@ -3,47 +3,15 @@ function debugLog(message, data) {
   // console.log(`[DEBUG] ${message}`, data);
 }
 
-// Universal date parser that handles multiple formats
-function parseDateSafe(dateStr) {
-    if (!dateStr || dateStr === "--") return new Date(NaN);
-    
-    // If it's in API format (YYYY-MM-DD)
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        return new Date(dateStr + 'T00:00:00');
-    }
-    
-    // If it's in displayed format (DD/MM/YYYY)
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
-        const parts = dateStr.split('/');
-        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-    }
-    
-    // If it's a Date object string
-    if (typeof dateStr === 'string' && dateStr.includes('T')) {
-        return new Date(dateStr);
-    }
-    
-    // Fallback to Date constructor
-    return new Date(dateStr);
-}
-
 // ====================== MAIN DATA LOADER ======================
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     debugLog("DOM fully loaded, starting data load");
 
-    // Fetch data from JSON files
-    const [dprResponse, projectResponse] = await Promise.all([
-      fetch('dprData.json'),
-      fetch('projectData.json')
-    ]);
-    
-    if (!dprResponse.ok || !projectResponse.ok) {
-      throw new Error('Failed to load JSON files');
-    }
-    
-    const dprData = await dprResponse.json();
-    const projectData = await projectResponse.json();
+    // Fetch both JSON files in parallel
+    const dprData = JSON.parse(localStorage.getItem("dprData"));
+    const projectData = JSON.parse(localStorage.getItem("projectData"));
+
 
     debugLog("Loaded DPR Data", dprData);
     debugLog("Loaded Project Data", projectData);
@@ -66,62 +34,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// ====================== FIXED DATE CALCULATIONS ======================
-function calculateTotalDays(startDate, endDate) {
-    if (!startDate || !endDate) return "--";
-    
-    const start = parseDateSafe(startDate);
-    const end = parseDateSafe(endDate);
-    
-    if (isNaN(start) || isNaN(end)) return "--";
-    
-    // Calculate difference in days (inclusive of both start and end dates)
-    const diffTime = Math.abs(end - start);
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-}
-
-function calculateDaysRemaining(endDate, reportDate) {
-    if (!endDate || !reportDate) return "--";
-    
-    const end = parseDateSafe(endDate);
-    const report = parseDateSafe(reportDate);
-    
-    if (isNaN(end) || isNaN(report)) return "--";
-    
-    // Calculate days remaining (inclusive of report date and end date)
-    const diffTime = Math.abs(end - report);
-    const daysRemaining = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    
-    return daysRemaining > 0 ? daysRemaining : 0;
-}
-
-function calculateDaysPassed(startDate, reportDate) {
-    if (!startDate || !reportDate) return "--";
-    
-    const start = parseDateSafe(startDate);
-    const report = parseDateSafe(reportDate);
-    
-    if (isNaN(start) || isNaN(report)) return "--";
-    
-    // Calculate days passed (inclusive of both start and report dates)
-    const diffTime = Math.abs(report - start);
-    const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    
-    return daysPassed > 0 ? daysPassed : 0;
-}
-
 // ====================== DATA TRANSFORMATION ======================
 function transformApiData(apiData) {
     debugLog("Transforming API Data", apiData);
-    
-    // Calculate dates first to ensure consistency
-    const startDate = apiData.projectDetails?.start_date || apiData.start_date;
-    const endDate = apiData.projectDetails?.end_date || apiData.end_date;
-    const reportDate = apiData.report_date;
-    
-    const totalDays = calculateTotalDays(startDate, endDate);
-    const daysPassed = calculateDaysPassed(startDate, reportDate);
-    const daysRemaining = calculateDaysRemaining(endDate, reportDate);
     
     // Convert API data structure to match what our HTML expects
     const transformed = {
@@ -130,12 +45,18 @@ function transformApiData(apiData) {
         Employer: apiData.projectDetails?.Employer || apiData.Employer || "Employer Not Available",
         contract_no: apiData.projectDetails?.contract_no || apiData.contract_no || "--",
         location: apiData.projectDetails?.location || apiData.location || "Location Not Available",
-        start_date: startDate ? new Date(startDate).toLocaleDateString('en-GB') : "--",
-        end_date: endDate ? new Date(endDate).toLocaleDateString('en-GB') : "--",
-        total_days: totalDays,
-        days_passed: daysPassed,
-        days_remaining: daysRemaining,
-        report_date: reportDate ? new Date(reportDate).toLocaleDateString('en-GB') : "--",
+        start_date: apiData.projectDetails?.start_date 
+            ? new Date(apiData.projectDetails.start_date).toLocaleDateString('en-GB') 
+            : (apiData.start_date ? new Date(apiData.start_date).toLocaleDateString('en-GB') : "--"),
+        end_date: apiData.projectDetails?.end_date 
+            ? new Date(apiData.projectDetails.end_date).toLocaleDateString('en-GB') 
+            : (apiData.end_date ? new Date(apiData.end_date).toLocaleDateString('en-GB') : "--"),
+        total_days: calculateTotalDays(
+            apiData.projectDetails?.start_date || apiData.start_date, 
+            apiData.projectDetails?.end_date || apiData.end_date
+        ),
+        days_remaining: calculateDaysRemaining(apiData.projectDetails?.end_date || apiData.end_date),
+        report_date: apiData.report_date ? new Date(apiData.report_date).toLocaleDateString('en-GB') : "--",
         
         // Site Conditions
         site_conditions: {
@@ -149,20 +70,17 @@ function transformApiData(apiData) {
         // Labour Report
         labour_data: formatLabourData(apiData.labour_report, apiData.cumulative_manpower),
         
-        // Progress Data - FIXED: Consistent key mapping
-        today_progress: formatProgressData(apiData.today_prog, 'today'),
-        tomorrow_planning: formatProgressData(apiData.tomorrow_plan, 'tomorrow'),
+        // Progress Data
+        today_progress: formatProgressData(apiData.today_prog),
+        tomorrow_planning: formatProgressData(apiData.tomorrow_plan),
         
-        // Events and Remarks - get from report_footer
-        events_remarks: apiData.report_footer?.events_remarks || [],
-        general_remarks: apiData.report_footer?.general_remarks || ["--"],
+        // Events and Remarks
+        events_remarks: apiData.report_footer?.events_visit || [],
+        general_remarks: apiData.report_footer?.bottom_remarks || ["--"],
         
         // Signatures
         prepared_by: apiData.report_footer?.prepared_by || "MANO PCPL",
-        approved_by: apiData.report_footer?.distribute?.join(", ") || "GOYAL",
-        
-        // Keep report_footer for reference
-        report_footer: apiData.report_footer || {}
+        approved_by: apiData.report_footer?.distribute?.join(", ") || "GOYAL"
     };
     
     debugLog("Final Transformed Data", transformed);
@@ -214,15 +132,15 @@ function formatLabourData(labourReport, cumulativeManpower = 0) {
 
         row.push(total.toString());
 
-        let remark = "";
-        if (Array.isArray(labourReport.remarks)) {
-            if (labourReport.remarks[i] !== undefined) {
-                remark = labourReport.remarks[i];
-            }
-        } else if (labourReport.remarks !== undefined) {
-            remark = labourReport.remarks;
-        }
-        row.push(remark);
+       let remark = "";
+if (Array.isArray(labourReport.remarks)) {
+    if (labourReport.remarks[i] !== undefined) {
+        remark = labourReport.remarks[i];
+    }
+} else if (labourReport.remarks !== undefined) {
+    remark = labourReport.remarks;
+}
+row.push(remark);
 
         tableData.push(row);
         debugLog(`Processed Row ${i}`, row);
@@ -235,34 +153,38 @@ function formatLabourData(labourReport, cumulativeManpower = 0) {
     };
 }
 
-// ====================== DATA FORMATTING HELPERS ======================
-function formatProgressData(progressData, type = 'today') {
-    if (!progressData) return [["--", "--", "--", "--"]];
+function formatProgressData(progressData) {
+    if (!progressData) return [["--", "--"]];
     
     const result = [];
-    
-    const taskArray = progressData.items;         // Item column
-    const remarksArray = progressData.remarks;   // Remarks column  
-    const unitArray = progressData.unit;         // Unit column
-    const quantityArray = progressData.qty;      // Quantity column
-    
     const maxLength = Math.max(
-        (taskArray && taskArray.length) || 0,
-        (remarksArray && remarksArray.length) || 0,
-        (unitArray && unitArray.length) || 0,
-        (quantityArray && quantityArray.length) || 0
+        progressData.progress?.length || 0,
+        progressData.plan?.length || 0,
+        progressData.qty?.length || 0
     );
     
     for (let i = 0; i < maxLength; i++) {
-        const task = (taskArray && taskArray[i]) || "--";
-        const remarks = (remarksArray && remarksArray[i]) || "--";
-        const unit = (unitArray && unitArray[i]) || "--";
-        const quantity = (quantityArray && quantityArray[i]) || "--";
-        
-        result.push([task, remarks, unit, quantity]);
+        const task = progressData.progress?.[i] || progressData.plan?.[i] || "--";
+        const qty = progressData.qty?.[i] || "--";
+        result.push([task, qty]);
     }
     
-    return result.length > 0 ? result : [["--", "--", "--", "--"]];
+    return result.length > 0 ? result : [["--", "--"]];
+}
+
+function calculateTotalDays(startDate, endDate) {
+    if (!startDate || !endDate) return "--";
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return Math.round((end - start) / (1000 * 60 * 60 * 24));
+}
+
+function calculateDaysRemaining(endDate) {
+    if (!endDate) return "--";
+    const end = new Date(endDate);
+    const today = new Date();
+    const diff = Math.round((end - today) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
 }
 
 // ====================== DATA POPULATION ======================
@@ -289,7 +211,7 @@ function populateProjectInfo(data) {
   document.getElementById("project_name").textContent =
     data.project_name || "--";
   document.getElementById("Employer").textContent = data.Employer || "--";
-  document.getElementById("project_code").textContent = data.contract_no || "--";
+  document.getElementById("project_code").textContent = data.project_code || "--";
   document.getElementById("location").textContent = data.location || "--";
   document.getElementById("start_date").textContent = data.start_date || "--";
   document.getElementById("end_date").textContent = data.end_date || "--";
@@ -306,43 +228,9 @@ function populateProjectInfo(data) {
     totalDaysElement.textContent = data.total_days || "--";
   }
 
-  const daysRemainingElement = document.getElementById("remaining-days");
+  const daysRemainingElement = document.querySelector(".balance-right");
   if (daysRemainingElement) {
     daysRemainingElement.textContent = data.days_remaining || "--";
-  }
-
-  // FIXED: Days passed calculation
-  if (data.start_date && data.report_date && data.start_date !== "--" && data.report_date !== "--") {
-    // Update days passed in HTML
-    const daysPassedElement = document.getElementById('days-passed');
-    if (daysPassedElement) {
-        daysPassedElement.textContent = data.days_passed !== "--" ? data.days_passed : "--";
-    }
-    
-    // Verify the calculation: total = passed + remaining
-    if (data.total_days !== "--" && data.days_passed !== "--" && data.days_remaining !== "--") {
-        const calculatedTotal = data.days_passed + data.days_remaining;
-        debugLog("Date validation:", {
-            total: data.total_days,
-            passed: data.days_passed,
-            remaining: data.days_remaining,
-            calculatedTotal: calculatedTotal
-        });
-        
-        // If there's a discrepancy, adjust the remaining days to match
-        if (calculatedTotal !== data.total_days) {
-            const adjustedRemaining = data.total_days - data.days_passed;
-            if (daysRemainingElement && adjustedRemaining >= 0) {
-                daysRemainingElement.textContent = adjustedRemaining;
-            }
-        }
-    }
-  } else {
-    // Set default values if dates are not available
-    const daysPassedElement = document.getElementById('days-passed');
-    if (daysPassedElement) {
-        daysPassedElement.textContent = "--";
-    }
   }
 }
 
@@ -395,58 +283,20 @@ function populateLabourReport(labourData) {
     });
     tbody.appendChild(headerRow);
     
-    // Calculate column totals
-    const columnTotals = new Array(labourData.headers.length).fill(0);
-    // Skip first column (Agency Name) and last column (Remarks)
-    const numericColumnsStart = 1;
-    const numericColumnsEnd = labourData.headers.length - 2;
-    
     labourData.tableData.forEach((row, index) => {
         const tr = document.createElement('tr');
-        row.forEach((cell, colIndex) => {
+        row.forEach(cell => {
             const td = document.createElement('td');
             td.textContent = cell;
             tr.appendChild(td);
-            
-            // Sum numeric columns (skip Agency Name and Remarks)
-            if (colIndex >= numericColumnsStart && colIndex <= numericColumnsEnd) {
-                const value = parseInt(cell) || 0;
-                columnTotals[colIndex] += value;
-            }
         });
         tbody.appendChild(tr);
     });
     
-    // Add total row
-    const totalRow = document.createElement('tr');
-    totalRow.style.fontWeight = 'bold';
-    
-    labourData.headers.forEach((header, colIndex) => {
-        const td = document.createElement('td');
-        
-        if (colIndex === 0) {
-            td.textContent = 'TOTAL';
-        } else if (colIndex >= numericColumnsStart && colIndex <= numericColumnsEnd) {
-            td.textContent = columnTotals[colIndex].toString();
-        } else if (colIndex === labourData.headers.length - 2) { // Total column
-            // Sum of all numeric columns
-            const grandTotal = columnTotals.slice(numericColumnsStart, numericColumnsEnd + 1)
-                .reduce((sum, value) => sum + value, 0);
-            td.textContent = grandTotal.toString();
-        } else { // Remarks column
-            td.textContent = '';
-        }
-        
-        totalRow.appendChild(td);
-    });
-    
-    tbody.appendChild(totalRow);
-    
-    // CUMULATIVE MANPOWER CALCULATION AND DISPLAY
     if (labourData.cumulative_manpower) {
         let todayTotal = 0;
         labourData.tableData.forEach(row => {
-            const totalCell = row[labourData.headers.length - 2]; // Get the "Total" column
+            const totalCell = row[labourData.headers.length - 2];
             const total = parseInt(totalCell) || 0;
             todayTotal += total;
         });
@@ -470,45 +320,54 @@ function populateProgressTables(data) {
     const todayProgress = data.today_progress || [];
     const tomorrowPlanning = data.tomorrow_planning || [];
 
-    const FIXED_ROW_COUNT = 9; // Fixed number of rows
-    
-    // Calculate max rows needed - use fixed count, but allow dynamic expansion if data exceeds it
-    const maxRows = Math.max(FIXED_ROW_COUNT, todayProgress.length, tomorrowPlanning.length);
+    const maxRows = Math.max(todayProgress.length, tomorrowPlanning.length);
 
-    // Today's progress - populate 4 columns with forced widths
-    const todayTbody = document.querySelector('#today-table tbody');
-    if (todayTbody) {
-        todayTbody.innerHTML = '';
+    const todayTable = document.getElementById('today-table');
+    const tomorrowTable = document.getElementById('tomorrow-table');
+
+    if (todayTable) {
+        const tbody = todayTable.querySelector('tbody') || todayTable.createTBody();
+        tbody.innerHTML = '';
+
+        // Header
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `<th style="text-align: center;">Task</th><th>Quantity</th>`;
+        tbody.appendChild(headerRow);
+
+        // Data rows
         for (let i = 0; i < maxRows; i++) {
-            const rowData = todayProgress[i] || ["--", "--", "--", "--"];
+            const rowData = todayProgress[i] || ["--", "--"];
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="text-align: center; border: 1px solid #000; width: 50% !important; padding: 4px;">${rowData[0] || "--"}</td>
-                <td style="text-align: center; border: 1px solid #000; width: 25% !important; padding: 4px;">${rowData[1] || "--"}</td>
-                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px;">${rowData[2] || "--"}</td>
-                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px; border-right-width: 0px;">${rowData[3] || "--"}</td>
+                <td style="text-align: left;">${rowData[0]}</td>
+                <td style="text-align: center;">${rowData[1]}</td>
             `;
-            todayTbody.appendChild(tr);
+            tbody.appendChild(tr);
         }
     }
 
-    // Tomorrow's planning - populate 4 columns with forced widths
-    const tomorrowTbody = document.querySelector('#tomorrow-table tbody');
-    if (tomorrowTbody) {
-        tomorrowTbody.innerHTML = '';
+    if (tomorrowTable) {
+        const tbody = tomorrowTable.querySelector('tbody') || tomorrowTable.createTBody();
+        tbody.innerHTML = '';
+
+        // Header
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `<th style="text-align: center;">Task</th><th>Quantity</th>`;
+        tbody.appendChild(headerRow);
+
+        // Data rows
         for (let i = 0; i < maxRows; i++) {
-            const rowData = tomorrowPlanning[i] || ["--", "--", "--", "--"];
+            const rowData = tomorrowPlanning[i] || ["--", "--"];
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="text-align: center; border: 1px solid #000; width: 50% !important; padding: 4px;">${rowData[0] || "--"}</td>
-                <td style="text-align: center; border: 1px solid #000; width: 25% !important; padding: 4px;">${rowData[1] || "--"}</td>
-                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px;">${rowData[2] || "--"}</td>
-                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px; border-right: none !important;;">${rowData[3] || "--"}</td>
+                <td style="text-align: left;">${rowData[0]}</td>
+                <td style="text-align: center;">${rowData[1]}</td>
             `;
-            tomorrowTbody.appendChild(tr);
+            tbody.appendChild(tr);
         }
     }
 }
+
 
 function populateRemarksAndEvents(data) {
     debugLog("Populating Remarks and Events", data);
@@ -516,9 +375,8 @@ function populateRemarksAndEvents(data) {
     const eventsContainer = document.querySelector('.events-container');
     if (eventsContainer) {
         eventsContainer.innerHTML = '';
-        // Get events from the transformed data
         const events = data.events_remarks || [];
-        const minEvents = 4;
+        const minEvents = 6;
         
         for (let i = 0; i < Math.max(events.length, minEvents); i++) {
             const div = document.createElement('div');
@@ -532,7 +390,6 @@ function populateRemarksAndEvents(data) {
     if (remarksContainer) {
         remarksContainer.innerHTML = '';
         
-        // Get remarks from the transformed data
         const remarks = data.general_remarks || [];
         const minRemarks = 3;
         
@@ -558,15 +415,11 @@ function setCheckboxState(elementId, isActive) {
   if (element) {
     if (isActive) {
       element.style.backgroundColor = "green";
+      element.textContent = "✓";
       element.style.color = "white";
     } else {
       element.style.backgroundColor = "";
       element.textContent = "";
     }
   }
-}
-
-function showErrorState(message) {
-  console.error("Error state:", message);
-  // You can add error display logic here if needed
 }
