@@ -16,25 +16,26 @@ router.post("/timein", authenticateJWT, async (req, res) => {
 
     const openSession = await knexDB("attendance_records")
       .where({ user_id })
-      .whereNull("check_out_time")
+      .whereNull("time_out")
+      .whereRaw("DATE(time_in) = CURDATE()")
       .first();
 
     if (openSession) {
-      return res.status(400).json({ ok: false, message: "Already checked in. Please check out first." });
+      return res.status(400).json({ ok: false, message: "Already timed in. Please time out first." });
     }
 
     const [attendance_id] = await knexDB("attendance_records").insert({
       user_id,
-      check_in_time: knexDB.fn.now(),
-      check_in_lat: latitude,
-      check_in_lng: longitude,
+      time_in: knexDB.fn.now(),
+      time_in_lat: latitude,
+      time_in_lng: longitude,
       created_at: knexDB.fn.now(),
       updated_at: knexDB.fn.now(),
     });
 
-    res.json({ ok: true, attendance_id, message: "Checked in successfully" });
+    res.json({ ok: true, attendance_id, message: "Timed in successfully" });
   } catch (err) {
-    console.error("Check-in error:", err);
+    console.error("Time-in error:", err);
     res.status(500).json({ ok: false, message: "Internal server error" });
   }
 });
@@ -51,25 +52,27 @@ router.post("/timeout", authenticateJWT, async (req, res) => {
 
     const openSession = await knexDB("attendance_records")
       .where({ user_id })
-      .whereNull("check_out_time")
+      .whereNull("time_out")
+      .whereRaw("DATE(time_in) = CURDATE()")
       .first();
 
+
     if (!openSession) {
-      return res.status(400).json({ ok: false, message: "No active check-in found to check out." });
+      return res.status(400).json({ ok: false, message: "No active time-in found to time out." });
     }
 
     await knexDB("attendance_records")
       .where({ attendance_id: openSession.attendance_id })
       .update({
-        check_out_time: knexDB.fn.now(),
-        check_out_lat: latitude,
-        check_out_lng: longitude,
+        time_out: knexDB.fn.now(),
+        time_out_lat: latitude,
+        time_out_lng: longitude,
         updated_at: knexDB.fn.now(),
       });
 
-    res.json({ ok: true, attendance_id: openSession.attendance_id, message: "Checked out successfully" });
+    res.json({ ok: true, attendance_id: openSession.attendance_id, message: "Timed out successfully" });
   } catch (err) {
-    console.error("Check-out error:", err);
+    console.error("Time-out error:", err);
     res.status(500).json({ ok: false, message: "Internal server error" });
   }
 });
@@ -90,12 +93,12 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
         "users.user_name",
         "users.email"
       )
-      .orderBy("check_in_time", "desc")
+      .orderBy("time_in", "desc")
       .limit(Math.min(parseInt(limit), 100)); // max limit 100 to prevent abuse
 
     if (user_id) query = query.where("attendance_records.user_id", user_id);
-    if (date_from) query = query.where("check_in_time", ">=", date_from);
-    if (date_to) query = query.where("check_in_time", "<=", date_to);
+    if (date_from) query = query.where("time_in", ">=", date_from);
+    if (date_to) query = query.where("time_in", "<=", date_to);
 
     const records = await query;
     res.json({ ok: true, data: records });
@@ -114,11 +117,11 @@ router.get("/records", authenticateJWT, async (req, res) => {
 
     let query = knexDB("attendance_records")
       .where("user_id", userId)
-      .orderBy("check_in_time", "desc")
+      .orderBy("time_in", "desc")
       .limit(Math.min(parseInt(limit), 100)); // max limit 100
 
-    if (date_from) query = query.where("check_in_time", ">=", date_from);
-    if (date_to) query = query.where("check_in_time", "<=", date_to);
+    if (date_from) query = query.where("time_in", ">=", date_from);
+    if (date_to) query = query.where("time_in", "<=", date_to);
 
     const records = await query;
     res.json({ ok: true, data: records });
