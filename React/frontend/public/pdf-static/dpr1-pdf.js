@@ -526,7 +526,7 @@ function populateRemarksAndEvents(data) {
         
         // Get remarks from the transformed data
         const remarks = data.bottom_remarks || [];
-        const minRemarks = 3;
+        const minRemarks = 1;
         
         //idar aake wo  --  hataya tha maine - dp the bakra
 
