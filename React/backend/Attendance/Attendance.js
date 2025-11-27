@@ -8,7 +8,7 @@ const router = express.Router();
 router.post("/timein", authenticateJWT, async (req, res) => {
   try {
     const user_id = req.user.user_id;
-    const { latitude, longitude } = req.body;
+    const { latitude, longitude, late_reason } = req.body;
 
     if (typeof latitude !== "number" || typeof longitude !== "number") {
       return res.status(400).json({ ok: false, message: "Invalid or missing latitude/longitude" });
@@ -26,6 +26,7 @@ router.post("/timein", authenticateJWT, async (req, res) => {
 
     const [attendance_id] = await knexDB("attendance_records").insert({
       user_id,
+      late_reason: late_reason || null,
       time_in: knexDB.fn.now(),
       time_in_lat: latitude,
       time_in_lng: longitude,
