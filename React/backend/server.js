@@ -14,6 +14,9 @@ import VendorRoutes from './VendorClientAPI/vendor.js';
 import TaskRoutes from './Tasks/task.js';
 import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
+
+import VerifyEmailRouter from './AuthAPI/VerifyEmailAPI.js';
+
 import './config.js';
 import cookieParser from 'cookie-parser';
 
@@ -45,7 +48,9 @@ app.use(cors({
 app.use(express.json());
 app.use('/auth', LoginRoutes);
 app.use('/api', SignupRoutes);
+app.use('/api', VerifyEmailRouter);
 app.use('/api', ForgotPasswordRoutes);
+
 
 app.use('/project', ProjectRoutes);
 app.use("/report", ReportRoutes); 
