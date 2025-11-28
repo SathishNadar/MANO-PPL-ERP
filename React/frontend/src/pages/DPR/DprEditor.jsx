@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function DprEditor() {
   const { projectId } = useParams();
+    const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
   const [projectName, setProjectName] = useState("");
@@ -306,36 +307,42 @@ function DprEditor() {
     const userRoleChanges = buildUserRoleUpdatePayload(initialRoles, userRoles);
 
     try {
-      const res = await fetch(`${API_BASE}/project/updateProject/${projectId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            project_name: projectName,
-            Employer: employer,
-            location,
-            project_code: projectCode,
-            project_description: projectDescription,
-            start_date: startDate || null,
-            end_date: endDate || null,
-            metadata,
-            user_roles: userRoleChanges, // merge metadata into the same payload
-          }),
-        }
-      );
+      const res = await fetch(`${API_BASE}/project/updateProject/${projectId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          project_name: projectName,
+          Employer: employer,
+          location,
+          project_code: projectCode,
+          project_description: projectDescription,
+          start_date: startDate || null,
+          end_date: endDate || null,
+          metadata,
+          user_roles: userRoleChanges, // merge metadata into the same payload
+        }),
+      });
 
       const data = await res.json();
+      const autoCloseMs = 2000;
       if (res.ok && (data.ok || data.success)) {
-        toast.success("Project details & metadata saved successfully!");
+        toast.success("Project details & metadata saved successfully!", { 
+          autoClose: autoCloseMs,
+          onClose: () => {
+            // SPA navigation to project description for this projectId
+            navigate(`/dashboard/project-description/${projectId}`);
+          },
+        });
         setInitialRoles(userRoles);
       } else {
         toast.error(data.message || "Failed to save project data");
       }
     } catch (e) {
       console.error("Error saving project:", e);
-      alert("Error saving project");
+      toast.error("Error saving project");
     }
+
     setSavingDetails(false);
   }
 
@@ -434,8 +441,19 @@ function DprEditor() {
   if (loading)
     return <div className="text-center text-white mt-20">Loading...</div>;
 
-  return (
+    return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-6 py-8 md:px-16 lg:px-28">
+      <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <h1 className="text-3xl font-extrabold mb-8 text-white text-center">
         Daily Progress Report Editor
       </h1>

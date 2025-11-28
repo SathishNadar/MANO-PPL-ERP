@@ -51,6 +51,7 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const isoToYMD = (iso) => (typeof iso === "string" ? iso.split("T")[0] : "");
 
@@ -429,7 +430,7 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
         toast.success("DPR updated successfully");
         initialDpr.current = currentDpr;
       } else {
-        toast.error(data.message || "Failed to update DPR");
+        toast.info("Make changes to update the DPR" || data.message);
       }
     } catch (e) {
       console.error(e);
@@ -598,28 +599,45 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
     );
   }
 
-  // Submit
-  const SubmitDPR = async () => {
-    const confirmSubmit = window.confirm(
-      "Are you sure you want to submit the DPR? This action cannot be undone."
-    );
+    // open the confirm modal
+  const openSubmitModal = () => setShowConfirmModal(true);
+  const cancelSubmit = () => setShowConfirmModal(false);
 
-    if (!confirmSubmit) return;
-
+  
+  const autoCloseMs = 2000;
+  // confirmed submit handler
+  const confirmSubmit = async () => {
+    setShowConfirmModal(false);
     try {
       setSubmitting(true);
 
       const response = await fetch(`${API_BASE}/report/submit/${dprId}`, {
-        credentials:"include"
+        credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error("Request failed");
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.message || response.statusText || "Request failed");
       }
+      
+      const successBody = await response.json().catch(() => ({}));
 
-      toast.success("Success:", await response.json());
+      // show success toast and redirect when it closes
+      toast.success(successBody.message || "DPR submitted successfully", {
+        autoClose: autoCloseMs,
+        onClose: () => {
+          navigate(`/dashboard/project-description/${projectId}`);
+        },
+      });
     } catch (error) {
-      toast.error("Error:", error);
+      console.error("Submit DPR error:", error);
+      // show error toast then redirect when it closes
+      toast.error(error?.message || "Error submitting DPR", {
+        autoClose: autoCloseMs,
+        onClose: () => {
+          navigate(`/dashboard/project-description/${projectId}`);
+        },
+      });
     } finally {
       setSubmitting(false);
     }
@@ -638,6 +656,18 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
           </span>
         </div>
       </div>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={autoCloseMs}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
 
       <div className="grid md:grid-cols-3 gap-6 mb-10">
         {/* Project Info + Timeline */}
@@ -1011,6 +1041,20 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
         </div>
       </div>
 
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black opacity-60"></div>
+          <div className="relative bg-gray-800 text-white rounded-lg p-6 w-11/12 max-w-md z-10 shadow-lg border border-gray-700">
+            <h3 className="text-lg font-semibold mb-2">Confirm Submit</h3>
+            <p className="mb-4 text-sm text-gray-300">Are you sure you want to submit the DPR? This action cannot be undone.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={cancelSubmit} className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm">Cancel</button>
+              <button onClick={confirmSubmit} className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold">{submitting ? 'Submitting...' : 'Submit'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex justify-end gap-3">
         <button
@@ -1034,7 +1078,7 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
         </button>
         <button
           type="button"
-          onClick={SubmitDPR}
+          onClick={openSubmitModal}
           disabled={submitting}
           className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
             submitting
