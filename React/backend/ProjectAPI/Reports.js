@@ -13,17 +13,17 @@ const router = express.Router();
 // Today Progress fetch
 async function getTodayProgByDprId(dpr_id) {
   // adjust table/columns as per your schema
-  const rows = await knexDB("dpr_component_use as dcu")
-  .join("component as c", "dcu.component_id", "c.component_id")
+  const rows = await knexDB("dpr_item_use as diu")
+  .join("item as i", "diu.item_id", "i.item_id")
   .select(
-    "dcu.dpr_use_id",
-    "c.component_id",
-    "c.name as component_name",
-    "c.unit",
-    "dcu.quantity",
-    "dcu.remarks",
+    "diu.dpr_use_id",
+    "i.item_id",
+    "i.name as item_name",
+    "i.unit",
+    "diu.quantity",
+    "diu.remarks",
   )
-  .where("dcu.dpr_id", dpr_id);
+  .where("diu.dpr_id", dpr_id);
 
   return rows || null;
 }
@@ -31,17 +31,17 @@ async function getTodayProgByDprId(dpr_id) {
 // Tomorrow Planning fetch
 async function getTomPlanByDprId(dpr_id) {
   // adjust table/columns as per your schema
-  const rows = await knexDB("dpr_component_plan as dcp")
-  .join("component as c", "dcp.component_id", "c.component_id")
+  const rows = await knexDB("dpr_item_plan as dip")
+  .join("item as i", "dip.item_id", "i.item_id")
   .select(
-    "dcp.dpr_plan_id",
-    "c.component_id",
-    "c.name as component_name",
-    "c.unit",
-    "dcp.quantity",
-    "dcp.remarks",
+    "dip.dpr_plan_id",
+    "i.item_id",
+    "i.name as item_name",
+    "i.unit",
+    "dip.quantity",
+    "dip.remarks",
   )
-  .where("dcp.dpr_id", dpr_id);
+  .where("dip.dpr_id", dpr_id);
 
   return rows || null;
 }
@@ -197,29 +197,29 @@ async function getCurrentHandlerForDpr(dpr_id) {
   return row ? row.current_handler : null;
 }
 
-// Get latest rate for a given component_id
-async function getLatestRatesForComponents(componentIds) {
-  if (!Array.isArray(componentIds) || componentIds.length === 0)
-    throw new Error("Component list is empty");
+// Get latest rate for a given item_id
+async function getLatestRatesForItems(itemIds) {
+  if (!Array.isArray(itemIds) || itemIds.length === 0)
+    throw new Error("Item list is empty");
 
-  const rows = await knexDB("component_rate")
-    .whereIn("component_id", componentIds)
+  const rows = await knexDB("item_rate")
+    .whereIn("item_id", itemIds)
     .orderBy([
-      { column: "component_id", order: "asc" },
+      { column: "item_id", order: "asc" },
       { column: "effective_from", order: "desc" }
     ]);
 
   const latest = {};
   for (const row of rows) {
-    if (!latest[row.component_id]) {
-      latest[row.component_id] = row.rate_id;
+    if (!latest[row.item_id]) {
+      latest[row.item_id] = row.rate_id;
     }
   }
 
-  // Mandatory check: If any component has no rate, throw error
-  for (const compId of componentIds) {
-    if (!latest[compId]) {
-      throw new Error(`Rate not found for component_id: ${compId}`);
+  // Mandatory check: If any item has no rate, throw error
+  for (const itemId of itemIds) {
+    if (!latest[itemId]) {
+      throw new Error(`Rate not found for item_id: ${itemId}`);
     }
   }
 
@@ -234,21 +234,21 @@ async function insertTodayProg(dpr_id, items = []) {
   if (!dpr_id) throw new Error("Missing dpr_id");
   if (!Array.isArray(items)) throw new Error("Items must be an array");
 
-  const componentIds = items.map(i => i.component_id);
+  const itemIds = items.map(i => i.item_id);
 
   // Fetch latest mandatory rates
-  const latestRates = await getLatestRatesForComponents(componentIds);
+  const latestRates = await getLatestRatesForItems(itemIds);
 
   const rows = items.map(item => ({
     dpr_id,
-    component_id: item.component_id,
-    rate_id: latestRates[item.component_id],  // always exists
+    item_id: item.item_id,
+    rate_id: latestRates[item.item_id],  // always exists
     quantity: item.quantity ?? 0,
     remarks: item.remarks ?? null
   }));
 
   try {
-    const inserted = await knexDB("dpr_component_use").insert(rows);
+    const inserted = await knexDB("dpr_item_use").insert(rows);
     return { ok: true, insertedCount: inserted.length };
   } catch (err) {
     console.error("❌ Insert Today Progress Error:", err.message);
@@ -261,21 +261,21 @@ async function insertTomPlan(dpr_id, items = []) {
   if (!dpr_id) throw new Error("Missing dpr_id");
   if (!Array.isArray(items)) throw new Error("Items must be an array");
 
-  const componentIds = items.map(i => i.component_id);
+  const itemIds = items.map(i => i.item_id);
 
   // Fetch latest mandatory rates
-  const latestRates = await getLatestRatesForComponents(componentIds);
+  const latestRates = await getLatestRatesForItems(itemIds);
 
   const rows = items.map(item => ({
     dpr_id,
-    component_id: item.component_id,
-    rate_id: latestRates[item.component_id], // always exists
+    item_id: item.item_id,
+    rate_id: latestRates[item.item_id], // always exists
     quantity: item.quantity ?? 0,
     remarks: item.remarks ?? null
   }));
 
   try {
-    const inserted = await knexDB("dpr_component_plan").insert(rows);
+    const inserted = await knexDB("dpr_item_plan").insert(rows);
     return { ok: true, insertedCount: inserted.length };
   } catch (err) {
     console.error("❌ Insert Tomorrow Plan Error:", err.message);
@@ -287,7 +287,7 @@ async function insertTomPlan(dpr_id, items = []) {
 async function replaceTodayProg(dpr_id, items = []) {
   try {
     // Delete existing rows
-    await knexDB("dpr_component_use")
+    await knexDB("dpr_item_use")
       .where({ dpr_id })
       .del();
 
@@ -304,7 +304,7 @@ async function replaceTodayProg(dpr_id, items = []) {
 async function replaceTomPlan(dpr_id, items = []) {
   try {
     // Delete existing rows
-    await knexDB("dpr_component_plan")
+    await knexDB("dpr_item_plan")
       .where({ dpr_id })
       .del();
 
@@ -856,4 +856,3 @@ router.get("/submit/:dpr_id", authenticateJWT, async (req, res) => {
 
 
 export default router;
-
