@@ -88,14 +88,19 @@ const ProjectsView = () => {
 
     const barColors = visible.map((p) => (getDaysInfo(p).completed ? "rgba(34,197,94,0.85)" : "rgba(59,130,246,0.8)"));
 
-    const maxVal = Math.max(10, ...elapsedValues, ...totalValues);
+    const maxVal = Math.max(10, ...elapsedValues);
+
+    // dynamic axis max: start at 365 and grow in steps of 50 when needed
+    const axisStep = 50;
+    const axisBase = 365;
+    let axisMax = axisBase;
+    while (maxVal > axisMax) axisMax += axisStep;
 
     // destroy old chart cleanly
     try {
       const existing = chartInstanceRef.current || (chartRef.current && Chart.getChart(chartRef.current));
       if (existing) existing.destroy();
     } catch (e) {
-      /* ignore */
     }
 
     if (!chartRef.current) return;
@@ -158,9 +163,14 @@ const ProjectsView = () => {
           },
           x: {
             beginAtZero: true,
-            max: Math.ceil(maxVal * 1.1),
-            ticks: { color: "#9CA3AF" },
-            grid: { color: "rgba(255,255,255,0.04)" },
+            max: axisMax,
+            ticks: {
+              color: "#9CA3AF",
+              stepSize: 50,
+            },
+            grid: {
+              color: "rgba(255,255,255,0.04)",
+            },
           },
         },
       },
@@ -184,10 +194,21 @@ const ProjectsView = () => {
       <main className="flex-1 p-8 overflow-hidden">
         <div className="flex gap-8 h-full">
           {/* LEFT */}
-          <div className="w-1/3 flex flex-col">
-            <div className="flex-shrink-0 mb-6">
-              <h1 className="text-3xl font-bold text-primary">Project List</h1>
-              <p className="text-secondary">An overview of all ongoing projects.</p>
+          <div className="w-[40%] flex flex-col">
+            <div className="flex-shrink-0 mb-6 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-primary">Project List</h1>
+                <p className="text-secondary">An overview of all ongoing projects.</p>
+              </div>
+              <div className="ml-4">
+                <button
+                  onClick={() => setCreateProject(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue text-white rounded-md shadow hover:bg-blue-dark transition-colors"
+                >
+                  <span className="material-icons">post_add</span>
+                  <span className="text-sm font-medium">Create Project...</span>
+                </button>
+              </div>
             </div>
 
             <div className="relative w-full mb-6 flex-shrink-0">
@@ -258,7 +279,7 @@ const ProjectsView = () => {
           </div>
 
           {/* RIGHT - Chart */}
-          <div className="w-2/3 bg-card p-6 rounded-lg shadow-md flex flex-col">
+          <div className="w-[60%] bg-background p-6 rounded-lg flex flex-col">
             <h2 className="text-xl font-bold mb-6 text-primary">Project Progress Overview</h2>
             <div className="flex-grow relative" style={{ minHeight: 320 }}>
               <canvas id="projectChart" ref={chartRef} />
@@ -266,12 +287,6 @@ const ProjectsView = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => setCreateProject(true)}
-          className="fixed bottom-8 right-8 w-14 h-14 bg-blue text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-dark transition-colors"
-        >
-          <span className="material-icons text-3xl">add</span>
-        </button>
 
         {showCreateProject && (
           <>

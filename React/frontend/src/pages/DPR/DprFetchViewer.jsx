@@ -15,6 +15,8 @@ const DprFetchViewer = () => {
 
   const [submitting, setSubmitting] = useState(false);
   const [dprData, setDprData] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  
   let projectStart = null;
   let projectEnd = null;
 
@@ -406,29 +408,50 @@ const DprFetchViewer = () => {
 
 
   // Submit
-  const SubmitDPR = async () => {
-    const confirmSubmit = window.confirm(
-      "Are you sure you want to submit the DPR? This action cannot be undone."
-    );
+    // Open the custom confirm modal
+  const openSubmitModal = () => {
+    setShowConfirmModal(true);
+  };
 
-    if (!confirmSubmit) return;
+  const cancelSubmit = () => {
+    setShowConfirmModal(false);
+  };
 
+  const autoCloseMs = 2000;
+  // Confirmed submit handler
+  const confirmSubmit = async () => {
+    setShowConfirmModal(false);
     try {
       setSubmitting(true);
 
-      const response = await fetch(`${API_BASE}/report/submit/${dprId}`,
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${API_BASE}/report/submit/${dprId}`, {
+        credentials: "include",
+      });
 
       if (!response.ok) {
-        throw new Error("Request failed");
+        // try to parse error body for message
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.message || response.statusText || "Request failed");
       }
 
-      toast.success("Success:", await response.json());
+      const successBody = await response.json().catch(() => ({}));
+
+      // show success toast and redirect when it closes
+      toast.success(successBody.message || "DPR submitted successfully", {
+        autoClose: autoCloseMs,
+        onClose: () => {
+          navigate(`/dashboard/project-description/${projectId}`);
+        },
+      });
     } catch (error) {
-      toast.error("Error:", error);
+      console.error("Submit DPR error:", error);
+      // show error toast then redirect when it closes
+      toast.error(error?.message || "Error submitting DPR", {
+        autoClose: autoCloseMs,
+        onClose: () => {
+          navigate(`/dashboard/project-description/${projectId}`);
+        },
+      });
     } finally {
       setSubmitting(false);
     }
@@ -439,11 +462,36 @@ const DprFetchViewer = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center border-b border-gray-700 pb-4">
-          <h1 className="text-3xl font-bold">Daily Progress Report</h1>
-          <div className="bg-gray-800 px-4 py-2 rounded text-sm text-gray-300">
-            Report Date: <span id="report_date">--</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/dashboard/project-description/${projectId}`)}
+              className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm flex items-center gap-2"
+            >
+              <span className="material-icons">arrow_back</span>
+              <span>Back</span>
+            </button>
+            <h1 className="text-3xl font-bold">Daily Progress Report</h1>
+          </div>
+
+          <div className="ml-auto">
+            <div className="bg-gray-800 px-4 py-2 rounded text-sm text-gray-300">
+              Report Date: <span id="report_date">--</span>
+            </div>
           </div>
         </div>
+
+        <ToastContainer
+            position="top-right"
+            autoClose={autoCloseMs}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
 
         {/* Grid Layout */}
         <div className="grid md:grid-cols-3 gap-4">
@@ -670,7 +718,7 @@ const DprFetchViewer = () => {
               </button>
               <button
                 type="button"
-                onClick={SubmitDPR}
+                onClick={openSubmitModal}
                 disabled={submitting}
                 className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
                   submitting
@@ -683,6 +731,20 @@ const DprFetchViewer = () => {
             </>
           )}
         </div>
+
+        {showConfirmModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black opacity-60"></div>
+            <div className="relative bg-gray-800 text-white rounded-lg p-6 w-11/12 max-w-md z-10 shadow-lg border border-gray-700">
+              <h3 className="text-lg font-semibold mb-2">Confirm Submit</h3>
+              <p className="mb-4 text-sm text-gray-300">Are you sure you want to submit the DPR? This action cannot be undone.</p>
+              <div className="flex justify-end gap-3">
+                <button onClick={cancelSubmit} className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm">Cancel</button>
+                <button onClick={confirmSubmit} className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold">{submitting ? 'Submitting...' : 'Submit'}</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-5 border border-gray-300 p-3 invisible">
           <div

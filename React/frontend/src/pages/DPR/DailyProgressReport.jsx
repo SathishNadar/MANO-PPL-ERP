@@ -35,13 +35,16 @@ function EditableList({ items, onAdd, onRemove, onChange, placeholder, addButton
     </div>
   );
 }
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Sidebar from "../SidebarComponent/sidebar";
 
 function DailyProgressReport() {
   const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [condition, setCondition] = React.useState("normal"); // "normal" or "rainy"
   const [timeSlots, setTimeSlots] = React.useState([
@@ -315,7 +318,6 @@ function DailyProgressReport() {
     };
   }
 
-  // Function to post DPR to backend
   async function postDPRToBackend() {
   try {
     const dprObj = generateCompleteDPRObject();
@@ -328,40 +330,56 @@ function DailyProgressReport() {
     };
 
     const fullPayload = {
-      pr_id: null, // or generate if required
+      pr_id: null,
       ...dprObj,
       report_footer,
       created_at: getMySQLDateTime(),
-      created_by: "system", // fill according to your auth
+      created_by: "system",
       approved_by: null,
       final_approved_by: null,
       current_handler: null,
-      dpr_status: "pending", // or your default
+      dpr_status: "pending",
     };
 
-    const response = await fetch(`${API_BASE}/report/insertDPR`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(fullPayload),
-      }
-    );
+    const response = await fetch(`${API_BASE}/report/insertDPR`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(fullPayload),
+    });
 
-    const data = await response.json();
-    if (response.ok && data.success) {
-      alert("DPR generated and submitted successfully!");
+    // safe parse (avoid throw if invalid JSON)
+    const data = await response.json().catch(() => ({}));
+
+    // Robust success detection:
+    // - prefer explicit flags (data.success || data.ok)
+    // - fallback to HTTP response.ok
+    // - fallback to message containing 'insert' (covers "DPR inserted successfully")
+    const isSuccess = Boolean(
+      (data && (data.success || data.ok)) ||
+        response.ok ||
+        (typeof data.message === "string" && /insert(ed)?/i.test(data.message))
+    );
+    const autoCloseMs = 2000;
+    if (isSuccess) {
+      // success toast and navigate when toast closes
+      toast.success(data.message || "DPR generated and submitted successfully!", {
+        autoClose: autoCloseMs,
+        onClose: () => {
+          navigate(`/dashboard/project-description/${projectId}`);
+        },
+      });
     } else {
-      alert(
-        `Failed to generate DPR: ${
-          data?.message || response.statusText || "Unknown error"
-        }`
-      );
+      toast.error(data?.message || response.statusText || "Failed to generate DPR", {
+        autoClose: autoCloseMs,
+        onClose: () => {
+          navigate(`/dashboard/project-description/${projectId}`);
+        }
+      });
     }
   } catch (err) {
-    alert(`Error submitting DPR: ${err.message}`);
+    toast.error(`Error submitting DPR: ${err?.message || err}`);
+    console.error("Error submitting DPR:", err);
   }
 }
 
@@ -413,12 +431,34 @@ function DailyProgressReport() {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 min-h-screen bg-gray-900 text-gray-100 overflow-y-auto">
-        {/* Header */}
+        <ToastContainer
+          position="top-right"
+          autoClose={2000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+        {/* Header with Back Button and Date */}
         <div className="px-4 py-6 md:px-12 lg:px-24">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-extrabold text-white mb-2">
-              Daily Progress Report
-            </h1>
+          <div className="mb-8 flex justify-between items-center px-2">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => window.location.href = `/dashboard/project-description/${projectId}`}
+                className="flex items-center gap-2 bg-gray-700 text-gray-200 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                <span className="material-icons">arrow_back</span>
+                Back
+              </button>
+
+              <h1 className="text-2xl align-middle font-extrabold text-white">
+                Daily Progress Report
+              </h1>
+            </div>
+
             <p className="text-base text-[#BBDEFB]">
               {today.toLocaleDateString("en-GB", {
                 day: "numeric",
