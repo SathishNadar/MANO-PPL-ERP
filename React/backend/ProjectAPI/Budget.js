@@ -5,7 +5,7 @@ import { authenticateJWT } from "../AuthAPI/LoginAPI.js";
 
 const router = express.Router();
 
-// Recursively sync JSON budget hierarchy with DB: insert, update, delete nodes and leaf components
+// Recursively sync JSON budget hierarchy with DB: insert, update, delete nodes and leaf items
 async function syncBudgetHierarchy(jsonNode, parentId, projectId, effective_date) {
   // Fetch existing node if ID exists
   let dbNode = jsonNode.id
@@ -30,31 +30,31 @@ async function syncBudgetHierarchy(jsonNode, parentId, projectId, effective_date
     });
   }
 
-  // Handle leaf node component and rate
-  if (jsonNode.is_leaf && jsonNode.component) {
-    let component = await knexDB('component')
-      .where({ project_id: projectId, name: jsonNode.component.name })
+  // Handle leaf node item and rate
+  if (jsonNode.is_leaf && jsonNode.item) {
+    let item = await knexDB('item')
+      .where({ project_id: projectId, name: jsonNode.item.name })
       .first();
 
-    if (!component) {
-      const [componentId] = await knexDB('component').insert({
+    if (!item) {
+      const [itemId] = await knexDB('item').insert({
         project_id: projectId,
-        name: jsonNode.component.name,
-        unit: jsonNode.component.unit
+        name: jsonNode.item.name,
+        unit: jsonNode.item.unit
       });
-      component = { component_id: componentId };
+      item = { item_id: itemId };
     }
 
-    if (jsonNode.component.rate) {
-      await knexDB('component_rate').insert({
-        component_id: component.component_id,
-        rate: jsonNode.component.rate,
+    if (jsonNode.item.rate) {
+      await knexDB('item_rate').insert({
+        item_id: item.item_id,
+        rate: jsonNode.item.rate,
         effective_from: effective_date,
       });
     }
 
     await knexDB('budget_category').where({ id: jsonNode.id })
-      .update({ component_id: component.component_id });
+      .update({ item_id: item.item_id });
   }
 
   // Fetch children from DB
@@ -67,7 +67,7 @@ async function syncBudgetHierarchy(jsonNode, parentId, projectId, effective_date
   for (const dbChild of dbChildren) {
     if (!inputChildIds.includes(dbChild.id)) {
       await knexDB('budget_category').where({ id: dbChild.id }).del();
-      // Optionally handle cascading deletes for associated components if needed
+      // Optionally handle cascading deletes for associated items if needed
     }
   }
 
@@ -79,24 +79,24 @@ async function syncBudgetHierarchy(jsonNode, parentId, projectId, effective_date
   }
 }
 
-// Fetch full project budget hierarchy in one query and build nested tree in memory with latest component rates
+// Fetch full project budget hierarchy in one query and build nested tree in memory with latest item rates
 async function fetchBudgetHierarchy(projectId) {
-  // Fetch all categories with joined component and latest rate data
+  // Fetch all categories with joined item and latest rate data
   const rows = await knexDB('budget_category as bc')
-    .leftJoin('component as c', 'bc.component_id', 'c.component_id')
+    .leftJoin('item as c', 'bc.item_id', 'c.item_id')
     .leftJoin(
-      knexDB('component_rate')
-        .select('component_id')
+      knexDB('item_rate')
+        .select('item_id')
         .max('effective_from as max_eff')
         .where('effective_from', '<=', knexDB.fn.now())
-        .groupBy('component_id')
+        .groupBy('item_id')
         .as('latest_rate'),
       function () {
-        this.on('c.component_id', '=', 'latest_rate.component_id');
+        this.on('c.item_id', '=', 'latest_rate.item_id');
       }
     )
-    .leftJoin('component_rate as cr', function () {
-      this.on('cr.component_id', '=', 'c.component_id')
+    .leftJoin('item_rate as cr', function () {
+      this.on('cr.item_id', '=', 'c.item_id')
           .andOn('cr.effective_from', '=', 'latest_rate.max_eff');
     })
     .select(
@@ -104,10 +104,10 @@ async function fetchBudgetHierarchy(projectId) {
       'bc.parent_id',
       'bc.name',
       'bc.is_leaf',
-      'c.component_id',
-      'c.name as component_name',
-      'c.unit as component_unit',
-      'cr.rate as component_rate'
+      'c.item_id',
+      'c.name as item_name',
+      'c.unit as item_unit',
+      'cr.rate as item_rate'
     )
     .where('bc.project_id', projectId)
     .orderBy('bc.id');
