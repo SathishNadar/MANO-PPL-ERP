@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from "react-router-dom";
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function BudgetCreation() {
@@ -7,6 +8,7 @@ function BudgetCreation() {
   const [selectedId, setSelectedId] = useState(null);
   const [expanded, setExpanded] = useState(new Set(['root']));
   const [toast, setToast] = useState(null);
+  const { projectId } = useParams();
 
   // track which input was focused so we can restore focus after rerenders
   const focusedRef = useRef({ id: null, field: null });
@@ -210,7 +212,6 @@ function BudgetCreation() {
       };
         
       console.log(JSON.stringify(payload, null, 2));
-      const projectId = 10;
 
       const res = await fetch(`${API_BASE}/budget/sync/${projectId}`, {
         method: 'POST',   

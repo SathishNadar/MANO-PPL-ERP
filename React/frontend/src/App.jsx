@@ -125,7 +125,7 @@ function App() {
         />
 
         <Route
-          path="/dashboard/Budgeting"
+          path="/dashboard/project-description/:projectId/budgetCreate"
           element={
             <ProtectedRoute>
               <BudgetingCreate />
@@ -133,7 +133,7 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/budget-view"
+          path="/dashboard/project-description/:projectId/budgetView"
           element={
             <ProtectedRoute>
               <BudgetingView />
