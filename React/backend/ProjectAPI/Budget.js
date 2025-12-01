@@ -12,14 +12,17 @@ async function syncBudgetHierarchy(jsonNode, parentId, projectId, effective_date
     ? await knexDB('budget_category').where({ id: jsonNode.id, project_id: projectId }).first()
     : null;
 
-  // Insert new node if missing
   if (!dbNode) {
-    const [newId] = await knexDB('budget_category').insert({
-      parent_id: parentId,
-      project_id: projectId,
-      name: jsonNode.name,
-      is_leaf: jsonNode.is_leaf,
-    });
+    const insertedCat = await knexDB('budget_category')
+      .insert({
+        parent_id: parentId,
+        project_id: projectId,
+        name: jsonNode.name,
+        is_leaf: jsonNode.is_leaf,
+      });
+
+    const newIdObj = Array.isArray(insertedCat) ? insertedCat[0] : insertedCat;
+    const newId = newIdObj?.id ?? newIdObj;
     jsonNode.id = newId;
     dbNode = { id: newId };
   } else {
@@ -30,27 +33,50 @@ async function syncBudgetHierarchy(jsonNode, parentId, projectId, effective_date
     });
   }
 
+  // allow frontend to send either `item` (preferred) or legacy `component`
+  const itemPayload = jsonNode.item ?? jsonNode.component ?? null;
+
   // Handle leaf node item and rate
-  if (jsonNode.is_leaf && jsonNode.item) {
-    let item = await knexDB('item')
-      .where({ project_id: projectId, name: jsonNode.item.name })
+  if (jsonNode.is_leaf && itemPayload) {
+    let itemRow = await knexDB('item')
+      .where({ project_id: projectId, name: itemPayload.name })
       .first();
 
-    if (!item) {
-      const [itemId] = await knexDB('item').insert({
-        project_id: projectId,
-        name: jsonNode.item.name,
-        unit: jsonNode.item.unit
-      });
+    let item;
+    if (!itemRow) {
+      const inserted = await knexDB('item')
+        .insert({
+          project_id: projectId,
+          name: itemPayload.name,
+          unit: itemPayload.unit
+        });
+
+      const first = Array.isArray(inserted) ? inserted[0] : inserted;
+      const itemId = first?.item_id ?? first?.id ?? first;
+      item = { item_id: itemId };
+    } else {
+      const itemId = itemRow.item_id ?? itemRow.id;
       item = { item_id: itemId };
     }
 
-    if (jsonNode.item.rate) {
-      await knexDB('item_rate').insert({
-        item_id: item.item_id,
-        rate: jsonNode.item.rate,
-        effective_from: effective_date,
-      });
+    // insert item_rate if rate provided (allow 0). also store quantity if present
+    if (itemPayload.rate != null) {
+      // defensive parse for numeric values
+      const rateVal = Number(itemPayload.rate);
+      const qVal = itemPayload.quantity != null ? Number(itemPayload.quantity) : 0.0;
+
+      await knexDB('item_rate')
+        .insert({
+          item_id: item.item_id,
+          rate: isNaN(rateVal) ? itemPayload.rate : rateVal,
+          effective_from: effective_date,
+          quantity: isNaN(qVal) ? 0.0 : qVal
+        })
+        .catch(err => {
+          // log but don't crash entire sync — optional: consider upsert/merge for Postgres
+          console.error('item_rate insert error (item_id=' + item.item_id + '):', err.message);
+          throw err; // rethrow to let outer try/catch handle transaction-level rollback if used
+        });
     }
 
     await knexDB('budget_category').where({ id: jsonNode.id })
@@ -79,9 +105,7 @@ async function syncBudgetHierarchy(jsonNode, parentId, projectId, effective_date
   }
 }
 
-// Fetch full project budget hierarchy in one query and build nested tree in memory with latest item rates
 async function fetchBudgetHierarchy(projectId) {
-  // Fetch all categories with joined item and latest rate data
   const rows = await knexDB('budget_category as bc')
     .leftJoin('item as c', 'bc.item_id', 'c.item_id')
     .leftJoin(
@@ -107,7 +131,8 @@ async function fetchBudgetHierarchy(projectId) {
       'c.item_id',
       'c.name as item_name',
       'c.unit as item_unit',
-      'cr.rate as item_rate'
+      'cr.rate as item_rate',
+      'cr.quantity as quantity'
     )
     .where('bc.project_id', projectId)
     .orderBy('bc.id');
@@ -115,6 +140,7 @@ async function fetchBudgetHierarchy(projectId) {
   // Build map of id to node
   const nodeMap = new Map();
   for (const row of rows) {
+    row.quantity = row.quantity != null ? Number(row.quantity) : 0;
     row.children = [];
     nodeMap.set(row.id, row);
   }
