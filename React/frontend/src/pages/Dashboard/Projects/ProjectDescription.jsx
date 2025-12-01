@@ -12,6 +12,65 @@ function ProjectDescription() {
   const [dprs, setDprs] = useState([]);
   const [usersMap, setUsersMap] = useState({});
 
+  const [budgetExists, setBudgetExists] = useState(false);
+  const [budgetTotal, setBudgetTotal] = useState(null);
+  const [budgetUsed, setBudgetUsed] = useState(null);
+
+  const generateRandomBudget = () => {
+    // random total between 500,000 and 2,000,000 for now
+    const total = Math.floor(Math.random() * (2000000 - 500000 + 1)) + 500000;
+    const used = Math.floor(Math.random() * (total + 1));
+    setBudgetTotal(total);
+    setBudgetUsed(used);
+  };
+
+  const formatNumber = (n) => {
+    if (n === null || n === undefined) return '-';
+    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
+  const [checkingBudget, setCheckingBudget] = useState(true);
+
+  const fetchBudgetExists = async (pId) => {
+    try {
+      setCheckingBudget(true);
+      const res = await fetch(`${API_BASE}/budget/exists/${pId}`, {
+        credentials: "include",
+      });
+      const json = await res.json();
+      if (json && json.success) {
+        setBudgetExists(!!json.exists);
+        // generate a placeholder budget preview for now
+        generateRandomBudget();
+      } else {
+        setBudgetExists(false);
+        // still generate fallback preview so UI isn't empty
+        generateRandomBudget();
+      }
+    } catch (err) {
+      console.error('Failed to check budget existence:', err);
+      setBudgetExists(false);
+      // ensure UI has something to display
+      generateRandomBudget();
+    } finally {
+      setCheckingBudget(false);
+    }
+  };
+
+  const handleCreateBudget = () => {
+    // navigate to your budget creation page (adjust route if you use a different path)
+    navigate(`/dashboard/project-description/${projectId}/budgetCreate`);
+  };
+
+  const handleEditBudget = () => {
+    // navigate to budget edit page (adjust route if you use a different path)
+    // navigate(`/dashboard/project-description/${projectId}/budgetEdit`);
+    navigate(`/dashboard/project-description/${projectId}`);
+  };
+
+  const handleViewBudget = () => {
+    // navigate to budget view page
+    navigate(`/dashboard/project-description/${projectId}/budgetView`);
+  };
 
   useEffect(() => {
     if (!projectId) return;
@@ -54,32 +113,35 @@ function ProjectDescription() {
 
     // fetch users for mapping ids -> names (if permitted)
     const fetchUsers = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/admin/users`, {
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data && data.success && Array.isArray(data.users)) {
-        const map = {};
-        data.users.forEach((u) => {
-          // prefer the explicit user_id and user_name columns; fall back to common alternatives
-          const id = u.user_id ?? u.id ?? u.userId;
-          const name = u.user_name ?? u.userName ?? u.name ?? u.full_name ?? `${id}`;
-          if (id !== undefined && id !== null) map[id] = name;
+      try {
+        const res = await fetch(`${API_BASE}/admin/users`, {
+          credentials: "include",
         });
-        setUsersMap(map);
-      } else {
-        // likely not permitted for this user (non-admin) or unexpected shape
-        console.info("Users fetch returned no users or not permitted.", data);
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.users)) {
+          const map = {};
+          data.users.forEach((u) => {
+            // prefer the explicit user_id and user_name columns; fall back to common alternatives
+            const id = u.user_id ?? u.id ?? u.userId;
+            const name = u.user_name ?? u.userName ?? u.name ?? u.full_name ?? `${id}`;
+            if (id !== undefined && id !== null) map[id] = name;
+          });
+          setUsersMap(map);
+        } else {
+          // likely not permitted for this user (non-admin) or unexpected shape
+          console.info("Users fetch returned no users or not permitted.", data);
+        }
+      } catch (err) {
+        // non-admins will likely get a 403 — that's fine, we'll just show Unknown
+        console.info("Users fetch skipped or failed:", err);
       }
-    } catch (err) {
-      // non-admins will likely get a 403 — that's fine, we'll just show Unknown
-      console.info("Users fetch skipped or failed:", err);
-    }
-  };
+    };
 
-  fetchUsers();
-}, [projectId]);
+    fetchUsers();
+
+    // check if budget exists for this project (calls backend /budget/exists/:projectId)
+    fetchBudgetExists(projectId);
+  }, [projectId]);
 
   // Calculate project progress percentage
   const getProgressPercentage = () => {
@@ -96,6 +158,9 @@ function ProjectDescription() {
     const percent = Math.floor((elapsed / total) * 100);
     return `${percent}%`;
   };
+
+  // simple derived values for budget preview
+  const percentUsed = budgetTotal ? Math.round((budgetUsed / budgetTotal) * 100) : 0;
 
   //#region  helpers
   const getStatusClasses = (status) => {
@@ -311,6 +376,51 @@ function ProjectDescription() {
                 >
                   Edit Project
                 </button>
+              </div>
+            </div>
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Budget</h3>
+
+              <div className="relative pt-1">
+                <div className="flex mb-2 items-center justify-between">
+                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-[var(--accent-blue)] bg-gray-900">
+                    Budget Status
+                  </span>
+                  <span className="text-xs font-semibold text-[var(--accent-blue)]">
+                    {percentUsed}%
+                  </span>
+                </div>
+
+                <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-[var(--border-color)]">
+                  <div
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[var(--accent-blue)]"
+                    style={{ width: `${percentUsed}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="text-sm text-[var(--text-secondary)] mb-2">
+                  <strong className="text-[var(--text-primary)]">{formatNumber(budgetUsed)}</strong>
+                  <span className="mx-2">/</span>
+                  <span className="text-[var(--text-secondary)]">{formatNumber(budgetTotal)}</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  {checkingBudget ? (
+                    <button disabled className="col-span-2 bg-gray-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Checking...</button>
+                  ) : budgetExists ? (
+                    <>
+                      <button onClick={handleEditBudget} className="col-span-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Edit Budget</button>
+                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={handleCreateBudget} className="col-span-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Create Budget</button>
+                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
