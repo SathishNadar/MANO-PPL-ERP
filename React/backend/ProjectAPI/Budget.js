@@ -159,6 +159,30 @@ async function fetchBudgetHierarchy(projectId) {
   return treeRoots;
 }
 
+router.get('/exists/:projectId', async (req, res) => {
+  const { projectId } = req.params;
+  if (!projectId) {
+    return res.status(400).json({ success: false, message: 'projectId required' });
+  }
+
+  try {
+    // Use knex (same style as other routes in this file)
+    const rows = await knexDB('budget_category')
+      .where({ project_id: projectId })
+      .count('id as cnt');
+
+    // knex returns an array with a count value; normalize safely
+    const cnt = Array.isArray(rows) ? rows[0].cnt : rows.cnt;
+    const exists = Number(cnt) > 0;
+
+    return res.json({ success: true, exists });
+  } catch (err) {
+    console.error('Error checking budget existence:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
 // POST /budget/sync - update entire budget hierarchy for a project
 router.post("/sync/:projectId", authenticateJWT, async (req, res) => {
   try {
