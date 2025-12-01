@@ -22,6 +22,7 @@ import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
 import Admin from "./pages/admin/Admin.jsx";
 
 import BudgetingCreate from "./pages/BudgetingComponent/BudgetCreation.jsx"
+import BudgetingView from "./pages/BudgetingComponent/BudgetView.jsx"
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -128,6 +129,14 @@ function App() {
           element={
             <ProtectedRoute>
               <BudgetingCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/budget-view"
+          element={
+            <ProtectedRoute>
+              <BudgetingView />
             </ProtectedRoute>
           }
         />
