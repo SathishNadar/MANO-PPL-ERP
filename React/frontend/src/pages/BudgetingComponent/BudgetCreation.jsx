@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function BudgetCreation() {
   // Node structure: { id, name, type: 'category'|'item', unit?: string, qty?: number|string, rate?: number|string, children: [] }
@@ -158,9 +159,83 @@ function BudgetCreation() {
     setToast('Budget creation cancelled');
   }
 
-  function handleSave() {
-    // dummy toast for now
-    setToast('Budget Created Successfully');
+  // Build payload node (exact format requested by backend/sample)
+    function buildPayloadNode(node, parent_id = null) {
+    // Always send id:null and parent_id:null per your sample
+    const out = {
+        id: null,
+        parent_id: null,
+        name: node.name ?? '',
+        is_leaf: node.type === 'item' ? 1 : 0,
+        item_id: node.item_id ?? null,
+        children: []
+    };
+
+    if (node.type === 'item') {
+        // ensure numeric rate (two decimals) and proper types
+        const rawRate = node.rate === '' || node.rate === null || node.rate === undefined ? 0 : Number(node.rate) || 0;
+        const rateNum = Math.round(rawRate * 100) / 100;
+
+        // parse quantity defensively (allow empty string -> 0)
+        const rawQty = (node.qty === '' || node.qty === null || node.qty === undefined) ? 0 : Number(node.qty) || 0;
+        const qtyNum = Math.round(rawQty * 100) / 100;
+
+        out.item = {
+        name: node.component_name ?? node.name ?? '',
+        unit: node.unit ?? '',
+        rate: Number(rateNum.toFixed(2)),
+        quantity: Number(qtyNum)
+        };
+    }
+
+    // children should always be an array (empty if none)
+    if (Array.isArray(node.children) && node.children.length > 0) {
+        out.children = node.children.map((c) => buildPayloadNode(c, out.id));
+    } else {
+        out.children = [];
+    }
+
+    return out;
+    }
+
+  async function handleSave() {
+    try {
+      setToast('Saving...');
+
+      const effective_date = new Date().toISOString().slice(0, 10);
+        
+      const payload = {
+        effective_date,
+        data: buildPayloadNode(tree, null)
+      };
+        
+      console.log(JSON.stringify(payload, null, 2));
+      const projectId = 10;
+
+      const res = await fetch(`${API_BASE}/budget/sync/${projectId}`, {
+        method: 'POST',   
+        credentials: "include",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await res.text();
+        let json = null;
+        try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
+
+        if (!res.ok) {
+        console.error('Save failed:', res.status,json);
+        setToast(json && json.message ? json.message : 'Save failed');
+        return;
+      }
+
+      setToast('Budget Created Successfully');
+    } catch (err) {
+      console.error(err);
+      setToast('Save failed');
+    }
   }
 
   // Move a node by id to become a child of targetParentId. If targetParentId is null, attach to root.
