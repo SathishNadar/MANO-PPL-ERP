@@ -72,7 +72,7 @@ const DprFetchViewer = () => {
 
         table.innerHTML = prog
           .map((row) => {
-            const item = row.component_name ?? row.item ?? "--";
+            const item = row.item_name ?? row.item ?? "--";
             const remarks = row.remarks ?? "--";
             const unit = row.unit ?? "--";
             const qty = row.quantity ?? row.qty ?? "--";
