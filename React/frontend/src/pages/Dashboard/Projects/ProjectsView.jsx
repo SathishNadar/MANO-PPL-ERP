@@ -1,6 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Chart from "chart.js/auto";
+// Chart logic moved into a separate component (create this file)
+import ChartAreaComponent from "./../../SmolComponents/chartAreaComponent";
+// Budget preview component (you will create BudgetPreviewComponent.jsx)
+import BudgetPreviewComponent from "./../../BudgetingComponent/BudgetPreviewComponent";
 import Sidebar from "../../SidebarComponent/sidebar";
 import "material-icons/iconfont/material-icons.css";
 import "./ProjectsView.css";
@@ -15,8 +18,8 @@ const ProjectsView = () => {
   const [showCreateProject, setCreateProject] = useState(false);
   const [query, setQuery] = useState("");
   const userId = JSON.parse(localStorage.getItem("session"))?.user_id;
-  const chartRef = useRef(null);
-  const chartInstanceRef = useRef(null);
+  const [previewProjectId, setPreviewProjectId] = useState(null);
+  const [showChart, setShowChart] = useState(true); // true -> show chart, false -> show budget tree preview
 
   // compute elapsed & total days and completion flag
   const getDaysInfo = (project) => {
@@ -78,113 +81,6 @@ const ProjectsView = () => {
       return tokens.every((t) => hay.includes(t));
     });
   };
-
-  // Build chart whenever projects or query change
-  useEffect(() => {
-    const visible = filterProjects(projects, query);
-    const labels = visible.map((p) => p.project_name);
-    const elapsedValues = visible.map((p) => getDaysInfo(p).elapsed);
-    const totalValues = visible.map((p) => getDaysInfo(p).total);
-
-    const barColors = visible.map((p) => (getDaysInfo(p).completed ? "rgba(34,197,94,0.85)" : "rgba(59,130,246,0.8)"));
-
-    const maxVal = Math.max(10, ...elapsedValues);
-
-    // dynamic axis max: start at 365 and grow in steps of 50 when needed
-    const axisStep = 50;
-    const axisBase = 365;
-    let axisMax = axisBase;
-    while (maxVal > axisMax) axisMax += axisStep;
-
-    // destroy old chart cleanly
-    try {
-      const existing = chartInstanceRef.current || (chartRef.current && Chart.getChart(chartRef.current));
-      if (existing) existing.destroy();
-    } catch (e) {
-    }
-
-    if (!chartRef.current) return;
-
-    // plugin: draw values (e.g. "12d") to the right of each horizontal bar
-    const valueLabels = {
-      id: "valueLabels",
-      afterDatasetsDraw: (chart) => {
-        const ctx = chart.ctx;
-        chart.data.datasets.forEach((dataset, i) => {
-          const meta = chart.getDatasetMeta(i);
-          meta.data.forEach((bar, idx) => {
-            const value = dataset.data[idx];
-            const x = bar.x + 8; // a little padding
-            const y = bar.y;
-            ctx.save();
-            ctx.fillStyle = "#D1D5DB";
-            ctx.font = "12px Poppins, sans-serif";
-            ctx.textAlign = "left";
-            ctx.textBaseline = "middle";
-            ctx.fillText(`${value}days`, x, y);
-            ctx.restore();
-          });
-        });
-      },
-    };
-
-    chartInstanceRef.current = new Chart(chartRef.current, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Elapsed Days",
-            data: elapsedValues,
-            backgroundColor: barColors,
-            borderColor: "rgba(59,130,246,1)",
-            borderWidth: 1,
-            borderRadius: 6,
-            borderSkipped: false,
-          },
-        ],
-      },
-      options: {
-        indexAxis: "y", // horizontal bars
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}days`,
-            },
-          },
-        },
-        scales: {
-          y: {
-            grid: { display: false },
-            ticks: { color: "#9CA3AF" },
-          },
-          x: {
-            beginAtZero: true,
-            max: axisMax,
-            ticks: {
-              color: "#9CA3AF",
-              stepSize: 50,
-            },
-            grid: {
-              color: "rgba(255,255,255,0.04)",
-            },
-          },
-        },
-      },
-      plugins: [valueLabels],
-    });
-
-    // cleanup when effect re-runs or component unmounts
-    return () => {
-      try {
-        chartInstanceRef.current?.destroy();
-        chartInstanceRef.current = null;
-      } catch (e) {}
-    };
-  }, [projects, query]);
 
   const visibleProjects = filterProjects(projects, query);
 
@@ -251,7 +147,16 @@ const ProjectsView = () => {
                       </div>
                     </div>
 
-                    <div className="text-right ml-4">
+                    <div
+                      className="text-right ml-4"
+                      // onClick={(e) => {
+                      //   // stop outer card navigation
+                      //   e.stopPropagation();
+                      //   // show budget preview for this project
+                      //   setShowChart(false);
+                      //   setPreviewProjectId(project.project_id);
+                      // }}
+                    >
                       {completed ? (
                         <div className="text-sm font-semibold text-green-400">Completed</div>
                       ) : (
@@ -278,11 +183,34 @@ const ProjectsView = () => {
             </div>
           </div>
 
-          {/* RIGHT - Chart */}
-          <div className="w-[60%] bg-background p-6 rounded-lg flex flex-col">
+          {/* RIGHT - Chart or Budget Preview */}
+          <div className="w-[60%] bg-background p-6 rounded-lg flex flex-col h-full">
             <h2 className="text-xl font-bold mb-6 text-primary">Project Progress Overview</h2>
-            <div className="flex-grow relative" style={{ minHeight: 320 }}>
-              <canvas id="projectChart" ref={chartRef} />
+            <div className="flex-grow relative h-full" style={{ minHeight: "100%" }}>
+              {showChart ? (
+                <ChartAreaComponent
+                  projects={projects}
+                  filterProjects={filterProjects}
+                  query={query}
+                  getDaysInfo={getDaysInfo}
+                />
+              ) : (
+                <BudgetPreviewComponent projectId={previewProjectId} />
+              )}
+
+              {!showChart && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => {
+                      setShowChart(true);
+                      setPreviewProjectId(null);
+                    }}
+                    className="inline-flex items-center gap-2 px-3 py-2 bg-gray-800 text-white rounded-md shadow hover:bg-gray-700 transition-colors"
+                  >
+                    Back to chart
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
