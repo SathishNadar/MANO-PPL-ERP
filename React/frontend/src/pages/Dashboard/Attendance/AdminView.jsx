@@ -1,8 +1,8 @@
 import React from 'react';
-import Header from '../../../components/Header';
-import FilterBar from '../../../components/FilterBar';
-import AttendanceChart from '../../../components/AttendanceChart';
-import AttendanceDetailsModal from '../../../components/AttendanceDetailsModal';
+import Header from '../../AttendanceComponents/Header';
+import FilterBar from '../../AttendanceComponents/FilterBar';
+import AttendanceChart from '../../AttendanceComponents/AttendanceChart';
+import AttendanceDetailsModal from '../../AttendanceComponents/AttendanceDetailsModal';
 import Sidebar from '../../SidebarComponent/sidebar';
 import { DateTime } from 'luxon';
 

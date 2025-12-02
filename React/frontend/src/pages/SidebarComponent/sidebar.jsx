@@ -62,7 +62,7 @@ function Sidebar({ onCategoryChange }) {
       label: "Projects",
       roles: [1, 2, 5],
     },
-    { icon: "bar_chart", path: "/dashboard/attendance/admin", id: "Attendance", label: "Attendance", roles: [2, 5] },
+
     {
       icon: "receipt_long",
       id: "vendors",
@@ -74,6 +74,7 @@ function Sidebar({ onCategoryChange }) {
         { label: "Suppliers", category: "3" },
       ],
     },
+
     {
       icon: "wysiwyg",
       path: "/dashboard/work-in-progress",
@@ -81,6 +82,14 @@ function Sidebar({ onCategoryChange }) {
       label: "Work In Progress",
       roles: [2, 5],
     },
+
+    { icon: "bar_chart", 
+      path: "/dashboard/attendance/admin", 
+      id: "attendance", 
+      label: "Attendance", 
+      roles: [2, 5] 
+    },
+
     {
       icon: "admin_panel_settings",
       path: "/dashboard/admin",
@@ -125,8 +134,12 @@ function Sidebar({ onCategoryChange }) {
                   setActiveMenu(""); // collapse dropdown on other clicks
                 }
               }}
-              className={`text-secondary hover:text-blue-light transition-all duration-300 transform hover:scale-110 cursor-pointer w-full flex justify-center ${location.pathname.includes(id) ? "text-blue-light" : ""
-                }`}
+              className={`text-secondary hover:text-blue-light transition-all duration-300 transform hover:scale-110 cursor-pointer w-full flex justify-center ${
+  /* prefer matching by explicit `path` when available to avoid substring collisions like 'admin' */
+  path
+    ? (location.pathname === path || location.pathname.startsWith(path + "/") ? "text-blue-light" : "")
+    : (location.pathname.includes(id) ? "text-blue-light" : "")
+}`}
             >
               <span className="material-icons text-[42px]">{icon}</span>
             </button>
