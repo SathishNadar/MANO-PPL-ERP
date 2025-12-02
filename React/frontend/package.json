@@ -15,6 +15,7 @@
     "chart.js": "^4.5.1",
     "country-telephone-data": "^0.6.3",
     "fuse.js": "^7.1.0",
+    "luxon": "^3.7.2",
     "material-icons": "^1.13.14",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

@@ -62,7 +62,7 @@ function Sidebar({ onCategoryChange }) {
       label: "Projects",
       roles: [1, 2, 5],
     },
-    { icon: "bar_chart", id: "reports", label: "Reports", roles: [1, 2] },
+    { icon: "bar_chart", path: "/dashboard/attendance/admin", id: "Attendance", label: "Attendance", roles: [2, 5] },
     {
       icon: "receipt_long",
       id: "vendors",
@@ -125,11 +125,10 @@ function Sidebar({ onCategoryChange }) {
                   setActiveMenu(""); // collapse dropdown on other clicks
                 }
               }}
-              className={`text-secondary hover:text-blue-light transition-all duration-300 transform hover:scale-110 cursor-pointer w-full flex justify-center ${
-                location.pathname.includes(id) ? "text-blue-light" : ""
-              }`}
+              className={`text-secondary hover:text-blue-light transition-all duration-300 transform hover:scale-110 cursor-pointer w-full flex justify-center ${location.pathname.includes(id) ? "text-blue-light" : ""
+                }`}
             >
-              <span className="material-icons text-3xl">{icon}</span>
+              <span className="material-icons text-[42px]">{icon}</span>
             </button>
 
             {/* Tooltip */}
@@ -148,18 +147,17 @@ function Sidebar({ onCategoryChange }) {
                       onCategoryChange(parseInt(item.category, 10));
                       setActiveMenu("vendors"); // keep dropdown open
                     }}
-                    className={`flex items-center gap-2 text-xs px-2 text-left transition-colors duration-200 ${
-                      categoryParam === item.category
-                        ? "text-blue-light font-semibold"
-                        : "text-gray-300 hover:text-blue-light"
-                    }`}
+                    className={`flex items-center gap-2 text-xs px-2 text-left transition-colors duration-200 ${categoryParam === item.category
+                      ? "text-blue-light font-semibold"
+                      : "text-gray-300 hover:text-blue-light"
+                      }`}
                   >
-                    <span className="material-icons text-[26px] ml-2">
+                    <span className="material-icons text-[34px] ml-2">
                       {item.label === "Contractors"
                         ? "engineering"
                         : item.label === "Consultants"
-                        ? "support_agent"
-                        : "local_shipping"}
+                          ? "support_agent"
+                          : "local_shipping"}
                     </span>
                   </button>
                 ))}

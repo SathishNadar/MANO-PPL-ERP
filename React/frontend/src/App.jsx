@@ -20,6 +20,7 @@ import DprFetchViewer from "./pages/DPR/DprFetchViewer.jsx";
 import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
 import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
 import Admin from "./pages/admin/Admin.jsx";
+import AdminView from "./pages/Dashboard/Attendance/AdminView.jsx";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -120,6 +121,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/dashboard/attendance/admin"
+          element={
+            <ProtectedRoute>
+              <AdminView />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/dummy2" element={<Dummy />} />
       </Routes>
       <ToastContainer
@@ -129,7 +138,7 @@ function App() {
         pauseOnFocusLoss={false}
         pauseOnClick={false}
       />
-    </div>
+    </div >
   );
 }
 
