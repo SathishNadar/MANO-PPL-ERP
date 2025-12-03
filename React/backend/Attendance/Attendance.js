@@ -1,6 +1,7 @@
 import express from "express";
 import { knexDB } from "../Database.js";
 import { authenticateJWT } from "../AuthAPI/LoginAPI.js";
+import { fetchTimeStamp } from "../Timezone/Timezone.js";
 
 const router = express.Router();
 
@@ -11,9 +12,19 @@ router.post("/timein", authenticateJWT, async (req, res) => {
     const { latitude, longitude, late_reason } = req.body;
 
     if (typeof latitude !== "number" || typeof longitude !== "number") {
-      return res.status(400).json({ ok: false, message: "Invalid or missing latitude/longitude" });
+      return res.status(400).json({
+        ok: false,
+        message: "Invalid or missing latitude/longitude",
+      });
     }
 
+    // STEP 1: Convert UTC → local time at user's coordinates
+    const nowUTC = new Date().toISOString();
+    const tz = await fetchTimeStamp(latitude, longitude, nowUTC);
+
+    const localTime = tz.localTime; // The converted time
+
+    // STEP 2: Check existing session
     const openSession = await knexDB("attendance_records")
       .where({ user_id })
       .whereNull("time_out")
@@ -21,23 +32,37 @@ router.post("/timein", authenticateJWT, async (req, res) => {
       .first();
 
     if (openSession) {
-      return res.status(400).json({ ok: false, message: "Already timed in. Please time out first." });
+      return res.status(400).json({
+        ok: false,
+        message: "Already timed in. Please time out first.",
+      });
     }
 
+    // STEP 3: Save local time instead of server time
     const [attendance_id] = await knexDB("attendance_records").insert({
       user_id,
       late_reason: late_reason || null,
-      time_in: knexDB.fn.now(),
+      time_in: localTime, // << USE LOCAL TIME
       time_in_lat: latitude,
       time_in_lng: longitude,
       created_at: knexDB.fn.now(),
       updated_at: knexDB.fn.now(),
     });
 
-    res.json({ ok: true, attendance_id, message: "Timed in successfully" });
+    return res.json({
+      ok: true,
+      attendance_id,
+      local_time: localTime,
+      timezone: tz.timezone,
+      tz_name: tz.tzName,
+      message: "Timed in successfully",
+    });
+
   } catch (err) {
     console.error("Time-in error:", err);
-    res.status(500).json({ ok: false, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ ok: false, message: "Internal server error" });
   }
 });
 
@@ -51,32 +76,47 @@ router.post("/timeout", authenticateJWT, async (req, res) => {
       return res.status(400).json({ ok: false, message: "Invalid or missing latitude/longitude" });
     }
 
+    // STEP 1 — Get current UTC time and convert to LOCAL (based on GPS)
+    const nowUTC = new Date().toISOString();
+    const tz = await fetchTimeStamp(latitude, longitude, nowUTC);
+    const localTime = tz.localTime;
+
+    // STEP 2 — Find open attendance session
     const openSession = await knexDB("attendance_records")
       .where({ user_id })
       .whereNull("time_out")
       .whereRaw("DATE(time_in) = CURDATE()")
       .first();
 
-
     if (!openSession) {
       return res.status(400).json({ ok: false, message: "No active time-in found to time out." });
     }
 
+    // STEP 3 — Update time_out using LOCAL TIME
     await knexDB("attendance_records")
       .where({ attendance_id: openSession.attendance_id })
       .update({
-        time_out: knexDB.fn.now(),
+        time_out: localTime,        // <<— USE THE CONVERTED LOCAL TIME
         time_out_lat: latitude,
         time_out_lng: longitude,
         updated_at: knexDB.fn.now(),
       });
 
-    res.json({ ok: true, attendance_id: openSession.attendance_id, message: "Timed out successfully" });
+    return res.json({
+      ok: true,
+      attendance_id: openSession.attendance_id,
+      local_time_out: localTime,
+      timezone: tz.timezone,
+      tz_name: tz.tzName,
+      message: "Timed out successfully",
+    });
+
   } catch (err) {
     console.error("Time-out error:", err);
-    res.status(500).json({ ok: false, message: "Internal server error" });
+    return res.status(500).json({ ok: false, message: "Internal server error" });
   }
 });
+
 
 
 // Admin attendance records with admin role check
@@ -92,7 +132,8 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
       .select(
         "attendance_records.*",
         "users.user_name",
-        "users.email"
+        "users.email",
+        "users.designation"
       )
       .orderBy("time_in", "desc")
       .limit(Math.min(parseInt(limit), 100)); // max limit 100 to prevent abuse
