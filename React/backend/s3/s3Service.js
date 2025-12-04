@@ -21,7 +21,7 @@ const s3 = new S3Client({
 const BUCKET = process.env.S3_BUCKET;
 
 // 1. Upload File (buffer or local file)
-export async function uploadFile({ fileBuffer, filePath, key, directory = "", ContentType = "application/octet-stream"}) {
+export async function uploadFile({ fileBuffer, filePath, key, directory = "", contentType = "application/octet-stream"}) {
   try {
     const finalKey = directory ? `${directory}/${key}` : key;
 
@@ -34,7 +34,7 @@ export async function uploadFile({ fileBuffer, filePath, key, directory = "", Co
       Bucket: BUCKET,
       Key: finalKey,
       Body,
-      ContentType: ContentType,
+      ContentType: contentType,
     });
 
     await s3.send(cmd);
