@@ -21,12 +21,21 @@ const WorkInProgress = () => {
   const UserId = session?.user_id;
 
   // newTask default
+  const defaultDueDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    // set a consistent time to match server expectation (18:30 local)
+    d.setHours(18, 30, 0, 0);
+    return d.toISOString();
+  })();
+
   const [newTask, setNewTask] = useState({
     task_name: "",
     task_description: "",
     assigned_to: UserId,
     assigned_date: "",
-    due_date: "",
+    // default deadline is 14 days from today unless user changes it
+    due_date: defaultDueDate,
     status: "not_started",
   });
 
@@ -190,13 +199,24 @@ const WorkInProgress = () => {
   // Create task
   const onCreate = async (task) => {
     try {
+      // Do not auto-read or coerce any placeholder/default from the DOM.
+      // Only send due_date if the user explicitly provided one.
       const payload = { ...task, assigned_to: Number(task.assigned_to) };
+      if (!task?.due_date) {
+        // ensure we don't accidentally include an empty due_date property
+        delete payload.due_date;
+      }
+
+      // Remove any UI-only properties (internal flags starting with __) before sending
+      Object.keys(payload).forEach((k) => { if (k.startsWith("__")) delete payload[k]; });
+
       const res = await fetch(`${API_BASE}/tasks/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),
       });
+      console.log(payload);
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.message || "Something went wrong");
@@ -214,34 +234,37 @@ const WorkInProgress = () => {
       fetchTasks(selectedUser);
     } catch (err) {
       toast.error("Error creating task");
+      console.error(err);
     }
   };
 
   // Update task
   const onUpdate = async (task) => {
     try {
-      const payload = {
-        ...task,
-        assigned_to: Number(task.assigned_to),
-      };
-      const res = await fetch(`${API_BASE}/tasks/${task.task_id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        }
-      );
+      // Do not auto-read or coerce any placeholder/default from the DOM.
+      // Only include due_date if the user explicitly provided one in `task`.
+      const payload = { ...task, assigned_to: Number(task.assigned_to) };
+      if (!task?.due_date) {
+        delete payload.due_date;
+      }
 
+      // Remove UI-only computed properties before sending to backend
+      Object.keys(payload).forEach((k) => { if (k.startsWith("__")) delete payload[k]; });
+
+      const res = await fetch(`${API_BASE}/tasks/${task.task_id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      console.log(payload);
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.message || "Something went wrong");
       }
 
       toast.success("Task updated successfully");
-      setTasks((prev) =>
-        prev.map((t) => (t.task_id === task.task_id ? task : t))
-      );
+      setTasks((prev) => prev.map((t) => (t.task_id === task.task_id ? task : t)));
       setShowEditModal(null);
     } catch (err) {
       toast.error("Error updating task");
@@ -348,7 +371,18 @@ const WorkInProgress = () => {
                   </select>
 
                   <button
-                    onClick={() => setShowCreateModal(true)}
+                    onClick={() => {
+                      setNewTask((prev) => ({
+                        ...prev,
+                        task_name: "",
+                        task_description: "",
+                        assigned_to: selectedUser || UserId,
+                        assigned_date: "",
+                        due_date: defaultDueDate,
+                        status: "not_started",
+                      }));
+                      setShowCreateModal(true);
+                    }}
                     className="rounded-md px-6 py-3 inline-flex items-center justify-center gap-2 whitespace-nowrap bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                   >
                     <svg
