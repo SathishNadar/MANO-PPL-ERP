@@ -85,7 +85,7 @@ function AttendanceDashboard() {
             </div>
           </Link>
 
-          <Link to="/attendance/dashboard" className="block">
+          <Link to="/dashboard/attendance" className="block">
             <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex">
               <div className="flex-1 flex flex-col justify-between">
                 <div>
@@ -97,7 +97,7 @@ function AttendanceDashboard() {
             </div>
           </Link>
 
-          <Link to="/attendance/employee-stats" className="block">
+          <Link to="/dashboard/attendance" className="block">
             <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex">
               <div className="flex-1 flex flex-col justify-between">
                 <div>
@@ -109,7 +109,7 @@ function AttendanceDashboard() {
             </div>
           </Link>
 
-          <Link to="/attendance/attendance-list" className="block">
+          <Link to="/dashboard/attendance" className="block">
             <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-blue-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex">
               <div className="flex-1 flex flex-col justify-between">
                 <div>
