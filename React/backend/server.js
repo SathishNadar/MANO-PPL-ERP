@@ -14,6 +14,7 @@ import VendorRoutes from './VendorClientAPI/vendor.js';
 import TaskRoutes from './Tasks/task.js';
 import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
+import S3Routes from './s3/s3Routes.js';
 
 import './config.js';
 import cookieParser from 'cookie-parser';
@@ -50,6 +51,7 @@ app.get('/verify-signup', handleVerifySignup);
 app.post('/verify-signup', handleVerifySignup);
 app.use('/api', ForgotPasswordRoutes);
 
+app.use('/s3', S3Routes);
 
 app.use('/project', ProjectRoutes);
 app.use("/report", ReportRoutes); 
