@@ -84,7 +84,7 @@ function Sidebar({ onCategoryChange }) {
     },
 
     { icon: "bar_chart", 
-      path: "/dashboard/attendance/admin", 
+      path: "/dashboard/attendance", 
       id: "attendance", 
       label: "Attendance", 
       roles: [2, 5] 
