@@ -28,7 +28,7 @@ router.post("/timein", authenticateJWT, async (req, res) => {
     const openSession = await knexDB("attendance_records")
       .where({ user_id })
       .whereNull("time_out")
-      .whereRaw("DATE(time_in) = CURDATE()")
+      .whereRaw("DATE(time_in) = DATE(?)", [localTime])
       .first();
 
     if (openSession) {
@@ -85,7 +85,7 @@ router.post("/timeout", authenticateJWT, async (req, res) => {
     const openSession = await knexDB("attendance_records")
       .where({ user_id })
       .whereNull("time_out")
-      .whereRaw("DATE(time_in) = CURDATE()")
+      .whereRaw("DATE(time_in) = DATE(?)", [localTime])
       .first();
 
     if (!openSession) {
@@ -139,8 +139,8 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
       .limit(Math.min(parseInt(limit), 100)); // max limit 100 to prevent abuse
 
     if (user_id) query = query.where("attendance_records.user_id", user_id);
-    if (date_from) query = query.where("time_in", ">=", date_from);
-    if (date_to) query = query.where("time_in", "<=", date_to);
+    if (date_from) query = query.whereRaw("DATE(time_in) >= DATE(?)", [date_from]);
+    if (date_to) query = query.whereRaw("DATE(time_in) <= DATE(?)", [date_to]);
 
     const records = await query;
     res.json({ ok: true, data: records });
@@ -162,8 +162,8 @@ router.get("/records", authenticateJWT, async (req, res) => {
       .orderBy("time_in", "desc")
       .limit(Math.min(parseInt(limit), 100)); // max limit 100
 
-    if (date_from) query = query.where("time_in", ">=", date_from);
-    if (date_to) query = query.where("time_in", "<=", date_to);
+    if (date_from) query = query.whereRaw("DATE(time_in) >= DATE(?)", [date_from]);
+    if (date_to) query = query.whereRaw("DATE(time_in) <= DATE(?)", [date_to]);
 
     const records = await query;
     res.json({ ok: true, data: records });
