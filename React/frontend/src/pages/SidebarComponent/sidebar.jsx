@@ -87,7 +87,7 @@ function Sidebar({ onCategoryChange }) {
       path: "/dashboard/attendance", 
       id: "attendance", 
       label: "Attendance", 
-      roles: [2, 5] 
+      roles: [2] 
     },
 
     {
