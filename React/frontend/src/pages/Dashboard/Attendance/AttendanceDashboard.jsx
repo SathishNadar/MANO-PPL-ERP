@@ -92,57 +92,61 @@ function AttendanceDashboard() {
 
       <div className="flex-1 p-6 flex flex-col" style={{ minHeight: 0 }}>
         <div className="mb-4 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-2xl font-semibold">Attendance — Map</h2>
+          <h2 className="text-2xl font-semibold">Attendance Dashboard</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 flex-shrink-0">
-          <Link to="/dashboard/attendance/admin" className="block">
-            <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-blue-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex">
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Admin View — Graph</h3>
-                  <p className="text-sm text-gray-400 mt-1">Shows time-series graphs for users: <span className="text-gray-200">time_in, time_out, breaks, idle periods</span>. Useful for spotting punctuality trends and long breaks.</p>
+        <div className="flex gap-4 mb-6 overflow-x-auto items-stretch">
+          <div className="flex-shrink-0 w-64 md:w-1/4">
+            <Link to="/dashboard/attendance/admin" className="block h-full">
+              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-blue-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Admin View — Graph</h3>
+                    <p className="text-sm text-gray-400 mt-1">Shows time-series graphs for users: <span className="text-gray-200">time_in, time_out, breaks, idle periods</span>.</p>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-400">Tip: hover graph points to see exact timestamps.</div>
               </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
 
-          <Link to="/dashboard/attendance" className="block">
-            <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex">
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Attendance Dashboard</h3>
-                  <p className="text-sm text-gray-400 mt-1">At-a-glance overview: <span className="text-gray-200">present, not reported, late leaderboard</span>. Includes quick filters for team / department and today's highlights.</p>
+          <div className="flex-shrink-0 w-64 md:w-1/4">
+            <Link to="/dashboard/attendance" className="block h-full">
+              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Attendance Dashboard</h3>
+                    <p className="text-sm text-gray-400 mt-1">At-a-glance overview: <span className="text-gray-200">present, not reported, late leaderboard</span>.</p>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-400">Great for daily ops and quick escalations.</div>
               </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
 
-          <Link to="/dashboard/attendance" className="block">
-            <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex">
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Employee Stats</h3>
-                  <p className="text-sm text-gray-400 mt-1">Detailed breakdowns by <span className="text-gray-200">department, gender, cohorts, tenure</span>. Use this to find patterns and create targeted reports.</p>
+          <div className="flex-shrink-0 w-64 md:w-1/4">
+            <Link to="/dashboard/attendance" className="block h-full">
+              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Employee Stats</h3>
+                    <p className="text-sm text-gray-400 mt-1">Detailed breakdowns by <span className="text-gray-200">department, gender, cohorts, tenure</span>.</p>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-400">Export charts for presentations.</div>
               </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
 
-          <Link to="/dashboard/attendance" className="block">
-            <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-blue-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex">
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Attendance List — Cumulative</h3>
-                  <p className="text-sm text-gray-400 mt-1">Excel-style summary view with quick exports. Helpful for payroll, audits and giving a concise attendance snapshot to stakeholders.</p>
+          <div className="flex-shrink-0 w-64 md:w-1/4">
+            <Link to="/dashboard/attendance" className="block h-full">
+              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-blue-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Attendance List — Cumulative</h3>
+                    <p className="text-sm text-gray-400 mt-1">Excel-style summary view with quick exports.</p>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-400">Includes row-level export and column filters.</div>
               </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
         </div>
 
         <div className="rounded bg-[#061024] border border-gray-700 p-4 flex-1 min-h-0 flex flex-col">
@@ -163,7 +167,7 @@ function AttendanceDashboard() {
               center={indiaCenter}
               zoom={defaultZoom}
               scrollWheelZoom={true}
-              style={{ height: '70vh', width: '100%' }}
+              style={{ height: '85vh', width: '100%' }}
               zoomControl={false}
             >
               <ZoomControl position="topright" />
@@ -253,7 +257,6 @@ function AttendanceDashboard() {
                           <li key={`u-${idx}-${i}`} className="mb-1">{uname}</li>
                         ))}
                       </ul>
-                      <div className="text-xs text-gray-400 mt-2">Click marker to zoom in.</div>
                     </div>
                   )
 
@@ -292,8 +295,6 @@ function AttendanceDashboard() {
               })()}
             </MapContainer>
           </div>
-
-          <p className="text-xs text-gray-400 mt-2 flex-shrink-0">Tip: Use mouse scroll / two-finger drag to zoom & pan. Showing individual pins (no clustering).</p>
         </div>
       </div>
     </div>

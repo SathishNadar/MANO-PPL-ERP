@@ -312,7 +312,6 @@ const AdminView = () => {
         const formattedDateNext = `${ny}-${nm}-${nd}`;
         const response = await fetch(`${API_BASE}/attendance/records/admin?date_from=${formattedDate}&date_to=${formattedDateNext}`, { credentials: 'include' });
         const data = await response.json();
-        console.log(data)
         if (data.ok) {
           const groupedByEmployee = {};
           data.data.forEach(record => {
