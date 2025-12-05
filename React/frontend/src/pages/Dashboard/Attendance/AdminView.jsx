@@ -76,11 +76,42 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
     '8 PM','9 PM','10 PM','11 PM','12 AM'
   ];
 
-  const parseISO = (v) => {
+    const parseISO = (v) => {
     if (!v) return null;
-    const d = typeof v === 'string' ? new Date(v) : v instanceof Date ? v : null;
-    if (!d || isNaN(d.getTime())) return null;
-    return d;
+    if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    if (typeof v !== 'string') return null;
+    const s = v.trim();
+
+    // Verbose JS date string: e.g. "Fri Dec 05 2025 09:17:19 GMT+0530 ..."
+    if (/\bGMT[+-]\d{4}\b/.test(s) || /^\w{3} \w{3} \d{2} \d{4} /.test(s)) {
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // SQL-like: "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS"
+    const sqlMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (sqlMatch) {
+      const year = parseInt(sqlMatch[1], 10);
+      const monthIndex = parseInt(sqlMatch[2], 10) - 1;
+      const day = parseInt(sqlMatch[3], 10);
+      const hours = parseInt(sqlMatch[4], 10);
+      const minutes = parseInt(sqlMatch[5], 10);
+      const seconds = parseInt(sqlMatch[6] || '0', 10);
+      const d = new Date(year, monthIndex, day, hours, minutes, seconds); // local
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // time-only like "HH:MM" or "HH:MM:SS"
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) {
+      const parts = s.split(':').map(p => parseInt(p, 10));
+      const d = new Date();
+      d.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // ISO / fallback (native parser)
+    const fallback = new Date(s);
+    return isNaN(fallback.getTime()) ? null : fallback;
   };
 
   const isSameLocalDay = (d, dayDate) => {
@@ -230,6 +261,43 @@ const AdminView = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
 
+  // Helper to parse backend timestamps (SQL string, ISO, or verbose JS string)
+  const parseTimestamp = (v, refDate = new Date()) => {
+    if (!v) return null;
+    if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    const s = String(v).trim();
+
+    // Verbose JS date with GMT offset
+    if (/\bGMT[+-]\d{4}\b/.test(s) || /^\w{3} \w{3} \d{2} \d{4} /.test(s)) {
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // SQL-like "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS"
+    const sqlMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (sqlMatch) {
+      const year = parseInt(sqlMatch[1], 10);
+      const monthIndex = parseInt(sqlMatch[2], 10) - 1;
+      const day = parseInt(sqlMatch[3], 10);
+      const hours = parseInt(sqlMatch[4], 10);
+      const minutes = parseInt(sqlMatch[5], 10);
+      const seconds = parseInt(sqlMatch[6] || '0', 10);
+      const d = new Date(year, monthIndex, day, hours, minutes, seconds);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // time-only like "HH:MM" or "HH:MM:SS" -> anchored to refDate
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) {
+      const parts = s.split(':').map(p => parseInt(p, 10));
+      const d = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate(), parts[0] || 0, parts[1] || 0, parts[2] || 0);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // Fallback to native parsing
+    const fallback = new Date(s);
+    return isNaN(fallback.getTime()) ? null : fallback;
+  };
+
   React.useEffect(() => {
     const fetchAttendance = async () => {
       try {
@@ -244,6 +312,7 @@ const AdminView = () => {
         const formattedDateNext = `${ny}-${nm}-${nd}`;
         const response = await fetch(`${API_BASE}/attendance/records/admin?date_from=${formattedDate}&date_to=${formattedDateNext}`, { credentials: 'include' });
         const data = await response.json();
+        console.log(data)
         if (data.ok) {
           const groupedByEmployee = {};
           data.data.forEach(record => {
@@ -253,20 +322,27 @@ const AdminView = () => {
             groupedByEmployee[record.user_name].rawRecords.push(record);
           });
 
-          const transformedData = Object.values(groupedByEmployee).map(employee => {
+                    const transformedData = Object.values(groupedByEmployee).map(employee => {
             const records = (employee.rawRecords || []).slice().sort((a,b) => {
-              const aIn = a.time_in ?? a.timeIn ?? a.timeInISO ?? a.start;
-              const bIn = b.time_in ?? b.timeIn ?? b.timeInISO ?? b.start;
-              const ad = aIn ? new Date(aIn).getTime() : 0;
-              const bd = bIn ? new Date(bIn).getTime() : 0;
+              const aIn = a.time_in ?? a.timeIn ?? a.timeInISO ?? a.start ?? '';
+              const bIn = b.time_in ?? b.timeIn ?? b.timeInISO ?? b.start ?? '';
+              const ad = parseTimestamp(aIn) ? parseTimestamp(aIn).getTime() : 0;
+              const bd = parseTimestamp(bIn) ? parseTimestamp(bIn).getTime() : 0;
               return ad - bd;
             });
 
             const fmt = (v) => {
               if (!v) return null;
-              const d = typeof v === 'string' ? new Date(v) : v instanceof Date ? v : null;
-              if (!d || isNaN(d.getTime())) return null;
-              return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              if (v instanceof Date) return v.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const s = String(v).trim();
+              const verboseMatch = s.match(/(\d{2}:\\d{2}:\\d{2})/);
+              if (verboseMatch) return verboseMatch[1].slice(0,5);
+              const sqlMatch = s.match(/^(?:\\d{4}-\\d{2}-\\d{2})[ T](\\d{2}:\\d{2}:?\\d{0,2})/);
+              if (sqlMatch) return sqlMatch[1].slice(0,5);
+              if (/^\\d{1,2}:\\d{2}(:\\d{2})?$/.test(s)) return s.slice(0,5);
+              const d = parseTimestamp(s);
+              if (d) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              return s.length >= 5 ? s.slice(0,5) : s;
             };
 
             const firstRecord = records[0];
@@ -295,8 +371,8 @@ const AdminView = () => {
             for (const r of records) {
               const tinRaw = r.time_in ?? r.timeIn ?? r.timeInISO ?? r.start;
               if (!tinRaw) continue;
-              const dt = new Date(tinRaw);
-              if (isFinite(dt.getTime())) {
+              const dt = parseTimestamp(tinRaw, selectedDate);
+              if (dt && !isNaN(dt.getTime())) {
                 if (dt.getHours() > 9 || (dt.getHours() === 9 && dt.getMinutes() > 0)) { isLate = true; break; }
               }
             }
@@ -312,14 +388,15 @@ const AdminView = () => {
             };
           });
 
-          const selDate = DateTime.fromJSDate(selectedDate);
           const dateFilteredData = transformedData.filter(emp => {
             return (emp.records || []).some(r => {
               const tinRaw = r.time_in ?? r.timeIn ?? r.timeInISO ?? r.start;
               if (!tinRaw) return false;
-              const dt = DateTime.fromISO(tinRaw);
-              if (!dt.isValid) return false;
-              return dt.hasSame(selDate, 'day');
+              const d = parseTimestamp(tinRaw, selectedDate);
+              if (!d) return false;
+              return d.getFullYear() === selectedDate.getFullYear() &&
+                     d.getMonth() === selectedDate.getMonth() &&
+                     d.getDate() === selectedDate.getDate();
             });
           });
 
