@@ -228,12 +228,12 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
         let timeInUrl = null;
         let timeOutUrl = null;
 
-        if (row.time_in_image) {
-          const { url } = await getFileUrl({ key: row.time_in_image });
+        if (row.time_in_image_key) {
+          const { url } = await getFileUrl({ key: row.time_in_image_key });
           timeInUrl = url;
         }
-        if (row.time_out_image) {
-          const { url } = await getFileUrl({ key: row.time_out_image });
+        if (row.time_in_image_key) {
+          const { url } = await getFileUrl({ key: row.time_out_image_key });
           timeOutUrl = url;
         }
 
