@@ -228,7 +228,6 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
 
     const records = await query;
 
-    // map keys -> signed URLs
     const withUrls = await Promise.all(
       records.map(async (row) => {
         let timeInUrl = null;
@@ -243,8 +242,30 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
           timeOutUrl = url;
         }
 
+        // Normalize timestamp fields to ISO 8601 UTC strings so clients get unambiguous datetimes.
+        const safeToISOString = (v) => {
+          if (v == null) return null;
+          try {
+            // If it's already a Date instance, use it; otherwise construct a Date
+            const d = v instanceof Date ? v : new Date(v);
+            if (isNaN(d.getTime())) return null;
+            return d.toISOString(); // returns e.g. '2025-12-04T04:33:43.000Z'
+          } catch (e) {
+            return null;
+          }
+        };
+
+        const time_in = safeToISOString(row.time_in);
+        const time_out = safeToISOString(row.time_out);
+        const created_at = safeToISOString(row.created_at);
+        const updated_at = safeToISOString(row.updated_at);
+
         return {
           ...row,
+          time_in,
+          time_out,
+          created_at,
+          updated_at,
           time_in_image: timeInUrl,
           time_out_image: timeOutUrl,
         };
