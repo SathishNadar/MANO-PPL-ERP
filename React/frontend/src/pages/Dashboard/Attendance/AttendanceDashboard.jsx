@@ -3,7 +3,30 @@ import Sidebar from '../../SidebarComponent/sidebar'
 import { Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, Tooltip } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow
+})
 
+const _DEFAULT_MARKER = L.icon({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28]
+})
+
+// small helper to avoid creating new icon objects on every render
+function getDefaultMarker() {
+  return _DEFAULT_MARKER
+}
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
 function AttendanceDashboard() {
@@ -152,19 +175,25 @@ function AttendanceDashboard() {
               />
 
               {/* Render individual markers */}
-              {records.map(pt => (
-                <Marker key={`p-${pt.id}`} position={[pt.lat, pt.lng]}>
-                  <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={false}>
-                    {pt.name}
-                  </Tooltip>
-                  <Popup>
-                    <div>
-                      <div className="font-semibold">{pt.name}</div>
-                      <div className="text-xs text-gray-500">{pt.time_in}</div>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+              {records.map(pt => {
+                // defensive: ensure numeric coords
+                const lat = Number(pt.lat)
+                const lng = Number(pt.lng)
+                if (!isFinite(lat) || !isFinite(lng)) return null
+                return (
+                  <Marker key={`p-${pt.id}`} position={[lat, lng]} icon={getDefaultMarker()}>
+                    <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={false}>
+                      {pt.name}
+                    </Tooltip>
+                    <Popup>
+                      <div>
+                        <div className="font-semibold">{pt.name}</div>
+                        <div className="text-xs text-gray-500">{pt.time_in}</div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )
+              })}
             </MapContainer>
           </div>
 
