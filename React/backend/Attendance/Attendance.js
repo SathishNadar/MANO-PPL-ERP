@@ -237,23 +237,11 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
           timeOutUrl = url;
         }
 
-        // Normalize timestamp fields to ISO 8601 UTC strings so clients get unambiguous datetimes.
-        const safeToISOString = (v) => {
-          if (v == null) return null;
-          try {
-            // If it's already a Date instance, use it; otherwise construct a Date
-            const d = v instanceof Date ? v : new Date(v);
-            if (isNaN(d.getTime())) return null;
-            return d.toISOString(); // returns e.g. '2025-12-04T04:33:43.000Z'
-          } catch (e) {
-            return null;
-          }
-        };
-
-        const time_in = safeToISOString(row.time_in);
-        const time_out = safeToISOString(row.time_out);
-        const created_at = safeToISOString(row.created_at);
-        const updated_at = safeToISOString(row.updated_at);
+        // Return timestamp fields exactly as strings for this attendance endpoint (do not convert to Date/ISO)
+        const time_in = row.time_in == null ? null : String(row.time_in);
+        const time_out = row.time_out == null ? null : String(row.time_out);
+        const created_at = row.created_at == null ? null : String(row.created_at);
+        const updated_at = row.updated_at == null ? null : String(row.updated_at);
 
         return {
           ...row,
@@ -295,7 +283,15 @@ router.get("/records", authenticateJWT, async (req, res) => {
     // records.time_in_image = await getFileUrl({ key: records.time_in_image })
     // records.time_out_image = await getFileUrl({ key: records.time_out_image })
 
-    res.json({ ok: true, data: records });
+    const userRows = (records || []).map(r => ({
+      ...r,
+      time_in: r.time_in == null ? null : String(r.time_in),
+      time_out: r.time_out == null ? null : String(r.time_out),
+      created_at: r.created_at == null ? null : String(r.created_at),
+      updated_at: r.updated_at == null ? null : String(r.updated_at),
+    }));
+
+    res.json({ ok: true, data: userRows });
   } catch (err) {
     console.error("User attendance records error:", err);
     res.status(500).json({ ok: false, message: "Internal server error" });
