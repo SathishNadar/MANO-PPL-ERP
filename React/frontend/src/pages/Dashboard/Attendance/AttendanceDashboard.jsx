@@ -33,7 +33,7 @@ function AttendanceDashboard() {
   const [records, setRecords] = useState([])
   const mapRef = useRef(null)
 
-  const indiaCenter = [20.5937, 78.9629]
+  const indiaCenter = [15.0, 78.9629]
   const defaultZoom = 5
   const [tileUrl, setTileUrl] = useState('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
 
@@ -174,26 +174,122 @@ function AttendanceDashboard() {
                 noWrap={true}
               />
 
-              {/* Render individual markers */}
-              {records.map(pt => {
-                // defensive: ensure numeric coords
-                const lat = Number(pt.lat)
-                const lng = Number(pt.lng)
-                if (!isFinite(lat) || !isFinite(lng)) return null
-                return (
-                  <Marker key={`p-${pt.id}`} position={[lat, lng]} icon={getDefaultMarker()}>
-                    <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={false}>
-                      {pt.name}
-                    </Tooltip>
-                    <Popup>
-                      <div>
-                        <div className="font-semibold">{pt.name}</div>
-                        <div className="text-xs text-gray-500">{pt.time_in}</div>
-                      </div>
-                    </Popup>
-                  </Marker>
-                )
-              })}
+              {/* Render clustered markers (200m radius) */}
+              {(() => {
+                // build clusters on the fly
+                function haversineDistance(aLat, aLng, bLat, bLng) {
+                  const toRad = v => (v * Math.PI) / 180
+                  const R = 6371000 // meters
+                  const dLat = toRad(bLat - aLat)
+                  const dLon = toRad(bLng - aLng)
+                  const lat1 = toRad(aLat)
+                  const lat2 = toRad(bLat)
+
+                  const sinDLat = Math.sin(dLat / 2)
+                  const sinDLon = Math.sin(dLon / 2)
+                  const a = sinDLat * sinDLat + sinDLon * sinDLon * Math.cos(lat1) * Math.cos(lat2)
+                  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+                  return R * c
+                }
+
+                function buildClusters(points, radiusMeters = 200) {
+                  const clusters = []
+                  for (const p of points) {
+                    const lat = Number(p.lat)
+                    const lng = Number(p.lng)
+                    if (!isFinite(lat) || !isFinite(lng)) continue
+
+                    let placed = false
+                    for (const c of clusters) {
+                      // distance from cluster center to this point
+                      const d = haversineDistance(c.lat, c.lng, lat, lng)
+                      if (d <= radiusMeters) {
+                        // append to cluster and recompute centroid
+                        c.members.push(p)
+                        const n = c.members.length
+                        c.lat = (c.lat * (n - 1) + lat) / n
+                        c.lng = (c.lng * (n - 1) + lng) / n
+                        placed = true
+                        break
+                      }
+                    }
+
+                    if (!placed) {
+                      clusters.push({ lat, lng, members: [p] })
+                    }
+                  }
+                  return clusters
+                }
+
+                const clusters = buildClusters(records, 200)
+
+                return clusters.map((c, idx) => {
+                  if (!c || !Array.isArray(c.members) || c.members.length === 0) return null
+                  if (c.members.length === 1) {
+                    const pt = c.members[0]
+                    return (
+                      <Marker key={`p-${pt.id}`} position={[Number(pt.lat), Number(pt.lng)]} icon={getDefaultMarker()}>
+                        <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={false}>
+                          {pt.name}
+                        </Tooltip>
+                        <Popup>
+                          <div>
+                            <div className="font-semibold">{pt.name}</div>
+                            <div className="text-xs text-gray-500">{pt.time_in}</div>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    )
+                  }
+
+                  // cluster marker (shows unique names count and unique name list)
+                  const uniqueNamesArr = Array.from(new Set(c.members.map(m => (m.name || '').toString().trim()).filter(Boolean)))
+                  const uniqueCount = uniqueNamesArr.length
+                  const popupContent = (
+                    <div style={{ maxHeight: 220, overflowY: 'auto', minWidth: 160 }}>
+                      <div className="font-semibold">Names nearby</div>
+                      <ul className="text-sm mt-2" style={{ paddingLeft: 16 }}>
+                        {uniqueNamesArr.map((uname, i) => (
+                          <li key={`u-${idx}-${i}`} className="mb-1">{uname}</li>
+                        ))}
+                      </ul>
+                      <div className="text-xs text-gray-400 mt-2">Click marker to zoom in.</div>
+                    </div>
+                  )
+
+                  return (
+                    <Marker
+                      key={`cluster-${idx}`}
+                      position={[c.lat, c.lng]}
+                      icon={getDefaultMarker()}
+                      eventHandlers={{
+                        click: () => {
+                          // zoom further into cluster center
+                          try {
+                            if (mapRef.current && typeof mapRef.current.flyTo === 'function') {
+                              mapRef.current.flyTo([c.lat, c.lng], 17, { animate: true, duration: 0.8 })
+                            } else if (mapRef.current) {
+                              mapRef.current.setView([c.lat, c.lng], 17, { animate: true })
+                            }
+                          } catch (e) {
+                            console.warn('cluster click zoom failed', e)
+                          }
+                        }
+                      }}
+                    >
+                      <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={false}>
+                        {(() => {
+                          const displayNames = uniqueNamesArr.slice(0, 3).join(', ')
+                          return displayNames ? `${displayNames}${uniqueCount > 3 ? ' ...' : ''}` : 'Multiple nearby'
+                        })()}
+                      </Tooltip>
+                      <Popup>
+                        {popupContent}
+                      </Popup>
+                    </Marker>
+                  )
+                })
+              })()}
             </MapContainer>
           </div>
 
