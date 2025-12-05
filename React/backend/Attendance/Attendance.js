@@ -206,15 +206,10 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
       .join("users", "attendance_records.user_id", "users.user_id")
       .select(
         "attendance_records.*",
-        // "attendance_records.attendance_id",
-        // "attendance_records.late_reason",
-        // "attendance_records.time_in",
-        // "attendance_records.time_in_lat",
-        // "attendance_records.time_in_image_key as time_in_image",
-        // "attendance_records.time_out",
-        // "attendance_records.time_out_lat",
-        // "attendance_records.time_out_image_key as time_out_image",
-        // "attendance_records.user_id",
+        knexDB.raw("DATE_FORMAT(attendance_records.time_in, '%Y-%m-%d %H:%i:%s') as time_in"),
+        knexDB.raw("DATE_FORMAT(attendance_records.time_out, '%Y-%m-%d %H:%i:%s') as time_out"),
+        knexDB.raw("DATE_FORMAT(attendance_records.created_at, '%Y-%m-%d %H:%i:%s') as created_at"),
+        knexDB.raw("DATE_FORMAT(attendance_records.updated_at, '%Y-%m-%d %H:%i:%s') as updated_at"),
         "users.user_name",
         "users.email",
         "users.designation"
