@@ -4,7 +4,7 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 // BudgetUpdate: fetch existing hierarchy, make it editable (same UI as creation), and PUT to update endpoint
 function BudgetUpdate() {
-  const [tree, setTree] = useState({ id: 'root', name: 'Main Budget', type: 'category', children: [] });
+  const [tree, setTree] = useState({ id: 'root', name: '', type: 'category', children: [] });
   const [selectedId, setSelectedId] = useState(null);
   const [expanded, setExpanded] = useState(new Set(['root']));
   const [toast, setToast] = useState(null);
@@ -16,6 +16,11 @@ function BudgetUpdate() {
   const draggingRef = useRef(null);
   // highlight drop target
   const [dropTarget, setDropTarget] = useState(null);
+
+  // track original item_ids returned by server so we can compute deletions
+  const originalItemIdsRef = useRef(new Set());
+  // track item_ids deleted by the user (leaf nodes removed)
+  const deletedItemsRef = useRef(new Set());
 
   useEffect(() => {
     if (!toast) return;
@@ -73,8 +78,23 @@ function BudgetUpdate() {
           return node;
         }
 
-        // If backend returned multiple roots, attach them under a single root wrapper
-        const clientRoot = { id: 'root', name: 'Main Budget', type: 'category', children: serverRoots.map(mapNode) };
+        // If backend returned a single root, use it directly. If multiple roots, attach them
+        // under an empty-named root (so we do NOT force a "Main Budget" parent by default).
+        let clientRoot = null;
+        if (serverRoots.length === 1) {
+          clientRoot = mapNode(serverRoots[0]);
+        } else {
+          clientRoot = { id: 'root', name: '', type: 'category', children: serverRoots.map(mapNode) };
+        }
+
+        // collect original item_ids from server roots
+        originalItemIdsRef.current = new Set();
+        function collectItemIds(snode) {
+          if (snode.item_id != null) originalItemIdsRef.current.add(Number(snode.item_id));
+          if (Array.isArray(snode.children)) snode.children.forEach(collectItemIds);
+        }
+        serverRoots.forEach(collectItemIds);
+
         setTree(clientRoot);
         setExpanded(new Set(['root']));
         setToast(null);
@@ -194,11 +214,19 @@ function BudgetUpdate() {
 
   function removeNode(id) {
     if (id === 'root') return;
-    function removeRec(node) {
-      if (!node.children) return node;
-      return { ...node, children: node.children.filter((c) => c.id !== id).map(removeRec) };
+
+    // use findAndRemove to get the removed node and new tree
+    const res = findAndRemove(tree, id);
+    if (!res || !res.removed) return;
+
+    const removedNode = res.removed;
+
+    // if the removed node was a leaf and has an item_id from server, mark it for deletion
+    if (removedNode.type === 'item' && removedNode.item_id != null) {
+      deletedItemsRef.current.add(Number(removedNode.item_id));
     }
-    setTree((prev) => removeRec(prev));
+
+    setTree(res.node || { id: 'root', name: '', type: 'category', children: [] });
     if (selectedId === id) setSelectedId(null);
   }
 
@@ -247,7 +275,7 @@ function BudgetUpdate() {
       const payload = {
         effective_date,
         data: buildPayloadNode(tree),
-        inactive_items: []
+        delete_items: Array.from(deletedItemsRef.current)
       };
 
       const res = await fetch(`${API_BASE}/budget/update/${projectId}`, {
@@ -268,6 +296,8 @@ function BudgetUpdate() {
       }
 
       setToast('Budget updated successfully');
+      // clear deleted items after successful save
+      deletedItemsRef.current = new Set();
     } catch (err) {
       console.error(err);
       setToast('Save failed');
@@ -377,6 +407,7 @@ function BudgetUpdate() {
 
     return (
       <div className="w-full" style={{ paddingLeft: offset }}>
+        {/* Row container: make it relative so action buttons can be absolutely positioned to the right edge */}
         <div
           draggable={node.id !== 'root'}
           onDragStart={(e) => onDragStart(e, node)}
@@ -394,6 +425,7 @@ function BudgetUpdate() {
             )}
 
             <div className="flex items-center gap-3 flex-1 min-w-0">
+              {/* Name editable inline */}
               <input
                 value={node.name}
                 onChange={(e) => updateNodeField(node.id, 'name', e.target.value)}
@@ -404,10 +436,12 @@ function BudgetUpdate() {
                 style={{ outline: 'none', minWidth: 80 }}
               />
 
+              {/* Show unit next to item name in parentheses */}
               {node.type === 'item' && (
                 <span className="text-sm text-gray-400">({node.unit || ''})</span>
               )}
 
+              {/* Item inline fields: unit, qty, rate and pricing preview (qty * rate) */}
               {node.type === 'item' && (
                 <div className="flex items-center gap-4 ml-4 text-sm text-gray-400 shrink-0">
                   <input
@@ -451,6 +485,7 @@ function BudgetUpdate() {
             </div>
           </div>
 
+          {/* Action buttons: absolutely positioned to right so they always align to the extreme corner */}
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
             {node.type === 'category' && (
               <>
@@ -494,10 +529,14 @@ function BudgetUpdate() {
             <div className="flex items-center justify-between space-x-2">
               <div className="flex items-center space-x-2">
                 <span className="material-icons text-gray-400 text-lg">folder</span>
-                <input className="bg-transparent border-0 text-xl font-bold text-white p-0 focus:ring-0 w-64" type="text" value={tree.name} onChange={(e) => setTree((prev) => ({ ...prev, name: e.target.value }))} />
+                {tree.name ? (
+                  <input className="bg-transparent border-0 text-xl font-bold text-white p-0 focus:ring-0 w-64" type="text" value={tree.name} onChange={(e) => setTree((prev) => ({ ...prev, name: e.target.value }))} />
+                ) : (
+                  <div className="text-lg font-semibold text-gray-300">Server Budget</div>
+                )}
               </div>
               <div className="flex items-center gap-4">
-                <p className="text-center text-gray-400 italic">{tree.children.length === 0 ? 'No categories yet. Start building your budget hierarchy.' : `${tree.children.length} categories`}</p>
+                <p className="text-center text-gray-400 italic">{(tree.children && tree.children.length) ? `${tree.children.length} categories` : 'No categories yet. Start building your budget hierarchy.'}</p>
               </div>
             </div>
           </div>
