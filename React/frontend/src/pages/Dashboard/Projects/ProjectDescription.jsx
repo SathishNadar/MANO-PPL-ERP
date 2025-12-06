@@ -64,7 +64,7 @@ function ProjectDescription() {
   const handleEditBudget = () => {
     // navigate to budget edit page (adjust route if you use a different path)
     // navigate(`/dashboard/project-description/${projectId}/budgetEdit`);
-    navigate(`/dashboard/project-description/${projectId}`);
+    navigate(`/dashboard/project-description/${projectId}/budgetUpdate`);
   };
 
   const handleViewBudget = () => {
@@ -411,7 +411,7 @@ function ProjectDescription() {
                     <button disabled className="col-span-2 bg-gray-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Checking...</button>
                   ) : budgetExists ? (
                     <>
-                      <button onClick={handleEditBudget} className="col-span-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Edit Budget</button>
+                      <button onClick={handleEditBudget} className="col-span-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Update Budget</button>
                       <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
                     </>
                   ) : (
