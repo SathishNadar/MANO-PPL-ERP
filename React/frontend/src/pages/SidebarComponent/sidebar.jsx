@@ -62,7 +62,7 @@ function Sidebar({ onCategoryChange }) {
       label: "Projects",
       roles: [1, 2, 5],
     },
-    { icon: "bar_chart", id: "reports", label: "Reports", roles: [1, 2] },
+
     {
       icon: "receipt_long",
       id: "vendors",
@@ -74,6 +74,7 @@ function Sidebar({ onCategoryChange }) {
         { label: "Suppliers", category: "3" },
       ],
     },
+
     {
       icon: "wysiwyg",
       path: "/dashboard/work-in-progress",
@@ -81,6 +82,14 @@ function Sidebar({ onCategoryChange }) {
       label: "Work In Progress",
       roles: [2, 5],
     },
+
+    { icon: "bar_chart", 
+      path: "/dashboard/attendance", 
+      id: "attendance", 
+      label: "Attendance", 
+      roles: [2] 
+    },
+
     {
       icon: "admin_panel_settings",
       path: "/dashboard/admin",
@@ -126,10 +135,13 @@ function Sidebar({ onCategoryChange }) {
                 }
               }}
               className={`text-secondary hover:text-blue-light transition-all duration-300 transform hover:scale-110 cursor-pointer w-full flex justify-center ${
-                location.pathname.includes(id) ? "text-blue-light" : ""
-              }`}
+  /* prefer matching by explicit `path` when available to avoid substring collisions like 'admin' */
+  path
+    ? (location.pathname === path || location.pathname.startsWith(path + "/") ? "text-blue-light" : "")
+    : (location.pathname.includes(id) ? "text-blue-light" : "")
+}`}
             >
-              <span className="material-icons text-3xl">{icon}</span>
+              <span className="material-icons text-[42px]">{icon}</span>
             </button>
 
             {/* Tooltip */}
@@ -148,18 +160,17 @@ function Sidebar({ onCategoryChange }) {
                       onCategoryChange(parseInt(item.category, 10));
                       setActiveMenu("vendors"); // keep dropdown open
                     }}
-                    className={`flex items-center gap-2 text-xs px-2 text-left transition-colors duration-200 ${
-                      categoryParam === item.category
-                        ? "text-blue-light font-semibold"
-                        : "text-gray-300 hover:text-blue-light"
-                    }`}
+                    className={`flex items-center gap-2 text-xs px-2 text-left transition-colors duration-200 ${categoryParam === item.category
+                      ? "text-blue-light font-semibold"
+                      : "text-gray-300 hover:text-blue-light"
+                      }`}
                   >
-                    <span className="material-icons text-[26px] ml-2">
+                    <span className="material-icons text-[34px] ml-2">
                       {item.label === "Contractors"
                         ? "engineering"
                         : item.label === "Consultants"
-                        ? "support_agent"
-                        : "local_shipping"}
+                          ? "support_agent"
+                          : "local_shipping"}
                     </span>
                   </button>
                 ))}

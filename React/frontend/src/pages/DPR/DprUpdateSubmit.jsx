@@ -75,6 +75,7 @@ function DprUpdateSubmit() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const isoToYMD = (iso) => (typeof iso === "string" ? iso.split("T")[0] : "");
 
@@ -687,11 +688,9 @@ function DprUpdateSubmit() {
 
       if (!response.ok) {
         const errBody = await response.json().catch(() => ({}));
-        throw new Error(
-          errBody.message || response.statusText || "Request failed"
-        );
+        throw new Error(errBody.message || response.statusText || "Request failed");
       }
-
+      
       const successBody = await response.json().catch(() => ({}));
 
       // show success toast and redirect when it closes
@@ -702,6 +701,14 @@ function DprUpdateSubmit() {
         },
       });
     } catch (error) {
+      console.error("Submit DPR error:", error);
+      // show error toast then redirect when it closes
+      toast.error(error?.message || "Error submitting DPR", {
+        autoClose: autoCloseMs,
+        onClose: () => {
+          navigate(`/dashboard/project-description/${projectId}`);
+        },
+      });
       console.error("Submit DPR error:", error);
       // show error toast then redirect when it closes
       toast.error(error?.message || "Error submitting DPR", {
@@ -1170,23 +1177,10 @@ function DprUpdateSubmit() {
           <div className="absolute inset-0 bg-black opacity-60"></div>
           <div className="relative bg-gray-800 text-white rounded-lg p-6 w-11/12 max-w-md z-10 shadow-lg border border-gray-700">
             <h3 className="text-lg font-semibold mb-2">Confirm Submit</h3>
-            <p className="mb-4 text-sm text-gray-300">
-              Are you sure you want to submit the DPR? This action cannot be
-              undone.
-            </p>
+            <p className="mb-4 text-sm text-gray-300">Are you sure you want to submit the DPR? This action cannot be undone.</p>
             <div className="flex justify-end gap-3">
-              <button
-                onClick={cancelSubmit}
-                className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmSubmit}
-                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-              >
-                {submitting ? "Submitting..." : "Submit"}
-              </button>
+              <button onClick={cancelSubmit} className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm">Cancel</button>
+              <button onClick={confirmSubmit} className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold">{submitting ? 'Submitting...' : 'Submit'}</button>
             </div>
           </div>
         </div>

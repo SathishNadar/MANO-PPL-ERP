@@ -21,6 +21,9 @@ import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
 import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
 import Admin from "./pages/admin/Admin.jsx";
 
+import AttendanceDashboard from "./pages/Dashboard/Attendance/AttendanceDashboard.jsx";
+import AdminView from "./pages/Dashboard/Attendance/AdminView.jsx";
+
 import BudgetingCreate from "./pages/BudgetingComponent/BudgetCreation.jsx"
 import BudgetingView from "./pages/BudgetingComponent/BudgetView.jsx"
 import BudgetUpdate from "./pages/BudgetingComponent/BudgetUpdate.jsx"
@@ -125,6 +128,7 @@ function App() {
           }
         />
 
+
         <Route
           path="/dashboard/project-description/:projectId/budgetCreate"
           element={
@@ -150,7 +154,27 @@ function App() {
           }
         />
 
-        <Route path="/dummy2" element={<Dummy />} />
+        <Route
+          path="/dashboard/attendance"
+          element={
+            <ProtectedRoute>
+              <AttendanceDashboard/>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/attendance/admin"
+          element={
+            <ProtectedRoute>
+              <AdminView />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/dummy2" 
+        element={<Dummy />} 
+        />
       </Routes>
       <ToastContainer
         position="top-right"
@@ -159,7 +183,7 @@ function App() {
         pauseOnFocusLoss={false}
         pauseOnClick={false}
       />
-    </div>
+    </div >
   );
 }
 
