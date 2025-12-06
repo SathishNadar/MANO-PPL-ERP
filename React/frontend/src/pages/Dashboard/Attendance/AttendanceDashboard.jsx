@@ -33,7 +33,7 @@ function AttendanceDashboard() {
   const [records, setRecords] = useState([])
   const mapRef = useRef(null)
 
-  const indiaCenter = [15.0, 78.9629]
+  const indiaCenter = [17.9, 78.9629]
   const defaultZoom = 5
   const [tileUrl, setTileUrl] = useState('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
 
