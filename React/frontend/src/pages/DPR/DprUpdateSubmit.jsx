@@ -75,7 +75,6 @@ function DprUpdateSubmit() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const isoToYMD = (iso) => (typeof iso === "string" ? iso.split("T")[0] : "");
 
