@@ -76,13 +76,13 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
     '8 PM','9 PM','10 PM','11 PM','12 AM'
   ];
 
-    const parseISO = (v) => {
+  const parseISO = (v, refDate = new Date()) => {
     if (!v) return null;
     if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
     if (typeof v !== 'string') return null;
     const s = v.trim();
 
-    // Verbose JS date string: e.g. "Fri Dec 05 2025 09:17:19 GMT+0530 ..."
+    // Verbose JS date string from backend: e.g. "Fri Dec 05 2025 09:17:19 GMT+0530 (India Standard Time)"
     if (/\bGMT[+-]\d{4}\b/.test(s) || /^\w{3} \w{3} \d{2} \d{4} /.test(s)) {
       const d = new Date(s);
       return isNaN(d.getTime()) ? null : d;
@@ -97,19 +97,29 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
       const hours = parseInt(sqlMatch[4], 10);
       const minutes = parseInt(sqlMatch[5], 10);
       const seconds = parseInt(sqlMatch[6] || '0', 10);
-      const d = new Date(year, monthIndex, day, hours, minutes, seconds); // local
+      const d = new Date(year, monthIndex, day, hours, minutes, seconds); // local time
       return isNaN(d.getTime()) ? null : d;
     }
 
-    // time-only like "HH:MM" or "HH:MM:SS"
+    // time-only like "HH:MM" or "HH:MM:SS" -> apply to refDate
     if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) {
       const parts = s.split(':').map(p => parseInt(p, 10));
-      const d = new Date();
-      d.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+      const hours = parts[0];
+      const minutes = parts[1] || 0;
+      const seconds = parts[2] || 0;
+      const d = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate(), hours, minutes, seconds);
       return isNaN(d.getTime()) ? null : d;
     }
 
-    // ISO / fallback (native parser)
+    // ISO-like fallback: extract time portion and apply to refDate without assuming timezone
+    const isoTimeMatch = s.match(/T(\d{2}:\d{2}:?\d{0,2})/);
+    if (isoTimeMatch) {
+      const parts = isoTimeMatch[1].split(':').map(p => parseInt(p || '0', 10));
+      const d = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate(), parts[0] || 0, parts[1] || 0, parts[2] || 0);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // Last resort (try native parser)
     const fallback = new Date(s);
     return isNaN(fallback.getTime()) ? null : fallback;
   };
@@ -136,7 +146,7 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
 
   const buildSegmentsForEmployee = (emp) => {
     const raw = emp.records || emp.segments || emp.attendanceRecords || [];
-    const dayRecords = (raw || []).map(r => ({ r, tin: parseISO(r.time_in ?? r.timeIn ?? r.timeInISO ?? r.start) }))
+    const dayRecords = (raw || []).map(r => ({ r, tin: parseISO(r.time_in ?? r.timeIn ?? r.timeInISO ?? r.start, selectedDate) }))
       .filter(x => x.tin && isSameLocalDay(x.tin, selectedDate))
       .sort((a,b) => a.tin - b.tin)
       .map(x => x.r);
@@ -150,8 +160,8 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
       const r = dayRecords[i];
       const timeInRaw = r.time_in ?? r.timeIn ?? r.timeInISO ?? r.checkIn ?? r.start;
       const timeOutRaw = r.time_out ?? r.timeOut ?? r.timeOutISO ?? r.checkOut ?? r.end;
-      const tin = parseISO(timeInRaw);
-      const tout = parseISO(timeOutRaw);
+      const tin = parseISO(timeInRaw, selectedDate);
+      const tout = parseISO(timeOutRaw, selectedDate);
       if (!tin) continue;
       const segStart = clamp(tin, chartStart, chartEnd);
 
@@ -255,6 +265,55 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
 };
 
 const AdminView = () => {
+  // Local parseISO for AdminView (AttendanceChart has its own version)
+  const parseISO = (v, refDate = new Date()) => {
+    if (!v) return null;
+    if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    if (typeof v !== 'string') return null;
+    const s = v.trim();
+
+    // Verbose JS date string from backend: e.g. "Fri Dec 05 2025 09:17:19 GMT+0530 (India Standard Time)"
+    if (/\bGMT[+-]\d{4}\b/.test(s) || /^\w{3} \w{3} \d{2} \d{4} /.test(s)) {
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // SQL-like: "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS"
+    const sqlMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (sqlMatch) {
+      const year = parseInt(sqlMatch[1], 10);
+      const monthIndex = parseInt(sqlMatch[2], 10) - 1;
+      const day = parseInt(sqlMatch[3], 10);
+      const hours = parseInt(sqlMatch[4], 10);
+      const minutes = parseInt(sqlMatch[5], 10);
+      const seconds = parseInt(sqlMatch[6] || '0', 10);
+      const d = new Date(year, monthIndex, day, hours, minutes, seconds); // local time
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // time-only like "HH:MM" or "HH:MM:SS" -> apply to refDate
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) {
+      const parts = s.split(':').map(p => parseInt(p, 10));
+      const hours = parts[0];
+      const minutes = parts[1] || 0;
+      const seconds = parts[2] || 0;
+      const d = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate(), hours, minutes, seconds);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // ISO-like fallback: extract time portion and apply to refDate without assuming timezone
+    const isoTimeMatch = s.match(/T(\d{2}:\d{2}:?\d{0,2})/);
+    if (isoTimeMatch) {
+      const parts = isoTimeMatch[1].split(':').map(p => parseInt(p || '0', 10));
+      const d = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate(), parts[0] || 0, parts[1] || 0, parts[2] || 0);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // Last resort (try native parser)
+    const fallback = new Date(s);
+    return isNaN(fallback.getTime()) ? null : fallback;
+  };
+
   const [employees, setEmployees] = React.useState([]);
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [selectedEmployee, setSelectedEmployee] = React.useState(null);
@@ -312,6 +371,7 @@ const AdminView = () => {
         const formattedDateNext = `${ny}-${nm}-${nd}`;
         const response = await fetch(`${API_BASE}/attendance/records/admin?date_from=${formattedDate}&date_to=${formattedDateNext}`, { credentials: 'include' });
         const data = await response.json();
+        console.log(data)
         if (data.ok) {
           const groupedByEmployee = {};
           data.data.forEach(record => {
@@ -325,22 +385,38 @@ const AdminView = () => {
             const records = (employee.rawRecords || []).slice().sort((a,b) => {
               const aIn = a.time_in ?? a.timeIn ?? a.timeInISO ?? a.start ?? '';
               const bIn = b.time_in ?? b.timeIn ?? b.timeInISO ?? b.start ?? '';
-              const ad = parseTimestamp(aIn) ? parseTimestamp(aIn).getTime() : 0;
-              const bd = parseTimestamp(bIn) ? parseTimestamp(bIn).getTime() : 0;
-              return ad - bd;
+              if (aIn < bIn) return -1;
+              if (aIn > bIn) return 1;
+              return 0;
             });
 
             const fmt = (v) => {
               if (!v) return null;
+              // If value is already a Date object, format it
               if (v instanceof Date) return v.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
               const s = String(v).trim();
-              const verboseMatch = s.match(/(\d{2}:\\d{2}:\\d{2})/);
+
+              // Verbose JS Date string from backend: extract HH:MM:SS
+              const verboseMatch = s.match(/(\d{2}:\d{2}:\d{2})/);
               if (verboseMatch) return verboseMatch[1].slice(0,5);
-              const sqlMatch = s.match(/^(?:\\d{4}-\\d{2}-\\d{2})[ T](\\d{2}:\\d{2}:?\\d{0,2})/);
+
+              // SQL-like or ISO-like with space/T: extract the time part
+              const sqlMatch = s.match(/^(?:\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:?\d{0,2})/);
               if (sqlMatch) return sqlMatch[1].slice(0,5);
-              if (/^\\d{1,2}:\\d{2}(:\\d{2})?$/.test(s)) return s.slice(0,5);
-              const d = parseTimestamp(s);
-              if (d) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+              // Time-only like "HH:MM" or "HH:MM:SS"
+              if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) return s.slice(0,5);
+
+              // ISO with timezone offset: try to extract time after 'T'
+              const isoMatch = s.match(/T(\d{2}:\d{2}:?\d{0,2})/);
+              if (isoMatch) return isoMatch[1].slice(0,5);
+
+              // Fallback: attempt to create Date and format, but only as last resort
+              const fallback = new Date(s);
+              if (!isNaN(fallback.getTime())) return fallback.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+              // If nothing else, return the raw string (or first 5 chars)
               return s.length >= 5 ? s.slice(0,5) : s;
             };
 
@@ -370,7 +446,7 @@ const AdminView = () => {
             for (const r of records) {
               const tinRaw = r.time_in ?? r.timeIn ?? r.timeInISO ?? r.start;
               if (!tinRaw) continue;
-              const dt = parseTimestamp(tinRaw, selectedDate);
+              const dt = parseISO(tinRaw, selectedDate);
               if (dt && !isNaN(dt.getTime())) {
                 if (dt.getHours() > 9 || (dt.getHours() === 9 && dt.getMinutes() > 0)) { isLate = true; break; }
               }
