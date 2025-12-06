@@ -161,43 +161,45 @@ function BudgetCreation() {
     setToast('Budget creation cancelled');
   }
 
-  // Build payload node (exact format requested by backend/sample)
-    function buildPayloadNode(node, parent_id = null) {
-    // Always send id:null and parent_id:null per your sample
-    const out = {
-        id: null,
-        parent_id: null,
+    // Build payload node (exact format requested by backend/sample)
+    function buildPayloadNode(node) {
+      const out = {
         name: node.name ?? '',
         is_leaf: node.type === 'item' ? 1 : 0,
-        item_id: node.item_id ?? null,
         children: []
-    };
+      };
 
-    if (node.type === 'item') {
+      if (node.type === 'item') {
         // ensure numeric rate (two decimals) and proper types
-        const rawRate = node.rate === '' || node.rate === null || node.rate === undefined ? 0 : Number(node.rate) || 0;
+        const rawRate =
+          node.rate === '' || node.rate === null || node.rate === undefined
+            ? 0
+            : Number(node.rate) || 0;
         const rateNum = Math.round(rawRate * 100) / 100;
 
         // parse quantity defensively (allow empty string -> 0)
-        const rawQty = (node.qty === '' || node.qty === null || node.qty === undefined) ? 0 : Number(node.qty) || 0;
+        const rawQty =
+          node.qty === '' || node.qty === null || node.qty === undefined
+            ? 0
+            : Number(node.qty) || 0;
         const qtyNum = Math.round(rawQty * 100) / 100;
 
         out.item = {
-        name: node.component_name ?? node.name ?? '',
-        unit: node.unit ?? '',
-        rate: Number(rateNum.toFixed(2)),
-        quantity: Number(qtyNum)
+          name: node.component_name ?? node.name ?? '',
+          unit: node.unit ?? '',
+          rate: Number(rateNum.toFixed(2)),
+          quantity: Number(qtyNum)
         };
-    }
+      }
 
-    // children should always be an array (empty if none)
-    if (Array.isArray(node.children) && node.children.length > 0) {
-        out.children = node.children.map((c) => buildPayloadNode(c, out.id));
-    } else {
+      // children should always be an array (empty if none)
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        out.children = node.children.map((c) => buildPayloadNode(c));
+      } else {
         out.children = [];
-    }
+      }
 
-    return out;
+      return out;
     }
 
   async function handleSave() {
@@ -208,12 +210,12 @@ function BudgetCreation() {
         
       const payload = {
         effective_date,
-        data: buildPayloadNode(tree, null)
+        data: buildPayloadNode(tree)
       };
         
       console.log(JSON.stringify(payload, null, 2));
 
-      const res = await fetch(`${API_BASE}/budget/sync/${projectId}`, {
+      const res = await fetch(`${API_BASE}/budget/create/${projectId}`, {
         method: 'POST',   
         credentials: "include",
         headers: {

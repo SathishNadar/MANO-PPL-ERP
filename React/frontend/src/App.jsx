@@ -23,6 +23,7 @@ import Admin from "./pages/admin/Admin.jsx";
 
 import BudgetingCreate from "./pages/BudgetingComponent/BudgetCreation.jsx"
 import BudgetingView from "./pages/BudgetingComponent/BudgetView.jsx"
+import BudgetUpdate from "./pages/BudgetingComponent/BudgetUpdate.jsx"
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -137,6 +138,14 @@ function App() {
           element={
             <ProtectedRoute>
               <BudgetingView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/budgetUpdate"
+          element={
+            <ProtectedRoute>
+              <BudgetUpdate />
             </ProtectedRoute>
           }
         />
