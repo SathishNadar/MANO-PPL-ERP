@@ -237,7 +237,8 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
           timeOutUrl = url;
         }
 
-        // Return timestamp fields exactly as strings for this attendance endpoint (do not convert to Date/ISO)
+        // Return timestamp fields exactly as they come from DB. Do not convert to Date/ISO.
+        // Stringify non-null values to ensure JSON serialization is consistent.
         const time_in = row.time_in == null ? null : String(row.time_in);
         const time_out = row.time_out == null ? null : String(row.time_out);
         const created_at = row.created_at == null ? null : String(row.created_at);

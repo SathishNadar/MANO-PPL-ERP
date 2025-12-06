@@ -1,6 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Chart from "chart.js/auto";
+// Chart logic moved into a separate component (create this file)
+import ChartAreaComponent from "./../../SmolComponents/chartAreaComponent";
+// Budget preview component (you will create BudgetPreviewComponent.jsx)
+import BudgetPreviewComponent from "./../../BudgetingComponent/BudgetPreviewComponent";
 import Sidebar from "../../SidebarComponent/sidebar";
 import "material-icons/iconfont/material-icons.css";
 import "./ProjectsView.css";
@@ -15,8 +18,8 @@ const ProjectsView = () => {
   const [showCreateProject, setCreateProject] = useState(false);
   const [query, setQuery] = useState("");
   const userId = JSON.parse(localStorage.getItem("session"))?.user_id;
-  const chartRef = useRef(null);
-  const chartInstanceRef = useRef(null);
+  const [previewProjectId, setPreviewProjectId] = useState(null);
+  const [showChart, setShowChart] = useState(true); // true -> show chart, false -> show budget tree preview
 
   // compute elapsed & total days and completion flag
   const getDaysInfo = (project) => {
@@ -251,7 +254,16 @@ const ProjectsView = () => {
                       </div>
                     </div>
 
-                    <div className="text-right ml-4">
+                    <div
+                      className="text-right ml-4"
+                      // onClick={(e) => {
+                      //   // stop outer card navigation
+                      //   e.stopPropagation();
+                      //   // show budget preview for this project
+                      //   setShowChart(false);
+                      //   setPreviewProjectId(project.project_id);
+                      // }}
+                    >
                       {completed ? (
                         <div className="text-sm font-semibold text-green-400">Completed</div>
                       ) : (

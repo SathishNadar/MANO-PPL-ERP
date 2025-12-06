@@ -524,6 +524,9 @@ img {
     font-weight: 600;
     padding: 10px 5px 10px 0;
     border-top: none !important;
+    display:flex;
+    justify-content: center;
+    align-items: center;
 }
 .remarks-content {
     padding-left: 5px ;
