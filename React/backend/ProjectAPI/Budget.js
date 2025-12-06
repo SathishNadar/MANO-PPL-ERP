@@ -6,9 +6,12 @@ import { authenticateJWT } from "../AuthAPI/LoginAPI.js";
 const router = express.Router();
 
 // CREATE hierarchy from scratch (no deletes, no updates)
-async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentId = null, iteration) {
+// add trx parameter (default: null)
+async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentId = null, iteration, trx = null) {
+  const db = trx || knexDB; // use transaction if provided, otherwise global knex
+
   // insert category
-  const [newId] = await knexDB("budget_category").insert({
+  const [newId] = await db("budget_category").insert({
     parent_id: parentId,
     project_id: projectId,
     iteration: iteration,
@@ -25,7 +28,7 @@ async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentI
 
     // If no item_id → create item
     if (!itemId) {
-      const [newItemId] = await knexDB("item").insert({
+      const [newItemId] = await db("item").insert({
         project_id: projectId,
         name: itemData.name,
         unit: itemData.unit,
@@ -35,7 +38,7 @@ async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentI
       itemId = newItemId;
 
       // Insert item_rate for new item
-      await knexDB("item_rate").insert({
+      await db("item_rate").insert({
         item_id: itemId,
         rate: itemData.rate,
         quantity: itemData.quantity ?? 0,
@@ -45,7 +48,7 @@ async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentI
     } else {
       // If item_id is given, also allow inserting new rate (optional)
       if (itemData.rate != null) {
-        await knexDB("item_rate").insert({
+        await db("item_rate").insert({
           item_id: itemId,
           rate: itemData.rate,
           quantity: itemData.quantity ?? 0,
@@ -56,17 +59,17 @@ async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentI
     }
 
     // Update category with item_id
-    await knexDB("budget_category")
+    await db("budget_category")
       .where({ id: newId })
       .update({ item_id: itemId });
   }
 
   // -------------------------------------------------
-  // Recursively process children
+  // Recursively process children (pass trx)
   // -------------------------------------------------
   if (jsonRoot.children?.length > 0) {
     for (const child of jsonRoot.children) {
-      await createBudgetHierarchy(child, projectId, effectiveDate, newId, iteration);
+      await createBudgetHierarchy(child, projectId, effectiveDate, newId, iteration, trx);
     }
   }
 
@@ -158,7 +161,7 @@ router.get('/exists/:projectId', async (req, res) => {
   }
 });
 
-// POST /budget/sync - update entire budget hierarchy for a project
+// POST /budget/create - create entire budget hierarchy for a project
 router.post("/create/:projectId", authenticateJWT, async (req, res) => {
   try {
     const { projectId } = req.params;
@@ -211,16 +214,14 @@ router.put("/update/:projectId", authenticateJWT, async (req, res) => {
           .update({ is_active: 0 });
       }
 
-      // 3) Fetch last iteration number
-      const Iteration = await knexDB("budget_category")
-        .where({ project_id: projectId })
+      // 3) Fetch last iteration number using trx
+      const Iteration = await trx("budget_category")
+        .where({ project_id: projectNum })
         .max("iteration as max_iter")
         .first();
 
-      // console.log(maxIteration);
-
-      // 4) RECREATE hierarchy using your existing create function
-      await createBudgetHierarchy(data, projectNum, effective_date, null, Iteration.max_iter + 1);
+      // 4) RECREATE hierarchy using transaction-aware create function (pass trx)
+      await createBudgetHierarchy(data, projectNum, effective_date, null, (Iteration?.max_iter ?? 0) + 1, trx);
     });
 
     res.json({
