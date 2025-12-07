@@ -66,14 +66,14 @@ async (req, res) => {
 
       // STEP 5: If image present, upload to S3
       if (file) {
-        const key = `${attendance_id}_in`;
+        const key = `${attendance_id}_in.jpeg`;
         const directory = "attendance_images";
 
         const uploadResult = await uploadFile({
           fileBuffer: file.buffer,
           key,
           directory,
-          contentType: file.mimetype,
+          contentType: "image/jpeg",
         });
 
         imageKey = uploadResult.key;
@@ -149,14 +149,14 @@ async (req, res) => {
 
       // STEP 4: If image present, upload to S3 and store key
       if (file) {
-        const key = `${openSession.attendance_id}_out`;
+        const key = `${openSession.attendance_id}_out.jpeg`;
         const directory = "attendance_images";
 
         const uploadResult = await uploadFile({
           fileBuffer: file.buffer,
           key,
           directory,
-          contentType: file.mimetype,
+          contentType: "image/jpeg",
         });
 
         imageKey = uploadResult.key;
