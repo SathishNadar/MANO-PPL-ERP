@@ -7,6 +7,8 @@ import LoginRoutes from './AuthAPI/LoginAPI.js';
 import SignupRoutes, { handleVerifySignup } from './AuthAPI/VerifyEmailAPI.js';
 import ForgotPasswordRoutes from './AuthAPI/ForgotPasswordAPI.js';
 
+import AppError from './utils/AppError.js';
+import errorHandler from './middleware/errorHandler.js';
 import ProjectRoutes from './ProjectAPI/Projects.js';
 import ReportRoutes from './ProjectAPI/Reports.js';
 import BudgetRoutes from './ProjectAPI/Budget.js';
@@ -14,6 +16,7 @@ import VendorRoutes from './VendorClientAPI/vendor.js';
 import TaskRoutes from './Tasks/task.js';
 import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
+import WorkLocationRoutes from './Admin/WorkLocations.js';
 import S3Routes from './s3/s3Routes.js';
 
 import './config.js';
@@ -54,12 +57,13 @@ app.use('/api', ForgotPasswordRoutes);
 app.use('/s3', S3Routes);
 
 app.use('/project', ProjectRoutes);
-app.use("/report", ReportRoutes); 
-app.use("/budget", BudgetRoutes); 
+app.use("/report", ReportRoutes);
+app.use("/budget", BudgetRoutes);
 app.use("/vendor_api", VendorRoutes);
 app.use("/tasks", TaskRoutes);
 app.use("/attendance", AttendanceRoutes);
 app.use("/admin", Admin);
+app.use("/admin/locations", WorkLocationRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');
@@ -103,6 +107,15 @@ io.on('connection', (socket) => {
   });
 });
 
+
 server.listen(HTTP_PORT, '127.0.0.1', () => {
   console.log(`Backend server listening at http://127.0.0.1:${HTTP_PORT}`);
 });
+
+// Handle 404 for undefined routes
+app.all(/(.*)/, (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+// Global Error Handler
+app.use(errorHandler);
