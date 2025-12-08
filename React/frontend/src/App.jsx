@@ -24,6 +24,8 @@ import Admin from "./pages/admin/Admin.jsx";
 import AttendanceDashboard from "./pages/Dashboard/Attendance/AttendanceDashboard.jsx";
 import AdminView from "./pages/Dashboard/Attendance/AdminView.jsx";
 
+import AttendanceUsers from "./pages/Dashboard/Attendance/AttendanceAdmin.jsx"
+
 import BudgetingCreate from "./pages/BudgetingComponent/BudgetCreation.jsx"
 import BudgetingView from "./pages/BudgetingComponent/BudgetView.jsx"
 import BudgetUpdate from "./pages/BudgetingComponent/BudgetUpdate.jsx"
@@ -168,6 +170,15 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminView />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/attendance/users"
+          element={
+            <ProtectedRoute>
+              <AttendanceUsers />
             </ProtectedRoute>
           }
         />
