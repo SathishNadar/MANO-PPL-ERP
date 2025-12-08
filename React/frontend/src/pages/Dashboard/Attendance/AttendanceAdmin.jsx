@@ -9,8 +9,8 @@ import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
-const DEFAULT_MAP_CENTER = [19.0760, 72.8777]; // Mumbai
-
+const DEFAULT_MAP_CENTER = [19.165924, 73.041916] //[19.0760, 72.8777]; // Mumbai [19.145168, 73.072128]
+const defaultZoom = 11
 // Fix leaflet icon paths for ESM builds
 L.Icon.Default.mergeOptions({ iconRetinaUrl: markerIcon2x, iconUrl: markerIcon, shadowUrl: markerShadow });
 
@@ -248,6 +248,7 @@ export default function attendanceGeoFencing() {
         </div>
 
         {/* Search (tailwind style per reference) */}
+        {view === "users" && (
         <div className="relative w-[360px]">
           <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-sky-300">search</span>
           <input
@@ -258,6 +259,7 @@ export default function attendanceGeoFencing() {
             type="search"
           />
         </div>
+        )}
       </div>
 
       {/* TOP CARDS as directory tabs that visually overlap content */}
@@ -370,7 +372,7 @@ export default function attendanceGeoFencing() {
 
               <div className="flex-1 h-full">
                 <div className="h-full rounded-lg overflow-hidden">
-                  <MapContainer whenCreated={(map) => (mapRef.current = map)} center={newCenter || DEFAULT_MAP_CENTER} zoom={13} className="h-full w-full">
+                  <MapContainer whenCreated={(map) => (mapRef.current = map)} center={newCenter || DEFAULT_MAP_CENTER} zoom={defaultZoom} className="h-full w-full">
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     <ClickSetter enabled={clickToSet} onSet={(latlng) => setNewCenter(latlng)} />
                     {newCenter && <><Marker position={newCenter} /><Circle center={newCenter} radius={Number(newRadius)} /></>}
@@ -437,7 +439,7 @@ export default function attendanceGeoFencing() {
                 <MapContainer
                   whenCreated={(map) => (mapRef.current = map)}
                   center={editCenter || DEFAULT_MAP_CENTER}
-                  zoom={13}
+                  zoom={defaultZoom}
                   className="h-full w-full"
                 >
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
