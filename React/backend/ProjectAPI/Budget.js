@@ -42,6 +42,7 @@ async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentI
         item_id: itemId,
         rate: itemData.rate,
         quantity: itemData.quantity ?? 0,
+        labour_rate: itemData.labour_rate,
         effective_from: effectiveDate,
         iteration: iteration
       });
@@ -52,6 +53,7 @@ async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentI
           item_id: itemId,
           rate: itemData.rate,
           quantity: itemData.quantity ?? 0,
+          labour_rate: itemData.labour_rate,
           effective_from: effectiveDate,
           iteration: iteration
         });
@@ -111,6 +113,7 @@ async function fetchBudgetHierarchy(projectId) {
       'c.name as item_name',
       'c.unit as item_unit',
       'cr.rate as item_rate',
+      'cr.labour_rate as item_labour_rate',
       'cr.quantity as quantity'
     )
     .orderBy('bc.id');
