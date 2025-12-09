@@ -98,7 +98,7 @@ function AttendanceDashboard() {
         <div className="flex gap-4 mb-6 overflow-x-auto items-stretch">
           <div className="flex-shrink-0 w-64 md:w-1/4">
             <Link to="/dashboard/attendance/admin" className="block h-full">
-              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-blue-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
+              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="text-lg font-semibold">Admin View — Graph</h3>
@@ -110,12 +110,12 @@ function AttendanceDashboard() {
           </div>
 
           <div className="flex-shrink-0 w-64 md:w-1/4">
-            <Link to="/dashboard/attendance" className="block h-full">
+            <Link to="/dashboard/attendance/users" className="block h-full">
               <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold">Attendance Dashboard</h3>
-                    <p className="text-sm text-gray-400 mt-1">At-a-glance overview: <span className="text-gray-200">present, not reported, late leaderboard</span>.</p>
+                    <h3 className="text-lg font-semibold">Admin View — Users</h3>
+                    <p className="text-sm text-gray-400 mt-1">A Admin Page to manage geofencing rules for employees.</p>
                   </div>
                 </div>
               </div>
@@ -124,7 +124,7 @@ function AttendanceDashboard() {
 
           <div className="flex-shrink-0 w-64 md:w-1/4">
             <Link to="/dashboard/attendance" className="block h-full">
-              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
+              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-blue-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="text-lg font-semibold">Employee Stats</h3>
