@@ -31,7 +31,8 @@ router.get("/users", authenticateJWT, catchAsync(async (req, res, next) => {
       'u.user_name',
       'u.email',
       'u.phone_no',
-      't.title_name'
+      'u.designation',
+      't.title_name',
     );
 
   // If work locations are requested, we need to fetch them

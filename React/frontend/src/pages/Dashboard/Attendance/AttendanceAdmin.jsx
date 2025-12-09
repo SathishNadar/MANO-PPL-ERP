@@ -3,16 +3,20 @@ import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Circle, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+delete L.Icon.Default.prototype._getIconUrl;
 
+L.Icon.Default.mergeOptions({ 
+    iconRetinaUrl: markerIcon2x, 
+    iconUrl: markerIcon, 
+    shadowUrl: markerShadow });
+
+    
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 const DEFAULT_MAP_CENTER = [19.165924, 73.041916] //[19.0760, 72.8777]; // Mumbai [19.145168, 73.072128]
 const defaultZoom = 11
-// Fix leaflet icon paths for ESM builds
-L.Icon.Default.mergeOptions({ iconRetinaUrl: markerIcon2x, iconUrl: markerIcon, shadowUrl: markerShadow });
 
 function ClickSetter({ enabled, onSet }) {
   useMapEvents({
@@ -94,9 +98,9 @@ export default function attendanceGeoFencing() {
 
   // static sample users (no phone numbers displayed)
   const staticUsers = [
-    { id: "u1", username: "Mano", email: "manobharathi189@gmail.com", role: "admin", allowedGeofences: ["hq"] },
-    { id: "u2", username: "Mugilan Muthaiah", email: "mugilan6633@gmail.com", role: "admin", allowedGeofences: ["warehouse", "hq"] },
-    { id: "u3", username: "Nishok Ganapathy Nadar", email: "nishokganapathy07@gmail.com", role: "client", allowedGeofences: [] },
+    { id: "u1", username: "Mano", email: "manobharathi189@gmail.com", designation: "admin", allowedGeofences: ["hq"] },
+    { id: "u2", username: "Mugilan Muthaiah", email: "mugilan6633@gmail.com", designation: "admin", allowedGeofences: ["warehouse", "hq"] },
+    { id: "u3", username: "Nishok Ganapathy Nadar", email: "nishokganapathy07@gmail.com", designation: "client", allowedGeofences: [] },
   ];
 
   const [users, setUsers] = useState(staticUsers);
@@ -154,13 +158,14 @@ export default function attendanceGeoFencing() {
           throw new Error("Expected JSON from /api/admin/users — got HTML or other. Check server route.");
         }
         const body = JSON.parse(text);
+        console.log(body)
         if (!body.success) throw new Error(body.message || "Failed to fetch users");
 
         const mapped = (body.users || []).map((u) => ({
           id: u.user_id ?? u.id ?? Math.random().toString(36).slice(2, 8),
           username: u.name ?? u.user_name ?? u.full_name ?? u.display_name ?? "Unknown",
           email: u.email ?? u.user_email ?? "",
-          role: u.title ?? u.role ?? u.designation ?? "client",
+          designation: u.designation ?? u.title ?? "NULL",
           allowedGeofences: (u.allowedGeofences || u.geofences || []).map((g) => (typeof g === "string" ? g : g.id ?? g.name)),
           raw: u,
         }));
@@ -204,7 +209,7 @@ export default function attendanceGeoFencing() {
   function filteredUsers() {
     const q = query.trim().toLowerCase();
     if (!q) return users;
-    return users.filter((u) => (u.username || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q) || (u.role || "").toLowerCase().includes(q));
+    return users.filter((u) => (u.username || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q) || (u.designation || "").toLowerCase().includes(q));
   }
 
   function saveNew() {
@@ -291,7 +296,7 @@ export default function attendanceGeoFencing() {
                       <tr>
                         <th className="text-left px-4 py-3 text-sky-300 text-sm">Username</th>
                         <th className="text-left px-4 py-3 text-sky-300 text-sm">Email</th>
-                        <th className="text-left px-4 py-3 text-sky-300 text-sm">Role</th>
+                        <th className="text-left px-4 py-3 text-sky-300 text-sm">Designation</th>
                         <th className="text-left px-4 py-3 text-sky-300 text-sm">Shift</th>
                         <th className="text-center px-4 py-3 text-sky-300 text-sm">Allowed Geofences</th>
                         <th className="text-center px-4 py-3 text-sky-300 text-sm">Manage</th>
@@ -302,7 +307,7 @@ export default function attendanceGeoFencing() {
                         <tr key={u.id} className="border-b border-white/5">
                           <td className="px-4 py-3 text-white font-semibold">{u.username}</td>
                           <td className="px-4 py-3 text-sky-100">{u.email || "—"}</td>
-                          <td className="px-4 py-3 text-sky-100">{u.role}</td>
+                          <td className="px-4 py-3 text-sky-100">{u.designation}</td>
                           <td className="px-4 py-3 text-sky-100">9:00 AM - 6:00 PM</td>
                           <td className="px-4 py-3 text-sky-100 text-center">
                             <div className="flex gap-2 items-center justify-center flex-wrap">
