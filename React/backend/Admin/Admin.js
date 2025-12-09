@@ -34,9 +34,6 @@ router.get("/users", authenticateJWT, catchAsync(async (req, res, next) => {
       't.title_name'
     );
 
-  // If work locations are requested, we need to fetch them
-  // Since a user can have multiple work locations, doing a simple join might duplicate user rows.
-  // We can fetch work locations separately and merge them, similar to task controls.
   const users = await usersQuery;
 
   let workLocationMap = {};
