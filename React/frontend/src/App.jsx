@@ -18,6 +18,7 @@ import ProjectsView from "./pages/Dashboard/Projects/ProjectsView.jsx";
 import ProjectDescription from "./pages/Dashboard/Projects/ProjectDescription.jsx";
 import DPRList from "./pages/Dashboard/Projects/DPRList.jsx";
 import ProjectDirectory from "./pages/Dashboard/ProjectDirectory/ProjectDirectory.jsx";
+import ProjectVendorList from "./pages/Dashboard/ProjectVendorList/ProjectVendorList.jsx";
 import DprFetchViewer from "./pages/DPR/DprFetchViewer.jsx";
 import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
 import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
@@ -95,6 +96,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ProjectDirectory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-vendor-list"
+          element={
+            <ProtectedRoute>
+              <ProjectVendorList />
             </ProtectedRoute>
           }
         />

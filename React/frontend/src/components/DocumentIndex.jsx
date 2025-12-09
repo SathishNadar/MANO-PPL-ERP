@@ -2,19 +2,28 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const DocumentIndex = () => {
-    const [expandedSections, setExpandedSections] = useState({});
+    const [expandedSections, setExpandedSections] = useState(() => {
+        const saved = sessionStorage.getItem('documentIndexExpanded');
+        return saved ? JSON.parse(saved) : {};
+    });
     const navigate = useNavigate();
 
     const toggleSection = (index) => {
-        setExpandedSections((prev) => ({
-            ...prev,
-            [index]: !prev[index],
-        }));
+        setExpandedSections((prev) => {
+            const newState = {
+                ...prev,
+                [index]: !prev[index],
+            };
+            sessionStorage.setItem('documentIndexExpanded', JSON.stringify(newState));
+            return newState;
+        });
     };
 
     const handleItemClick = (item) => {
         if (item === "Project Directory") {
             navigate('/dashboard/project-directory');
+        } else if (item === "Project Vendor List") {
+            navigate('/dashboard/project-vendor-list');
         }
         // Add other document navigations here as needed
     };
