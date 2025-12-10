@@ -23,6 +23,7 @@ import DprFetchViewer from "./pages/DPR/DprFetchViewer.jsx";
 import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
 import StaffRoles from "./pages/Dashboard/StaffRoles/StaffRoles.jsx";
 import AgendaMinutes from "./pages/Dashboard/AgendaMinutes/AgendaMinutes.jsx";
+import HindranceReport from "./pages/Dashboard/HindranceReport/HindranceReport.jsx";
 import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
 import Admin from "./pages/admin/Admin.jsx";
 
@@ -122,6 +123,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AgendaMinutes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/hindrance-report"
+          element={
+            <ProtectedRoute>
+              <HindranceReport />
             </ProtectedRoute>
           }
         />

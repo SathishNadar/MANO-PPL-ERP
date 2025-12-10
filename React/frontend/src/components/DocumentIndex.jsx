@@ -29,6 +29,8 @@ const DocumentIndex = () => {
             navigate('/dashboard/staff-roles');
         } else if (item === "Agenda & Minutes of Meeting") {
             navigate('/dashboard/agenda-minutes');
+        } else if (item === "Events / Hindrance Report") {
+            navigate('/dashboard/hindrance-report');
         }
         // Add other document navigations here as needed
     };
