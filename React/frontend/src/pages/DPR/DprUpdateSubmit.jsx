@@ -6,17 +6,17 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function DprUpdateSubmit() {
   const { projectId, dprId } = useParams();
-  const navigate = useNavigate(); 
-  const UNIT_OPTIONS = ["No","Rmt","Sqm","Cum","Rft","Sft","Cft","MT","Kg","Lit","Day","Each","LS","Shift","Month","Hrs"];
-  const genId = () => `${Date.now().toString(36)}-${Math.floor(Math.random()*100000).toString(36)}`;
+  const navigate = useNavigate();
+  const UNIT_OPTIONS = ["No", "Rmt", "Sqm", "Cum", "Rft", "Sft", "Cft", "MT", "Kg", "Lit", "Day", "Each", "LS", "Shift", "Month", "Hrs"];
+  const genId = () => `${Date.now().toString(36)}-${Math.floor(Math.random() * 100000).toString(36)}`;
 
   const [project, setProject] = useState(null);
   const [eventsVisit, setEventsVisit] = useState([{ id: genId(), text: "" }]);
   const [generalRemark, setGeneralRemark] = useState("");
 
-const addEventVisit = () => setEventsVisit(p => [...p, { id: genId(), text: '' }]);
-const removeEventVisit = idx => setEventsVisit(p => p.filter((_, i) => i !== idx));
-const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === idx ? { ...row, text: val } : row));
+  const addEventVisit = () => setEventsVisit(p => [...p, { id: genId(), text: '' }]);
+  const removeEventVisit = idx => setEventsVisit(p => p.filter((_, i) => i !== idx));
+  const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === idx ? { ...row, text: val } : row));
 
   const [reportDate, setReportDate] = useState(""); // read-only later
   const [siteCondition, setSiteCondition] = useState({
@@ -74,12 +74,12 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
     const e = new Date(project.end_date);
     const current = reportDate
       ? new Date(
-          Date.UTC(
-            Number(reportDate.slice(0, 4)),
-            Number(reportDate.slice(5, 7)) - 1,
-            Number(reportDate.slice(8, 10))
-          )
+        Date.UTC(
+          Number(reportDate.slice(0, 4)),
+          Number(reportDate.slice(5, 7)) - 1,
+          Number(reportDate.slice(8, 10))
         )
+      )
       : new Date();
 
     const DAY = 86400000;
@@ -202,8 +202,8 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
         Array.isArray(data?.report_footer?.bottom_remarks)
           ? data.report_footer.bottom_remarks.join("\n")
           : typeof data?.report_footer?.bottom_remarks === "string"
-          ? data.report_footer.bottom_remarks
-          : ""
+            ? data.report_footer.bottom_remarks
+            : ""
       );
 
       // Distribute
@@ -279,7 +279,7 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
       rain_timing: Array.isArray(dpr?.site_condition?.rain_timing)
         ? dpr.site_condition.rain_timing
         : [],
-    }, 
+    },
 
     // labour_report is ALWAYS an object
     labour_report: (() => {
@@ -300,8 +300,8 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
       items: Array.isArray(dpr?.today_prog?.items)
         ? dpr.today_prog.items
         : Array.isArray(dpr?.today_prog?.progress)
-        ? dpr.today_prog.progress
-        : [],
+          ? dpr.today_prog.progress
+          : [],
       unit: Array.isArray(dpr?.today_prog?.unit) ? dpr.today_prog.unit : [],
       qty: Array.isArray(dpr?.today_prog?.qty) ? dpr.today_prog.qty : [],
       remarks: Array.isArray(dpr?.today_prog?.remarks) ? dpr.today_prog.remarks : [],
@@ -310,8 +310,8 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
       items: Array.isArray(dpr?.tomorrow_plan?.items)
         ? dpr.tomorrow_plan.items
         : Array.isArray(dpr?.tomorrow_plan?.plan)
-        ? dpr.tomorrow_plan.plan
-        : [],
+          ? dpr.tomorrow_plan.plan
+          : [],
       unit: Array.isArray(dpr?.tomorrow_plan?.unit) ? dpr.tomorrow_plan.unit : [],
       qty: Array.isArray(dpr?.tomorrow_plan?.qty) ? dpr.tomorrow_plan.qty : [],
       remarks: Array.isArray(dpr?.tomorrow_plan?.remarks) ? dpr.tomorrow_plan.remarks : [],
@@ -330,8 +330,8 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
       bottom_remarks: Array.isArray(dpr?.report_footer?.bottom_remarks)
         ? dpr.report_footer.bottom_remarks
         : typeof dpr?.report_footer?.bottom_remarks === "string"
-        ? [dpr.report_footer.bottom_remarks]
-        : [],
+          ? [dpr.report_footer.bottom_remarks]
+          : [],
     },
   });
 
@@ -357,7 +357,7 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
     return diff;
   }
 
-  const onSave = async () => {
+  const performSave = async (silent = false) => {
     try {
       setSaving(true);
 
@@ -395,7 +395,7 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
           distribute: distribute.map((d) => d.text),
           prepared_by: preparedBy,
           bottom_remarks: bottomRemarksArray,
-          events_visit: eventsVisit.map((e) => e.text),  
+          events_visit: eventsVisit.map((e) => e.text),
         },
       };
 
@@ -404,9 +404,9 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
       console.log("PATCH:", patch);
 
       if (!patch || Object.keys(patch).length === 0) {
-        toast.info("No changes to save.");
+        if (!silent) toast.info("No changes to save.");
         setSaving(false);
-        return;
+        return true; // considered success
       }
 
       if (Object.keys(patch).length > 0) {
@@ -427,17 +427,24 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
       const data = await res.json();
 
       if (res.ok && (data.ok || data.success)) {
-        toast.success("DPR updated successfully");
+        if (!silent) toast.success("DPR updated successfully");
         initialDpr.current = currentDpr;
+        return true;
       } else {
         toast.info("Make changes to update the DPR" || data.message);
+        return false;
       }
     } catch (e) {
       console.error(e);
       toast.error("Error updating DPR");
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  const onSave = async () => {
+    await performSave();
   };
 
   // #region helpers
@@ -599,15 +606,23 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
     );
   }
 
-    // open the confirm modal
+  // open the confirm modal
   const openSubmitModal = () => setShowConfirmModal(true);
   const cancelSubmit = () => setShowConfirmModal(false);
 
-  
+
   const autoCloseMs = 2000;
   // confirmed submit handler
   const confirmSubmit = async () => {
     setShowConfirmModal(false);
+
+    // First save any pending changes silently
+    const saved = await performSave(true);
+    if (!saved) {
+      toast.error("Cannot submit: Failed to save changes.");
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -619,14 +634,14 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
         const errBody = await response.json().catch(() => ({}));
         throw new Error(errBody.message || response.statusText || "Request failed");
       }
-      
+
       const successBody = await response.json().catch(() => ({}));
 
       // show success toast and redirect when it closes
       toast.success(successBody.message || "DPR submitted successfully", {
         autoClose: autoCloseMs,
         onClose: () => {
-          navigate(`/dashboard/project-description/${projectId}`);
+          navigate(`/dashboard/project-description/${projectId}/dpr-list`);
         },
       });
     } catch (error) {
@@ -1059,7 +1074,7 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
       <div className="flex justify-end gap-3">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(`/dashboard/project-description/${projectId}/${dprId}`)}
           className="px-5 py-2 rounded bg-gray-700 hover:bg-gray-600"
         >
           Cancel
@@ -1068,11 +1083,10 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
           type="button"
           onClick={onSave}
           disabled={saving}
-          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
-            saving
+          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${saving
               ? "bg-blue-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
-          }`}
+            }`}
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
@@ -1080,11 +1094,10 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
           type="button"
           onClick={openSubmitModal}
           disabled={submitting}
-          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
-            submitting
+          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${submitting
               ? "bg-blue-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
-          }`}
+            }`}
         >
           {submitting ? "Submitting..." : "Submit"}
         </button>
@@ -1095,103 +1108,103 @@ const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === 
 
 export default DprUpdateSubmit;
 
-  function EditableTable4({
-    title,
-    rows,
-    onAdd,
-    onRemove,
-    onChangeItem,
-    onChangeRemarks,
-    onChangeUnit,
-    onChangeQty,
-  }) {
-    const UNIT_OPTIONS_LOCAL = ["No","Rmt","Sqm","Cum","Rft","Sft","Cft","MT","Kg","Lit","Day","Each","LS","Shift","Month","Hrs"];
-    return (
-      <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button
-            type="button"
-            onClick={onAdd}
-            className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600"
-          >
-            + Add Row
-          </button>
-        </div>
-        <table className="w-full text-sm border-separate border-spacing-y-2">
-          <thead className="text-gray-300 border-b border-gray-600">
-            <tr>
-              <th className="py-2 pl-2 text-left w-[35%]">Item</th>
-              <th className="py-2 pl-2 text-left w-[35%]">Remarks</th>
-              <th className="py-2 pl-2 text-left w-[10%]">Unit</th>
-              <th className="py-2 pl-2 text-left w-[20%]">Qty</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody className="text-white">
-            {rows.length ? (
-              rows.map((r, idx) => (
-                <tr key={r.id}>
-                  <td className="px-3 py-2 w-[35%]">
-                    <input
-                      type="text"
-                      value={r.item}
-                      onChange={(e) => onChangeItem(idx, e.target.value)}
-                      className="w-full bg-transparent border-b border-gray-600 outline-none"
-                      placeholder="Item"
-                    />
-                  </td>
-                  <td className="px-3 py-2 w-[35%]">
-                    <input
-                      type="text"
-                      value={r.remarks}
-                      onChange={(e) => onChangeRemarks(idx, e.target.value)}
-                      className="w-full bg-transparent border-b border-gray-600 outline-none"
-                      placeholder="Remarks"
-                    />
-                  </td>
-                  <td className="px-3 py-2 w-[10%] text-left">
-                    <select
-                      value={r.unit}
-                      onChange={(e) => onChangeUnit(idx, e.target.value)}
-                      className="w-full text-left bg-transparent border-b border-gray-600 outline-none"
-                    >
-                      <option value="">Select</option>
-                      {UNIT_OPTIONS_LOCAL.map((u) => (
-                        <option key={u} value={u}>{u}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-3 py-2 w-[20%] text-left">
-                    <input
-                      type="text"
-                      value={r.qty}
-                      onChange={(e) => onChangeQty(idx, e.target.value)}
-                      className="w-full bg-transparent border-b border-gray-600 outline-none text-left"
-                      placeholder="Qty"
-                    />
-                  </td>
-                  <td className="py-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => onRemove(idx)}
-                      className="text-red-400 hover:text-red-500 hover:cursor-pointer"
-                      title="Delete row"
-                    >
-                      <span className="material-icons text-md">delete</span>
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td className="text-gray-500 italic py-4" colSpan={5}>
-                  No rows yet. Use “+ Add Row”.
+function EditableTable4({
+  title,
+  rows,
+  onAdd,
+  onRemove,
+  onChangeItem,
+  onChangeRemarks,
+  onChangeUnit,
+  onChangeQty,
+}) {
+  const UNIT_OPTIONS_LOCAL = ["No", "Rmt", "Sqm", "Cum", "Rft", "Sft", "Cft", "MT", "Kg", "Lit", "Day", "Each", "LS", "Shift", "Month", "Hrs"];
+  return (
+    <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600"
+        >
+          + Add Row
+        </button>
+      </div>
+      <table className="w-full text-sm border-separate border-spacing-y-2">
+        <thead className="text-gray-300 border-b border-gray-600">
+          <tr>
+            <th className="py-2 pl-2 text-left w-[35%]">Item</th>
+            <th className="py-2 pl-2 text-left w-[35%]">Remarks</th>
+            <th className="py-2 pl-2 text-left w-[10%]">Unit</th>
+            <th className="py-2 pl-2 text-left w-[20%]">Qty</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody className="text-white">
+          {rows.length ? (
+            rows.map((r, idx) => (
+              <tr key={r.id}>
+                <td className="px-3 py-2 w-[35%]">
+                  <input
+                    type="text"
+                    value={r.item}
+                    onChange={(e) => onChangeItem(idx, e.target.value)}
+                    className="w-full bg-transparent border-b border-gray-600 outline-none"
+                    placeholder="Item"
+                  />
+                </td>
+                <td className="px-3 py-2 w-[35%]">
+                  <input
+                    type="text"
+                    value={r.remarks}
+                    onChange={(e) => onChangeRemarks(idx, e.target.value)}
+                    className="w-full bg-transparent border-b border-gray-600 outline-none"
+                    placeholder="Remarks"
+                  />
+                </td>
+                <td className="px-3 py-2 w-[10%] text-left">
+                  <select
+                    value={r.unit}
+                    onChange={(e) => onChangeUnit(idx, e.target.value)}
+                    className="w-full text-left bg-transparent border-b border-gray-600 outline-none"
+                  >
+                    <option value="">Select</option>
+                    {UNIT_OPTIONS_LOCAL.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </td>
+                <td className="px-3 py-2 w-[20%] text-left">
+                  <input
+                    type="text"
+                    value={r.qty}
+                    onChange={(e) => onChangeQty(idx, e.target.value)}
+                    className="w-full bg-transparent border-b border-gray-600 outline-none text-left"
+                    placeholder="Qty"
+                  />
+                </td>
+                <td className="py-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => onRemove(idx)}
+                    className="text-red-400 hover:text-red-500 hover:cursor-pointer"
+                    title="Delete row"
+                  >
+                    <span className="material-icons text-md">delete</span>
+                  </button>
                 </td>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
+            ))
+          ) : (
+            <tr>
+              <td className="text-gray-500 italic py-4" colSpan={5}>
+                No rows yet. Use “+ Add Row”.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}

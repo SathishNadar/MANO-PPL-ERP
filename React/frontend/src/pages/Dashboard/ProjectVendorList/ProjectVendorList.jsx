@@ -1,7 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
 
 const ProjectVendorList = () => {
+    const navigate = useNavigate();
     // Mock data - 10 dummy records
     const vendors = Array.from({ length: 10 }, (_, i) => ({
         id: i + 1,
@@ -21,6 +23,14 @@ const ProjectVendorList = () => {
             <Sidebar />
             <main className="flex-1 p-8 bg-gray-900 overflow-y-auto">
                 <header className="mb-8">
+                    <button
+                        className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2 mb-4"
+                        onClick={() => navigate(-1)}
+                    >
+                        <span className="material-icons">arrow_back</span>
+                        <span>Back</span>
+                    </button>
+
                     <h1 className="text-4xl font-bold text-[var(--text-primary)]">
                         Project Vendor List
                     </h1>

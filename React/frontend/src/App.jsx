@@ -21,6 +21,8 @@ import ProjectDirectory from "./pages/Dashboard/ProjectDirectory/ProjectDirector
 import ProjectVendorList from "./pages/Dashboard/ProjectVendorList/ProjectVendorList.jsx";
 import DprFetchViewer from "./pages/DPR/DprFetchViewer.jsx";
 import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
+import StaffRoles from "./pages/Dashboard/StaffRoles/StaffRoles.jsx";
+import AgendaMinutes from "./pages/Dashboard/AgendaMinutes/AgendaMinutes.jsx";
 import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
 import Admin from "./pages/admin/Admin.jsx";
 
@@ -104,6 +106,22 @@ function App() {
           element={
             <ProtectedRoute>
               <ProjectVendorList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/staff-roles"
+          element={
+            <ProtectedRoute>
+              <StaffRoles />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/agenda-minutes"
+          element={
+            <ProtectedRoute>
+              <AgendaMinutes />
             </ProtectedRoute>
           }
         />

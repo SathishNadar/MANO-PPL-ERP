@@ -55,6 +55,13 @@ function ProjectDescription() {
       <main className="flex-1 p-8 bg-gray-900 overflow-y-auto">
         <header className="flex justify-between items-center mb-8">
           <div>
+            <button
+              className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2 mb-4"
+              onClick={() => navigate("/dashboard/projects")}
+            >
+              <span className="material-icons">arrow_back</span>
+              <span>Back to Projects</span>
+            </button>
             <h1 className="text-4xl font-bold text-[var(--text-primary)]">
               {project?.project_name || "Project"}
             </h1>
@@ -153,188 +160,190 @@ function ProjectDescription() {
               </button>
             </div>
 
-            {/* Project Progress Card - Always Expanded */}
-            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
-                Project Progress
-              </h3>
+            {/* Project Progress Card - Always Expanded - HIDDEN */}
+            {false && (
+              <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
+                  Project Progress
+                </h3>
 
-              <div className="space-y-3">
-                {/* DPR Dropdown */}
-                <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleReport('dpr')}
-                    className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors group"
-                  >
-                    <span className="text-white font-semibold text-sm uppercase">DPR</span>
-                    <span
-                      className={`material-icons text-gray-400 group-hover:text-white transition-all duration-200 ${expandedReports.dpr ? 'rotate-180' : ''
-                        }`}
+                <div className="space-y-3">
+                  {/* DPR Dropdown */}
+                  <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleReport('dpr')}
+                      className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors group"
                     >
-                      expand_more
-                    </span>
-                  </button>
-                  {expandedReports.dpr && (
-                    <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div
-                          onClick={() => navigate(`/dashboard/project-description/${projectId}/dprCreate`)}
-                          className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
-                              edit
-                            </span>
-                            <div className="flex-1">
-                              <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                                Create
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
-                                Create DPR
-                              </p>
+                      <span className="text-white font-semibold text-sm uppercase">DPR</span>
+                      <span
+                        className={`material-icons text-gray-400 group-hover:text-white transition-all duration-200 ${expandedReports.dpr ? 'rotate-180' : ''
+                          }`}
+                      >
+                        expand_more
+                      </span>
+                    </button>
+                    {expandedReports.dpr && (
+                      <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div
+                            onClick={() => navigate(`/dashboard/project-description/${projectId}/dprCreate`)}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                edit
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  Create
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  Create DPR
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div
-                          onClick={() => navigate(`/dashboard/project-description/${projectId}/dpr-list`)}
-                          className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
-                              visibility
-                            </span>
-                            <div className="flex-1">
-                              <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                                View
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
-                                View all DPRs
-                              </p>
+                          <div
+                            onClick={() => navigate(`/dashboard/project-description/${projectId}/dpr-list`)}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                visibility
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  View
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  View all DPRs
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* WPR Dropdown */}
-                <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleReport('wpr')}
-                    className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors group"
-                  >
-                    <span className="text-white font-semibold text-sm uppercase">WPR</span>
-                    <span
-                      className={`material-icons text-gray-400 group-hover:text-white transition-all duration-200 ${expandedReports.wpr ? 'rotate-180' : ''
-                        }`}
+                  {/* WPR Dropdown */}
+                  <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleReport('wpr')}
+                      className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors group"
                     >
-                      expand_more
-                    </span>
-                  </button>
-                  {expandedReports.wpr && (
-                    <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div
-                          onClick={() => {/* Navigate to edit WPR */ }}
-                          className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
-                              edit
-                            </span>
-                            <div className="flex-1">
-                              <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                                Create
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
-                                Create WPR
-                              </p>
+                      <span className="text-white font-semibold text-sm uppercase">WPR</span>
+                      <span
+                        className={`material-icons text-gray-400 group-hover:text-white transition-all duration-200 ${expandedReports.wpr ? 'rotate-180' : ''
+                          }`}
+                      >
+                        expand_more
+                      </span>
+                    </button>
+                    {expandedReports.wpr && (
+                      <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div
+                            onClick={() => {/* Navigate to edit WPR */ }}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                edit
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  Create
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  Create WPR
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div
-                          onClick={() => {/* Navigate to view WPR */ }}
-                          className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
-                              visibility
-                            </span>
-                            <div className="flex-1">
-                              <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                                View
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
-                                View all WPRs
-                              </p>
+                          <div
+                            onClick={() => {/* Navigate to view WPR */ }}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                visibility
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  View
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  View all WPRs
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* MPR Dropdown */}
-                <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleReport('mpr')}
-                    className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors group"
-                  >
-                    <span className="text-white font-semibold text-sm uppercase">MPR</span>
-                    <span
-                      className={`material-icons text-gray-400 group-hover:text-white transition-all duration-200 ${expandedReports.mpr ? 'rotate-180' : ''
-                        }`}
+                  {/* MPR Dropdown */}
+                  <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleReport('mpr')}
+                      className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors group"
                     >
-                      expand_more
-                    </span>
-                  </button>
-                  {expandedReports.mpr && (
-                    <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div
-                          onClick={() => {/* Navigate to edit MPR */ }}
-                          className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
-                              edit
-                            </span>
-                            <div className="flex-1">
-                              <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                                Create
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
-                                Create MPR
-                              </p>
+                      <span className="text-white font-semibold text-sm uppercase">MPR</span>
+                      <span
+                        className={`material-icons text-gray-400 group-hover:text-white transition-all duration-200 ${expandedReports.mpr ? 'rotate-180' : ''
+                          }`}
+                      >
+                        expand_more
+                      </span>
+                    </button>
+                    {expandedReports.mpr && (
+                      <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div
+                            onClick={() => {/* Navigate to edit MPR */ }}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                edit
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  Create
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  Create MPR
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div
-                          onClick={() => {/* Navigate to view MPR */ }}
-                          className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
-                              visibility
-                            </span>
-                            <div className="flex-1">
-                              <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                                View
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
-                                View all MPRs
-                              </p>
+                          <div
+                            onClick={() => {/* Navigate to view MPR */ }}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                visibility
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  View
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  View all MPRs
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="lg:col-span-2 space-y-8">
