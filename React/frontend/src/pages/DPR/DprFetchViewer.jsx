@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
-import { ToastContainer, toast } from "react-toastify";
 import "./DprFetchViewer.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
