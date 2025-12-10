@@ -221,13 +221,13 @@ const Admin = () => {
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
-      <div className="relative flex size-full min-h-screen flex-col bg-[var(--background-color)] overflow-x-hidden">
+      <div className="relative flex size-full min-h-screen flex-col bg-[(--background-color)] overflow-x-hidden">
         <div className="layout-container flex h-full grow flex-col mt-10">
           <main className="main_container">
             <div className="layout-content-container flex flex-col max-w-7xl mx-auto flex-1">
               {/* Header Section */}
               <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
-                <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+                <h1 className="text-3xl font-bold text-[(--text-primary)]">
                   Admin: User Management
                 </h1>
                 <div className="flex items-center gap-4">
@@ -236,7 +236,7 @@ const Admin = () => {
                     placeholder="Search users..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="form-input block w-full md:w-64 px-4 py-3 rounded-lg text-[var(--text-primary)] bg-[var(--card-background)] border-gray-700 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] placeholder:text-[var(--text-secondary)]"
+                    className="form-input block w-full md:w-64 px-4 py-3 rounded-lg text-[(--text-primary)] bg-[(--card-background)] border-gray-700 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] placeholder:text-[var(--text-secondary)]"
                   />
                 </div>
               </div>
@@ -244,12 +244,12 @@ const Admin = () => {
               {/* Users Table */}
               <div className="space-y-12">
                 <div>
-                  <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">
+                  <h2 className="text-2xl font-semibold text-[(--text-primary)] mb-4">
                     Users
                   </h2>
-                  <div className="overflow-x-auto rounded-lg border border-gray-800 bg-[var(--card-background)]">
+                  <div className="overflow-x-auto rounded-lg border border-gray-800 bg-[(--card-background)]">
                     {loading ? (
-                      <p className="p-6 text-center text-[var(--text-secondary)]">
+                      <p className="p-6 text-center text-[(--text-secondary)]">
                         Loading users...
                       </p>
                     ) : (
@@ -270,16 +270,16 @@ const Admin = () => {
                                 key={user.user_id}
                                 className="hover:bg-gray-800/30 transition-colors"
                               >
-                                <td className="px-6 py-4 whitespace-nowrap text-lg font-medium text-[var(--text-primary)]">
+                                <td className="px-6 py-4 whitespace-nowrap text-lg font-medium text-[(--text-primary)]">
                                   {user.user_name}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
+                                <td className="px-6 py-4 whitespace-nowrap text-[(--text-secondary)]">
                                   {user.email}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
+                                <td className="px-6 py-4 whitespace-nowrap text-[(--text-secondary)]">
                                   {user.phone_no}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">
+                                <td className="px-6 py-4 whitespace-nowrap text-[(--text-secondary)]">
                                   {user.title_name}
                                 </td>
                                 <td className="px-6 py-4 text-center flex justify-center gap-4">
