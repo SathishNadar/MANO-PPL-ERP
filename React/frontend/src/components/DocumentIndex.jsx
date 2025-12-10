@@ -33,6 +33,8 @@ const DocumentIndex = () => {
             navigate('/dashboard/hindrance-report');
         } else if (item === "Project Report / Summary") {
             navigate('/dashboard/project-summary');
+        } else if (item === "Organisation Chart") {
+            navigate('/dashboard/organisation-chart');
         }
         // Add other document navigations here as needed
     };

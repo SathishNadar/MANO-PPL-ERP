@@ -25,6 +25,7 @@ import StaffRoles from "./pages/Dashboard/StaffRoles/StaffRoles.jsx";
 import AgendaMinutes from "./pages/Dashboard/AgendaMinutes/AgendaMinutes.jsx";
 import HindranceReport from "./pages/Dashboard/HindranceReport/HindranceReport.jsx";
 import ProjectSummary from "./pages/Dashboard/ProjectSummary/ProjectSummary.jsx";
+import OrganisationChart from "./pages/Dashboard/OrganisationChart/OrganisationChart.jsx";
 import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
 import Admin from "./pages/admin/Admin.jsx";
 
@@ -140,6 +141,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ProjectSummary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/organisation-chart"
+          element={
+            <ProtectedRoute>
+              <OrganisationChart />
             </ProtectedRoute>
           }
         />
