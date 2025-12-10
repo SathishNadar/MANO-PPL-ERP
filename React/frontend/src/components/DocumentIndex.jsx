@@ -31,6 +31,8 @@ const DocumentIndex = () => {
             navigate('/dashboard/agenda-minutes');
         } else if (item === "Events / Hindrance Report") {
             navigate('/dashboard/hindrance-report');
+        } else if (item === "Project Report / Summary") {
+            navigate('/dashboard/project-summary');
         }
         // Add other document navigations here as needed
     };
