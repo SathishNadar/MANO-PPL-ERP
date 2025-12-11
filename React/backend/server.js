@@ -10,10 +10,12 @@ import ForgotPasswordRoutes from './AuthAPI/ForgotPasswordAPI.js';
 import ProjectRoutes from './ProjectAPI/Projects.js';
 import ReportRoutes from './ProjectAPI/Reports.js';
 import BudgetRoutes from './ProjectAPI/Budget.js';
+import HindranceRoutes from './ProjectAPI/Hindrance.js';
 import VendorRoutes from './VendorClientAPI/vendor.js';
 import TaskRoutes from './Tasks/task.js';
 import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
+import HindranceRoutes from './ProjectAPI/Hindrance.js';
 
 import './config.js';
 import cookieParser from 'cookie-parser';
@@ -58,6 +60,7 @@ app.use("/vendor_api", VendorRoutes);
 app.use("/tasks", TaskRoutes);
 app.use("/attendance", AttendanceRoutes);
 app.use("/admin", Admin);
+app.use("/hindrance", HindranceRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');
