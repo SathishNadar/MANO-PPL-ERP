@@ -7,41 +7,16 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 function DprUpdateSubmit() {
   const { projectId, dprId } = useParams();
   const navigate = useNavigate();
-  const UNIT_OPTIONS = [
-    "No",
-    "Rmt",
-    "Sqm",
-    "Cum",
-    "Rft",
-    "Sft",
-    "Cft",
-    "MT",
-    "Kg",
-    "Lit",
-    "Day",
-    "Each",
-    "LS",
-    "Shift",
-    "Month",
-    "Hrs",
-  ];
-  const genId = () =>
-    `${Date.now().toString(36)}-${Math.floor(Math.random() * 100000).toString(
-      36
-    )}`;
+  const UNIT_OPTIONS = ["No", "Rmt", "Sqm", "Cum", "Rft", "Sft", "Cft", "MT", "Kg", "Lit", "Day", "Each", "LS", "Shift", "Month", "Hrs"];
+  const genId = () => `${Date.now().toString(36)}-${Math.floor(Math.random() * 100000).toString(36)}`;
 
   const [project, setProject] = useState(null);
   const [eventsVisit, setEventsVisit] = useState([{ id: genId(), text: "" }]);
   const [generalRemark, setGeneralRemark] = useState("");
 
-  const addEventVisit = () =>
-    setEventsVisit((p) => [...p, { id: genId(), text: "" }]);
-  const removeEventVisit = (idx) =>
-    setEventsVisit((p) => p.filter((_, i) => i !== idx));
-  const setEventVisit = (idx, val) =>
-    setEventsVisit((p) =>
-      p.map((row, i) => (i === idx ? { ...row, text: val } : row))
-    );
+  const addEventVisit = () => setEventsVisit(p => [...p, { id: genId(), text: '' }]);
+  const removeEventVisit = idx => setEventsVisit(p => p.filter((_, i) => i !== idx));
+  const setEventVisit = (idx, val) => setEventsVisit(p => p.map((row, i) => i === idx ? { ...row, text: val } : row));
 
   const [reportDate, setReportDate] = useState(""); // read-only later
   const [siteCondition, setSiteCondition] = useState({
@@ -97,12 +72,12 @@ function DprUpdateSubmit() {
     const e = new Date(project.end_date);
     const current = reportDate
       ? new Date(
-          Date.UTC(
-            Number(reportDate.slice(0, 4)),
-            Number(reportDate.slice(5, 7)) - 1,
-            Number(reportDate.slice(8, 10))
-          )
+        Date.UTC(
+          Number(reportDate.slice(0, 4)),
+          Number(reportDate.slice(5, 7)) - 1,
+          Number(reportDate.slice(8, 10))
         )
+      )
       : new Date();
 
     const DAY = 86400000;
@@ -297,8 +272,8 @@ function DprUpdateSubmit() {
         Array.isArray(data?.report_footer?.bottom_remarks)
           ? data.report_footer.bottom_remarks.join("\n")
           : typeof data?.report_footer?.bottom_remarks === "string"
-          ? data.report_footer.bottom_remarks
-          : ""
+            ? data.report_footer.bottom_remarks
+            : ""
       );
 
       // Distribute
@@ -454,8 +429,8 @@ function DprUpdateSubmit() {
       bottom_remarks: Array.isArray(dpr?.report_footer?.bottom_remarks)
         ? dpr.report_footer.bottom_remarks
         : typeof dpr?.report_footer?.bottom_remarks === "string"
-        ? [dpr.report_footer.bottom_remarks]
-        : [],
+          ? [dpr.report_footer.bottom_remarks]
+          : [],
     },
   });
 
@@ -481,7 +456,7 @@ function DprUpdateSubmit() {
     return diff;
   }
 
-  const onSave = async () => {
+  const performSave = async (silent = false) => {
     try {
       setSaving(true);
 
@@ -541,10 +516,10 @@ function DprUpdateSubmit() {
 
       // console.log("PATCH:", patch);
 
-      if (Object.keys(patch).length === 0) {
-        toast.info("No changes to save.");
+      if (!patch || Object.keys(patch).length === 0) {
+        if (!silent) toast.info("No changes to save.");
         setSaving(false);
-        return;
+        return true; // considered success
       }
 
       if (Object.keys(patch).length > 0) {
@@ -563,17 +538,24 @@ function DprUpdateSubmit() {
       const data = await res.json();
 
       if (res.ok && (data.ok || data.success)) {
-        toast.success("DPR updated successfully");
+        if (!silent) toast.success("DPR updated successfully");
         initialDpr.current = currentDpr;
+        return true;
       } else {
         toast.info("Make changes to update the DPR" || data.message);
+        return false;
       }
     } catch (e) {
       console.error(e);
       toast.error("Error updating DPR");
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  const onSave = async () => {
+    await performSave();
   };
 
   // #region helpers
@@ -674,10 +656,19 @@ function DprUpdateSubmit() {
   const openSubmitModal = () => setShowConfirmModal(true);
   const cancelSubmit = () => setShowConfirmModal(false);
 
+
   const autoCloseMs = 2000;
   // confirmed submit handler
   const confirmSubmit = async () => {
     setShowConfirmModal(false);
+
+    // First save any pending changes silently
+    const saved = await performSave(true);
+    if (!saved) {
+      toast.error("Cannot submit: Failed to save changes.");
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -689,14 +680,14 @@ function DprUpdateSubmit() {
         const errBody = await response.json().catch(() => ({}));
         throw new Error(errBody.message || response.statusText || "Request failed");
       }
-      
+
       const successBody = await response.json().catch(() => ({}));
 
       // show success toast and redirect when it closes
       toast.success(successBody.message || "DPR submitted successfully", {
         autoClose: autoCloseMs,
         onClose: () => {
-          navigate(`/dashboard/project-description/${projectId}`);
+          navigate(`/dashboard/project-description/${projectId}/dpr-list`);
         },
       });
     } catch (error) {
@@ -1189,7 +1180,7 @@ function DprUpdateSubmit() {
       <div className="flex justify-end gap-3">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(`/dashboard/project-description/${projectId}/${dprId}`)}
           className="px-5 py-2 rounded bg-gray-700 hover:bg-gray-600"
         >
           Cancel
@@ -1198,11 +1189,10 @@ function DprUpdateSubmit() {
           type="button"
           onClick={onSave}
           disabled={saving}
-          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
-            saving
+          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${saving
               ? "bg-blue-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
-          }`}
+            }`}
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
@@ -1210,11 +1200,10 @@ function DprUpdateSubmit() {
           type="button"
           onClick={openSubmitModal}
           disabled={submitting}
-          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
-            submitting
+          className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${submitting
               ? "bg-blue-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
-          }`}
+            }`}
         >
           {submitting ? "Submitting..." : "Submit"}
         </button>
@@ -1235,33 +1224,7 @@ function EditableTable4({
   onChangeUnit,
   onChangeQty,
 }) {
-  const UNIT_OPTIONS_LOCAL = [
-    "No",
-    "Rmt",
-    "Sqm",
-    "Cum",
-    "Rft",
-    "Sft",
-    "Cft",
-    "MT",
-    "Kg",
-    "Lit",
-    "Day",
-    "Each",
-    "LS",
-    "Shift",
-    "Month",
-    "Hrs",
-  ];
-  const extraUnits = Array.from(
-    new Set(
-      (rows || [])
-        .map((r) => (r.unit || "").trim())
-        .filter((u) => u && !UNIT_OPTIONS_LOCAL.includes(u))
-    )
-  );
-  const allUnits = [...UNIT_OPTIONS_LOCAL, ...extraUnits];
-
+  const UNIT_OPTIONS_LOCAL = ["No", "Rmt", "Sqm", "Cum", "Rft", "Sft", "Cft", "MT", "Kg", "Lit", "Day", "Each", "LS", "Shift", "Month", "Hrs"];
   return (
     <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
       <div className="flex items-center justify-between mb-3">
@@ -1306,19 +1269,15 @@ function EditableTable4({
                     placeholder="Remarks"
                   />
                 </td>
-                <td className="px-3 py-2 w-[15%] text-left">
+                <td className="px-3 py-2 w-[10%] text-left">
                   <select
                     value={r.unit}
                     onChange={(e) => onChangeUnit(idx, e.target.value)}
-                    className="w-full text-left bg-gray-800 text-gray-100 border border-gray-600 rounded px-1 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full text-left bg-transparent border-b border-gray-600 outline-none"
                   >
-                    <option value="" className="bg-gray-800 text-gray-100">
-                      Select
-                    </option>
-                    {allUnits.map((u) => (
-                      <option key={u} value={u}>
-                        {u}
-                      </option>
+                    <option value="">Select</option>
+                    {UNIT_OPTIONS_LOCAL.map((u) => (
+                      <option key={u} value={u}>{u}</option>
                     ))}
                   </select>
                 </td>

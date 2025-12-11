@@ -16,8 +16,16 @@ import ProjectEdit from "./pages/DPR/DprEditor.jsx";
 
 import ProjectsView from "./pages/Dashboard/Projects/ProjectsView.jsx";
 import ProjectDescription from "./pages/Dashboard/Projects/ProjectDescription.jsx";
+import DPRList from "./pages/Dashboard/Projects/DPRList.jsx";
+import ProjectDirectory from "./pages/Dashboard/ProjectDirectory/ProjectDirectory.jsx";
+import ProjectVendorList from "./pages/Dashboard/ProjectVendorList/ProjectVendorList.jsx";
 import DprFetchViewer from "./pages/DPR/DprFetchViewer.jsx";
 import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
+import StaffRoles from "./pages/Dashboard/StaffRoles/StaffRoles.jsx";
+import AgendaMinutes from "./pages/Dashboard/AgendaMinutes/AgendaMinutes.jsx";
+import HindranceReport from "./pages/Dashboard/HindranceReport/HindranceReport.jsx";
+import ProjectSummary from "./pages/Dashboard/ProjectSummary/ProjectSummary.jsx";
+import OrganisationChart from "./pages/Dashboard/OrganisationChart/OrganisationChart.jsx";
 import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
 import Admin from "./pages/admin/Admin.jsx";
 
@@ -86,6 +94,70 @@ function App() {
           element={
             <ProtectedRoute>
               <DprFetchViewer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/dpr-list"
+          element={
+            <ProtectedRoute>
+              <DPRList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-directory"
+          element={
+            <ProtectedRoute>
+              <ProjectDirectory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-vendor-list"
+          element={
+            <ProtectedRoute>
+              <ProjectVendorList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/staff-roles"
+          element={
+            <ProtectedRoute>
+              <StaffRoles />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/agenda-minutes"
+          element={
+            <ProtectedRoute>
+              <AgendaMinutes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/hindrance-report"
+          element={
+            <ProtectedRoute>
+              <HindranceReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-summary"
+          element={
+            <ProtectedRoute>
+              <ProjectSummary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/organisation-chart"
+          element={
+            <ProtectedRoute>
+              <OrganisationChart />
             </ProtectedRoute>
           }
         />

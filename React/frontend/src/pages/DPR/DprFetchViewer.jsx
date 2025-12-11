@@ -10,12 +10,13 @@ const DprFetchViewer = () => {
 
   const { projectId, dprId } = useParams();
   const [projectData, setProjectData] = useState(null);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null)
+
 
   const [submitting, setSubmitting] = useState(false);
   const [dprData, setDprData] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  
+
   let projectStart = null;
   let projectEnd = null;
 
@@ -264,11 +265,11 @@ const DprFetchViewer = () => {
       if (container) {
         container.innerHTML = rain_timing.length
           ? rain_timing
-              .map((t) => {
-                const [from, to] = t.split("-");
-                return `<span class="inline-block bg-gray-700 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${from}–${to}</span>`;
-              })
-              .join("")
+            .map((t) => {
+              const [from, to] = t.split("-");
+              return `<span class="inline-block bg-gray-700 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${from}–${to}</span>`;
+            })
+            .join("")
           : "—";
       }
     };
@@ -409,7 +410,7 @@ const DprFetchViewer = () => {
   };
 
   // Submit
-    // Open the custom confirm modal
+  // Open the custom confirm modal
   const openSubmitModal = () => {
     setShowConfirmModal(true);
   };
@@ -441,7 +442,7 @@ const DprFetchViewer = () => {
       toast.success(successBody.message || "DPR submitted successfully", {
         autoClose: autoCloseMs,
         onClose: () => {
-          navigate(`/dashboard/project-description/${projectId}`);
+          navigate(`/dashboard/project-description/${projectId}/dpr-list`);
         },
       });
     } catch (error) {
@@ -466,7 +467,7 @@ const DprFetchViewer = () => {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate(`/dashboard/project-description/${projectId}`)}
+              onClick={() => navigate(`/dashboard/project-description/${projectId}/dpr-list`)}
               className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm flex items-center gap-2"
             >
               <span className="material-icons">arrow_back</span>
@@ -483,16 +484,16 @@ const DprFetchViewer = () => {
         </div>
 
         <ToastContainer
-            position="top-right"
-            autoClose={autoCloseMs}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
+          position="top-right"
+          autoClose={autoCloseMs}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
 
         {/* Grid Layout */}
         <div className="grid md:grid-cols-3 gap-4">
@@ -726,11 +727,10 @@ const DprFetchViewer = () => {
                 type="button"
                 onClick={openSubmitModal}
                 disabled={submitting}
-                className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
-                  submitting
-                    ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
+                className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${submitting
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+                  }`}
               >
                 {submitting ? "Submitting..." : "Submit"}
               </button>
