@@ -145,7 +145,7 @@ function DPRList() {
                 <header className="flex items-center mb-8 gap-4">
                     <button
                         className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate(`/dashboard/project-description/${projectId}`)}
                     >
                         <span className="material-icons">arrow_back</span>
                         <span>Back</span>

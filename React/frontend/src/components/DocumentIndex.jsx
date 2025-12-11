@@ -1,20 +1,40 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const DocumentIndex = () => {
-    const [expandedSections, setExpandedSections] = useState({});
+    const [expandedSections, setExpandedSections] = useState(() => {
+        const saved = sessionStorage.getItem('documentIndexExpanded');
+        return saved ? JSON.parse(saved) : {};
+    });
     const navigate = useNavigate();
+    const { projectId } = useParams();
 
     const toggleSection = (index) => {
-        setExpandedSections((prev) => ({
-            ...prev,
-            [index]: !prev[index],
-        }));
+        setExpandedSections((prev) => {
+            const newState = {
+                ...prev,
+                [index]: !prev[index],
+            };
+            sessionStorage.setItem('documentIndexExpanded', JSON.stringify(newState));
+            return newState;
+        });
     };
 
     const handleItemClick = (item) => {
         if (item === "Project Directory") {
             navigate('/dashboard/project-directory');
+        } else if (item === "Project Vendor List") {
+            navigate('/dashboard/project-vendor-list');
+        } else if (item === "MANO's Staff Role & Responsibilties") {
+            navigate('/dashboard/staff-roles');
+        } else if (item === "Agenda & Minutes of Meeting") {
+            navigate('/dashboard/agenda-minutes');
+        } else if (item === "Events / Hindrance Report") {
+            navigate('/dashboard/hindrance-report');
+        } else if (item === "Project Report / Summary") {
+            navigate('/dashboard/project-summary');
+        } else if (item === "Organisation Chart") {
+            navigate('/dashboard/organisation-chart');
         }
         // Add other document navigations here as needed
     };
@@ -143,27 +163,152 @@ const DocumentIndex = () => {
                         {expandedSections[index] && (
                             <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
                                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {section.items.map((item, itemIndex) => (
-                                        <div
-                                            key={itemIndex}
-                                            onClick={() => handleItemClick(item)}
-                                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
-                                        >
-                                            <div className="flex items-start space-x-3">
-                                                <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
-                                                    description
-                                                </span>
-                                                <div className="flex-1">
-                                                    <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                                                        {item}
-                                                    </h4>
-                                                    <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
-                                                        Click to view
-                                                    </p>
+                                    {section.items.map((item, itemIndex) => {
+                                        if (item === "Daily Progress report") {
+                                            return (
+                                                <div
+                                                    key={itemIndex}
+                                                    className="p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200"
+                                                >
+                                                    <div className="flex items-start space-x-3 mb-3">
+                                                        <span className="material-icons text-gray-500 text-xl">
+                                                            description
+                                                        </span>
+                                                        <div className="flex-1">
+                                                            <h4 className="text-sm font-medium text-gray-200 transition-colors">
+                                                                {item}
+                                                            </h4>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/dashboard/project-description/${projectId}/dprCreate`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">edit</span>
+                                                            <span>Create</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/dashboard/project-description/${projectId}/dpr-list`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-gray-600/20 hover:bg-gray-600/40 text-gray-300 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">visibility</span>
+                                                            <span>View</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        if (item === "Weekly Progress report (Sun-Sat closing & report on Monday)") {
+                                            return (
+                                                <div
+                                                    key={itemIndex}
+                                                    className="p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200"
+                                                >
+                                                    <div className="flex items-start space-x-3 mb-3">
+                                                        <span className="material-icons text-gray-500 text-xl">
+                                                            description
+                                                        </span>
+                                                        <div className="flex-1">
+                                                            <h4 className="text-sm font-medium text-gray-200 transition-colors">
+                                                                {item}
+                                                            </h4>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // navigate(`/dashboard/project-description/${projectId}/wprCreate`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">edit</span>
+                                                            <span>Create</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // navigate(`/dashboard/project-description/${projectId}/wpr-list`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-gray-600/20 hover:bg-gray-600/40 text-gray-300 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">visibility</span>
+                                                            <span>View</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        if (item === "Monthly Progress report (1st of every month)") {
+                                            return (
+                                                <div
+                                                    key={itemIndex}
+                                                    className="p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200"
+                                                >
+                                                    <div className="flex items-start space-x-3 mb-3">
+                                                        <span className="material-icons text-gray-500 text-xl">
+                                                            description
+                                                        </span>
+                                                        <div className="flex-1">
+                                                            <h4 className="text-sm font-medium text-gray-200 transition-colors">
+                                                                {item}
+                                                            </h4>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // navigate(`/dashboard/project-description/${projectId}/mprCreate`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">edit</span>
+                                                            <span>Create</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // navigate(`/dashboard/project-description/${projectId}/mpr-list`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-gray-600/20 hover:bg-gray-600/40 text-gray-300 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">visibility</span>
+                                                            <span>View</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return (
+                                            <div
+                                                key={itemIndex}
+                                                onClick={() => handleItemClick(item)}
+                                                className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                                            >
+                                                <div className="flex items-start space-x-3">
+                                                    <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                                        description
+                                                    </span>
+                                                    <div className="flex-1">
+                                                        <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                                            {item}
+                                                        </h4>
+                                                        <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                                            Click to view
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
