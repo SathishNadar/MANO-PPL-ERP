@@ -13,12 +13,14 @@ import ProjectRoutes from './ProjectAPI/Projects.js';
 import ProjectContactsRoutes from './ProjectAPI/ProjectContacts.js';
 import ReportRoutes from './ProjectAPI/Reports.js';
 import BudgetRoutes from './ProjectAPI/Budget.js';
+import HindranceRoutes from './ProjectAPI/Hindrance.js';
 import VendorRoutes from './VendorClientAPI/vendor.js';
 import TaskRoutes from './Tasks/task.js';
 import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
 import WorkLocationRoutes from './Admin/WorkLocations.js';
 import S3Routes from './s3/s3Routes.js';
+import HindranceRoutes from './ProjectAPI/Hindrance.js';
 
 import './config.js';
 import cookieParser from 'cookie-parser';
@@ -66,6 +68,7 @@ app.use("/tasks", TaskRoutes);
 app.use("/attendance", AttendanceRoutes);
 app.use("/admin", Admin);
 app.use("/admin/locations", WorkLocationRoutes);
+app.use("/hindrance", HindranceRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');
