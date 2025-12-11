@@ -353,6 +353,52 @@ function ProjectDescription() {
               </button>
             </div>
 
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6 mt-6">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Budget</h3>
+
+              <div className="relative pt-1">
+                <div className="flex mb-2 items-center justify-between">
+                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-[var(--accent-blue)] bg-gray-900">
+                    Budget Status
+                  </span>
+                  <span className="text-xs font-semibold text-[var(--accent-blue)]">
+                    {percentUsed}%
+                  </span>
+                </div>
+
+                <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-[var(--border-color)]">
+                  <div
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[var(--accent-blue)]"
+                    style={{ width: `${percentUsed}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="text-sm text-[var(--text-secondary)] mb-2">
+                  <strong className="text-[var(--text-primary)]">{formatNumber(budgetUsed)}</strong>
+                  <span className="mx-2">/</span>
+                  <span className="text-[var(--text-secondary)]">{formatNumber(budgetTotal)}</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  {checkingBudget ? (
+                    <button disabled className="col-span-2 bg-gray-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Checking...</button>
+                  ) : budgetExists ? (
+                    <>
+                      <button onClick={handleEditBudget} className="col-span-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Update Budget</button>
+                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={handleCreateBudget} className="col-span-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Create Budget</button>
+                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Project Progress Card - Always Expanded - HIDDEN */}
             {false && (
               <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
