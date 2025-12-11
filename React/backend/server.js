@@ -17,8 +17,9 @@ import TaskRoutes from './Tasks/task.js';
 import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
 import WorkLocationRoutes from './Admin/WorkLocations.js';
-import S3Routes from './s3/s3Routes.js';
+import S3Routes from './S3/S3Routes.js';
 import EnquiryRoutes from './EnquiryAPI/Enquiry.js';
+import UserRoutes from './UserAPI/User.js';
 
 import './config.js';
 import cookieParser from 'cookie-parser';
@@ -66,6 +67,7 @@ app.use("/tasks", TaskRoutes);
 app.use("/attendance", AttendanceRoutes);
 app.use("/admin", Admin);
 app.use("/admin/locations", WorkLocationRoutes);
+app.use("/user", UserRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');

@@ -24,6 +24,12 @@ import Admin from "./pages/admin/Admin.jsx";
 import AttendanceDashboard from "./pages/Dashboard/Attendance/AttendanceDashboard.jsx";
 import AdminView from "./pages/Dashboard/Attendance/AdminView.jsx";
 
+import AttendanceUsers from "./pages/Dashboard/Attendance/AttendanceAdmin.jsx"
+
+import BudgetingCreate from "./pages/BudgetingComponent/BudgetCreation.jsx"
+import BudgetingView from "./pages/BudgetingComponent/BudgetView.jsx"
+import BudgetUpdate from "./pages/BudgetingComponent/BudgetUpdate.jsx"
+
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -124,6 +130,32 @@ function App() {
           }
         />
 
+
+        <Route
+          path="/dashboard/project-description/:projectId/budgetCreate"
+          element={
+            <ProtectedRoute>
+              <BudgetingCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/budgetView"
+          element={
+            <ProtectedRoute>
+              <BudgetingView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/budgetUpdate"
+          element={
+            <ProtectedRoute>
+              <BudgetUpdate />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/dashboard/attendance"
           element={
@@ -138,6 +170,15 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminView />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/attendance/users"
+          element={
+            <ProtectedRoute>
+              <AttendanceUsers />
             </ProtectedRoute>
           }
         />

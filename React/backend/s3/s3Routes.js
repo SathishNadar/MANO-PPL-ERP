@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { uploadFile, getFileUrl, listFiles, deleteFile } from "./s3Service.js";
+import { uploadFile, getFileUrl, listFiles, deleteFile } from "./S3Service.js";
 
 const router = express.Router();
 const upload = multer(); // store files in memory

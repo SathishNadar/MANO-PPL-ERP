@@ -261,28 +261,53 @@ function formatLabourData(labourReport, cumulativeManpower = 0) {
 }
 
 // ====================== DATA FORMATTING HELPERS ======================
+function normalizeProgressData(progressData) {
+  if (!progressData) {
+    return { items: [], remarks: [], unit: [], qty: [] };
+  }
+
+  // ✅ New API shape: array of objects
+  // [ { component_name, unit, quantity, remarks }, ... ]
+  if (Array.isArray(progressData)) {
+    return {
+      items: progressData.map((p) => p.component_name ?? p.item ?? "--"),
+      remarks: progressData.map((p) => p.remarks ?? "--"),
+      unit: progressData.map((p) => p.unit ?? "--"),
+      qty: progressData.map((p) => p.quantity ?? p.qty ?? "--"),
+    };
+  }
+
+  // ✅ Old shape already: { items, remarks, unit, qty }
+  return {
+    items: progressData.items || [],
+    remarks: progressData.remarks || [],
+    unit: progressData.unit || [],
+    qty: progressData.qty || [],
+  };
+}
+
 function formatProgressData(progressData, type = "today") {
-  if (!progressData) return [["--", "--", "--", "--"]];
+  const normalized = normalizeProgressData(progressData);
+
+  const taskArray = normalized.items;
+  const remarksArray = normalized.remarks;
+  const unitArray = normalized.unit;
+  const quantityArray = normalized.qty;
 
   const result = [];
 
-  const taskArray = progressData.items; // Item column
-  const remarksArray = progressData.remarks; // Remarks column
-  const unitArray = progressData.unit; // Unit column
-  const quantityArray = progressData.qty; // Quantity column
-
   const maxLength = Math.max(
-    (taskArray && taskArray.length) || 0,
-    (remarksArray && remarksArray.length) || 0,
-    (unitArray && unitArray.length) || 0,
-    (quantityArray && quantityArray.length) || 0
+    taskArray.length,
+    remarksArray.length,
+    unitArray.length,
+    quantityArray.length
   );
 
   for (let i = 0; i < maxLength; i++) {
-    const task = (taskArray && taskArray[i]) || "--";
-    const remarks = (remarksArray && remarksArray[i]) || "--";
-    const unit = (unitArray && unitArray[i]) || "--";
-    const quantity = (quantityArray && quantityArray[i]) || "--";
+    const task = taskArray[i] || "--";
+    const remarks = remarksArray[i] || "--";
+    const unit = unitArray[i] || "--";
+    const quantity = quantityArray[i] || "--";
 
     result.push([task, remarks, unit, quantity]);
   }

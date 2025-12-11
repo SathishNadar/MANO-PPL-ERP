@@ -2,10 +2,11 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import * as DB from "../Database.js";
+import { getFileUrl } from '../S3/S3Service.js';
 
 const tokenExpirePeriod = 7 * 24 * 60 * 60; // Time in seconds 
 const router = express.Router();
-  
+
 export async function authenticateJWT(req, res, next) {
   try {
     let token;
@@ -47,11 +48,11 @@ export async function authenticateJWT(req, res, next) {
 
 
 export async function generateJWT(user_data) {
-    return jwt.sign(user_data, process.env.JWT_SECRET, { expiresIn: tokenExpirePeriod});
+  return jwt.sign(user_data, process.env.JWT_SECRET, { expiresIn: tokenExpirePeriod });
 }
 
 
- 
+
 // Login route
 router.post("/login", async (req, res) => {
   try {
@@ -70,12 +71,20 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
+    let profileImageUrl = null;
+    if (user_data.profile_image_key) {
+      const { success, url } = await getFileUrl({ key: user_data.profile_image_key });
+      if (success) {
+        profileImageUrl = url;
+      }
+    }
+
     const response_data = {
       user_id: user_data.user_id,
       user_name: user_data.user_name,
       email: user_data.email,
-      title_name:user_data.title_name,
-      title_id:user_data.title_id
+      title_name: user_data.title_name,
+      title_id: user_data.title_id,
     };
 
     const token = await generateJWT(response_data);
@@ -84,13 +93,14 @@ router.post("/login", async (req, res) => {
       httpOnly: true,
       secure: false,
       sameSite: 'Lax',
-      maxAge: tokenExpirePeriod * 1000
+      maxAge: tokenExpirePeriod * 1000,
     });
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: "Login successful",
       user_data: response_data,
-      jwt_token: token
+      jwt_token: token,
+      profile_image: profileImageUrl,
     });
 
   } catch (error) {

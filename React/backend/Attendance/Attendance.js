@@ -3,14 +3,14 @@ import { knexDB } from "../Database.js";
 import { authenticateJWT } from "../AuthAPI/LoginAPI.js";
 import { fetchTimeStamp, coordsToAddress } from "../Google_API/Maps.js";
 import multer from "multer";
-import { uploadFile, getFileUrl, listFiles } from "../s3/s3Service.js";
+import { uploadFile, getFileUrl, listFiles, uploadCompressedImage } from "../S3/S3Service.js";
 
 const router = express.Router();
 const upload = multer(); // store files in memory
 
 // POST /attendance/checkin
-router.post("/timein", authenticateJWT, upload.single("image"), 
-async (req, res) => {
+router.post("/timein", authenticateJWT, upload.single("image"),
+  async (req, res) => {
     try {
       const user_id = req.user.user_id;
 
@@ -66,14 +66,10 @@ async (req, res) => {
 
       // STEP 5: If image present, upload to S3
       if (file) {
-        const key = `${attendance_id}_in`;
-        const directory = "attendance_images";
-
-        const uploadResult = await uploadFile({
+        const uploadResult = await uploadCompressedImage({
           fileBuffer: file.buffer,
-          key,
-          directory,
-          contentType: file.mimetype,
+          key: `${attendance_id}_in`,
+          directory: "attendance_images"
         });
 
         imageKey = uploadResult.key;
@@ -90,7 +86,6 @@ async (req, res) => {
         ok: true,
         attendance_id,
         local_time: localTime,
-        // timezone: tz.timezone,
         address: address,
         tz_name: tz.tzName,
         image_key: imageKey,
@@ -106,8 +101,8 @@ async (req, res) => {
 );
 
 // POST /attendance/checkout
-router.post("/timeout", authenticateJWT, upload.single("image"), 
-async (req, res) => {
+router.post("/timeout", authenticateJWT, upload.single("image"),
+  async (req, res) => {
     try {
       const user_id = req.user.user_id;
 
@@ -149,14 +144,10 @@ async (req, res) => {
 
       // STEP 4: If image present, upload to S3 and store key
       if (file) {
-        const key = `${openSession.attendance_id}_out`;
-        const directory = "attendance_images";
-
-        const uploadResult = await uploadFile({
+        const uploadResult = await uploadCompressedImage({
           fileBuffer: file.buffer,
-          key,
-          directory,
-          contentType: file.mimetype,
+          key: `${openSession.attendance_id}_out`,
+          directory: "attendance_images"
         });
 
         imageKey = uploadResult.key;
@@ -168,10 +159,10 @@ async (req, res) => {
             time_out_image_key: imageKey,
             updated_at: knexDB.fn.now(),
           });
-        }
-        
-        // STEP 5: Update time_out (LOCAL time)
-        await knexDB("attendance_records")
+      }
+
+      // STEP 5: Update time_out (LOCAL time)
+      await knexDB("attendance_records")
         .where({ attendance_id: openSession.attendance_id })
         .update({
           time_out: localTime,
@@ -244,7 +235,6 @@ router.get("/records/admin", authenticateJWT, async (req, res) => {
           timeOutUrl = url;
         }
 
-        // Return timestamp fields exactly as strings for this attendance endpoint (do not convert to Date/ISO)
         const time_in = row.time_in == null ? null : String(row.time_in);
         const time_out = row.time_out == null ? null : String(row.time_out);
         const created_at = row.created_at == null ? null : String(row.created_at);
@@ -303,7 +293,6 @@ router.get("/records", authenticateJWT, async (req, res) => {
           timeOutUrl = url;
         }
 
-        // Keep timestamps as plain strings (like admin API)
         const time_in = row.time_in == null ? null : String(row.time_in);
         const time_out = row.time_out == null ? null : String(row.time_out);
         const created_at = row.created_at == null ? null : String(row.created_at);

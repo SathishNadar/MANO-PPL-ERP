@@ -57,6 +57,7 @@ export async function r_fetchUserByName(name) {
       u.user_name, 
       u.user_password, 
       u.email, 
+      u.profile_image_key,
       t.title_id AS title_id,
       t.title_name AS title_name
     FROM users u
