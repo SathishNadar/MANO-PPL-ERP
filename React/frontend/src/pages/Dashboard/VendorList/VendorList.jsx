@@ -174,8 +174,6 @@ function VendorList() {
                       "COMPANY",
                       "NATURE OF THE JOB",
                       "NAME OF THE PERSON",
-                      "DESIGNATION",
-                      "RESPONSIBILITIES",
                       "MOBILE NO",
                       "EMAIL ID",
                       "ADDRESS"
@@ -202,19 +200,13 @@ function VendorList() {
                       <td className="p-4 text-xs font-semibold text-white group-hover:text-blue-400 transition-colors">
                         {vendor.name}
                       </td>
-                      <td className="p-4 text-xs text-gray-400">
+                      <td className="p-4 text-xs text-white">
                         {vendor.job_nature_name}
                       </td>
-                      <td className="p-4 text-xs text-gray-300 font-medium">
+                      <td className="p-4 text-xs text-white font-medium">
                         {vendor.contact_person || vendor.name}
                       </td>
-                      <td className="p-4 text-xs text-gray-500 italic">
-                        -- {/* Placeholder for Designation */}
-                      </td>
-                      <td className="p-4 text-xs text-gray-500 italic">
-                        -- {/* Placeholder for Responsibilities */}
-                      </td>
-                      <td className="p-4 text-xs font-mono text-gray-400">
+                      <td className="p-4 text-xs font-mono text-white">
                         {vendor.mobile}
                       </td>
                       <td className="p-4 text-xs text-blue-400 hover:underline">
