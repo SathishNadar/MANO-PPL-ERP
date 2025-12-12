@@ -30,7 +30,7 @@ const DocumentIndex = () => {
         } else if (item === "Agenda & Minutes of Meeting") {
             navigate('/dashboard/agenda-minutes');
         } else if (item === "Events / Hindrance Report") {
-            navigate('/dashboard/hindrance-report');
+            navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
         } else if (item === "Project Report / Summary") {
             navigate('/dashboard/project-summary');
         } else if (item === "Organisation Chart") {
