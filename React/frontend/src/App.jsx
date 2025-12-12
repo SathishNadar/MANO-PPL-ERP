@@ -138,7 +138,7 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/hindrance-report"
+          path="/dashboard/project-description/:projectId/hindrance-report"
           element={
             <ProtectedRoute>
               <HindranceReport />
@@ -232,7 +232,7 @@ function App() {
           path="/dashboard/attendance"
           element={
             <ProtectedRoute>
-              <AttendanceDashboard/>
+              <AttendanceDashboard />
             </ProtectedRoute>
           }
         />
@@ -255,8 +255,8 @@ function App() {
           }
         />
 
-        <Route path="/dummy2" 
-        element={<Dummy />} 
+        <Route path="/dummy2"
+          element={<Dummy />}
         />
       </Routes>
       <ToastContainer

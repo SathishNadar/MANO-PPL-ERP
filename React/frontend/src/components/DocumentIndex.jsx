@@ -30,7 +30,7 @@ const DocumentIndex = () => {
         } else if (item === "Agenda & Minutes of Meeting") {
             navigate('/dashboard/agenda-minutes');
         } else if (item === "Events / Hindrance Report") {
-            navigate('/dashboard/hindrance-report');
+            navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
         } else if (item === "Project Report / Summary") {
             navigate('/dashboard/project-summary');
         } else if (item === "Organisation Chart") {
@@ -64,7 +64,8 @@ const DocumentIndex = () => {
                 "Project Planning & Bar Chart",
                 "Logistic Plan",
                 "Manpower Histogram",
-                "Material Histogram"
+                "Material Histogram",
+                "Events / Hindrance Report"
             ]
         },
         {
@@ -108,8 +109,7 @@ const DocumentIndex = () => {
                 "Daily Progress report",
                 "Weekly Progress report (Sun-Sat closing & report on Monday)",
                 "Monthly Progress report (1st of every month)",
-                "Site Progress Pictures (1st & 15th of every month)",
-                "Events / Hindrance Report"
+                "Site Progress Pictures (1st & 15th of every month)"
             ]
         },
         {
@@ -287,6 +287,9 @@ const DocumentIndex = () => {
                                                 </div>
                                             );
                                         }
+
+
+
                                         return (
                                             <div
                                                 key={itemIndex}
