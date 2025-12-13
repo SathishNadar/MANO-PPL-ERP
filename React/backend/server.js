@@ -20,6 +20,7 @@ import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
 import WorkLocationRoutes from './Admin/WorkLocations.js';
 import S3Routes from './s3/s3Routes.js';
+import HindranceRoutes from './ProjectAPI/Hindrance.js';
 
 import './config.js';
 import cookieParser from 'cookie-parser';
