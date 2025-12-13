@@ -16,6 +16,10 @@ const HindranceReport = () => {
     const [editingId, setEditingId] = useState(null);
     const [editFormData, setEditFormData] = useState({});
 
+    // Delete Modal State
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState(null);
+
     // Fetch on mount
     useEffect(() => {
         fetchReports();
@@ -139,21 +143,25 @@ const HindranceReport = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!id) return;
-        if (!window.confirm("Are you sure you want to delete this report?")) return;
+    const handleDeleteClick = (id) => {
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteId) return;
 
         try {
-            console.log(`Deleting Report ${id} at ${API_BASE}/hindrance/delete/${id}`);
-            // Reverted to DELETE /hindrance/delete/:id as per user feedback ("u fixed the deletion option here")
-            const response = await fetch(`${API_BASE}/hindrance/delete/${id}`, {
+            console.log(`Deleting Report ${deleteId} at ${API_BASE}/hindrance/delete/${deleteId}`);
+            // Reverted to DELETE /hindrance/delete/:id based on previous working state
+            const response = await fetch(`${API_BASE}/hindrance/delete/${deleteId}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
 
             if (response.ok) {
                 toast.success("Report deleted successfully");
-                setReports(reports.filter(r => getReportId(r) !== id));
+                setReports(reports.filter(r => getReportId(r) !== deleteId));
             } else {
                 const data = await response.json();
                 toast.error(data.message || "Failed to delete report");
@@ -161,6 +169,9 @@ const HindranceReport = () => {
         } catch (error) {
             console.error("Error deleting report:", error);
             toast.error("Error deleting report");
+        } finally {
+            setShowDeleteModal(false);
+            setDeleteId(null);
         }
     };
     //#endregion
@@ -380,7 +391,7 @@ const HindranceReport = () => {
                                                         <button onClick={() => handleEditClick(item)} className="text-blue-500 hover:text-blue-400" title="Edit">
                                                             <span className="material-icons text-lg">edit</span>
                                                         </button>
-                                                        <button onClick={() => handleDelete(item.hindrance_id)} className="text-red-500 hover:text-red-400" title="Delete">
+                                                        <button onClick={() => handleDeleteClick(item.hindrance_id)} className="text-red-500 hover:text-red-400" title="Delete">
                                                             <span className="material-icons text-lg">delete</span>
                                                         </button>
                                                     </div>
@@ -498,6 +509,36 @@ const HindranceReport = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50">
+                    <div className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 max-w-sm w-full p-6 animate-fade-in-up">
+                        <div className="flex items-center gap-3 mb-4 text-red-400">
+                            <span className="material-icons text-3xl">warning</span>
+                            <h3 className="text-xl font-bold text-white">Confirm Deletion</h3>
+                        </div>
+                        <p className="text-gray-300 mb-6">
+                            Are you sure you want to delete this report? This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-medium transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium shadow-lg transition-colors flex items-center gap-2"
+                            >
+                                <span className="material-icons text-sm">delete</span>
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
