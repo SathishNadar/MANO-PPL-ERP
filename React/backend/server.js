@@ -8,7 +8,8 @@ import SignupRoutes, { handleVerifySignup } from './AuthAPI/VerifyEmailAPI.js';
 import ForgotPasswordRoutes from './AuthAPI/ForgotPasswordAPI.js';
 
 import ProjectRoutes from './ProjectAPI/Projects.js';
-import ProjectContactsRoutes from './ProjectAPI/ProjectContacts.js';
+// import ProjectContactsRoutes from './ProjectAPI/ProjectContacts.js';
+import ProjectDirectoryRoutes from './ProjectAPI/ProjectDirectory.js';
 import ReportRoutes from './ProjectAPI/Reports.js';
 import BudgetRoutes from './ProjectAPI/Budget.js';
 import VendorRoutes from './VendorClientAPI/vendor.js';
@@ -53,7 +54,7 @@ app.use('/api', ForgotPasswordRoutes);
 
 
 app.use('/project', ProjectRoutes);
-app.use("/projectContacts", ProjectContactsRoutes);
+app.use("/projectContacts", ProjectDirectoryRoutes);
 app.use("/report", ReportRoutes); 
 app.use("/budget", BudgetRoutes); 
 app.use("/vendor_api", VendorRoutes);
