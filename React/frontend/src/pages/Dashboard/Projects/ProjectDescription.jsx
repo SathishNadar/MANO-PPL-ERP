@@ -18,6 +18,65 @@ function ProjectDescription() {
       [reportType]: !prev[reportType],
     }));
   };
+  const [budgetExists, setBudgetExists] = useState(false);
+  const [budgetTotal, setBudgetTotal] = useState(null);
+  const [budgetUsed, setBudgetUsed] = useState(null);
+
+  const generateRandomBudget = () => {
+    // random total between 500,000 and 2,000,000 for now
+    const total = Math.floor(Math.random() * (2000000 - 500000 + 1)) + 500000;
+    const used = Math.floor(Math.random() * (total + 1));
+    setBudgetTotal(total);
+    setBudgetUsed(used);
+  };
+
+  const formatNumber = (n) => {
+    if (n === null || n === undefined) return '-';
+    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
+  const [checkingBudget, setCheckingBudget] = useState(true);
+
+  const fetchBudgetExists = async (pId) => {
+    try {
+      setCheckingBudget(true);
+      const res = await fetch(`${API_BASE}/budget/exists/${pId}`, {
+        credentials: "include",
+      });
+      const json = await res.json();
+      if (json && json.success) {
+        setBudgetExists(!!json.exists);
+        // generate a placeholder budget preview for now
+        generateRandomBudget();
+      } else {
+        setBudgetExists(false);
+        // still generate fallback preview so UI isn't empty
+        generateRandomBudget();
+      }
+    } catch (err) {
+      console.error('Failed to check budget existence:', err);
+      setBudgetExists(false);
+      // ensure UI has something to display
+      generateRandomBudget();
+    } finally {
+      setCheckingBudget(false);
+    }
+  };
+
+  const handleCreateBudget = () => {
+    // navigate to your budget creation page (adjust route if you use a different path)
+    navigate(`/dashboard/project-description/${projectId}/budgetCreate`);
+  };
+
+  const handleEditBudget = () => {
+    // navigate to budget edit page (adjust route if you use a different path)
+    // navigate(`/dashboard/project-description/${projectId}/budgetEdit`);
+    navigate(`/dashboard/project-description/${projectId}/budgetUpdate`);
+  };
+
+  const handleViewBudget = () => {
+    // navigate to budget view page
+    navigate(`/dashboard/project-description/${projectId}/budgetView`);
+  };
 
   useEffect(() => {
     if (!projectId) return;
@@ -31,6 +90,63 @@ function ProjectDescription() {
         if (data.success) setProject(data.data);
       })
       .catch((err) => console.error("Failed to load project:", err));
+
+    // fetch DPRs + role
+    fetch(`${API_BASE}/report/Alldpr/${projectId}`, {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data || !data.projects) {
+          console.error("Unexpected DPRs response:", data);
+          return;
+        }
+
+        let dprsList = data.projects;
+        const role = data.role?.role.role_name || "";
+
+        // special case for client
+        if (role.toLowerCase() === "client") {
+          dprsList = dprsList.filter((d) => d.dpr_status === "approved");
+        }
+
+        dprsList.sort(
+          (a, b) => new Date(b.report_date) - new Date(a.report_date)
+        );
+        setDprs(dprsList);
+      })
+      .catch((err) => console.error("Failed to load DPRs:", err));
+
+    // fetch users for mapping ids -> names (if permitted)
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/admin/users`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.users)) {
+          const map = {};
+          data.users.forEach((u) => {
+            // prefer the explicit user_id and user_name columns; fall back to common alternatives
+            const id = u.user_id ?? u.id ?? u.userId;
+            const name = u.user_name ?? u.userName ?? u.name ?? u.full_name ?? `${id}`;
+            if (id !== undefined && id !== null) map[id] = name;
+          });
+          setUsersMap(map);
+        } else {
+          // likely not permitted for this user (non-admin) or unexpected shape
+          console.info("Users fetch returned no users or not permitted.", data);
+        }
+      } catch (err) {
+        // non-admins will likely get a 403 — that's fine, we'll just show Unknown
+        console.info("Users fetch skipped or failed:", err);
+      }
+    };
+
+    fetchUsers();
+
+    // check if budget exists for this project (calls backend /budget/exists/:projectId)
+    fetchBudgetExists(projectId);
   }, [projectId]);
 
   // Calculate project progress percentage
@@ -48,6 +164,83 @@ function ProjectDescription() {
     const percent = Math.floor((elapsed / total) * 100);
     return `${percent}%`;
   };
+
+  // simple derived values for budget preview
+  const percentUsed = budgetTotal ? Math.round((budgetUsed / budgetTotal) * 100) : 0;
+
+  //#region  helpers
+  const getStatusClasses = (status) => {
+    switch (status) {
+      case "approved":
+        return "bg-green-900 text-green-300";
+      case "under_review":
+        return "bg-yellow-900 text-yellow-300";
+      case "final_review":
+        return "bg-blue-900 text-blue-300";
+      case "in_progress":
+        return "bg-orange-900 text-orange-300";
+      default:
+        return "bg-gray-700 text-gray-300";
+    }
+  };
+
+  const totitlecase = (input) => {
+    return input
+      .split(/[_\s-]+/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  };
+
+  // Given DPR status, return the label to display
+  const getActorLabelForStatus = (status) => {
+    switch (status) {
+      case "in_progress":
+        return "Created by";
+      case "under_review":
+        return "Submitted by";
+      case "final_review":
+        return "Reviewed by";
+      case "approved":
+        return "Approved by";
+      default:
+        return "Submitted by";
+    }
+  };
+
+  // Given DPR object and status, try to pick the correct user id field
+  const getActorIdFromDpr = (dpr, status) => {
+    // Preferential order of fields to check (best-effort)
+    const fieldPriority = {
+      in_progress: ["created_by", "createdBy", "creator_id", "user_id"],
+      under_review: ["submitted_by", "submittedBy", "submitted_id", "created_by"],
+      final_review: ["final_approved_by", "reviewed_by", "finalApprovedBy", "final_approved_id", "submitted_by"],
+      approved: ["approved_by", "approvedBy", "approver_id", "final_approved_by", "reviewed_by"],
+    };
+
+    const candidates = fieldPriority[status] || [
+      "submitted_by",
+      "created_by",
+      "approved_by",
+    ];
+
+    for (const f of candidates) {
+      if (dpr[f] !== undefined && dpr[f] !== null && dpr[f] !== "") {
+        return dpr[f];
+      }
+    }
+    // fallback: check common numeric fields
+    if (dpr.created_by) return dpr.created_by;
+    if (dpr.approved_by) return dpr.approved_by;
+    return null;
+  };
+
+  const getUserNameById = (id) => {
+    if (!id && id !== 0) return "Unknown";
+    // usersMap keys might be numbers or strings depending on API; normalize to string first
+    const key = id;
+    return usersMap[key] || usersMap[String(key)] || "Unknown";
+  };
+  //#endregion
 
   return (
     <div className="flex h-screen bg-background">
@@ -158,6 +351,52 @@ function ProjectDescription() {
               >
                 Edit Project
               </button>
+            </div>
+
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6 mt-6">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Budget</h3>
+
+              <div className="relative pt-1">
+                <div className="flex mb-2 items-center justify-between">
+                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-[var(--accent-blue)] bg-gray-900">
+                    Budget Status
+                  </span>
+                  <span className="text-xs font-semibold text-[var(--accent-blue)]">
+                    {percentUsed}%
+                  </span>
+                </div>
+
+                <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-[var(--border-color)]">
+                  <div
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[var(--accent-blue)]"
+                    style={{ width: `${percentUsed}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="text-sm text-[var(--text-secondary)] mb-2">
+                  <strong className="text-[var(--text-primary)]">{formatNumber(budgetUsed)}</strong>
+                  <span className="mx-2">/</span>
+                  <span className="text-[var(--text-secondary)]">{formatNumber(budgetTotal)}</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  {checkingBudget ? (
+                    <button disabled className="col-span-2 bg-gray-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Checking...</button>
+                  ) : budgetExists ? (
+                    <>
+                      <button onClick={handleEditBudget} className="col-span-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Update Budget</button>
+                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={handleCreateBudget} className="col-span-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Create Budget</button>
+                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Project Progress Card - Always Expanded - HIDDEN */}

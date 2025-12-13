@@ -30,7 +30,11 @@ const DocumentIndex = () => {
         } else if (item === "Agenda & Minutes of Meeting") {
             navigate('/dashboard/agenda-minutes');
         } else if (item === "Events / Hindrance Report") {
-            navigate('/dashboard/hindrance-report');
+            navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
+        } else if (item === "Project Report / Summary") {
+            navigate('/dashboard/project-summary');
+        } else if (item === "Organisation Chart") {
+            navigate('/dashboard/organisation-chart');
         }
         // Add other document navigations here as needed
     };
@@ -60,7 +64,8 @@ const DocumentIndex = () => {
                 "Project Planning & Bar Chart",
                 "Logistic Plan",
                 "Manpower Histogram",
-                "Material Histogram"
+                "Material Histogram",
+                "Events / Hindrance Report"
             ]
         },
         {
@@ -104,8 +109,7 @@ const DocumentIndex = () => {
                 "Daily Progress report",
                 "Weekly Progress report (Sun-Sat closing & report on Monday)",
                 "Monthly Progress report (1st of every month)",
-                "Site Progress Pictures (1st & 15th of every month)",
-                "Events / Hindrance Report"
+                "Site Progress Pictures (1st & 15th of every month)"
             ]
         },
         {
@@ -273,6 +277,49 @@ const DocumentIndex = () => {
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 // navigate(`/dashboard/project-description/${projectId}/mpr-list`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-gray-600/20 hover:bg-gray-600/40 text-gray-300 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">visibility</span>
+                                                            <span>View</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        if (item === "Events / Hindrance Report") {
+                                            return (
+                                                <div
+                                                    key={itemIndex}
+                                                    className="p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200"
+                                                >
+                                                    <div className="flex items-start space-x-3 mb-3">
+                                                        <span className="material-icons text-gray-500 text-xl">
+                                                            description
+                                                        </span>
+                                                        <div className="flex-1">
+                                                            <h4 className="text-sm font-medium text-gray-200 transition-colors">
+                                                                {item}
+                                                            </h4>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Placeholder for Create
+                                                                // navigate(`/dashboard/hindrance-report/create`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">edit</span>
+                                                            <span>Create</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/dashboard/hindrance-report`);
                                                             }}
                                                             className="flex-1 flex items-center justify-center space-x-1 bg-gray-600/20 hover:bg-gray-600/40 text-gray-300 py-1.5 rounded transition-colors text-xs font-medium"
                                                         >
