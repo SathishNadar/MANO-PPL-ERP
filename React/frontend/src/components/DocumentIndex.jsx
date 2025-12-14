@@ -31,6 +31,7 @@ const DocumentIndex = () => {
             navigate('/dashboard/agenda-minutes');
         } else if (item === "Events / Hindrance Report") {
             navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
+            navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
         } else if (item === "Project Report / Summary") {
             navigate('/dashboard/project-summary');
         } else if (item === "Organisation Chart") {
@@ -287,9 +288,6 @@ const DocumentIndex = () => {
                                                 </div>
                                             );
                                         }
-
-
-
                                         return (
                                             <div
                                                 key={itemIndex}
