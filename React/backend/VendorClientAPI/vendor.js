@@ -103,6 +103,7 @@ async function fetchVendorsCount() {
   return result.count;
 }
 
+
 async function insertVendor(data) {
   const [id] = await knexDB('vendors').insert({
     name: data.name,
@@ -224,6 +225,26 @@ router.delete("/delete/:id", catchAsync(async (req, res) => {
 
   res.json({ message: "Vendor deleted", affected: result.affectedRows });
 }));
+
+// GET call to fetch simplified vendors list for dropdowns etc.
+router.get("/vendors-jobnature", async (req, res) => {
+    try {
+        const vendors = await knexDB('vendors as v')
+            .leftJoin('job_nature as jn', 'v.job_nature_id', 'jn.job_id')
+            .select(
+                'v.id',
+                'v.name as company_name',
+                'jn.job_name as job_nature'
+            )
+            .orderBy('v.name', 'asc');
+
+        res.json({ vendors });
+    } catch (error) {
+        console.error("Error fetching vendors list:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 
 
 export default router;
