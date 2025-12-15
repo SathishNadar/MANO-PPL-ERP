@@ -10,6 +10,8 @@ function ProjectDescription() {
   const navigate = useNavigate();
   const { projectId } = useParams();
   const [project, setProject] = useState(null);
+  const [dprs, setDprs] = useState([]);
+  const [usersMap, setUsersMap] = useState({});
   const [expandedReports, setExpandedReports] = useState({});
 
   const toggleReport = (reportType) => {
@@ -18,65 +20,9 @@ function ProjectDescription() {
       [reportType]: !prev[reportType],
     }));
   };
-  const [budgetExists, setBudgetExists] = useState(false);
-  const [budgetTotal, setBudgetTotal] = useState(null);
-  const [budgetUsed, setBudgetUsed] = useState(null);
 
-  const generateRandomBudget = () => {
-    // random total between 500,000 and 2,000,000 for now
-    const total = Math.floor(Math.random() * (2000000 - 500000 + 1)) + 500000;
-    const used = Math.floor(Math.random() * (total + 1));
-    setBudgetTotal(total);
-    setBudgetUsed(used);
-  };
 
-  const formatNumber = (n) => {
-    if (n === null || n === undefined) return '-';
-    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
-  const [checkingBudget, setCheckingBudget] = useState(true);
 
-  const fetchBudgetExists = async (pId) => {
-    try {
-      setCheckingBudget(true);
-      const res = await fetch(`${API_BASE}/budget/exists/${pId}`, {
-        credentials: "include",
-      });
-      const json = await res.json();
-      if (json && json.success) {
-        setBudgetExists(!!json.exists);
-        // generate a placeholder budget preview for now
-        generateRandomBudget();
-      } else {
-        setBudgetExists(false);
-        // still generate fallback preview so UI isn't empty
-        generateRandomBudget();
-      }
-    } catch (err) {
-      console.error('Failed to check budget existence:', err);
-      setBudgetExists(false);
-      // ensure UI has something to display
-      generateRandomBudget();
-    } finally {
-      setCheckingBudget(false);
-    }
-  };
-
-  const handleCreateBudget = () => {
-    // navigate to your budget creation page (adjust route if you use a different path)
-    navigate(`/dashboard/project-description/${projectId}/budgetCreate`);
-  };
-
-  const handleEditBudget = () => {
-    // navigate to budget edit page (adjust route if you use a different path)
-    // navigate(`/dashboard/project-description/${projectId}/budgetEdit`);
-    navigate(`/dashboard/project-description/${projectId}/budgetUpdate`);
-  };
-
-  const handleViewBudget = () => {
-    // navigate to budget view page
-    navigate(`/dashboard/project-description/${projectId}/budgetView`);
-  };
 
   useEffect(() => {
     if (!projectId) return;
@@ -145,8 +91,7 @@ function ProjectDescription() {
 
     fetchUsers();
 
-    // check if budget exists for this project (calls backend /budget/exists/:projectId)
-    fetchBudgetExists(projectId);
+
   }, [projectId]);
 
   // Calculate project progress percentage
@@ -165,8 +110,7 @@ function ProjectDescription() {
     return `${percent}%`;
   };
 
-  // simple derived values for budget preview
-  const percentUsed = budgetTotal ? Math.round((budgetUsed / budgetTotal) * 100) : 0;
+
 
   //#region  helpers
   const getStatusClasses = (status) => {
@@ -262,142 +206,82 @@ function ProjectDescription() {
               Welcome back, let's get to work!
             </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <button
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center space-x-2"
-              onClick={() => navigate("/dashboard/home")}
-            >
-              <span className="material-icons">home</span>
-              <span>Home</span>
-            </button>
-            <div className="relative">
-              <img
-                alt="user avatar"
-                className="w-12 h-12 rounded-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzZrALTDtNtoKllECNeqa-KoCN3A3yAA9_l9U090P2qBGmuGd2sTXowj5ERtTyWBKsabMMLDKN2yvh5fs5vmv9BGyibq6-CvXy_dBvBywiGsXeBSbdxaYz9c3P82YPwtCzPLDyJYxTwcljuLX_aJu5tsw9ix3-A85mYi0S35mJNShmb5HaBZFguOZLtWfn1xI5a_nwj5FlApnATfVTO9AvOfVoxD0mqrb6hvV3oad2HofH0PbXsM_JRpiUn9T36C-TkH1_JAvLpCI"
-              />
-              <span className="absolute right-0 bottom-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></span>
-            </div>
-          </div>
+
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-8">
+        <div className="flex flex-col gap-8">
+          <div className="w-full space-y-8">
             {/* Project Details Card */}
-            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-              <div className="flex flex-col items-center">
-                <div className="w-32 h-32 rounded-full bg-gray-900 mb-4 flex items-center justify-center border-4 border-[var(--accent-blue)]">
-                  <span className="material-icons text-5xl text-[var(--accent-blue)]">
-                    flight
-                  </span>
-                </div>
-                <h2 className="text-xl font-bold text-[var(--text-primary)]">
-                  {project?.project_name || "Project"}
-                </h2>
-              </div>
-              <div className="mt-6 space-y-2 text-[var(--text-secondary)]">
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Project:
-                  </strong>{" "}
-                  {project?.project_name || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Employer:
-                  </strong>{" "}
-                  {project?.Employer || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Location:
-                  </strong>{" "}
-                  {project?.location || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Project Code:
-                  </strong>{" "}
-                  {project?.project_code || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Project Description:
-                  </strong>{" "}
-                  {project?.project_description || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">Start:</strong>{" "}
-                  {project?.start_date
-                    ? new Date(project.start_date).toLocaleDateString("en-GB")
-                    : "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">End:</strong>{" "}
-                  {project?.end_date
-                    ? new Date(project.end_date).toLocaleDateString("en-GB")
-                    : "-"}
-                </p>
-              </div>
-
-              {/* Edit Project Button */}
-              <button
-                onClick={() =>
-                  navigate(
-                    `/dashboard/project-description/${projectId}/dprEdit`
-                  )
-                }
-                className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-              >
-                Edit Project
-              </button>
-            </div>
-
-                        <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6 mt-6">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Budget</h3>
-
-              <div className="relative pt-1">
-                <div className="flex mb-2 items-center justify-between">
-                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-[var(--accent-blue)] bg-gray-900">
-                    Budget Status
-                  </span>
-                  <span className="text-xs font-semibold text-[var(--accent-blue)]">
-                    {percentUsed}%
-                  </span>
+            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6 relative">
+              <div className="flex flex-col md:flex-row items-start gap-8">
+                {/* Logo Section */}
+                <div className="flex-shrink-0">
+                  <div className="w-32 h-32 rounded-full bg-gray-900 flex items-center justify-center border-4 border-[var(--accent-blue)]">
+                    <span className="material-icons text-5xl text-[var(--accent-blue)]">
+                      flight
+                    </span>
+                  </div>
                 </div>
 
-                <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-[var(--border-color)]">
-                  <div
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[var(--accent-blue)]"
-                    style={{ width: `${percentUsed}%` }}
-                  ></div>
+                {/* Details Section */}
+                <div className="flex-1 space-y-4">
+                  <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+                    {project?.project_name || "Project"}
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[var(--text-secondary)]">
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Project:</strong>{" "}
+                      {project?.project_name || "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Employer:</strong>{" "}
+                      {project?.Employer || "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Location:</strong>{" "}
+                      {project?.location || "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Project Code:</strong>{" "}
+                      {project?.project_code || "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Start:</strong>{" "}
+                      {project?.start_date
+                        ? new Date(project.start_date).toLocaleDateString("en-GB")
+                        : "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">End:</strong>{" "}
+                      {project?.end_date
+                        ? new Date(project.end_date).toLocaleDateString("en-GB")
+                        : "-"}
+                    </p>
+                    <div className="col-span-1 md:col-span-2">
+                      <strong className="text-[var(--text-primary)] block mb-1">Project Description:</strong>
+                      <span>{project?.project_description || "-"}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-6">
-                <div className="text-sm text-[var(--text-secondary)] mb-2">
-                  <strong className="text-[var(--text-primary)]">{formatNumber(budgetUsed)}</strong>
-                  <span className="mx-2">/</span>
-                  <span className="text-[var(--text-secondary)]">{formatNumber(budgetTotal)}</span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  {checkingBudget ? (
-                    <button disabled className="col-span-2 bg-gray-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Checking...</button>
-                  ) : budgetExists ? (
-                    <>
-                      <button onClick={handleEditBudget} className="col-span-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Update Budget</button>
-                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={handleCreateBudget} className="col-span-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Create Budget</button>
-                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
-                    </>
-                  )}
-                </div>
+              {/* Edit Project Button - Absolute Top Right */}
+              <div className="absolute top-6 right-6">
+                <button
+                  onClick={() =>
+                    navigate(
+                      `/dashboard/project-description/${projectId}/dprEdit`
+                    )
+                  }
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center space-x-2"
+                >
+                  <span className="material-icons text-sm">edit</span>
+                  <span>Edit Project</span>
+                </button>
               </div>
             </div>
+
 
             {/* Project Progress Card - Always Expanded - HIDDEN */}
             {false && (
@@ -585,7 +469,7 @@ function ProjectDescription() {
             )}
           </div>
 
-          <div className="lg:col-span-2 space-y-8">
+          <div className="w-full space-y-8">
             {/* Document Index Component */}
             <DocumentIndex />
           </div>

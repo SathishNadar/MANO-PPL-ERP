@@ -105,16 +105,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
-          path="/dashboard/project-directory"
-          element={
-            <ProtectedRoute>
-              <ProjectDirectory />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/project-vendor-list"
+          path="/dashboard/project-description/:projectId/project-vendor-list"
           element={
             <ProtectedRoute>
               <ProjectVendorList />
@@ -122,7 +115,7 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/staff-roles"
+          path="/dashboard/project-description/:projectId/staff-roles"
           element={
             <ProtectedRoute>
               <StaffRoles />
@@ -142,6 +135,14 @@ function App() {
           element={
             <ProtectedRoute>
               <HindranceReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/project-directory"
+          element={
+            <ProtectedRoute>
+              <ProjectDirectory />
             </ProtectedRoute>
           }
         />
