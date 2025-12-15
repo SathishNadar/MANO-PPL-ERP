@@ -27,8 +27,10 @@ const DocumentIndex = () => {
             navigate(`/dashboard/project-description/${projectId}/project-vendor-list`);
         } else if (item === "MANO's Staff Role & Responsibilties") {
             navigate(`/dashboard/project-description/${projectId}/staff-roles`);
-        } else if (item === "Agenda & Minutes of Meeting") {
-            navigate('/dashboard/agenda-minutes');
+        } else if (item === "Agenda of Meeting") {
+            navigate('/dashboard/agenda');
+        } else if (item === "Minutes of Meeting") {
+            navigate('/dashboard/minutes');
         } else if (item === "Events / Hindrance Report") {
             navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
             navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
@@ -47,9 +49,10 @@ const DocumentIndex = () => {
                 "Project Directory",
                 "Project Vendor List",
                 "MANO's Staff Role & Responsibilties",
-                "Project Report / Summary",
+                "Project Report",
                 "Organisation Chart",
-                "Agenda & Minutes of Meeting",
+                "Agenda of Meeting",
+                "Minutes of Meeting",
             ]
         },
         {
