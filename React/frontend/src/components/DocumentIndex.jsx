@@ -22,13 +22,15 @@ const DocumentIndex = () => {
 
     const handleItemClick = (item) => {
         if (item === "Project Directory") {
-            navigate('/dashboard/project-directory');
+            navigate(`/dashboard/project-description/${projectId}/project-directory`);
         } else if (item === "Project Vendor List") {
-            navigate('/dashboard/project-vendor-list');
+            navigate(`/dashboard/project-description/${projectId}/project-vendor-list`);
         } else if (item === "MANO's Staff Role & Responsibilties") {
-            navigate('/dashboard/staff-roles');
-        } else if (item === "Agenda & Minutes of Meeting") {
-            navigate('/dashboard/agenda-minutes');
+            navigate(`/dashboard/project-description/${projectId}/staff-roles`);
+        } else if (item === "Agenda of Meeting") {
+            navigate('/dashboard/agenda');
+        } else if (item === "Minutes of Meeting") {
+            navigate('/dashboard/minutes');
         } else if (item === "Events / Hindrance Report") {
             navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
             navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
@@ -47,9 +49,10 @@ const DocumentIndex = () => {
                 "Project Directory",
                 "Project Vendor List",
                 "MANO's Staff Role & Responsibilties",
-                "Project Report / Summary",
+                "Project Report",
                 "Organisation Chart",
-                "Agenda & Minutes of Meeting",
+                "Agenda of Meeting",
+                "Minutes of Meeting",
             ]
         },
         {
@@ -73,7 +76,7 @@ const DocumentIndex = () => {
             title: "CONTRACTS MANAGEMENT",
             items: [
                 "Quantity Survey",
-                "Budget & Cash Flow Chart",
+                "Budget",
                 "Quotation",
                 "Tender",
                 "Work Order & Purchase Order"
@@ -165,6 +168,47 @@ const DocumentIndex = () => {
                             <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
                                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {section.items.map((item, itemIndex) => {
+                                        if (item === "Budget") {
+                                            return (
+                                                <div
+                                                    key={itemIndex}
+                                                    className="p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200"
+                                                >
+                                                    <div className="flex items-start space-x-3 mb-3">
+                                                        <span className="material-icons text-gray-500 text-xl">
+                                                            monetization_on
+                                                        </span>
+                                                        <div className="flex-1">
+                                                            <h4 className="text-sm font-medium text-gray-200 transition-colors">
+                                                                {item}
+                                                            </h4>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/dashboard/project-description/${projectId}/budgetUpdate`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-400 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">edit</span>
+                                                            <span>Edit</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/dashboard/project-description/${projectId}/budgetView`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">visibility</span>
+                                                            <span>View</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
                                         if (item === "Daily Progress report") {
                                             return (
                                                 <div

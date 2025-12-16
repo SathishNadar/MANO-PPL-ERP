@@ -22,7 +22,10 @@ import ProjectVendorList from "./pages/Dashboard/ProjectVendorList/ProjectVendor
 import DprFetchViewer from "./pages/DPR/DprFetchViewer.jsx";
 import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
 import StaffRoles from "./pages/Dashboard/StaffRoles/StaffRoles.jsx";
-import AgendaMinutes from "./pages/Dashboard/AgendaMinutes/AgendaMinutes.jsx";
+import AgendaList from "./pages/Dashboard/AgendaOfMeeting/AgendaList.jsx";
+import AgendaDetails from "./pages/Dashboard/AgendaOfMeeting/AgendaDetails.jsx";
+import MinutesList from "./pages/Dashboard/MinutesOfMeeting/MinutesList.jsx";
+import MinutesDetails from "./pages/Dashboard/MinutesOfMeeting/MinutesDetails.jsx";
 import HindranceReport from "./pages/Dashboard/HindranceReport/HindranceReport.jsx";
 import ProjectSummary from "./pages/Dashboard/ProjectSummary/ProjectSummary.jsx";
 import OrganisationChart from "./pages/Dashboard/OrganisationChart/OrganisationChart.jsx";
@@ -105,16 +108,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
-          path="/dashboard/project-directory"
-          element={
-            <ProtectedRoute>
-              <ProjectDirectory />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/project-vendor-list"
+          path="/dashboard/project-description/:projectId/project-vendor-list"
           element={
             <ProtectedRoute>
               <ProjectVendorList />
@@ -122,7 +118,7 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/staff-roles"
+          path="/dashboard/project-description/:projectId/staff-roles"
           element={
             <ProtectedRoute>
               <StaffRoles />
@@ -130,10 +126,34 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/agenda-minutes"
+          path="/dashboard/agenda"
           element={
             <ProtectedRoute>
-              <AgendaMinutes />
+              <AgendaList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/agenda/:id"
+          element={
+            <ProtectedRoute>
+              <AgendaDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/minutes"
+          element={
+            <ProtectedRoute>
+              <MinutesList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/minutes/:id"
+          element={
+            <ProtectedRoute>
+              <MinutesDetails />
             </ProtectedRoute>
           }
         />
@@ -142,6 +162,14 @@ function App() {
           element={
             <ProtectedRoute>
               <HindranceReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/project-directory"
+          element={
+            <ProtectedRoute>
+              <ProjectDirectory />
             </ProtectedRoute>
           }
         />

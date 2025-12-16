@@ -105,6 +105,7 @@ async function fetchProjectLocations(projectId) {
   return rows.map((r) => r.address_line);
 }
 
+
 /* -------------------------------------------------------
    CRUD OPERATIONS
 -------------------------------------------------------- */

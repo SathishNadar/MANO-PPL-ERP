@@ -141,26 +141,27 @@ function DPRList() {
     return (
         <div className="flex h-screen bg-background">
             <Sidebar />
-            <main className="flex-1 p-8 bg-gray-900 overflow-y-auto">
-                <header className="flex items-center mb-8 gap-4">
-                    <button
-                        className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
-                        onClick={() => navigate(`/dashboard/project-description/${projectId}`)}
-                    >
-                        <span className="material-icons">arrow_back</span>
-                        <span>Back</span>
-                    </button>
-                    <div>
-                        <h1 className="text-4xl font-bold text-[var(--text-primary)]">
-                            Daily Progress Reports
-                        </h1>
-                        <p className="text-[var(--text-secondary)]">
-                            View and manage all daily progress reports
-                        </p>
+            <main className="flex-1 p-6 bg-gray-900 overflow-y-auto">
+                <header className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                        <button
+                            className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-lg shadow-md transition-all duration-200 border border-gray-700"
+                            onClick={() => navigate(`/dashboard/project-description/${projectId}`)}
+                        >
+                            <span className="material-icons">arrow_back</span>
+                        </button>
+                        <div>
+                            <h1 className="text-3xl font-bold text-white tracking-tight">
+                                Daily Progress Reports
+                            </h1>
+                            <p className="text-gray-400 text-sm mt-1">
+                                View and manage all daily progress reports
+                            </p>
+                        </div>
                     </div>
                 </header>
 
-                <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md p-6">
+                <div className="space-y-4">
                     {loading ? (
                         <p className="text-[var(--text-secondary)]">Loading reports...</p>
                     ) : dprs.length === 0 ? (
@@ -168,74 +169,80 @@ function DPRList() {
                             No DPR Data found.
                         </p>
                     ) : (
-                        <ul className="space-y-4">
-                            {dprs.map((dpr) => {
-                                const date = new Date(dpr.report_date);
-                                const dateStr = date.toLocaleDateString("en-GB", {
-                                    day: "2-digit",
-                                    month: "long",
-                                    year: "numeric",
-                                });
-                                const today = new Date();
-                                today.setHours(0, 0, 0, 0);
-                                date.setHours(0, 0, 0, 0);
-                                const diffDays = Math.floor(
-                                    (today - date) / (1000 * 60 * 60 * 24)
-                                );
-                                const label =
-                                    diffDays === 0
-                                        ? "Today"
-                                        : diffDays === 1
-                                            ? "Yesterday"
-                                            : `${diffDays} days ago`;
+                        dprs.map((dpr) => {
+                            const date = new Date(dpr.report_date);
+                            const dateStr = date.toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                            });
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            date.setHours(0, 0, 0, 0);
+                            const diffDays = Math.floor(
+                                (today - date) / (1000 * 60 * 60 * 24)
+                            );
+                            const label =
+                                diffDays === 0
+                                    ? "Today"
+                                    : diffDays === 1
+                                        ? "Yesterday"
+                                        : `${diffDays} days ago`;
 
-                                const userId = JSON.parse(
-                                    localStorage.getItem("session") || "{}"
-                                ).user_id;
-                                const isHandler =
-                                    dpr.current_handler?.toString() === userId?.toString();
-                                const borderClass = isHandler
-                                    ? "bg-gray-900 border border-gray-700 border-l-4 border-l-green-500"
-                                    : "bg-gray-900 border border-gray-700";
+                            const userId = JSON.parse(
+                                localStorage.getItem("session") || "{}"
+                            ).user_id;
+                            const isHandler =
+                                dpr.current_handler?.toString() === userId?.toString();
 
-                                const actorLabel = getActorLabelForStatus(dpr.dpr_status);
-                                const actorId = getActorIdFromDpr(dpr, dpr.dpr_status);
-                                const actorName = getUserNameById(actorId);
+                            // Enhanced border logic for active items
+                            const activeBorderClass = isHandler
+                                ? "border-l-4 border-l-green-500 shadow-[0_0_15px_rgba(34,197,94,0.1)]"
+                                : "";
 
-                                return (
-                                    <a
-                                        key={dpr.dpr_id}
-                                        id={dpr.dpr_id}
-                                        href={`/dashboard/project-description/${projectId}/${dpr.dpr_id}`}
-                                        className={`flex justify-between items-center p-4 rounded-lg transition-all cursor-pointer hover:border-[var(--accent-blue)] ${borderClass}`}
-                                    >
+                            const actorLabel = getActorLabelForStatus(dpr.dpr_status);
+                            const actorId = getActorIdFromDpr(dpr, dpr.dpr_status);
+                            const actorName = getUserNameById(actorId);
+
+                            return (
+                                <a
+                                    key={dpr.dpr_id}
+                                    id={dpr.dpr_id}
+                                    href={`/dashboard/project-description/${projectId}/${dpr.dpr_id}`}
+                                    className={`group flex justify-between items-center p-5 rounded-xl transition-all duration-300 cursor-pointer 
+                                        bg-gray-800/40 hover:bg-gray-800 border border-gray-700/50 hover:border-gray-600 hover:shadow-lg hover:translate-x-1 ${activeBorderClass}`}
+                                >
+                                    <div className="flex items-center space-x-4">
+                                        <div className="h-10 w-10 rounded-full bg-gray-900/50 flex items-center justify-center border border-gray-700 group-hover:border-gray-600 transition-colors">
+                                            <span className="material-icons text-gray-400 group-hover:text-white transition-colors text-xl">description</span>
+                                        </div>
                                         <div>
-                                            <div className="flex items-center space-x-2">
-                                                <p className="font-semibold text-[var(--text-primary)]">
-                                                    DPR - {dateStr}
-                                                </p>
-                                            </div>
-                                            <p className="text-sm text-[var(--text-secondary)]">
+                                            <p className="font-semibold text-lg text-gray-200 group-hover:text-white transition-colors">
+                                                DPR - {dateStr}
+                                            </p>
+                                            <p className="text-sm text-gray-500 group-hover:text-gray-400">
                                                 {actorLabel} {actorName}
                                             </p>
                                         </div>
-                                        <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)]">
-                                            <span
-                                                className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${getStatusClasses(
-                                                    dpr.dpr_status
-                                                )}`}
-                                            >
-                                                {totitlecase(dpr.dpr_status)}
-                                            </span>
-                                            <span className="material-icons text-base">
-                                                today
-                                            </span>
+                                    </div>
+
+                                    <div className="flex items-center space-x-4 text-sm">
+                                        <span
+                                            className={`text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide ${getStatusClasses(
+                                                dpr.dpr_status
+                                            )}`}
+                                        >
+                                            {totitlecase(dpr.dpr_status)}
+                                        </span>
+                                        <div className="flex items-center space-x-2 text-gray-500 group-hover:text-gray-400 transition-colors">
+                                            <span className="material-icons text-base">today</span>
                                             <span>{label}</span>
                                         </div>
-                                    </a>
-                                );
-                            })}
-                        </ul>
+                                        <span className="material-icons text-gray-600 group-hover:text-gray-400 group-hover:translate-x-1 transition-all duration-300">chevron_right</span>
+                                    </div>
+                                </a>
+                            );
+                        })
                     )}
                 </div>
             </main>
