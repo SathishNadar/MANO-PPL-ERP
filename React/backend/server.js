@@ -23,6 +23,7 @@ import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
 import WorkLocationRoutes from './Admin/WorkLocations.js';
 import S3Routes from './s3/s3Routes.js';
+import ProjectSummaryRoutes from './ProjectAPI/ProjectSummary.js';
 
 
 import './config.js';
@@ -66,8 +67,9 @@ app.use('/project', ProjectRoutes);
 app.use("/projectContacts", ProjectDirectoryRoutes);
 app.use("/projectVendors", ProjectVendorsRoutes);
 app.use("/projectStaffRoles", ProjectRolesandResponsibilitiesRoutes);
-app.use("/report", ReportRoutes); 
-app.use("/budget", BudgetRoutes); 
+app.use("/projectSummary", ProjectSummaryRoutes);
+app.use("/report", ReportRoutes);
+app.use("/budget", BudgetRoutes);
 app.use("/vendor_api", VendorRoutes);
 app.use("/tasks", TaskRoutes);
 app.use("/attendance", AttendanceRoutes);
