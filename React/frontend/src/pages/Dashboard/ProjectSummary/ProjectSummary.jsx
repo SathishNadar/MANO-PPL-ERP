@@ -1,189 +1,409 @@
-import React, { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Sidebar from "../../SidebarComponent/sidebar";
-import Chart from "chart.js/auto";
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:5001';
 
 const ProjectSummary = () => {
     const navigate = useNavigate();
-    const progressChartRef = useRef(null);
-    const financialChartRef = useRef(null);
-    const progressChartInstance = useRef(null);
-    const financialChartInstance = useRef(null);
+    const { projectId } = useParams();
+
+    const [summaryData, setSummaryData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+
+    // Add Modal State
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [newItem, setNewItem] = useState({ title: "", details: "" });
+    const [adding, setAdding] = useState(false);
+
+    // Fetch Data
+    const fetchSummary = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/projectSummary/${projectId}`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (response.ok) {
+                // Ensure data is an array
+                const list = Array.isArray(data) ? data : (data.summary ? data.summary : []);
+                setSummaryData(list);
+            } else {
+                // If it's a 404 or empty, just show empty list, don't necessarily error out loudly if it's just "no data yet"
+                setSummaryData([]);
+            }
+        } catch (error) {
+            console.error("Error fetching summary:", error);
+            toast.error("Error loading project summary");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        // --- Progress Chart (Doughnut) ---
-        if (progressChartInstance.current) {
-            progressChartInstance.current.destroy();
+        if (projectId) {
+            fetchSummary();
+        }
+    }, [projectId]);
+
+    // Add Summary Item
+    const handleAddItem = async () => {
+        if (!projectId) {
+            toast.error("Project ID is missing");
+            return;
+        }
+        if (!newItem.title || !newItem.details) {
+            toast.warning("Please fill in both Title and Details");
+            return;
         }
 
-        const progressCtx = progressChartRef.current.getContext("2d");
-        progressChartInstance.current = new Chart(progressCtx, {
-            type: "doughnut",
-            data: {
-                labels: ["Completed", "In Progress", "Not Started"],
-                datasets: [{
-                    data: [65, 20, 15],
-                    backgroundColor: [
-                        "rgba(34, 197, 94, 0.8)", // Green
-                        "rgba(59, 130, 246, 0.8)", // Blue
-                        "rgba(75, 85, 99, 0.5)"   // Gray
-                    ],
-                    borderColor: "rgba(17, 24, 39, 1)",
-                    borderWidth: 2,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#9ca3af', padding: 20 }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Overall Project Completion',
-                        color: '#f3f4f6',
-                        font: { size: 16 }
-                    }
-                }
-            }
-        });
+        setAdding(true);
+        try {
+            const response = await fetch(`${API_BASE}/projectSummary/add/${projectId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify([{
+                    title: newItem.title,
+                    details: newItem.details
+                }]),
+                credentials: 'include'
+            });
 
-        // --- Financial Chart (Bar) ---
-        if (financialChartInstance.current) {
-            financialChartInstance.current.destroy();
+            const data = await response.json();
+            if (response.ok) {
+                toast.success("Summary item added");
+                setNewItem({ title: "", details: "" });
+                setIsAddModalOpen(false);
+                fetchSummary();
+            } else {
+                toast.error(data.message || "Failed to add item");
+            }
+        } catch (error) {
+            console.error("Error adding item:", error);
+            toast.error("Error adding item");
+        } finally {
+            setAdding(false);
         }
+    };
 
-        const financialCtx = financialChartRef.current.getContext("2d");
-        financialChartInstance.current = new Chart(financialCtx, {
-            type: "bar",
-            data: {
-                labels: ["Civil Work", "Plumbing", "Electrical", "HVAC", "Interiors"],
-                datasets: [
-                    {
-                        label: "Budget Allocated",
-                        data: [500000, 200000, 250000, 150000, 300000],
-                        backgroundColor: "rgba(59, 130, 246, 0.6)",
-                        borderColor: "rgba(59, 130, 246, 1)",
-                        borderWidth: 1
-                    },
-                    {
-                        label: "Actual Spent",
-                        data: [420000, 180000, 120000, 50000, 50000],
-                        backgroundColor: "rgba(245, 158, 11, 0.6)", // Amber
-                        borderColor: "rgba(245, 158, 11, 1)",
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(75, 85, 99, 0.2)' },
-                        ticks: { color: '#9ca3af' }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#9ca3af' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#9ca3af' }
-                    }
-                }
+    // Update Summary Logic (Save all changes)
+    const handleSaveUpdates = async () => {
+        // Prepare payload: filter out items that haven't changed? no, just send all is fine or better yet, simple approach:
+        // The API expects an array of objects with ids. 
+        // We will send the current state of summaryData.
+
+        try {
+            const updates = summaryData.map(item => ({
+                id: item.id,
+                title: item.title,
+                details: item.details || item.description // handle both keys if legacy data exists
+            }));
+
+            const response = await fetch(`${API_BASE}/projectSummary/update/`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates),
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                toast.success("Changes saved successfully");
+                setIsEditing(false);
+                fetchSummary();
+            } else {
+                const data = await response.json();
+                toast.error(data.message || "Failed to update summary");
             }
+        } catch (error) {
+            console.error("Error updating summary:", error);
+            toast.error("Error saving changes");
+        }
+    };
+
+    // Handle Inline Edit Change
+    const handleInputChange = (index, field, value) => {
+        setSummaryData(prev => {
+            const newData = [...prev];
+            newData[index] = { ...newData[index], [field]: value };
+            return newData;
         });
+    };
 
-        // Cleanup function
-        return () => {
-            if (progressChartInstance.current) progressChartInstance.current.destroy();
-            if (financialChartInstance.current) financialChartInstance.current.destroy();
-        };
-    }, []);
+    // Delete Modal State
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState(null);
 
-    // Summary Cards Data
-    const summaryCards = [
-        { title: "Days Completed", value: "145", sub: "out of 365 Days", icon: "calendar_today", color: "text-blue-400" },
-        { title: "Pending Hindrances", value: "12", sub: "Issues Reported", icon: "warning", color: "text-red-400" },
-        { title: "Manpower on Site", value: "85", sub: "Workers Today", icon: "groups", color: "text-green-400" },
-        { title: "Active Work Orders", value: "8", sub: "Contractors Assigned", icon: "assignment", color: "text-purple-400" },
-    ];
+    if (!projectId) {
+        return (
+            <div className="flex h-screen bg-background">
+                <Sidebar />
+                <main className="flex-1 p-8 bg-gray-900 flex flex-col items-center justify-center text-center">
+                    <span className="material-icons text-6xl text-gray-500 mb-4">folder_off</span>
+                    <h1 className="text-3xl font-bold text-white mb-2">No Project Selected</h1>
+                    <p className="text-gray-400 mb-6 max-w-md">
+                        This page requires a valid Project ID. Please navigate here from a specific project's dashboard.
+                    </p>
+                    <button
+                        onClick={() => navigate('/dashboard/projects')}
+                        className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                    >
+                        Go to Projects
+                    </button>
+                </main>
+            </div>
+        );
+    }
+
+    // Trigger Delete Modal
+    const handleDeleteItem = (id) => {
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    // Confirm Delete
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/projectSummary/delete/`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify([deleteId]),
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                toast.success("Item deleted");
+                fetchSummary();
+            } else {
+                const data = await response.json();
+                toast.error(data.message || "Failed to delete item");
+            }
+        } catch (error) {
+            console.error("Error deleting item:", error);
+            toast.error("Error deleting item");
+        } finally {
+            setShowDeleteModal(false);
+            setDeleteId(null);
+        }
+    };
 
     return (
         <div className="flex h-screen bg-background">
             <Sidebar />
             <main className="flex-1 p-8 bg-gray-900 overflow-y-auto">
-                <header className="mb-8">
-                    <button
-                        className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2 mb-4"
-                        onClick={() => navigate(-1)}
-                    >
-                        <span className="material-icons">arrow_back</span>
-                        <span>Back</span>
-                    </button>
-                    <h1 className="text-4xl font-bold text-[var(--text-primary)]">
-                        Project Summary & Overview
-                    </h1>
-                    <p className="text-[var(--text-secondary)]">
-                        High-level metrics, financial status, and progress charts.
-                    </p>
+                <header className="mb-8 flex justify-between items-center">
+                    <div>
+                        <button
+                            className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2 mb-4"
+                            onClick={() => navigate(-1)}
+                        >
+                            <span className="material-icons">arrow_back</span>
+                            <span>Back</span>
+                        </button>
+                        <h1 className="text-4xl font-bold text-[var(--text-primary)]">
+                            Project Summary
+                        </h1>
+                        <p className="text-[var(--text-secondary)]">
+                            Detailed tabular report of project status and metrics.
+                        </p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => {
+                                if (isEditing) handleSaveUpdates();
+                                else setIsEditing(true);
+                            }}
+                            className={`font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 ${isEditing
+                                ? 'bg-green-600 hover:bg-green-500 text-white'
+                                : 'bg-gray-700 hover:bg-gray-600 text-white'
+                                }`}
+                        >
+                            <span className="material-icons">{isEditing ? 'save' : 'edit'}</span>
+                            {isEditing ? 'Save Changes' : 'Edit'}
+                        </button>
+                        <button
+                            onClick={() => setIsAddModalOpen(!isAddModalOpen)} // Toggles the inline row state actually, let's reuse isAddModalOpen variable for inline toggle or rename it. I'll stick to isAddModalOpen for now as a toggle for the "New" row
+                            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2"
+                        >
+                            <span className="material-icons">add</span>
+                            Add Item
+                        </button>
+                    </div>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {summaryCards.map((card, index) => (
-                        <div key={index} className="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-md hover:-translate-y-1 transition-transform">
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 className="text-gray-400 text-sm uppercase tracking-wide font-semibold">{card.title}</h3>
-                                    <div className="text-3xl font-bold text-white mt-1">{card.value}</div>
-                                </div>
-                                <span className={`material-icons text-3xl ${card.color}`}>{card.icon}</span>
+                <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-900/50 border-b border-gray-700 text-xs uppercase text-gray-400 font-semibold tracking-wider">
+                                    <th className="p-4 w-16 text-center border-r border-gray-700">Sr No.</th>
+                                    <th className="p-4 w-1/4 border-r border-gray-700">Title</th>
+                                    <th className="p-4 w-3/4 border-r border-gray-700">Details</th>
+                                    {(isEditing || isAddModalOpen) && <th className="p-4 w-16 text-center">Action</th>}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-700">
+
+
+                                {loading ? (
+                                    <tr><td colSpan="4" className="p-8 text-center text-gray-400">Loading summary...</td></tr>
+                                ) : summaryData.length === 0 && !isAddModalOpen ? (
+                                    <tr><td colSpan={(isEditing || isAddModalOpen) ? "4" : "3"} className="p-8 text-center text-gray-400">No project summary data found. Add items to get started.</td></tr>
+                                ) : (
+                                    summaryData.map((row, index) => (
+                                        <tr key={row.id || index} className="hover:bg-gray-700/30 transition-colors duration-150 text-sm text-gray-300 border-b border-gray-700 last:border-0">
+                                            <td className="p-4 text-center text-gray-500 font-medium border-r border-gray-700 align-middle">
+                                                {index + 1}
+                                            </td>
+                                            <td className={isEditing ? "p-2 font-medium text-white border-r border-gray-700 align-top" : "p-4 font-medium text-white border-r border-gray-700 align-top"}>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        value={row.title}
+                                                        onChange={(e) => handleInputChange(index, 'title', e.target.value)}
+                                                        className="w-full h-10 bg-gray-900 border border-gray-600 rounded px-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                                                        placeholder="Title..."
+                                                    />
+                                                ) : (
+                                                    row.title
+                                                )}
+                                            </td>
+                                            <td className={isEditing ? "p-2 text-gray-300 border-r border-gray-700 align-top" : "p-4 text-gray-300 border-r border-gray-700 align-top"}>
+                                                {isEditing ? (
+                                                    <textarea
+                                                        value={row.details || row.description}
+                                                        onChange={(e) => handleInputChange(index, 'details', e.target.value)}
+                                                        className="w-full min-h-[40px] bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-y transition-colors leading-relaxed"
+                                                        placeholder="Details..."
+                                                        rows={1}
+                                                        onInput={(e) => {
+                                                            e.target.style.height = 'auto';
+                                                            e.target.style.height = e.target.scrollHeight + 'px';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="whitespace-pre-wrap">{row.details || row.description}</div>
+                                                )}
+                                            </td>
+                                            {(isEditing || isAddModalOpen) && (
+                                                <td className="p-4 text-center align-middle">
+                                                    {isEditing ? (
+                                                        <button
+                                                            onClick={() => handleDeleteItem(row.id)}
+                                                            className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all mx-auto"
+                                                            title="Delete Item"
+                                                        >
+                                                            <span className="material-icons text-sm font-bold">delete</span>
+                                                        </button>
+                                                    ) : (
+                                                        <span></span>
+                                                    )}
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))
+                                )}
+                                {/* Inline Add Row (Active when Add Item is clicked) */}
+                                {isAddModalOpen && (
+                                    <tr className="bg-gray-800 border-b border-gray-700">
+                                        <td className="p-4 text-center font-bold text-gray-400 border-r border-gray-700 align-middle">
+                                            New
+                                        </td>
+                                        <td className="p-2 border-r border-gray-700 align-top">
+                                            <input
+                                                type="text"
+                                                value={newItem.title}
+                                                onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
+                                                className="w-full h-10 bg-gray-900 border border-gray-600 rounded px-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                                                placeholder="Title..."
+                                                autoFocus
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        // Optional: move focus to details or submit
+                                                    }
+                                                }}
+                                            />
+                                        </td>
+                                        <td className="p-2 border-r border-gray-700 align-top">
+                                            <textarea
+                                                value={newItem.details}
+                                                onChange={(e) => setNewItem({ ...newItem, details: e.target.value })}
+                                                className="w-full min-h-[40px] bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-y transition-colors leading-relaxed"
+                                                placeholder="Details..."
+                                                rows={1}
+                                                onInput={(e) => {
+                                                    e.target.style.height = 'auto';
+                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                }}
+                                            />
+                                        </td>
+                                        <td className="p-2 text-center align-middle whitespace-nowrap">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        if (!newItem.title.trim() && !newItem.details.trim()) {
+                                                            setIsAddModalOpen(false); // Discard if empty
+                                                            return;
+                                                        }
+                                                        handleAddItem();
+                                                    }}
+                                                    disabled={adding}
+                                                    className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-500 text-white flex items-center justify-center shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    title="Save Item"
+                                                >
+                                                    <span className="material-icons text-sm font-bold">check</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setNewItem({ title: '', details: '' }); // Clear field
+                                                        setIsAddModalOpen(false); // Discard row
+                                                    }}
+                                                    className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                    title="Discard Row"
+                                                >
+                                                    <span className="material-icons text-sm font-bold">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Delete Confirmation Modal */}
+                {showDeleteModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 max-w-sm w-full p-6 animate-fade-in-up">
+                            <div className="flex items-center gap-3 mb-4 text-red-400">
+                                <span className="material-icons text-3xl">warning</span>
+                                <h3 className="text-xl font-bold text-white">Confirm Deletion</h3>
                             </div>
-                            <div className="text-sm text-gray-500">{card.sub}</div>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Progress Chart Container */}
-                    <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-md">
-                        <h3 className="text-lg font-bold text-white mb-6 flex items-center">
-                            <span className="material-icons mr-2 text-green-500">donut_large</span>
-                            Progress Overview
-                        </h3>
-                        <div className="relative h-64 w-full">
-                            <canvas ref={progressChartRef}></canvas>
-                        </div>
-                    </div>
-
-                    {/* Financial Chart Container */}
-                    <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-md">
-                        <h3 className="text-lg font-bold text-white mb-6 flex items-center">
-                            <span className="material-icons mr-2 text-blue-500">bar_chart</span>
-                            Financial Status
-                        </h3>
-                        <div className="relative h-64 w-full">
-                            <canvas ref={financialChartRef}></canvas>
+                            <p className="text-gray-300 mb-6">
+                                Are you sure you want to delete this summary item? This action cannot be undone.
+                            </p>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-medium transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium shadow-lg transition-colors flex items-center gap-2"
+                                >
+                                    <span className="material-icons text-sm">delete</span>
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div className="mt-8 bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-md">
-                    <h3 className="text-lg font-bold text-white mb-4">Executive Summary</h3>
-                    <p className="text-gray-300 leading-relaxed">
-                        The project is currently proceeding with a <span className="text-green-400 font-semibold">Healthy</span> status overall.
-                        Civil works are nearing 60% completion. However, delays in <span className="text-red-400">Excavation work</span> due to geotech consultancy
-                        and material shortages in <span className="text-red-400">Column Casting</span> (Steel) have been noted as critical hindrances.
-                        Budget utilization is within limits for electrical and interiors, but plumbing expenses are tracking slightly lower than planned.
-                        Immediate attention is required for the "Borewell CF4" decision pending status.
-                    </p>
-                </div>
+                )}
             </main>
         </div>
     );

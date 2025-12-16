@@ -1279,3 +1279,60 @@ async function patchProjectRoles(project_id, changes) {
 
 // const t = await getTitles();
 // console.log(t);
+
+// #region 📄 PROJECT SUMMARY ─────────────────────────────────────────────
+
+// Fetch Project Summary by Project ID
+export async function r_fetchProjectSummary(project_id) {
+  const query = `SELECT * FROM project_summary WHERE project_id = ? ORDER BY id ASC`;
+  try {
+    const [rows] = await pool.query(query, [project_id]);
+    return rows;
+  } catch (error) {
+    console.error("❌ Error fetching project summary:", error);
+    // If table doesn't exist, return empty array to prevent crash if not strict
+    // But better to throw original error so we know if table is missing
+    throw error;
+  }
+}
+
+// Insert Project Summary Item
+export async function r_insertProjectSummary(project_id, item) {
+  const query = `INSERT INTO project_summary (project_id, title, details) VALUES (?, ?, ?)`;
+  try {
+    const [result] = await pool.query(query, [project_id, item.title, item.details]);
+    return result.insertId;
+  } catch (error) {
+    console.error("❌ Error inserting project summary:", error);
+    throw error;
+  }
+}
+
+// Update Project Summary Item
+export async function r_updateProjectSummary(item) {
+  const query = `UPDATE project_summary SET title = ?, details = ? WHERE id = ?`;
+  try {
+    const [result] = await pool.query(query, [item.title, item.details, item.id]);
+    return result.affectedRows;
+  } catch (error) {
+    console.error("❌ Error updating project summary:", error);
+    throw error;
+  }
+}
+
+// Delete Project Summary Items
+export async function r_deleteProjectSummary(ids) {
+  if (!ids || ids.length === 0) return 0;
+  // Use IN clause
+  const placeholders = ids.map(() => '?').join(',');
+  const query = `DELETE FROM project_summary WHERE id IN (${placeholders})`;
+  try {
+    const [result] = await pool.query(query, ids);
+    return result.affectedRows;
+  } catch (error) {
+    console.error("❌ Error deleting project summary:", error);
+    throw error;
+  }
+}
+
+// #endregion

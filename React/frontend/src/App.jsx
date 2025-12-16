@@ -182,6 +182,14 @@ function App() {
           }
         />
         <Route
+          path="/dashboard/project-summary/:projectId"
+          element={
+            <ProtectedRoute>
+              <ProjectSummary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dashboard/organisation-chart"
           element={
             <ProtectedRoute>

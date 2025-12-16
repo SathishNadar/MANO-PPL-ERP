@@ -17,13 +17,14 @@ import ProjectRolesandResponsibilitiesRoutes from './ProjectAPI/ProjectRolesandR
 import ReportRoutes from './ProjectAPI/Reports.js';
 import BudgetRoutes from './ProjectAPI/Budget.js';
 import HindranceRoutes from './ProjectAPI/Hindrance.js';
+import ProjectSummaryRoutes from './ProjectAPI/ProjectSummary.js';
 import VendorRoutes from './VendorClientAPI/vendor.js';
 import TaskRoutes from './Tasks/task.js';
 import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
 import WorkLocationRoutes from './Admin/WorkLocations.js';
 import S3Routes from './s3/s3Routes.js';
-import ProjectSummaryRoutes from './ProjectAPI/ProjectSummary.js';
+
 
 
 import './config.js';
@@ -99,6 +100,7 @@ const io = new SocketIO(server, {
   },
   // you can tune pingInterval/pingTimeout if needed
 });
+
 
 // basic connection handler
 io.on('connection', (socket) => {

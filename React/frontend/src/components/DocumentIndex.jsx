@@ -34,8 +34,8 @@ const DocumentIndex = () => {
         } else if (item === "Events / Hindrance Report") {
             navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
             navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
-        } else if (item === "Project Report / Summary") {
-            navigate('/dashboard/project-summary');
+        } else if (item === "Project Summary") {
+            navigate(`/dashboard/project-summary/${projectId}`);
         } else if (item === "Organisation Chart") {
             navigate('/dashboard/organisation-chart');
         }
@@ -49,7 +49,7 @@ const DocumentIndex = () => {
                 "Project Directory",
                 "Project Vendor List",
                 "MANO's Staff Role & Responsibilties",
-                "Project Report",
+                "Project Summary",
                 "Organisation Chart",
                 "Agenda of Meeting",
                 "Minutes of Meeting",
