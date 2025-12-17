@@ -4,6 +4,8 @@ import { authenticateJWT } from "../AuthAPI/LoginAPI.js";
 import { fetchTimeStamp, coordsToAddress } from "../Google_API/Maps.js";
 import multer from "multer";
 import { uploadFile, getFileUrl, listFiles, uploadCompressedImage } from "../s3/s3Service.js";
+import { exportAttendanceToFile } from "../File_Manager/Excel.js";
+import { getTempFilePath, cleanTempFile } from "../File_Manager/TempManager.js";
 
 const router = express.Router();
 const upload = multer(); // store files in memory
@@ -314,6 +316,42 @@ router.get("/records", authenticateJWT, async (req, res) => {
   } catch (err) {
     console.error("User attendance records error:", err);
     res.status(500).json({ ok: false, message: "Internal server error" });
+  }
+});
+
+// GET /attendance/download-report
+router.get("/download-report", authenticateJWT, async (req, res) => {
+  let tempFilePath = null;
+  try {
+    const { user_id, date_from, date_to } = req.query;
+
+    // Default to current month if dates are missing
+    const now = new Date();
+    const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const defaultEnd = now.toISOString().split('T')[0];
+
+    const startDate = date_from || defaultStart;
+    const endDate = date_to || defaultEnd;
+
+    // 1. Generate a temp file path
+    tempFilePath = getTempFilePath("xlsx", "Attendance_Report");
+
+    // 2. Generate the Excel file
+    await exportAttendanceToFile(tempFilePath, startDate, endDate, user_id);
+
+    // 3. Send the file to the client
+    res.download(tempFilePath, "Attendance_Report.xlsx", (err) => {
+      // 4. Clean up the temp file after sending
+      if (err) {
+        console.error("Error sending file:", err);
+      }
+      cleanTempFile(tempFilePath);
+    });
+  } catch (err) {
+    console.error("Error generating report:", err);
+    // Ensure cleanup if something failed before download started
+    if (tempFilePath) cleanTempFile(tempFilePath);
+    res.status(500).json({ ok: false, message: "Failed to generate report" });
   }
 });
 
