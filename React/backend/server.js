@@ -10,7 +10,6 @@ import ForgotPasswordRoutes from './AuthAPI/ForgotPasswordAPI.js';
 import AppError from './utils/AppError.js';
 import errorHandler from './middleware/errorHandler.js';
 import ProjectRoutes from './ProjectAPI/Projects.js';
-// import ProjectContactsRoutes from './ProjectAPI/ProjectContacts.js';
 import ProjectDirectoryRoutes from './ProjectAPI/ProjectDirectory.js';
 import ProjectVendorsRoutes from './ProjectAPI/ProjectVendors.js';
 import ProjectRolesandResponsibilitiesRoutes from './ProjectAPI/ProjectRolesandResponsibilities.js';
@@ -65,7 +64,7 @@ app.use('/api', ForgotPasswordRoutes);
 app.use('/s3', S3Routes);
 
 app.use('/project', ProjectRoutes);
-app.use("/projectContacts", ProjectDirectoryRoutes);
+app.use("/projectDirectory", ProjectDirectoryRoutes);
 app.use("/projectVendors", ProjectVendorsRoutes);
 app.use("/projectStaffRoles", ProjectRolesandResponsibilitiesRoutes);
 app.use("/projectSummary", ProjectSummaryRoutes);
