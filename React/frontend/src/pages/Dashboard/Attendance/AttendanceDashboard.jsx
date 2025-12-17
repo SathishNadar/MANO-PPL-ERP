@@ -23,7 +23,6 @@ const _DEFAULT_MARKER = L.icon({
   tooltipAnchor: [16, -28]
 })
 
-// small helper to avoid creating new icon objects on every render
 function getDefaultMarker() {
   return _DEFAULT_MARKER
 }
@@ -37,7 +36,6 @@ function AttendanceDashboard() {
   const defaultZoom = 5
   const [tileUrl, setTileUrl] = useState('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
 
-  // fetch today's records from server
   useEffect(() => {
     async function fetchToday() {
       try {
@@ -47,7 +45,6 @@ function AttendanceDashboard() {
         const dd = String(today.getDate()).padStart(2, '0')
         const dateStr = `${yyyy}-${mm}-${dd}`
 
-        // NOTE: adjust this URL if your backend route differs. Keep credentials if using cookie auth.
         const res = await fetch(`${API_BASE}/attendance/records/admin?date_from=${dateStr}&date_to=${dateStr}&limit=2000`, {
           credentials: 'include'
         })
@@ -87,214 +84,121 @@ function AttendanceDashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-background text-white">
+    <div className="flex h-screen bg-[#0f1724] text-[#e6eef8] font-sans overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 p-6 flex flex-col" style={{ minHeight: 0 }}>
-        <div className="mb-4 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-2xl font-semibold">Attendance Dashboard</h2>
-        </div>
-
-        <div className="flex gap-4 mb-6 overflow-x-auto items-stretch">
-          <div className="flex-shrink-0 w-64 md:w-1/4">
-            <Link to="/dashboard/attendance/admin" className="block h-full">
-              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
-                <div className="flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold">Admin View — Graph</h3>
-                    <p className="text-sm text-gray-400 mt-1">Shows time-series graphs for users: <span className="text-gray-200">time_in, time_out, breaks, idle periods</span>.</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
+      <div className="flex-1 flex flex-col h-full relative overflow-hidden">
+        {/* HEADER */}
+        <div className="h-20 flex items-center justify-between px-8 bg-[#0f1724] border-b border-white/5 flex-shrink-0 z-10">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-white tracking-wide">Attendance Dashboard</h1>
           </div>
 
-          <div className="flex-shrink-0 w-64 md:w-1/4">
-            <Link to="/dashboard/attendance/users" className="block h-full">
-              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-green-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
-                <div className="flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold">Admin View — Users</h3>
-                    <p className="text-sm text-gray-400 mt-1">A Admin Page to manage geofencing rules for employees.</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </div>
-
-          <div className="flex-shrink-0 w-64 md:w-1/4">
-            <Link to="/dashboard/attendance" className="block h-full">
-              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-blue-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
-                <div className="flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold">Employee Stats</h3>
-                    <p className="text-sm text-gray-400 mt-1">Detailed breakdowns by <span className="text-gray-200">department, gender, cohorts, tenure</span>.</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </div>
-
-          <div className="flex-shrink-0 w-64 md:w-1/4">
-            <Link to="/dashboard/attendance" className="block h-full">
-              <div className="h-44 rounded-lg bg-gray-800 border-l-4 border-blue-500 shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 p-4 flex h-full">
-                <div className="flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold">Attendance List — Cumulative</h3>
-                    <p className="text-sm text-gray-400 mt-1">Excel-style summary view with quick exports.</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
+          <div className="flex items-center gap-4">
+            <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1a2332] hover:bg-[#233042] border border-white/5 text-gray-400 transition-colors">
+              <span className="material-icons text-[20px]">notifications</span>
+            </button>
           </div>
         </div>
 
-        <div className="rounded bg-[#061024] border border-gray-700 p-4 flex-1 min-h-0 flex flex-col">
-          <div className="flex items-center justify-between mb-3 flex-shrink-0">
-            <h4 className="font-medium">Map</h4>
+        {/* SCROLLABLE CONTENT */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
 
-            <div className="flex gap-2 items-center">
-              <span className="text-xs text-gray-400 mr-2">Style</span>
-              <button onClick={() => setTileUrl('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')} className="px-2 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600">Street</button>
-              <button onClick={() => setTileUrl('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png')} className="px-2 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600">Dark</button>
-              <button onClick={() => setTileUrl('http://www.google.cn/maps/vt?lyrs=y&x={x}&y={y}&z={z}')} className="px-2 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600">Terrain</button>
+          {/* TOP CARDS ROW */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+            <Link to="/dashboard/attendance/admin" className="block group">
+              <div className="bg-[#1E2939] h-32 rounded-xl p-5 border border-white/5 relative transition-all transform hover:-translate-y-1 hover:shadow-xl hover:bg-[#253246] flex flex-col justify-center">
+                <h3 className="font-bold text-white text-base mb-2">Admin View — Graph</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">Shows time-series graphs for users: <span className="text-gray-200">time_in, time_out, breaks, idle periods</span>.</p>
+              </div>
+            </Link>
+
+            <Link to="/dashboard/attendance/users" className="block group">
+              <div className="bg-[#1E2939] h-32 rounded-xl p-5 border border-white/5 relative transition-all transform hover:-translate-y-1 hover:shadow-xl hover:bg-[#253246] flex flex-col justify-center">
+                <h3 className="font-bold text-white text-base mb-2">Admin View — Users</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">A Admin Page to manage geofencing rules for employees.</p>
+              </div>
+            </Link>
+
+            <Link to="/dashboard/attendance" className="block group">
+              <div className="bg-[#1E2939] h-32 rounded-xl p-5 border border-white/5 relative transition-all transform hover:-translate-y-1 hover:shadow-xl hover:bg-[#253246] flex flex-col justify-center">
+                <h3 className="font-bold text-white text-base mb-2">Employee Stats</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">Detailed breakdowns by <span className="text-gray-200">department, gender, cohorts, tenure</span>.</p>
+              </div>
+            </Link>
+
+            <Link to="/dashboard/attendance" className="block group">
+              <div className="bg-[#1E2939] h-32 rounded-xl p-5 border border-white/5 relative transition-all transform hover:-translate-y-1 hover:shadow-xl hover:bg-[#253246] flex flex-col justify-center">
+                <h3 className="font-bold text-white text-base mb-2">Attendance List — Cumulative</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">Excel-style summary view with quick exports.</p>
+              </div>
+            </Link>
+          </div>
+
+          {/* MAP SECTION */}
+          <div className="bg-[#151e2d] rounded-xl shadow-xl shadow-black/30 border border-white/5 flex flex-col min-h-[500px] h-[calc(100vh-280px)] overflow-hidden">
+            <div className="px-5 py-3 flex justify-between items-center bg-[#1a2332] border-b border-white/5">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <span className="material-icons text-sky-400 text-sm">my_location</span>
+                Live Location Overview
+              </h3>
+
+              <div className="bg-[#0f1724] p-1 rounded-lg flex gap-1 border border-white/10">
+                <button onClick={() => setTileUrl('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')} className={`px-3 py-1 text-xs font-medium rounded transition-all ${tileUrl.includes('openstreetmap') ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>Street</button>
+                <button onClick={() => setTileUrl('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png')} className={`px-3 py-1 text-xs font-medium rounded transition-all ${tileUrl.includes('dark_all') ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>Dark</button>
+                <button onClick={() => setTileUrl('http://www.google.cn/maps/vt?lyrs=y&x={x}&y={y}&z={z}')} className={`px-3 py-1 text-xs font-medium rounded transition-all ${tileUrl.includes('google') ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>Satellite</button>
+              </div>
+            </div>
+
+            <div className="flex-1 relative bg-[#0f1724]">
+              <MapContainer whenCreated={handleMapReady} center={indiaCenter} zoom={defaultZoom} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                <ZoomControl position="topright" />
+                <TileLayer attribution='&copy; OpenStreetMap contributors' url={tileUrl} noWrap={true} />
+                {(() => {
+                  function haversineDistance(aLat, aLng, bLat, bLng) {
+                    const toRad = v => (v * Math.PI) / 180; const R = 6371000;
+                    const dLat = toRad(bLat - aLat); const dLon = toRad(bLng - aLng);
+                    const lat1 = toRad(aLat); const lat2 = toRad(bLat);
+                    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+                    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                  }
+                  function buildClusters(points, radiusMeters = 200) {
+                    const clusters = [];
+                    for (const p of points) {
+                      const lat = Number(p.lat); const lng = Number(p.lng);
+                      if (!isFinite(lat) || !isFinite(lng)) continue;
+                      let placed = false;
+                      for (const c of clusters) {
+                        if (haversineDistance(c.lat, c.lng, lat, lng) <= radiusMeters) { c.members.push(p); const n = c.members.length; c.lat = (c.lat * (n - 1) + lat) / n; c.lng = (c.lng * (n - 1) + lng) / n; placed = true; break; }
+                      }
+                      if (!placed) clusters.push({ lat, lng, members: [p] });
+                    }
+                    return clusters;
+                  }
+                  return buildClusters(records, 200).map((c, idx) => {
+                    if (!c?.members?.length) return null;
+                    if (c.members.length === 1) {
+                      const pt = c.members[0];
+                      return (
+                        <Marker key={`p-${pt.id}`} position={[Number(pt.lat), Number(pt.lng)]} icon={getDefaultMarker()}>
+                          <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={false}>{pt.name}</Tooltip>
+                          <Popup><div><div className="font-semibold">{pt.name}</div><div className="text-xs text-gray-500">{pt.time_in}</div></div></Popup>
+                        </Marker>
+                      );
+                    }
+                    const uniqueNames = Array.from(new Set(c.members.map(m => (m.name || '').toString().trim()).filter(Boolean)));
+                    return (
+                      <Marker key={`cluster-${idx}`} position={[c.lat, c.lng]} icon={getDefaultMarker()} eventHandlers={{ click: () => { try { mapRef.current?.flyTo([c.lat, c.lng], 17, { animate: true, duration: 0.8 }); } catch (e) { } } }}>
+                        <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={false}>{uniqueNames.slice(0, 3).join(', ') + (uniqueNames.length > 3 ? ' ...' : '') || 'Multiple'}</Tooltip>
+                        <Popup><div style={{ maxHeight: 220, overflowY: 'auto', minWidth: 160 }}><div className="font-semibold">People nearby</div><ul className="text-sm mt-2 pl-4 list-disc">{uniqueNames.map((u, i) => <li key={i}>{u}</li>)}</ul></div></Popup>
+                      </Marker>
+                    );
+                  });
+                })()}
+              </MapContainer>
             </div>
           </div>
 
-          <div className="flex-1 rounded overflow-hidden min-h-0">
-            <MapContainer
-              whenCreated={handleMapReady}
-              center={indiaCenter}
-              zoom={defaultZoom}
-              scrollWheelZoom={true}
-              style={{ height: '85vh', width: '100%' }}
-              zoomControl={false}
-            >
-              <ZoomControl position="topright" />
-              {/* Outdoor / terrain style tiles (OpenTopoMap) - good shaded outdoor look */}
-              <TileLayer
-                attribution='&copy; OpenStreetMap contributors'
-                url={tileUrl}
-                noWrap={true}
-              />
-
-              {/* Render clustered markers (200m radius) */}
-              {(() => {
-                // build clusters on the fly
-                function haversineDistance(aLat, aLng, bLat, bLng) {
-                  const toRad = v => (v * Math.PI) / 180
-                  const R = 6371000 // meters
-                  const dLat = toRad(bLat - aLat)
-                  const dLon = toRad(bLng - aLng)
-                  const lat1 = toRad(aLat)
-                  const lat2 = toRad(bLat)
-
-                  const sinDLat = Math.sin(dLat / 2)
-                  const sinDLon = Math.sin(dLon / 2)
-                  const a = sinDLat * sinDLat + sinDLon * sinDLon * Math.cos(lat1) * Math.cos(lat2)
-                  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-                  return R * c
-                }
-
-                function buildClusters(points, radiusMeters = 200) {
-                  const clusters = []
-                  for (const p of points) {
-                    const lat = Number(p.lat)
-                    const lng = Number(p.lng)
-                    if (!isFinite(lat) || !isFinite(lng)) continue
-
-                    let placed = false
-                    for (const c of clusters) {
-                      // distance from cluster center to this point
-                      const d = haversineDistance(c.lat, c.lng, lat, lng)
-                      if (d <= radiusMeters) {
-                        // append to cluster and recompute centroid
-                        c.members.push(p)
-                        const n = c.members.length
-                        c.lat = (c.lat * (n - 1) + lat) / n
-                        c.lng = (c.lng * (n - 1) + lng) / n
-                        placed = true
-                        break
-                      }
-                    }
-
-                    if (!placed) {
-                      clusters.push({ lat, lng, members: [p] })
-                    }
-                  }
-                  return clusters
-                }
-
-                const clusters = buildClusters(records, 200)
-
-                return clusters.map((c, idx) => {
-                  if (!c || !Array.isArray(c.members) || c.members.length === 0) return null
-                  if (c.members.length === 1) {
-                    const pt = c.members[0]
-                    return (
-                      <Marker key={`p-${pt.id}`} position={[Number(pt.lat), Number(pt.lng)]} icon={getDefaultMarker()}>
-                        <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={false}>
-                          {pt.name}
-                        </Tooltip>
-                        <Popup>
-                          <div>
-                            <div className="font-semibold">{pt.name}</div>
-                            <div className="text-xs text-gray-500">{pt.time_in}</div>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    )
-                  }
-
-                  // cluster marker (shows unique names count and unique name list)
-                  const uniqueNamesArr = Array.from(new Set(c.members.map(m => (m.name || '').toString().trim()).filter(Boolean)))
-                  const uniqueCount = uniqueNamesArr.length
-                  const popupContent = (
-                    <div style={{ maxHeight: 220, overflowY: 'auto', minWidth: 160 }}>
-                      <div className="font-semibold">Names nearby</div>
-                      <ul className="text-sm mt-2" style={{ paddingLeft: 16 }}>
-                        {uniqueNamesArr.map((uname, i) => (
-                          <li key={`u-${idx}-${i}`} className="mb-1">{uname}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )
-
-                  return (
-                    <Marker
-                      key={`cluster-${idx}`}
-                      position={[c.lat, c.lng]}
-                      icon={getDefaultMarker()}
-                      eventHandlers={{
-                        click: () => {
-                          // zoom further into cluster center
-                          try {
-                            if (mapRef.current && typeof mapRef.current.flyTo === 'function') {
-                              mapRef.current.flyTo([c.lat, c.lng], 17, { animate: true, duration: 0.8 })
-                            } else if (mapRef.current) {
-                              mapRef.current.setView([c.lat, c.lng], 17, { animate: true })
-                            }
-                          } catch (e) {
-                            console.warn('cluster click zoom failed', e)
-                          }
-                        }
-                      }}
-                    >
-                      <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={false}>
-                        {(() => {
-                          const displayNames = uniqueNamesArr.slice(0, 3).join(', ')
-                          return displayNames ? `${displayNames}${uniqueCount > 3 ? ' ...' : ''}` : 'Multiple nearby'
-                        })()}
-                      </Tooltip>
-                      <Popup>
-                        {popupContent}
-                      </Popup>
-                    </Marker>
-                  )
-                })
-              })()}
-            </MapContainer>
-          </div>
         </div>
       </div>
     </div>

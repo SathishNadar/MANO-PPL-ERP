@@ -22,7 +22,7 @@ const AttendanceDetailsModal = ({ isOpen, onClose, employee }) => {
                 return { raw: r, tin, tout, timeInLat, timeInLng, timeOutLat, timeOutLng };
             });
 
-            parsed.sort((a,b) => {
+            parsed.sort((a, b) => {
                 const at = a.tin ? a.tin.getTime() : 0;
                 const bt = b.tin ? b.tin.getTime() : 0;
                 return bt - at;
@@ -61,7 +61,7 @@ const AttendanceDetailsModal = ({ isOpen, onClose, employee }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-[#1f2937] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-gray-700">
+            <div className="bg-[#1E2939] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-gray-700">
                 <div className="flex justify-between items-center p-6 border-b border-gray-700">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-gray-600 overflow-hidden flex-shrink-0">
@@ -91,7 +91,7 @@ const AttendanceDetailsModal = ({ isOpen, onClose, employee }) => {
                         <div className="space-y-4">
                             <p className="text-sm text-gray-400">Attendance Sessions ({sessionAddresses.length})</p>
                             {sessionAddresses.map((segment, index) => (
-                                <div key={index} className="bg-[#111827] rounded-lg p-4 border border-gray-700">
+                                <div key={index} className="bg-[#101828] rounded-lg p-4 border border-gray-700">
                                     <p className="text-xs text-gray-500 mb-3">Session {index + 1}</p>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
@@ -122,7 +122,7 @@ const AttendanceDetailsModal = ({ isOpen, onClose, employee }) => {
                     {employee.remarks && (
                         <div>
                             <p className="text-sm text-gray-400 mb-2">Remarks</p>
-                            <div className="w-full bg-[#111827] text-gray-300 p-3 rounded-lg border border-gray-700 text-sm min-h-[80px]">{employee.remarks || 'No remarks provided.'}</div>
+                            <div className="w-full bg-[#101828] text-gray-300 p-3 rounded-lg border border-gray-700 text-sm min-h-[80px]">{employee.remarks || 'No remarks provided.'}</div>
                         </div>
                     )}
                 </div>

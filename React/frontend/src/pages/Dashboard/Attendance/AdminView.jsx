@@ -4,6 +4,7 @@ import FilterBar from '../../AttendanceComponents/FilterBar';
 import Sidebar from '../../SidebarComponent/sidebar';
 import AttendanceDetailsModal from '../../AttendanceComponents/AttendanceDetailsModal';
 import { DateTime } from 'luxon';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
@@ -71,12 +72,12 @@ function EmployeeRow({ employee = {}, name, status, statusColor, checkIn, checkO
 // AttendanceChart
 const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployeeClick }) => {
   const timeLabels = [
-    '7 AM','8 AM','9 AM','10 AM','11 AM','12 PM',
-    '1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','7 PM',
-    '8 PM','9 PM','10 PM','11 PM','12 AM'
+    '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM',
+    '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM',
+    '8 PM', '9 PM', '10 PM', '11 PM', '12 AM'
   ];
 
-    const parseISO = (v) => {
+  const parseISO = (v) => {
     if (!v) return null;
     if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
     if (typeof v !== 'string') return null;
@@ -138,15 +139,15 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
     const raw = emp.records || emp.segments || emp.attendanceRecords || [];
     const dayRecords = (raw || []).map(r => ({ r, tin: parseISO(r.time_in ?? r.timeIn ?? r.timeInISO ?? r.start, selectedDate) }))
       .filter(x => x.tin && isSameLocalDay(x.tin, selectedDate))
-      .sort((a,b) => a.tin - b.tin)
+      .sort((a, b) => a.tin - b.tin)
       .map(x => x.r);
 
     const { start: chartStart, end: chartEnd } = getChartBounds(selectedDate);
     const now = new Date();
-    const sixPm = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 18,0,0,0);
+    const sixPm = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 18, 0, 0, 0);
     const segments = [];
 
-    for (let i=0;i<dayRecords.length;i++) {
+    for (let i = 0; i < dayRecords.length; i++) {
       const r = dayRecords[i];
       const timeInRaw = r.time_in ?? r.timeIn ?? r.timeInISO ?? r.checkIn ?? r.start;
       const timeOutRaw = r.time_out ?? r.timeOut ?? r.timeOutISO ?? r.checkOut ?? r.end;
@@ -185,7 +186,7 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
       });
     }
 
-    segments.sort((a,b) => a.start - b.start);
+    segments.sort((a, b) => a.start - b.start);
     return segments;
   };
 
@@ -199,11 +200,11 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
   });
 
   return (
-    <div className="bg-[#111827] rounded-xl p-6 flex flex-col h-full overflow-hidden min-h-0">
+    <div className="bg-[#1E2939] rounded-xl p-6 flex flex-col h-full overflow-hidden min-h-0">
       <div className="overflow-auto custom-scrollbar flex-1 relative min-h-0">
         <div className="min-w-[141.66%] h-full flex flex-col relative">
-          <div className="sticky top-0 z-20 bg-[#111827] flex mb-2 h-8 flex-shrink-0 border-b border-gray-800">
-            <div className="w-48 flex-shrink-0 bg-[#111827] sticky left-0 z-30"></div>
+          <div className="sticky top-0 z-20 bg-[#1E2939] flex mb-2 h-8 flex-shrink-0 border-b border-gray-800">
+            <div className="w-48 flex-shrink-0 bg-[#1E2939] sticky left-0 z-30"></div>
             <div className="flex-grow relative h-8">
               {timeLabels.map((label, index) => (
                 <div key={index} className="absolute top-0 flex flex-col items-center"
@@ -222,7 +223,7 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
 
           <div className="relative flex-1 min-h-0">
             <div className="absolute inset-0 flex pointer-events-none" style={{ zIndex: 0 }}>
-              <div className="w-48 flex-shrink-0 border-r border-gray-800/30 bg-[#111827] sticky left-0 z-10"></div>
+              <div className="w-48 flex-shrink-0 border-r border-gray-800/30 bg-[#1E2939] sticky left-0 z-10"></div>
               <div className="flex-grow relative">
                 {Array.from({ length: 18 }).map((_, index) => (
                   <div key={index} className="absolute top-0 bottom-0 border-l border-gray-800" style={{ left: `${(index / 17) * 100}%` }} />
@@ -255,6 +256,8 @@ const AttendanceChart = ({ employees = [], selectedDate = new Date(), onEmployee
 };
 
 const AdminView = () => {
+  const navigate = useNavigate();
+
   // Local parseISO for AdminView (AttendanceChart has its own version)
   const parseISO = (v, refDate = new Date()) => {
     if (!v) return null;
@@ -371,8 +374,8 @@ const AdminView = () => {
             groupedByEmployee[record.user_name].rawRecords.push(record);
           });
 
-                    const transformedData = Object.values(groupedByEmployee).map(employee => {
-            const records = (employee.rawRecords || []).slice().sort((a,b) => {
+          const transformedData = Object.values(groupedByEmployee).map(employee => {
+            const records = (employee.rawRecords || []).slice().sort((a, b) => {
               const aIn = a.time_in ?? a.timeIn ?? a.timeInISO ?? a.start ?? '';
               const bIn = b.time_in ?? b.timeIn ?? b.timeInISO ?? b.start ?? '';
               const ad = parseTimestamp(aIn) ? parseTimestamp(aIn).getTime() : 0;
@@ -385,13 +388,13 @@ const AdminView = () => {
               if (v instanceof Date) return v.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               const s = String(v).trim();
               const verboseMatch = s.match(/(\d{2}:\\d{2}:\\d{2})/);
-              if (verboseMatch) return verboseMatch[1].slice(0,5);
+              if (verboseMatch) return verboseMatch[1].slice(0, 5);
               const sqlMatch = s.match(/^(?:\\d{4}-\\d{2}-\\d{2})[ T](\\d{2}:\\d{2}:?\\d{0,2})/);
-              if (sqlMatch) return sqlMatch[1].slice(0,5);
-              if (/^\\d{1,2}:\\d{2}(:\\d{2})?$/.test(s)) return s.slice(0,5);
+              if (sqlMatch) return sqlMatch[1].slice(0, 5);
+              if (/^\\d{1,2}:\\d{2}(:\\d{2})?$/.test(s)) return s.slice(0, 5);
               const d = parseTimestamp(s);
               if (d) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-              return s.length >= 5 ? s.slice(0,5) : s;
+              return s.length >= 5 ? s.slice(0, 5) : s;
             };
 
             const firstRecord = records[0];
@@ -444,8 +447,8 @@ const AdminView = () => {
               const d = parseTimestamp(tinRaw, selectedDate);
               if (!d) return false;
               return d.getFullYear() === selectedDate.getFullYear() &&
-                     d.getMonth() === selectedDate.getMonth() &&
-                     d.getDate() === selectedDate.getDate();
+                d.getMonth() === selectedDate.getMonth() &&
+                d.getDate() === selectedDate.getDate();
             });
           });
 
@@ -471,10 +474,18 @@ const AdminView = () => {
   const handleEmployeeClick = (employee) => { setSelectedEmployee(employee); setIsModalOpen(true); };
 
   return (
-    <div className="flex h-screen bg-[#0b0f19] text-white">
+    <div className="flex h-screen bg-[#101828] text-white">
       <Sidebar />
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <div className="p-8 overflow-hidden h-full flex flex-col">
+          <button
+            onClick={() => navigate('/dashboard/attendance')}
+            className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors w-fit"
+          >
+            <span className="material-icons text-lg">arrow_back</span>
+            <span className="text-sm font-medium">Back</span>
+          </button>
+
           <Header title="Employee Attendance" subtitle="Daily attendance overview for today." />
           <FilterBar selectedDate={selectedDate} onDateChange={setSelectedDate} searchTerm={searchTerm} onSearchChange={setSearchTerm} />
 
