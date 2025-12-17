@@ -10,14 +10,21 @@ import ForgotPasswordRoutes from './AuthAPI/ForgotPasswordAPI.js';
 import AppError from './utils/AppError.js';
 import errorHandler from './middleware/errorHandler.js';
 import ProjectRoutes from './ProjectAPI/Projects.js';
+// import ProjectContactsRoutes from './ProjectAPI/ProjectContacts.js';
+import ProjectDirectoryRoutes from './ProjectAPI/ProjectDirectory.js';
+import ProjectVendorsRoutes from './ProjectAPI/ProjectVendors.js';
+import ProjectRolesandResponsibilitiesRoutes from './ProjectAPI/ProjectRolesandResponsibilities.js';
 import ReportRoutes from './ProjectAPI/Reports.js';
 import BudgetRoutes from './ProjectAPI/Budget.js';
+import HindranceRoutes from './ProjectAPI/Hindrance.js';
 import VendorRoutes from './VendorClientAPI/vendor.js';
 import TaskRoutes from './Tasks/task.js';
 import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
 import WorkLocationRoutes from './Admin/WorkLocations.js';
 import S3Routes from './s3/s3Routes.js';
+import ProjectSummaryRoutes from './ProjectAPI/ProjectSummary.js';
+
 
 import './config.js';
 import cookieParser from 'cookie-parser';
@@ -57,6 +64,10 @@ app.use('/api', ForgotPasswordRoutes);
 app.use('/s3', S3Routes);
 
 app.use('/project', ProjectRoutes);
+app.use("/projectContacts", ProjectDirectoryRoutes);
+app.use("/projectVendors", ProjectVendorsRoutes);
+app.use("/projectStaffRoles", ProjectRolesandResponsibilitiesRoutes);
+app.use("/projectSummary", ProjectSummaryRoutes);
 app.use("/report", ReportRoutes);
 app.use("/budget", BudgetRoutes);
 app.use("/vendor_api", VendorRoutes);
@@ -64,6 +75,7 @@ app.use("/tasks", TaskRoutes);
 app.use("/attendance", AttendanceRoutes);
 app.use("/admin", Admin);
 app.use("/admin/locations", WorkLocationRoutes);
+app.use("/hindrance", HindranceRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');
