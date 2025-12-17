@@ -8,9 +8,10 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import fs from "fs";
 import path from "path";
+import sharp from "sharp";
 import '../config.js';
 
-const s3 = new S3Client({
+const s3 = new S3Client({ 
   region: process.env.S3_REGION,
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY_ID,
@@ -21,7 +22,7 @@ const s3 = new S3Client({
 const BUCKET = process.env.S3_BUCKET;
 
 // 1. Upload File (buffer or local file)
-export async function uploadFile({ fileBuffer, filePath, key, directory = "", contentType = "application/octet-stream"}) {
+export async function uploadFile({ fileBuffer, filePath, key, directory = "", contentType = "application/octet-stream" }) {
   try {
     const finalKey = directory ? `${directory}/${key}` : key;
 
@@ -107,6 +108,38 @@ export async function deleteFile({ key, directory = "" }) {
     return { success: true, deletedKey: finalKey };
   } catch (error) {
     console.error("S3 Delete Error:", error);
+    throw error;
+  }
+}
+
+// 5. Upload Compressed Image (WebP)
+export async function uploadCompressedImage({
+  fileBuffer,
+  key,
+  directory = "",
+  width = 800,
+  quality = 50
+}) {
+  try {
+    // Process image: Resize -> WebP -> Buffer
+    const processedBuffer = await sharp(fileBuffer)
+      .resize({ width, withoutEnlargement: true })
+      .webp({ quality })
+      .toBuffer();
+
+    // Ensure extension is .webp
+    const keyBase = key.replace(/\.[^/.]+$/, ""); // Strip existing extension if any
+    const finalKey = `${keyBase}.webp`;
+
+    // Re-use standard upload function
+    return await uploadFile({
+      fileBuffer: processedBuffer,
+      key: finalKey,
+      directory,
+      contentType: "image/webp"
+    });
+  } catch (error) {
+    console.error("Compression Upload Error:", error);
     throw error;
   }
 }

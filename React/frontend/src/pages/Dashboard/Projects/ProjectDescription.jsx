@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Calendar from "../../SmolComponents/calendar";
+
 import Sidebar from "../../SidebarComponent/sidebar";
+import DocumentIndex from "../../../components/DocumentIndex";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
@@ -11,66 +12,17 @@ function ProjectDescription() {
   const [project, setProject] = useState(null);
   const [dprs, setDprs] = useState([]);
   const [usersMap, setUsersMap] = useState({});
+  const [expandedReports, setExpandedReports] = useState({});
 
-  const [budgetExists, setBudgetExists] = useState(false);
-  const [budgetTotal, setBudgetTotal] = useState(null);
-  const [budgetUsed, setBudgetUsed] = useState(null);
-
-  const generateRandomBudget = () => {
-    // random total between 500,000 and 2,000,000 for now
-    const total = Math.floor(Math.random() * (2000000 - 500000 + 1)) + 500000;
-    const used = Math.floor(Math.random() * (total + 1));
-    setBudgetTotal(total);
-    setBudgetUsed(used);
+  const toggleReport = (reportType) => {
+    setExpandedReports((prev) => ({
+      ...prev,
+      [reportType]: !prev[reportType],
+    }));
   };
 
-  const formatNumber = (n) => {
-    if (n === null || n === undefined) return '-';
-    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
-  const [checkingBudget, setCheckingBudget] = useState(true);
 
-  const fetchBudgetExists = async (pId) => {
-    try {
-      setCheckingBudget(true);
-      const res = await fetch(`${API_BASE}/budget/exists/${pId}`, {
-        credentials: "include",
-      });
-      const json = await res.json();
-      if (json && json.success) {
-        setBudgetExists(!!json.exists);
-        // generate a placeholder budget preview for now
-        generateRandomBudget();
-      } else {
-        setBudgetExists(false);
-        // still generate fallback preview so UI isn't empty
-        generateRandomBudget();
-      }
-    } catch (err) {
-      console.error('Failed to check budget existence:', err);
-      setBudgetExists(false);
-      // ensure UI has something to display
-      generateRandomBudget();
-    } finally {
-      setCheckingBudget(false);
-    }
-  };
 
-  const handleCreateBudget = () => {
-    // navigate to your budget creation page (adjust route if you use a different path)
-    navigate(`/dashboard/project-description/${projectId}/budgetCreate`);
-  };
-
-  const handleEditBudget = () => {
-    // navigate to budget edit page (adjust route if you use a different path)
-    // navigate(`/dashboard/project-description/${projectId}/budgetEdit`);
-    navigate(`/dashboard/project-description/${projectId}/budgetUpdate`);
-  };
-
-  const handleViewBudget = () => {
-    // navigate to budget view page
-    navigate(`/dashboard/project-description/${projectId}/budgetView`);
-  };
 
   useEffect(() => {
     if (!projectId) return;
@@ -139,8 +91,7 @@ function ProjectDescription() {
 
     fetchUsers();
 
-    // check if budget exists for this project (calls backend /budget/exists/:projectId)
-    fetchBudgetExists(projectId);
+
   }, [projectId]);
 
   // Calculate project progress percentage
@@ -159,8 +110,7 @@ function ProjectDescription() {
     return `${percent}%`;
   };
 
-  // simple derived values for budget preview
-  const percentUsed = budgetTotal ? Math.round((budgetUsed / budgetTotal) * 100) : 0;
+
 
   //#region  helpers
   const getStatusClasses = (status) => {
@@ -242,6 +192,13 @@ function ProjectDescription() {
       <main className="flex-1 p-8 bg-gray-900 overflow-y-auto">
         <header className="flex justify-between items-center mb-8">
           <div>
+            <button
+              className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2 mb-4"
+              onClick={() => navigate("/dashboard/projects")}
+            >
+              <span className="material-icons">arrow_back</span>
+              <span>Back to Projects</span>
+            </button>
             <h1 className="text-4xl font-bold text-[var(--text-primary)]">
               {project?.project_name || "Project"}
             </h1>
@@ -249,320 +206,272 @@ function ProjectDescription() {
               Welcome back, let's get to work!
             </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <button
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center space-x-2"
-              onClick={() => navigate("/dashboard/home")}
-            >
-              <span className="material-icons">home</span>
-              <span>Home</span>
-            </button>
-            <div className="relative">
-              <img
-                alt="user avatar"
-                className="w-12 h-12 rounded-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzZrALTDtNtoKllECNeqa-KoCN3A3yAA9_l9U090P2qBGmuGd2sTXowj5ERtTyWBKsabMMLDKN2yvh5fs5vmv9BGyibq6-CvXy_dBvBywiGsXeBSbdxaYz9c3P82YPwtCzPLDyJYxTwcljuLX_aJu5tsw9ix3-A85mYi0S35mJNShmb5HaBZFguOZLtWfn1xI5a_nwj5FlApnATfVTO9AvOfVoxD0mqrb6hvV3oad2HofH0PbXsM_JRpiUn9T36C-TkH1_JAvLpCI"
-              />
-              <span className="absolute right-0 bottom-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></span>
-            </div>
-          </div>
+
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-8">
-            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-              <div className="flex flex-col items-center">
-                <div className="w-32 h-32 rounded-full bg-gray-900 mb-4 flex items-center justify-center border-4 border-[var(--accent-blue)]">
-                  <span className="material-icons text-5xl text-[var(--accent-blue)]">
-                    flight
-                  </span>
+        <div className="flex flex-col gap-8">
+          <div className="w-full space-y-8">
+            {/* Project Details Card */}
+            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6 relative">
+              <div className="flex flex-col md:flex-row items-start gap-8">
+                {/* Logo Section */}
+                <div className="flex-shrink-0">
+                  <div className="w-32 h-32 rounded-full bg-gray-900 flex items-center justify-center border-4 border-[var(--accent-blue)]">
+                    <span className="material-icons text-5xl text-[var(--accent-blue)]">
+                      flight
+                    </span>
+                  </div>
                 </div>
-                <h2 className="text-xl font-bold text-[var(--text-primary)]">
-                  {project?.project_name || "Project"}
-                </h2>
-              </div>
-              <div className="mt-6 space-y-2 text-[var(--text-secondary)]">
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Project:
-                  </strong>{" "}
-                  {project?.project_name || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Employer:
-                  </strong>{" "}
-                  {project?.Employer || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Location:
-                  </strong>{" "}
-                  {project?.location || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Project Code:
-                  </strong>{" "}
-                  {project?.project_code || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">
-                    Project Description:
-                  </strong>{" "}
-                  {project?.project_description || "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">Start:</strong>{" "}
-                  {project?.start_date
-                    ? new Date(project.start_date).toLocaleDateString("en-GB")
-                    : "-"}
-                </p>
-                <p>
-                  <strong className="text-[var(--text-primary)]">End:</strong>{" "}
-                  {project?.end_date
-                    ? new Date(project.end_date).toLocaleDateString("en-GB")
-                    : "-"}
-                </p>
-              </div>
-            </div>
 
-            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
-                Project Progress
-              </h3>
-              <div className="relative pt-1">
-                <div className="flex mb-2 items-center justify-between">
-                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-[var(--accent-blue)] bg-gray-900">
-                    Task in progress
-                  </span>
-                  <span className="text-xs font-semibold text-[var(--accent-blue)]">
-                    {getProgressPercentage()}
-                  </span>
-                </div>
-                <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-[var(--border-color)]">
-                  <div
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[var(--accent-blue)]"
-                    style={{ width: getProgressPercentage() }}
-                  ></div>
+                {/* Details Section */}
+                <div className="flex-1 space-y-4">
+                  <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+                    {project?.project_name || "Project"}
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[var(--text-secondary)]">
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Project:</strong>{" "}
+                      {project?.project_name || "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Employer:</strong>{" "}
+                      {project?.Employer || "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Location:</strong>{" "}
+                      {project?.location || "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Project Code:</strong>{" "}
+                      {project?.project_code || "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">Start:</strong>{" "}
+                      {project?.start_date
+                        ? new Date(project.start_date).toLocaleDateString("en-GB")
+                        : "-"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--text-primary)]">End:</strong>{" "}
+                      {project?.end_date
+                        ? new Date(project.end_date).toLocaleDateString("en-GB")
+                        : "-"}
+                    </p>
+                    <div className="col-span-1 md:col-span-2">
+                      <strong className="text-[var(--text-primary)] block mb-1">Project Description:</strong>
+                      <span>{project?.project_description || "-"}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="mt-6">
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <button
-                    onClick={() =>
-                      navigate(
-                        `/dashboard/project-description/${projectId}/dprCreate`
-                      )
-                    }
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                  >
-                    DPR
-                  </button>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
-                    WPR
-                  </button>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
-                    MPR
-                  </button>
-                </div>
+
+              {/* Edit Project Button - Absolute Top Right */}
+              <div className="absolute top-6 right-6">
                 <button
                   onClick={() =>
                     navigate(
                       `/dashboard/project-description/${projectId}/dprEdit`
                     )
                   }
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center space-x-2"
                 >
-                  Edit Project
+                  <span className="material-icons text-sm">edit</span>
+                  <span>Edit Project</span>
                 </button>
               </div>
             </div>
-                        <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Budget</h3>
 
-              <div className="relative pt-1">
-                <div className="flex mb-2 items-center justify-between">
-                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-[var(--accent-blue)] bg-gray-900">
-                    Budget Status
-                  </span>
-                  <span className="text-xs font-semibold text-[var(--accent-blue)]">
-                    {percentUsed}%
-                  </span>
-                </div>
 
-                <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-[var(--border-color)]">
-                  <div
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[var(--accent-blue)]"
-                    style={{ width: `${percentUsed}%` }}
-                  ></div>
+            {/* Project Progress Card - Always Expanded - HIDDEN */}
+            {false && (
+              <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
+                  Project Progress
+                </h3>
+
+                <div className="space-y-3">
+                  {/* DPR Dropdown */}
+                  <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleReport('dpr')}
+                      className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors group"
+                    >
+                      <span className="text-white font-semibold text-sm uppercase">DPR</span>
+                      <span
+                        className={`material-icons text-gray-400 group-hover:text-white transition-all duration-200 ${expandedReports.dpr ? 'rotate-180' : ''
+                          }`}
+                      >
+                        expand_more
+                      </span>
+                    </button>
+                    {expandedReports.dpr && (
+                      <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div
+                            onClick={() => navigate(`/dashboard/project-description/${projectId}/dprCreate`)}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                edit
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  Create
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  Create DPR
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            onClick={() => navigate(`/dashboard/project-description/${projectId}/dpr-list`)}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                visibility
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  View
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  View all DPRs
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* WPR Dropdown */}
+                  <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleReport('wpr')}
+                      className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors group"
+                    >
+                      <span className="text-white font-semibold text-sm uppercase">WPR</span>
+                      <span
+                        className={`material-icons text-gray-400 group-hover:text-white transition-all duration-200 ${expandedReports.wpr ? 'rotate-180' : ''
+                          }`}
+                      >
+                        expand_more
+                      </span>
+                    </button>
+                    {expandedReports.wpr && (
+                      <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div
+                            onClick={() => {/* Navigate to edit WPR */ }}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                edit
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  Create
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  Create WPR
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            onClick={() => {/* Navigate to view WPR */ }}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                visibility
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  View
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  View all WPRs
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* MPR Dropdown */}
+                  <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleReport('mpr')}
+                      className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors group"
+                    >
+                      <span className="text-white font-semibold text-sm uppercase">MPR</span>
+                      <span
+                        className={`material-icons text-gray-400 group-hover:text-white transition-all duration-200 ${expandedReports.mpr ? 'rotate-180' : ''
+                          }`}
+                      >
+                        expand_more
+                      </span>
+                    </button>
+                    {expandedReports.mpr && (
+                      <div className="px-4 pb-4 bg-gray-900/50 border-t border-gray-700/50">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div
+                            onClick={() => {/* Navigate to edit MPR */ }}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                edit
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  Create
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  Create MPR
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            onClick={() => {/* Navigate to view MPR */ }}
+                            className="group relative p-3 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-blue-400 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <span className="material-icons text-gray-500 group-hover:text-blue-400 transition-colors text-xl">
+                                visibility
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                                  View
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+                                  View all MPRs
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              <div className="mt-6">
-                <div className="text-sm text-[var(--text-secondary)] mb-2">
-                  <strong className="text-[var(--text-primary)]">{formatNumber(budgetUsed)}</strong>
-                  <span className="mx-2">/</span>
-                  <span className="text-[var(--text-secondary)]">{formatNumber(budgetTotal)}</span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  {checkingBudget ? (
-                    <button disabled className="col-span-2 bg-gray-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Checking...</button>
-                  ) : budgetExists ? (
-                    <>
-                      <button onClick={handleEditBudget} className="col-span-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Update Budget</button>
-                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={handleCreateBudget} className="col-span-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">Create Budget</button>
-                      <button onClick={handleViewBudget} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-md transition-all duration-200">View</button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          <div className="lg:col-span-2 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
-                  Manpower
-                </h3>
-                <p className="text-[var(--text-secondary)] mb-4">
-                  Current on-site personnel.
-                </p>
-                <div className="flex items-center space-x-4">
-                  <span className="material-icons text-5xl text-[var(--accent-blue)]">
-                    groups
-                  </span>
-                  <div className="text-5xl font-bold text-[var(--text-primary)]">
-                    1,250
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
-                  Equipment
-                </h3>
-                <p className="text-[var(--text-secondary)] mb-4">
-                  Active machinery and tools.
-                </p>
-                <div className="flex items-center space-x-4">
-                  <span className="material-icons text-5xl text-[var(--accent-blue)]">
-                    construction
-                  </span>
-                  <div className="text-5xl font-bold text-[var(--text-primary)]">
-                    350
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
-                Daily Progress Report Summary
-              </h3>
-              <div className="w-full h-42 bg-gray-900 rounded-lg flex items-stretch justify-stretch border border-gray-700 p-0">
-                <div className="w-full h-full">
-                  <Calendar
-                    dprList={dprs.map((d) => ({
-                      date: d.report_date,
-                      dpr_id: d.dpr_id,
-                      project_id: projectId,
-                    }))}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 p-6">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
-                Daily Progress Reports
-              </h3>
-              {dprs.length === 0 ? (
-                <p className="text-[var(--text-secondary)]">
-                  No DPR Data to fetch.
-                </p>
-              ) : (
-                <ul className="space-y-4">
-                  {dprs.map((dpr) => {
-                    const date = new Date(dpr.report_date);
-                    const dateStr = date.toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    });
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    date.setHours(0, 0, 0, 0);
-                    const diffDays = Math.floor(
-                      (today - date) / (1000 * 60 * 60 * 24)
-                    );
-                    const label =
-                      diffDays === 0
-                        ? "Today"
-                        : diffDays === 1
-                        ? "Yesterday"
-                        : `${diffDays} days ago`;
-
-                    const userId = JSON.parse(
-                      localStorage.getItem("session")
-                    ).user_id;
-                    const isHandler =
-                      dpr.current_handler?.toString() === userId?.toString();
-                    const borderClass = isHandler
-                      ? "bg-gray-900 border border-gray-700 border-l-4 border-l-green-500"
-                      : "bg-gray-900 border border-gray-700";
-
-                    // dynamic actor label + name
-                    const actorLabel = getActorLabelForStatus(dpr.dpr_status);
-                    const actorId = getActorIdFromDpr(dpr, dpr.dpr_status);
-                    const actorName = getUserNameById(actorId);
-
-                    return (
-                      <a
-                        key={dpr.dpr_id}
-                        id={dpr.dpr_id}
-                        href={`/dashboard/project-description/${projectId}/${dpr.dpr_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`flex justify-between items-center p-4 rounded-lg transition-all cursor-pointer hover:border-[var(--accent-blue)] ${borderClass}`}
-                      >
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            {/* Date */}
-                            <p className="font-semibold text-[var(--text-primary)]">
-                              DPR - {dateStr}
-                            </p>
-                          </div>
-                          <p className="text-sm text-[var(--text-secondary)]">
-                            {actorLabel} {actorName}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)]">
-                          {/* Status pill */}
-                          <span
-                            className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${getStatusClasses(
-                              dpr.dpr_status
-                            )}`}
-                          >
-                            {totitlecase(dpr.dpr_status)}
-                          </span>
-                          <span className="material-icons text-base">
-                            today
-                          </span>
-                          <span>{label}</span>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+          <div className="w-full space-y-8">
+            {/* Document Index Component */}
+            <DocumentIndex />
           </div>
         </div>
       </main>
