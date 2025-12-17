@@ -40,7 +40,6 @@ export async function fetchProjectDirectory(projectId) {
 
 
 
-
 /* -------------------------------------------------------
    METADATA
 -------------------------------------------------------- */
@@ -52,7 +51,6 @@ async function fetchDirectoryCount(projectId = null) {
   const [result] = await query.count("* as count");
   return result.count;
 }
-
 
 
 /* -------------------------------------------------------
@@ -123,10 +121,6 @@ router.get("/list/:project_id", async (req, res) => {
   }
 });
 
-
-
-
-
 // Insert
 // Insert directory item for a specific project
 router.post("/add/:project_id", async (req, res) => {
@@ -151,11 +145,9 @@ router.post("/add/:project_id", async (req, res) => {
   }
 });
 
-
-
 // Update (project-scoped): PUT /:projectId/update/:id
 // Update directory item by pd_id only
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", async (req, res) => { 
   try {
     const id = parseInt(req.params.id, 10);
     if (Number.isNaN(id)) {
@@ -175,8 +167,6 @@ router.put("/update/:id", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-
 
 // Delete (project-scoped): DELETE /:projectId/delete/:id
 // Delete directory item by pd_id only
@@ -203,3 +193,4 @@ router.delete("/delete/:id", async (req, res) => {
 
 
 export default router;
+
