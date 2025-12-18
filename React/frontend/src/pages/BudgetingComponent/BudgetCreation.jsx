@@ -3,6 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function BudgetCreation() {
+  const UNIT_OPTIONS = [
+    'No', 'Rmt', 'Sqm', 'Cum', 'Rft', 'Sft', 'Cft', 'MT', 'Kg', 'Lit', 'Day', 'Each', 'LS', 'Shift', 'Month', 'Hrs'
+  ];
+
   // Node structure: { id, name, type: 'category'|'item', unit?: string, qty?: number|string, rate?: number|string, children: [] }
   const [tree, setTree] = useState({ id: 'root', name: 'Main Budget', type: 'category', children: [] });
   const [selectedId, setSelectedId] = useState(null);
@@ -466,16 +470,20 @@ function BudgetCreation() {
               {/* Item inline fields: unit, qty, rate and pricing preview (qty * rate) */}
               {node.type === 'item' && (
                 <div className="flex items-center gap-4 ml-4 text-sm text-gray-400 shrink-0">
-                  <input
+                  <select
                     value={node.unit ?? ''}
                     onChange={(e) => updateNodeField(node.id, 'unit', e.target.value)}
                     onFocus={() => { focusedRef.current = { id: node.id, field: 'unit' }; setSelectedId(node.id); }}
                     data-node-id={node.id}
                     data-field="unit"
-                    className="bg-transparent p-0 m-0 text-sm text-gray-400 w-20"
-                    placeholder="unit"
-                    style={{ outline: 'none' }}
-                  />
+                    className="bg-transparent p-0 m-0 text-sm text-gray-400 w-20 border-none outline-none appearance-none"
+                    style={{ outline: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
+                  >
+                    <option value="" disabled>Unit</option>
+                    {UNIT_OPTIONS.map(u => (
+                      <option key={u} value={u} className="bg-gray-800 text-white">{u}</option>
+                    ))}
+                  </select>
 
                   <input
                     type="text"
@@ -486,6 +494,7 @@ function BudgetCreation() {
                     data-node-id={node.id}
                     data-field="qty"
                     className="bg-transparent p-0 m-0 text-sm text-gray-400 w-20"
+                    placeholder="Quantity"
                     style={{ outline: 'none' }}
                   />
 
@@ -501,7 +510,7 @@ function BudgetCreation() {
                     data-node-id={node.id}
                     data-field="item_rate"
                     className="bg-transparent p-0 m-0 text-sm text-gray-400 w-24"
-                    placeholder="item rate"
+                    placeholder="Item Rate"
                   />
 
                   <input
@@ -516,7 +525,7 @@ function BudgetCreation() {
                     data-node-id={node.id}
                     data-field="labour_rate"
                     className="bg-transparent p-0 m-0 text-sm text-gray-400 w-24"
-                    placeholder="labour rate"
+                    placeholder="Labour Rate"
                   />
 
                   <div className="text-sm text-gray-200">
@@ -605,7 +614,7 @@ function BudgetCreation() {
             <div className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-left text-gray-500 bg-gray-900/30 w-full overflow-hidden">
               <p className="mb-3">New categories will appear here</p>
 
-              
+
 
               <div className="mt-2 text-left w-full">
                 <TreeNode node={tree} />
@@ -730,13 +739,16 @@ function BudgetCreation() {
                         <label className="block text-xs font-medium text-gray-400 mb-1.5">
                           Unit
                         </label>
-                        <input
-                          type="text"
+                        <select
                           value={popover.data.unit || ''}
                           onChange={(e) => updatePopoverData('unit', e.target.value)}
-                          placeholder="e.g. kg, unit, sq.m"
-                          className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                          className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                        >
+                          <option value="" disabled>Select Unit</option>
+                          {UNIT_OPTIONS.map(u => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
                       </div>
 
                       <div>
