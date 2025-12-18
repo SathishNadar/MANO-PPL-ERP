@@ -115,11 +115,27 @@ function BudgetCreation() {
     if (unit === null) return;
     const qtyStr = window.prompt('Enter quantity (number)', '1');
     if (qtyStr === null) return;
-    const rateStr = window.prompt('Enter rate (number)', '0');
-    if (rateStr === null) return;
+    
+    const itemRateStr = window.prompt('Enter item rate (material)', '0');
+    if (itemRateStr === null) return;
+
+    const labourRateStr = window.prompt('Enter labour rate', '0');
+    if (labourRateStr === null) return;
+
     const qty = qtyStr === '' ? '' : Number(qtyStr) || 0;
-    const rate = rateStr === '' ? '' : Number(rateStr) || 0;
-    const newNode = { id: genId(), name, type: 'item', unit, qty, rate, children: [] };
+    const item_rate = itemRateStr === '' ? '' : Number(itemRateStr) || 0;
+    const labour_rate = labourRateStr === '' ? '' : Number(labourRateStr) || 0;
+
+    const newNode = {
+      id: genId(),
+      name,
+      type: 'item',
+      unit,
+      qty,
+      item_rate,
+      labour_rate,
+      children: []
+    };
     if (parentId === null) parentId = selectedId || 'root';
     setTree((prev) => findAndUpdate(prev, parentId, (n) => ({ ...n, children: [...(n.children || []), newNode] })));
     setExpanded((s) => new Set(s).add(parentId));
@@ -184,10 +200,17 @@ function BudgetCreation() {
             : Number(node.qty) || 0;
         const qtyNum = Math.round(rawQty * 100) / 100;
 
+        const rawItemRate =
+          node.item_rate === '' || node.item_rate == null ? 0 : Number(node.item_rate) || 0;
+
+        const rawLabourRate =
+          node.labour_rate === '' || node.labour_rate == null ? 0 : Number(node.labour_rate) || 0;
+
         out.item = {
           name: node.component_name ?? node.name ?? '',
           unit: node.unit ?? '',
-          rate: Number(rateNum.toFixed(2)),
+          item_rate: Number(rawItemRate.toFixed(2)),
+          labour_rate: Number(rawLabourRate.toFixed(2)),
           quantity: Number(qtyNum)
         };
       }
@@ -345,7 +368,9 @@ function BudgetCreation() {
   function TreeNode({ node, depth = 0 }) {
     const isSelected = selectedId === node.id;
     const isExpanded = expanded.has(node.id);
-    const total = (Number(node.qty) || 0) * (Number(node.rate) || 0);
+    const total =
+  (Number(node.qty) || 0) *
+  ((Number(node.item_rate) || 0) + (Number(node.labour_rate) || 0));
 
     // indentation in pixels per level
     const indent = 18;
@@ -382,11 +407,6 @@ function BudgetCreation() {
                 style={{ outline: 'none', minWidth: 80 }}
               />
 
-              {/* Show unit next to item name in parentheses */}
-              {node.type === 'item' && (
-                <span className="text-sm text-gray-400">({node.unit || ''})</span>
-              )}
-
               {/* Item inline fields: unit, qty, rate and pricing preview (qty * rate) */}
               {node.type === 'item' && (
                 <div className="flex items-center gap-4 ml-4 text-sm text-gray-400 shrink-0">
@@ -416,16 +436,36 @@ function BudgetCreation() {
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={node.rate ?? ''}
-                    onChange={(e) => updateNodeField(node.id, 'rate', e.target.value)}
-                    onFocus={() => { focusedRef.current = { id: node.id, field: 'rate' }; setSelectedId(node.id); }}
+                    value={node.item_rate ?? ''}
+                    onChange={(e) => updateNodeField(node.id, 'item_rate', e.target.value)}
+                    onFocus={() => {
+                      focusedRef.current = { id: node.id, field: 'item_rate' };
+                      setSelectedId(node.id);
+                    }}
                     data-node-id={node.id}
-                    data-field="rate"
+                    data-field="item_rate"
                     className="bg-transparent p-0 m-0 text-sm text-gray-400 w-24"
-                    style={{ outline: 'none' }}
+                    placeholder="item rate"
                   />
 
-                  <div className="text-sm text-gray-200">Total: ₹{total}</div>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={node.labour_rate ?? ''}
+                    onChange={(e) => updateNodeField(node.id, 'labour_rate', e.target.value)}
+                    onFocus={() => {
+                      focusedRef.current = { id: node.id, field: 'labour_rate' };
+                      setSelectedId(node.id);
+                    }}
+                    data-node-id={node.id}
+                    data-field="labour_rate"
+                    className="bg-transparent p-0 m-0 text-sm text-gray-400 w-24"
+                    placeholder="labour rate"
+                  />
+
+                  <div className="text-sm text-gray-200">
+                    Total: ₹{total}
+                  </div>
                 </div>
               )}
             </div>

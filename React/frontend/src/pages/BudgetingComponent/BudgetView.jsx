@@ -73,6 +73,18 @@ function numberToWordsIndia(amount) {
 //   return words + ' rupees';
 }
 
+// Added helper function for Easter egg
+function numberToWordsWithEasterEgg(amount) {
+  const num = Number(amount);
+
+  // Easter egg: ONLY for exact value 7
+  if (num === 7) {
+    return 'K-seven';
+  }
+
+  return numberToWordsIndia(num);
+}
+
 // BudgetView: fetches budget tree from backend and displays it in a styled hierarchy view
 export default function BudgetView({ projectIdProp }) {
   const [tree, setTree] = useState([]); // array of root nodes
@@ -117,15 +129,16 @@ export default function BudgetView({ projectIdProp }) {
     return () => { mounted = false; };
   }, [projectId]);
 
-  // compute total cost for a node (recursive). Leaves use quantity * rate (prefer item_rate + quantity from backend, fallback to component)
+  // compute total cost for a node (recursive). Leaves use quantity * rate (prefer item_rate + quantity from backend, fallback to component) 
   function computeTotal(node) {
     if (!node) return 0;
 
     // Leaf nodes: use quantity * rate (prefer item_rate + quantity from backend, fallback to component)
     if (Number(node.is_leaf) === 1) {
-      const rate = Number(node.item_rate ?? (node.component && node.component.rate) ?? 0) || 0;
-      const qty = Number(node.quantity ?? (node.component && node.component.quantity) ?? 0) || 0;
-      return rate * qty;
+      const itemRate = Number(node.item_rate ?? 0) || 0;
+      const labourRate = Number(node.item_labour_rate ?? 0);
+      const qty = Number(node.quantity ?? 0) || 0;
+      return qty * (itemRate + labourRate);
     }
 
     // Non-leaf: sum cumulative totals of children recursively
@@ -165,7 +178,7 @@ export default function BudgetView({ projectIdProp }) {
 
             <div className="text-right">
               <p className="text-lg font-semibold text-white">₹{formatINR(total)}</p>
-              <div className="text-sm text-gray-400 mt-1">{numberToWordsIndia(total)}</div>
+              <div className="text-sm text-gray-400 mt-1">{numberToWordsWithEasterEgg(total)}</div>
             </div>
           </div>
         </div>
@@ -185,15 +198,29 @@ export default function BudgetView({ projectIdProp }) {
                         <span className="font-medium text-gray-300 text-base">{child.item_name ?? child.name}</span>
                         <span className="text-base text-gray-500">({child.item_unit ?? ''})</span>
 
-                        {/* quantity × rate breakdown */}
+                        {/* quantity × (rate + labour_rate) breakdown */}
                         <div className="text-sm text-gray-400 mt-1">
-                          ({child.quantity ?? 0}) × ({child.item_rate ?? 0}) = ₹{formatINR(Number(child.quantity ?? 0) * Number(child.item_rate ?? 0))}
+                          {child.quantity ?? 0} × ({child.item_rate ?? 0} + {child.item_labour_rate ?? 0})
+                          = ₹{formatINR(
+                            Number(child.quantity ?? 0) *
+                            (Number(child.item_rate ?? 0) + Number(child.item_labour_rate ?? 0))
+                          )}
                         </div>
                       </div>
 
                       <div className="text-right">
-                        <p className="text-base font-semibold text-white">₹{formatINR(Number(child.quantity ?? 0) * Number(child.item_rate ?? 0))}</p>
-                        <div className="text-sm text-gray-400 mt-1">{numberToWordsIndia(Number(child.quantity ?? 0) * Number(child.item_rate ?? 0))}</div>
+                        <p className="text-base font-semibold text-white">
+                          ₹{formatINR(
+                            Number(child.quantity ?? 0) *
+                            (Number(child.item_rate ?? 0) + Number(child.item_labour_rate ?? 0))
+                          )}
+                        </p>
+                        <div className="text-sm text-gray-400 mt-1">
+                          {numberToWordsWithEasterEgg(
+                            Number(child.quantity ?? 0) *
+                            (Number(child.item_rate ?? 0) + Number(child.item_labour_rate ?? 0))
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -217,13 +244,27 @@ export default function BudgetView({ projectIdProp }) {
                                   <span className="text-base text-gray-500">({g.item_unit ?? ''})</span>
 
                                   <div className="text-sm text-gray-400 mt-1">
-                                    ({g.quantity ?? 0}) × ({g.item_rate ?? 0}) = ₹{formatINR(Number(g.quantity ?? 0) * Number(g.item_rate ?? 0))}
+                                    {g.quantity ?? 0} × ({g.item_rate ?? 0} + {g.item_labour_rate ?? 0})
+                                    = ₹{formatINR(
+                                      Number(g.quantity ?? 0) *
+                                      (Number(g.item_rate ?? 0) + Number(g.item_labour_rate ?? 0))
+                                    )}
                                   </div>
                                 </div>
 
                                 <div className="text-right">
-                                  <p className="text-base font-semibold text-white">₹{formatINR(Number(g.quantity ?? 0) * Number(g.item_rate ?? 0))}</p>
-                                  <div className="text-sm text-gray-400 mt-1">{numberToWordsIndia(Number(g.quantity ?? 0) * Number(g.item_rate ?? 0))}</div>
+                                  <p className="text-base font-semibold text-white">
+                                    ₹{formatINR(
+                                      Number(g.quantity ?? 0) *
+                                      (Number(g.item_rate ?? 0) + Number(g.item_labour_rate ?? 0))
+                                    )}
+                                  </p>
+                                  <div className="text-sm text-gray-400 mt-1">
+                                    {numberToWordsWithEasterEgg(
+                                      Number(g.quantity ?? 0) *
+                                      (Number(g.item_rate ?? 0) + Number(g.item_labour_rate ?? 0))
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -266,7 +307,7 @@ export default function BudgetView({ projectIdProp }) {
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-green-400">₹{formatINR(computeTotal(root))}</p>
-                    <div className="text-sm text-gray-400 mt-1">{numberToWordsIndia(computeTotal(root))}</div>
+                    <div className="text-sm text-gray-400 mt-1">{numberToWordsWithEasterEgg(computeTotal(root))}</div>
                   </div>
                 </div>
               </div>
