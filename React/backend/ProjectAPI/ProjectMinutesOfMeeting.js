@@ -58,7 +58,7 @@ export async function fetchMoMById(momId) {
     .leftJoin("vendors as v", "pd.vendor_id", "v.id")
     .where("pmp.mom_id", momId)
     .select([
-      "pmp.pap_id",
+      "pmp.pmp_id",
       "pmp.pd_id",
       "pd.responsibilities",
       "v.name as organization",
