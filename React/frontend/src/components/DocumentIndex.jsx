@@ -38,6 +38,10 @@ const DocumentIndex = () => {
             navigate(`/dashboard/project-summary/${projectId}`);
         } else if (item === "Organisation Chart") {
             navigate('/dashboard/organisation-chart');
+        } else if (item === "Drawing Management") {
+            navigate(`/dashboard/project-description/${projectId}/drawing-management`);
+        } else if (item === "Drawing Planned vs Achieved") {
+            navigate(`/dashboard/project-description/${projectId}/drawing-planned-vs-achieved`);
         }
         // Add other document navigations here as needed
     };

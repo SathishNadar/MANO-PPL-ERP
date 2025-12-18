@@ -83,14 +83,14 @@ const ProjectDirectory = () => {
 
     const fetchContacts = async () => {
         try {
-            // Using correct GET endpoint: /projectContacts/contacts/:project_id
-            const response = await fetch(`${API_BASE}/projectContacts/contacts/${projectId}`, {
+            // Using correct GET endpoint: /projectDirectory/list/:project_id
+            const response = await fetch(`${API_BASE}/projectDirectory/list/${projectId}`, {
                 credentials: 'include'
             });
             const data = await response.json();
-            // API returns {contacts: [...], contactCount: N }
-            if (data.contacts) {
-                setContacts(data.contacts || []);
+            // API returns { directory: [...], count: N }
+            if (data.directory) {
+                setContacts(data.directory || []);
             } else {
                 setContacts([]);
             }
@@ -101,8 +101,8 @@ const ProjectDirectory = () => {
         }
     };
 
-    // Helper: Robust ID extraction using pc_id
-    const getContactId = (contact) => contact.pc_id || contact.id;
+    // Helper: Robust ID extraction using pd_id
+    const getContactId = (contact) => contact.pd_id || contact.id;
 
     const handleVendorSelect = (tempId, vendor) => {
         setNewRows(newRows.map(row =>
@@ -238,8 +238,8 @@ const ProjectDirectory = () => {
                 return;
             }
 
-            // Using PUT for updates as per project pattern: /projectContacts/update/:pc_id
-            const response = await fetch(`${API_BASE}/projectContacts/update/${editingId}`, {
+            // Using PUT for updates: /projectDirectory/update/:id
+            const response = await fetch(`${API_BASE}/projectDirectory/update/${editingId}`, {
                 method: 'PUT',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -270,8 +270,8 @@ const ProjectDirectory = () => {
     const confirmDelete = async () => {
         if (!deleteId) return;
         try {
-            // Using DELETE for deletion
-            const response = await fetch(`${API_BASE}/projectContacts/delete/${deleteId}`, {
+            // Using DELETE for deletion: /projectDirectory/delete/:id
+            const response = await fetch(`${API_BASE}/projectDirectory/delete/${deleteId}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
@@ -336,9 +336,9 @@ const ProjectDirectory = () => {
                 address_line: row.address_line
             };
 
-            // Using POST /projectContacts/add/:project_id based on backend definition
-            console.log(`Creating contact at ${API_BASE}/projectContacts/add/${projectId}`);
-            const response = await fetch(`${API_BASE}/projectContacts/add/${projectId}`, {
+            // Using POST /projectDirectory/add/:project_id
+            console.log(`Creating contact at ${API_BASE}/projectDirectory/add/${projectId}`);
+            const response = await fetch(`${API_BASE}/projectDirectory/add/${projectId}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },

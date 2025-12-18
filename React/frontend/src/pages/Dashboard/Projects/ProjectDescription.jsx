@@ -470,7 +470,7 @@ function ProjectDescription() {
           </div>
 
           <div className="w-full space-y-8">
-            {/* Document Index Component */}
+            {/* DocumentIndex Component */}
             <DocumentIndex />
           </div>
         </div>
