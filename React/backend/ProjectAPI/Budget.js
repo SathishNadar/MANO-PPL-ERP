@@ -40,7 +40,7 @@ async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentI
       // Insert item_rate for new item
       await db("item_rate").insert({
         item_id: itemId,
-        rate: itemData.rate,
+        rate: itemData.item_rate,
         quantity: itemData.quantity ?? 0,
         labour_rate: itemData.labour_rate,
         effective_from: effectiveDate,
@@ -51,7 +51,7 @@ async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentI
       if (itemData.rate != null) {
         await db("item_rate").insert({
           item_id: itemId,
-          rate: itemData.rate,
+          rate: itemData.item_rate,
           quantity: itemData.quantity ?? 0,
           labour_rate: itemData.labour_rate,
           effective_from: effectiveDate,
@@ -82,8 +82,7 @@ async function createBudgetHierarchy(jsonRoot, projectId, effectiveDate, parentI
 async function fetchBudgetHierarchy(projectId) {
   const rows = await knexDB('budget_category as bc')
     .leftJoin('item as c', function () {
-      this.on('bc.item_id', '=', 'c.item_id')
-        .andOn('c.is_active', '=', 1);  // only active items
+      this.on('bc.item_id', '=', 'c.item_id').andOn('c.is_active', '=', 1); ;
     })
     .leftJoin(
       knexDB('item_rate')
@@ -109,7 +108,7 @@ async function fetchBudgetHierarchy(projectId) {
       'bc.parent_id',
       'bc.name',
       'bc.is_leaf',
-      'c.item_id',
+      'bc.item_id as item_id',
       'c.name as item_name',
       'c.unit as item_unit',
       'cr.rate as item_rate',
