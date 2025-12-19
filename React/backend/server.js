@@ -16,6 +16,7 @@ import ProjectRolesandResponsibilitiesRoutes from './ProjectAPI/ProjectRolesandR
 import ProjectAgendaRoutes from './ProjectAPI/ProjectAgenda.js';
 import ProjectMinutesOfMeetingRoutes from './ProjectAPI/ProjectMinutesOfMeeting.js';
 import ProjectDrawingsRoutes from './ProjectAPI/ProjectDrawings.js';
+import ProjectPlannedVsAchievedRoutes from './ProjectAPI/ProjectPlannedVsAchieved.js';
 import ReportRoutes from './ProjectAPI/Reports.js';
 import BudgetRoutes from './ProjectAPI/Budget.js';
 import HindranceRoutes from './ProjectAPI/Hindrance.js';
@@ -73,6 +74,7 @@ app.use("/projectStaffRoles", ProjectRolesandResponsibilitiesRoutes);
 app.use("/projectAgenda", ProjectAgendaRoutes);
 app.use("/projectMoM", ProjectMinutesOfMeetingRoutes);
 app.use("/projectDrawings", ProjectDrawingsRoutes);
+app.use("/projectDrawingsPA", ProjectPlannedVsAchievedRoutes);
 app.use("/projectSummary", ProjectSummaryRoutes);
 app.use("/report", ReportRoutes);
 app.use("/budget", BudgetRoutes);
