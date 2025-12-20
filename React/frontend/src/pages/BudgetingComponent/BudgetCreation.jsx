@@ -3,12 +3,20 @@ import { useNavigate, useParams } from "react-router-dom";
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function BudgetCreation() {
+  const UNIT_OPTIONS = [
+    'No', 'Rmt', 'Sqm', 'Cum', 'Rft', 'Sft', 'Cft', 'MT', 'Kg', 'Lit', 'Day', 'Each', 'LS', 'Shift', 'Month', 'Hrs'
+  ];
+
   // Node structure: { id, name, type: 'category'|'item', unit?: string, qty?: number|string, rate?: number|string, children: [] }
   const [tree, setTree] = useState({ id: 'root', name: 'Main Budget', type: 'category', children: [] });
   const [selectedId, setSelectedId] = useState(null);
   const [expanded, setExpanded] = useState(new Set(['root']));
   const [toast, setToast] = useState(null);
   const { projectId } = useParams();
+
+  // Popover state
+  const [popover, setPopover] = useState(null); // { type: 'category' | 'item', parentId, buttonRef, step: 0, data: {} }
+  const popoverRef = useRef(null);
 
   // track which input was focused so we can restore focus after rerenders
   const focusedRef = useRef({ id: null, field: null });
@@ -32,7 +40,7 @@ function BudgetCreation() {
       sel.focus();
       // put cursor at end
       const val = sel.value || '';
-      try { sel.setSelectionRange(val.length, val.length); } catch (e) {}
+      try { sel.setSelectionRange(val.length, val.length); } catch (e) { }
     }
   }, [tree]);
 
@@ -98,33 +106,101 @@ function BudgetCreation() {
     return node.children.some((c) => isDescendant(c, nodeId, targetId));
   }
 
-  function addCategory(parentId) {
-    const name = window.prompt('Enter category name', 'New Category');
-    if (!name) return;
-    const newNode = { id: genId(), name, type: 'category', children: [] };
-    if (parentId === null) parentId = 'root';
-    setTree((prev) => findAndUpdate(prev, parentId, (n) => ({ ...n, children: [...(n.children || []), newNode] })));
-    setExpanded((s) => new Set(s).add(parentId));
-    setSelectedId(newNode.id);
+  function addCategory(parentId, buttonRef) {
+    setPopover({
+      type: 'category',
+      parentId: parentId === null ? 'root' : parentId,
+      buttonRef,
+      data: { name: '' }
+    });
   }
 
-  function addItem(parentId) {
-    const name = window.prompt('Enter item name', 'New Item');
-    if (!name) return;
-    const unit = window.prompt('Enter unit (e.g. kg, unit, sq.m)', 'unit');
-    if (unit === null) return;
-    const qtyStr = window.prompt('Enter quantity (number)', '1');
-    if (qtyStr === null) return;
-    const rateStr = window.prompt('Enter rate (number)', '0');
-    if (rateStr === null) return;
-    const qty = qtyStr === '' ? '' : Number(qtyStr) || 0;
-    const rate = rateStr === '' ? '' : Number(rateStr) || 0;
-    const newNode = { id: genId(), name, type: 'item', unit, qty, rate, children: [] };
-    if (parentId === null) parentId = selectedId || 'root';
-    setTree((prev) => findAndUpdate(prev, parentId, (n) => ({ ...n, children: [...(n.children || []), newNode] })));
-    setExpanded((s) => new Set(s).add(parentId));
-    setSelectedId(newNode.id);
+  function addItem(parentId, buttonRef) {
+    setPopover({
+      type: 'item',
+      parentId: parentId === null ? (selectedId || 'root') : parentId,
+      buttonRef,
+      data: { name: '', unit: '', qty: '', item_rate: '', labour_rate: '' }
+    });
   }
+
+  function handlePopoverSubmit() {
+    if (!popover) return;
+
+    if (popover.type === 'category') {
+      if (!popover.data.name.trim()) {
+        setToast('Category name is required');
+        return;
+      }
+      const newNode = { id: genId(), name: popover.data.name, type: 'category', children: [] };
+      setTree((prev) => findAndUpdate(prev, popover.parentId, (n) => ({ ...n, children: [...(n.children || []), newNode] })));
+      setExpanded((s) => new Set(s).add(popover.parentId));
+      setSelectedId(newNode.id);
+      setPopover(null);
+    } else if (popover.type === 'item') {
+      if (!popover.data.name.trim()) {
+        setToast('Item name is required');
+        return;
+      }
+      const qty = popover.data.qty === '' ? '' : Number(popover.data.qty) || 0;
+      const item_rate = popover.data.item_rate === '' ? '' : Number(popover.data.item_rate) || 0;
+      const labour_rate = popover.data.labour_rate === '' ? '' : Number(popover.data.labour_rate) || 0;
+
+      const newNode = {
+        id: genId(),
+        name: popover.data.name,
+        type: 'item',
+        unit: popover.data.unit || 'unit',
+        qty,
+        item_rate,
+        labour_rate,
+        children: []
+      };
+      setTree((prev) => findAndUpdate(prev, popover.parentId, (n) => ({ ...n, children: [...(n.children || []), newNode] })));
+      setExpanded((s) => new Set(s).add(popover.parentId));
+      setSelectedId(newNode.id);
+      setPopover(null);
+    }
+  }
+
+  function handlePopoverCancel() {
+    setPopover(null);
+  }
+
+  function updatePopoverData(field, value) {
+    setPopover(prev => ({
+      ...prev,
+      data: { ...prev.data, [field]: value }
+    }));
+  }
+
+  // Close popover when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (popover && popoverRef.current && !popoverRef.current.contains(event.target)) {
+        // Check if click is on the button that opened the popover
+        if (popover.buttonRef && popover.buttonRef.contains(event.target)) {
+          return;
+        }
+        setPopover(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [popover]);
+
+  // Handle window resize to reposition popover
+  useEffect(() => {
+    if (!popover) return;
+
+    function handleResize() {
+      // Force re-render to recalculate position
+      setPopover(prev => ({ ...prev }));
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [popover]);
 
   function toggleExpand(id) {
     setExpanded((s) => {
@@ -161,62 +237,69 @@ function BudgetCreation() {
     setToast('Budget creation cancelled');
   }
 
-    // Build payload node (exact format requested by backend/sample)
-    function buildPayloadNode(node) {
-      const out = {
-        name: node.name ?? '',
-        is_leaf: node.type === 'item' ? 1 : 0,
-        children: []
+  // Build payload node (exact format requested by backend/sample)
+  function buildPayloadNode(node) {
+    const out = {
+      name: node.name ?? '',
+      is_leaf: node.type === 'item' ? 1 : 0,
+      children: []
+    };
+
+    if (node.type === 'item') {
+      // ensure numeric rate (two decimals) and proper types
+      const rawRate =
+        node.rate === '' || node.rate === null || node.rate === undefined
+          ? 0
+          : Number(node.rate) || 0;
+      const rateNum = Math.round(rawRate * 100) / 100;
+
+      // parse quantity defensively (allow empty string -> 0)
+      const rawQty =
+        node.qty === '' || node.qty === null || node.qty === undefined
+          ? 0
+          : Number(node.qty) || 0;
+      const qtyNum = Math.round(rawQty * 100) / 100;
+
+      const rawItemRate =
+        node.item_rate === '' || node.item_rate == null ? 0 : Number(node.item_rate) || 0;
+
+      const rawLabourRate =
+        node.labour_rate === '' || node.labour_rate == null ? 0 : Number(node.labour_rate) || 0;
+
+      out.item = {
+        name: node.component_name ?? node.name ?? '',
+        unit: node.unit ?? '',
+        item_rate: Number(rawItemRate.toFixed(2)),
+        labour_rate: Number(rawLabourRate.toFixed(2)),
+        quantity: Number(qtyNum)
       };
-
-      if (node.type === 'item') {
-        // ensure numeric rate (two decimals) and proper types
-        const rawRate =
-          node.rate === '' || node.rate === null || node.rate === undefined
-            ? 0
-            : Number(node.rate) || 0;
-        const rateNum = Math.round(rawRate * 100) / 100;
-
-        // parse quantity defensively (allow empty string -> 0)
-        const rawQty =
-          node.qty === '' || node.qty === null || node.qty === undefined
-            ? 0
-            : Number(node.qty) || 0;
-        const qtyNum = Math.round(rawQty * 100) / 100;
-
-        out.item = {
-          name: node.component_name ?? node.name ?? '',
-          unit: node.unit ?? '',
-          rate: Number(rateNum.toFixed(2)),
-          quantity: Number(qtyNum)
-        };
-      }
-
-      // children should always be an array (empty if none)
-      if (Array.isArray(node.children) && node.children.length > 0) {
-        out.children = node.children.map((c) => buildPayloadNode(c));
-      } else {
-        out.children = [];
-      }
-
-      return out;
     }
+
+    // children should always be an array (empty if none)
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      out.children = node.children.map((c) => buildPayloadNode(c));
+    } else {
+      out.children = [];
+    }
+
+    return out;
+  }
 
   async function handleSave() {
     try {
       setToast('Saving...');
 
       const effective_date = new Date().toISOString().slice(0, 10);
-        
+
       const payload = {
         effective_date,
         data: buildPayloadNode(tree)
       };
-        
+
       console.log(JSON.stringify(payload, null, 2));
 
       const res = await fetch(`${API_BASE}/budget/create/${projectId}`, {
-        method: 'POST',   
+        method: 'POST',
         credentials: "include",
         headers: {
           'Content-Type': 'application/json'
@@ -225,11 +308,11 @@ function BudgetCreation() {
       });
 
       const text = await res.text();
-        let json = null;
-        try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
+      let json = null;
+      try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
 
-        if (!res.ok) {
-        console.error('Save failed:', res.status,json);
+      if (!res.ok) {
+        console.error('Save failed:', res.status, json);
         setToast(json && json.message ? json.message : 'Save failed');
         return;
       }
@@ -305,7 +388,7 @@ function BudgetCreation() {
       return;
     }
     draggingRef.current = node.id;
-    try { e.dataTransfer.setData('text/plain', node.id); } catch (err) {}
+    try { e.dataTransfer.setData('text/plain', node.id); } catch (err) { }
     e.dataTransfer.effectAllowed = 'move';
   }
 
@@ -345,7 +428,9 @@ function BudgetCreation() {
   function TreeNode({ node, depth = 0 }) {
     const isSelected = selectedId === node.id;
     const isExpanded = expanded.has(node.id);
-    const total = (Number(node.qty) || 0) * (Number(node.rate) || 0);
+    const total =
+      (Number(node.qty) || 0) *
+      ((Number(node.item_rate) || 0) + (Number(node.labour_rate) || 0));
 
     // indentation in pixels per level
     const indent = 18;
@@ -382,24 +467,23 @@ function BudgetCreation() {
                 style={{ outline: 'none', minWidth: 80 }}
               />
 
-              {/* Show unit next to item name in parentheses */}
-              {node.type === 'item' && (
-                <span className="text-sm text-gray-400">({node.unit || ''})</span>
-              )}
-
               {/* Item inline fields: unit, qty, rate and pricing preview (qty * rate) */}
               {node.type === 'item' && (
                 <div className="flex items-center gap-4 ml-4 text-sm text-gray-400 shrink-0">
-                  <input
+                  <select
                     value={node.unit ?? ''}
                     onChange={(e) => updateNodeField(node.id, 'unit', e.target.value)}
                     onFocus={() => { focusedRef.current = { id: node.id, field: 'unit' }; setSelectedId(node.id); }}
                     data-node-id={node.id}
                     data-field="unit"
-                    className="bg-transparent p-0 m-0 text-sm text-gray-400 w-20"
-                    placeholder="unit"
-                    style={{ outline: 'none' }}
-                  />
+                    className="bg-transparent p-0 m-0 text-sm text-gray-400 w-20 border-none outline-none appearance-none"
+                    style={{ outline: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
+                  >
+                    <option value="" disabled>Unit</option>
+                    {UNIT_OPTIONS.map(u => (
+                      <option key={u} value={u} className="bg-gray-800 text-white">{u}</option>
+                    ))}
+                  </select>
 
                   <input
                     type="text"
@@ -410,22 +494,43 @@ function BudgetCreation() {
                     data-node-id={node.id}
                     data-field="qty"
                     className="bg-transparent p-0 m-0 text-sm text-gray-400 w-20"
+                    placeholder="Quantity"
                     style={{ outline: 'none' }}
                   />
 
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={node.rate ?? ''}
-                    onChange={(e) => updateNodeField(node.id, 'rate', e.target.value)}
-                    onFocus={() => { focusedRef.current = { id: node.id, field: 'rate' }; setSelectedId(node.id); }}
+                    value={node.item_rate ?? ''}
+                    onChange={(e) => updateNodeField(node.id, 'item_rate', e.target.value)}
+                    onFocus={() => {
+                      focusedRef.current = { id: node.id, field: 'item_rate' };
+                      setSelectedId(node.id);
+                    }}
                     data-node-id={node.id}
-                    data-field="rate"
+                    data-field="item_rate"
                     className="bg-transparent p-0 m-0 text-sm text-gray-400 w-24"
-                    style={{ outline: 'none' }}
+                    placeholder="Item Rate"
                   />
 
-                  <div className="text-sm text-gray-200">Total: ₹{total}</div>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={node.labour_rate ?? ''}
+                    onChange={(e) => updateNodeField(node.id, 'labour_rate', e.target.value)}
+                    onFocus={() => {
+                      focusedRef.current = { id: node.id, field: 'labour_rate' };
+                      setSelectedId(node.id);
+                    }}
+                    data-node-id={node.id}
+                    data-field="labour_rate"
+                    className="bg-transparent p-0 m-0 text-sm text-gray-400 w-24"
+                    placeholder="Labour Rate"
+                  />
+
+                  <div className="text-sm text-gray-200">
+                    Total: ₹{total}
+                  </div>
                 </div>
               )}
             </div>
@@ -435,8 +540,30 @@ function BudgetCreation() {
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
             {node.type === 'category' && (
               <>
-                <button title="Add sub-category" onClick={() => addCategory(node.id)} className="px-2 py-1 rounded text-sm text-blue-400 border border-dashed border-blue-400/40">+Category</button>
-                <button title="Add item" onClick={() => addItem(node.id)} className="px-2 py-1 rounded text-sm text-green-400 border border-dashed border-green-400/40">+Item</button>
+                <button
+                  ref={(el) => {
+                    if (el && popover?.type === 'category' && popover?.parentId === node.id) {
+                      popover.buttonRef = el;
+                    }
+                  }}
+                  title="Add sub-category"
+                  onClick={(e) => addCategory(node.id, e.currentTarget)}
+                  className="px-2 py-1 rounded text-sm text-blue-400 border border-dashed border-blue-400/40 hover:bg-blue-900/20 transition-colors"
+                >
+                  +Category
+                </button>
+                <button
+                  ref={(el) => {
+                    if (el && popover?.type === 'item' && popover?.parentId === node.id) {
+                      popover.buttonRef = el;
+                    }
+                  }}
+                  title="Add item"
+                  onClick={(e) => addItem(node.id, e.currentTarget)}
+                  className="px-2 py-1 rounded text-sm text-green-400 border border-dashed border-green-400/40 hover:bg-green-900/20 transition-colors"
+                >
+                  +Item
+                </button>
               </>
             )}
             {node.id !== 'root' && <button onClick={() => removeNode(node.id)} className="text-sm px-2 py-1 rounded border border-red-600 text-red-400">Delete</button>}
@@ -487,16 +614,7 @@ function BudgetCreation() {
             <div className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-left text-gray-500 bg-gray-900/30 w-full overflow-hidden">
               <p className="mb-3">New categories will appear here</p>
 
-              <div className="flex justify-start gap-3 mb-4">
-                <button onClick={() => addItem(null)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 border border-dashed border-blue-400/50 rounded-md hover:bg-blue-900/40 hover:border-blue-400 transition-colors">
-                  <span className="material-icons text-base">add</span>
-                  Add Item
-                </button>
-                <button onClick={() => addCategory(null)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 border border-dashed border-gray-600 rounded-md hover:bg-gray-700/50 hover:border-gray-500 transition-colors">
-                  <span className="material-icons text-base">add</span>
-                  Add Category
-                </button>
-              </div>
+
 
               <div className="mt-2 text-left w-full">
                 <TreeNode node={tree} />
@@ -504,6 +622,197 @@ function BudgetCreation() {
             </div>
           </div>
         </div>
+
+        {/* Popover Input */}
+        {popover && popover.buttonRef && (() => {
+          const buttonRect = popover.buttonRef.getBoundingClientRect();
+          const popoverWidth = 320; // min-w-[320px]
+
+          // Calculate centered position
+          let left = buttonRect.left + (buttonRect.width / 2) - (popoverWidth / 2);
+          let top = buttonRect.bottom + 12; // 12px gap for arrow
+
+          // Viewport boundary checks
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          const padding = 16; // padding from edges
+
+          // Adjust horizontal position if overflowing
+          if (left < padding) {
+            left = padding;
+          } else if (left + popoverWidth > viewportWidth - padding) {
+            left = viewportWidth - popoverWidth - padding;
+          }
+
+          // Calculate arrow position (relative to popover)
+          const arrowLeft = buttonRect.left + (buttonRect.width / 2) - left;
+
+          // Check if popover would overflow bottom of viewport
+          const estimatedHeight = popover.type === 'category' ? 150 : 350;
+          const wouldOverflowBottom = top + estimatedHeight > viewportHeight - padding;
+
+          // If overflowing bottom, position above the button instead
+          let isAbove = false;
+          if (wouldOverflowBottom && buttonRect.top > estimatedHeight + padding) {
+            top = buttonRect.top - estimatedHeight - 12;
+            isAbove = true;
+          }
+
+          return (
+            <div
+              ref={popoverRef}
+              className="fixed z-[100] animate-in fade-in duration-200"
+              style={{
+                top: `${top}px`,
+                left: `${left}px`,
+                width: `${popoverWidth}px`,
+              }}
+            >
+              {/* Arrow */}
+              <div
+                className="absolute w-0 h-0"
+                style={{
+                  left: `${arrowLeft}px`,
+                  transform: 'translateX(-50%)',
+                  [isAbove ? 'bottom' : 'top']: '-8px',
+                  borderLeft: '8px solid transparent',
+                  borderRight: '8px solid transparent',
+                  [isAbove ? 'borderTop' : 'borderBottom']: '8px solid rgb(55, 65, 81)', // border-gray-700
+                }}
+              />
+
+              <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-4">
+                <h3 className="text-sm font-semibold text-white mb-3">
+                  {popover.type === 'category' ? 'Add Category' : 'Add Item'}
+                </h3>
+
+                {popover.type === 'category' ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                        Category Name
+                      </label>
+                      <input
+                        type="text"
+                        value={popover.data.name || ''}
+                        onChange={(e) => updatePopoverData('name', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handlePopoverSubmit();
+                          } else if (e.key === 'Escape') {
+                            handlePopoverCancel();
+                          }
+                        }}
+                        placeholder="Enter category name"
+                        autoFocus
+                        className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                        Item Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={popover.data.name || ''}
+                        onChange={(e) => updatePopoverData('name', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handlePopoverSubmit();
+                          } else if (e.key === 'Escape') {
+                            handlePopoverCancel();
+                          }
+                        }}
+                        placeholder="Enter item name"
+                        autoFocus
+                        className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                          Unit
+                        </label>
+                        <select
+                          value={popover.data.unit || ''}
+                          onChange={(e) => updatePopoverData('unit', e.target.value)}
+                          className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                        >
+                          <option value="" disabled>Select Unit</option>
+                          {UNIT_OPTIONS.map(u => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                          Quantity
+                        </label>
+                        <input
+                          type="number"
+                          value={popover.data.qty || ''}
+                          onChange={(e) => updatePopoverData('qty', e.target.value)}
+                          placeholder="Enter quantity"
+                          className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                          Item Rate
+                        </label>
+                        <input
+                          type="number"
+                          value={popover.data.item_rate || ''}
+                          onChange={(e) => updatePopoverData('item_rate', e.target.value)}
+                          placeholder="Material rate"
+                          className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                          Labour Rate
+                        </label>
+                        <input
+                          type="number"
+                          value={popover.data.labour_rate || ''}
+                          onChange={(e) => updatePopoverData('labour_rate', e.target.value)}
+                          placeholder="Labour rate"
+                          className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-gray-700">
+                  <button
+                    onClick={handlePopoverCancel}
+                    className="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white border border-gray-600 rounded hover:bg-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handlePopoverSubmit}
+                    className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-500 transition-colors"
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Toast */}
         {toast && (
