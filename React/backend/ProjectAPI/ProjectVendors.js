@@ -3,40 +3,68 @@ import { knexDB } from "../Database.js";
 
 const router = express.Router();
 
+const FIELD_MAP = {
+  name: "v.name",
+  location: "v.address",
+  email: "v.email",
+  mobile: "v.mobile",
+  website: "v.website",
+  job_nature: "jn.job_name",
+};
+
 /*fetch_vendors*/
 router.get("/:project_id", async (req, res) => {
   try {
-    const projectId = parseInt(req.params.project_id, 10);
-    if (Number.isNaN(projectId)) {
-      return res.status(400).json({ message: "project_id must be a number" });
+    const { project_id } = req.params;
+    const { fields } = req.query;
+
+    if (!project_id) {
+      return res.status(400).json({ message: "project_id is required" });
+    }
+
+    const BASE_FIELDS = [
+      "pv.pv_id as pv_id",
+      "pv.vendor_id as vendor_id",
+    ];
+
+    let selectedFields = [...BASE_FIELDS];
+
+    if (fields) {
+      const requestedFields = fields.split(",").map(f => f.trim());
+
+      const dynamicFields = requestedFields
+        .filter(f => FIELD_MAP[f])
+        .map(f => `${FIELD_MAP[f]} as ${f}`);
+
+      selectedFields.push(...dynamicFields);
+    } else {
+      selectedFields.push(
+        "v.name as name",
+        "jn.job_name as job_nature",
+        "v.mobile",
+        "v.email"
+      );
     }
 
     const vendors = await knexDB("project_vendors as pv")
       .leftJoin("vendors as v", "pv.vendor_id", "v.id")
       .leftJoin("job_nature as jn", "v.job_nature_id", "jn.job_id")
-      .where("pv.project_id", projectId)
-      .select([
-        "pv.pv_id",
-        "pv.project_id",
-        "pv.vendor_id",
-        "v.name as company_name",
-        "jn.job_name as job_nature",
-        "v.contact_person",
-        "v.telephone_no",
-        "v.mobile",
-        "v.email",
-        "v.address",
-        "v.website",
-        "v.reference",
-      ])
+      .where("pv.project_id", project_id)
+      .select(selectedFields)
       .orderBy("v.name", "asc");
 
-    res.json({ vendors });
+    res.json({
+      count: vendors.length,
+      vendors,
+    });
   } catch (err) {
     console.error("Fetch project vendors error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+
+
 
 
 
