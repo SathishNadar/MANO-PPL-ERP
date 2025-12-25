@@ -6,11 +6,7 @@ import VendorCreate from "./VendorCreate";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
-const CategoryDict = {
-  2: "Contractor",
-  1: "Consultant",
-  3: "Supplier"
-};
+
 
 function VendorList() {
   const [vendors, setVendors] = useState([]);
@@ -21,13 +17,22 @@ function VendorList() {
   const [showVendorForm, setShowVendorForm] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [totalVendorCount, setTotalVendorCount] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchCompany, setSearchCompany] = useState("");
+  const [searchPerson, setSearchPerson] = useState("");
+  const [searchJobNature, setSearchJobNature] = useState("");
   const [selectedJobNatureIds, setSelectedJobNatureIds] = useState([]);
-  const [selectedLocationIds, setSelectedLocationIds] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  // Manage Vendors States
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showManageMenu, setShowManageMenu] = useState(false);
+  const [showJobNatureModal, setShowJobNatureModal] = useState(false);
+  const [selectedVendorForEdit, setSelectedVendorForEdit] = useState(null);
+
   const itemsPerPage = 15;
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const categoryFromQuery = parseInt(queryParams.get("category") || "0");
+
 
   const flipObject = (obj) =>
     Object.fromEntries(Object.entries(obj).map(([k, v]) => [v, k]));
@@ -56,12 +61,15 @@ function VendorList() {
         credentials: 'include',
         body: JSON.stringify({
           order: "ASC",
-          locationIds: selectedLocationIds,
+          locationIds: [], // Removed location filter
           jobNatureIds: selectedJobNatureIds,
-          category: categoryFromQuery,
+          categories: selectedCategories,
+
           limit: itemsPerPage,
           page: currentPage,
-          queryString: searchTerm
+          searchCompany: searchCompany,
+          searchJobNature: searchJobNature,
+          searchPerson: searchPerson
         }),
       });
       const data = await res.json();
@@ -71,7 +79,7 @@ function VendorList() {
         ...vendor,
         job_nature_name: jobNatures[vendor.job_nature_id] || "--",
         location_name: locations[vendor.location_id] || "--",
-        category_name: CategoryDict[vendor.category_id] || "-"
+        category_name: vendor.category || "-"
       }));
       setVendors(enrichedVendors);
       setTotalVendorCount(vendorCount);
@@ -81,11 +89,43 @@ function VendorList() {
   };
 
   // Handle filter application from VendorFilter
-  const handleApplyFilters = ({ jobNatureIds, locationIds }) => {
+  const handleApplyFilters = ({ jobNatureIds, categories }) => {
     setSelectedJobNatureIds(jobNatureIds);
-    setSelectedLocationIds(locationIds);
+    setSelectedCategories(categories);
     setShowFilter(false);
     // fetchVendors will be triggered by useEffect as state changes
+  };
+
+  const handleDeleteVendor = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE}/vendor_api/delete/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (response.ok) {
+        // refresh
+        fetchVendors();
+      } else {
+        console.error("Failed to delete");
+      }
+    } catch (e) {
+      console.error("Delete error", e);
+    }
+  };
+
+  const handleAddJobNature = async (jobName) => {
+    try {
+      const response = await fetch(`${API_BASE}/vendor_api/add-job-nature`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ job_name: jobName })
+      });
+      if (response.ok) {
+        setShowJobNatureModal(false);
+        // Optionally refresh metadata if needed immediately, but for now just close
+      }
+    } catch (e) { console.error(e); }
   };
 
   useEffect(() => {
@@ -97,12 +137,14 @@ function VendorList() {
       fetchVendors();
     }
   }, [
-    categoryFromQuery,
+
     jobNatures,
     locations,
     currentPage,
     selectedJobNatureIds,
-    selectedLocationIds
+    currentPage,
+    selectedJobNatureIds,
+    selectedCategories
   ]);
 
   useEffect(() => {
@@ -110,7 +152,7 @@ function VendorList() {
       fetchVendors();
     }, 300);
     return () => clearTimeout(delayDebounce);
-  }, [searchTerm]);
+  }, [searchCompany, searchPerson, searchJobNature]);
 
   console.log("Pagination Pages:", Math.ceil(totalVendorCount / itemsPerPage));
 
@@ -129,18 +171,29 @@ function VendorList() {
             </div>
             {/* Actions: Search, Filter, Add */}
             <div className="flex items-center gap-4">
-              {/* Search Bar */}
-              <div className="relative">
+              {/* Search Bars */}
+              <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-[#111827] border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-sm text-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-64 transition-all"
+                  placeholder="Company..."
+                  value={searchCompany}
+                  onChange={(e) => setSearchCompany(e.target.value)}
+                  className="bg-[#111827] border border-gray-700 rounded-lg py-2 pl-3 pr-2 text-sm text-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-36 transition-all"
                 />
-                <span className="material-icons absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                  search
-                </span>
+                <input
+                  type="text"
+                  placeholder="Job Nature..."
+                  value={searchJobNature}
+                  onChange={(e) => setSearchJobNature(e.target.value)}
+                  className="bg-[#111827] border border-gray-700 rounded-lg py-2 pl-3 pr-2 text-sm text-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-36 transition-all"
+                />
+                <input
+                  type="text"
+                  placeholder="Person..."
+                  value={searchPerson}
+                  onChange={(e) => setSearchPerson(e.target.value)}
+                  className="bg-[#111827] border border-gray-700 rounded-lg py-2 pl-3 pr-2 text-sm text-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-36 transition-all"
+                />
               </div>
 
               {/* Filter Button */}
@@ -152,14 +205,52 @@ function VendorList() {
                 <span className="material-icons text-sm">filter_list</span>
               </button>
 
-              {/* Add Vendor Button */}
-              <button
-                onClick={() => setShowVendorForm(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-              >
-                <span>Add Vendor</span>
-                <span className="material-icons text-sm">add</span>
-              </button>
+              {/* Manage Vendors Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowManageMenu(!showManageMenu)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                >
+                  <span>Manage Vendors</span>
+                  <span className="material-icons text-sm">{showManageMenu ? 'expand_less' : 'expand_more'}</span>
+                </button>
+
+                {showManageMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 overflow-hidden">
+                    <button
+                      className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 hover:text-white flex items-center gap-2 transition-colors border-b border-gray-700"
+                      onClick={() => {
+                        setSelectedVendorForEdit(null); // Ensure add mode
+                        setShowVendorForm(true);
+                        setShowManageMenu(false);
+                      }}
+                    >
+                      <span className="material-icons text-sm text-green-400">add</span>
+                      Add Vendor
+                    </button>
+                    <button
+                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-2 transition-colors border-b border-gray-700 ${isEditMode ? 'bg-blue-900/30 text-blue-400' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
+                      onClick={() => {
+                        setIsEditMode(!isEditMode);
+                        setShowManageMenu(false);
+                      }}
+                    >
+                      <span className="material-icons text-sm text-blue-400">edit</span>
+                      {isEditMode ? 'Exit Edit Mode' : 'Edit Vendors'}
+                    </button>
+                    <button
+                      className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 hover:text-white flex items-center gap-2 transition-colors"
+                      onClick={() => {
+                        setShowJobNatureModal(true);
+                        setShowManageMenu(false);
+                      }}
+                    >
+                      <span className="material-icons text-sm text-purple-400">work</span>
+                      Add Job Nature
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -177,7 +268,7 @@ function VendorList() {
                       "MOBILE NO",
                       "EMAIL ID",
                       "ADDRESS"
-                    ].map((heading, idx) => (
+                    ].concat(isEditMode ? ["ACTIONS"] : []).map((heading, idx) => (
                       <th
                         key={idx}
                         className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-tight"
@@ -192,7 +283,7 @@ function VendorList() {
                     <tr
                       key={vendor.id || index}
                       className="hover:bg-gray-800/50 transition-colors duration-150 cursor-pointer group"
-                      onClick={() => setSelectedVendor(vendor)}
+                      onClick={() => !isEditMode && setSelectedVendor(vendor)}
                     >
                       <td className="p-4 text-center text-xs text-gray-600 font-medium">
                         {(currentPage - 1) * itemsPerPage + index + 1}
@@ -218,6 +309,33 @@ function VendorList() {
                       <td className="p-4 text-xs text-gray-500 max-w-[200px] truncate" title={vendor.address}>
                         {vendor.address}
                       </td>
+                      {isEditMode && (
+                        <td className="p-4 flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedVendorForEdit(vendor);
+                              setShowVendorForm(true);
+                            }}
+                            className="bg-blue-600/20 text-blue-400 p-1.5 rounded hover:bg-blue-600/40 transition-colors"
+                            title="Edit"
+                          >
+                            <span className="material-icons text-sm">edit</span>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Are you sure you want to delete ${vendor.name}?`)) {
+                                handleDeleteVendor(vendor.id);
+                              }
+                            }}
+                            className="bg-red-600/20 text-red-400 p-1.5 rounded hover:bg-red-600/40 transition-colors"
+                            title="Delete"
+                          >
+                            <span className="material-icons text-sm">delete</span>
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                   {vendors.length === 0 && (
@@ -369,7 +487,13 @@ function VendorList() {
               <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" />
               <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-8">
                 <div className="relative w-full max-w-4xl bg-transparent">
-                  <VendorCreate onClose={() => setShowVendorForm(false)} />
+                  <VendorCreate
+                    onClose={() => {
+                      setShowVendorForm(false);
+                      setSelectedVendorForEdit(null);
+                    }}
+                    initialData={selectedVendorForEdit}
+                  />
                 </div>
               </div>
             </>
@@ -384,10 +508,31 @@ function VendorList() {
                   <VendorFilter
                     onClose={() => setShowFilter(false)}
                     onApplyFilters={handleApplyFilters}
+                    initialCategories={selectedCategories}
+                    initialJobNatureIds={selectedJobNatureIds}
                   />
                 </div>
               </div>
             </>
+          )}
+          {/* Job Nature Modal */}
+          {showJobNatureModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div className="bg-[#1F2937] p-6 rounded-xl border border-gray-700 shadow-2xl w-full max-w-md">
+                <h2 className="text-xl font-bold text-white mb-4">Add Nature of Job</h2>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const val = e.target.elements.jobName.value;
+                  if (val) handleAddJobNature(val);
+                }}>
+                  <input name="jobName" className="w-full bg-gray-800 border border-gray-600 rounded p-2 text-white mb-4 focus:outline-none focus:border-blue-500" placeholder="Enter Job Nature (e.g. Electrical)" autoFocus />
+                  <div className="flex justify-end gap-3">
+                    <button type="button" onClick={() => setShowJobNatureModal(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                    <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">Add</button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
         </main>
       </div>
