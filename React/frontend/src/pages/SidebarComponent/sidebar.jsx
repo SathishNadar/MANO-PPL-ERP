@@ -65,14 +65,10 @@ function Sidebar({ onCategoryChange }) {
 
     {
       icon: "receipt_long",
+      path: "/dashboard/vendors",
       id: "vendors",
       label: "Vendors",
       roles: [2],
-      children: [
-        { label: "Contractors", category: "2" },
-        { label: "Consultants", category: "1" },
-        { label: "Suppliers", category: "3" },
-      ],
     },
 
     {
@@ -83,11 +79,12 @@ function Sidebar({ onCategoryChange }) {
       roles: [2, 5],
     },
 
-    { icon: "bar_chart", 
-      path: "/dashboard/attendance", 
-      id: "attendance", 
-      label: "Attendance", 
-      roles: [2] 
+    {
+      icon: "bar_chart",
+      path: "/dashboard/attendance",
+      id: "attendance",
+      label: "Attendance",
+      roles: [2]
     },
 
     {
@@ -121,25 +118,21 @@ function Sidebar({ onCategoryChange }) {
           <div key={idx} className="w-full relative group">
             <button
               onClick={() => {
-                if (id === "vendors") {
-                  setActiveMenu((prev) => {
-                    if (prev === "vendors") return ""; // collapse dropdown
-                    if (!location.pathname.includes("/dashboard/vendors")) {
-                      navigate("/dashboard/vendors?category=2");
-                    }
-                    return "vendors"; // open dropdown
-                  });
+                // If it has children (future proofing), toggle menu. Otherwise navigate.
+                // Vendors no longer has children, so it falls through to navigation.
+                if (children) {
+                  setActiveMenu((prev) => (prev === id ? "" : id));
                 } else {
                   path && navigate(path);
                   setActiveMenu(""); // collapse dropdown on other clicks
                 }
               }}
               className={`text-secondary hover:text-blue-light transition-all duration-300 transform hover:scale-110 cursor-pointer w-full flex justify-center ${
-  /* prefer matching by explicit `path` when available to avoid substring collisions like 'admin' */
-  path
-    ? (location.pathname === path || location.pathname.startsWith(path + "/") ? "text-blue-light" : "")
-    : (location.pathname.includes(id) ? "text-blue-light" : "")
-}`}
+                /* prefer matching by explicit `path` when available to avoid substring collisions like 'admin' */
+                path
+                  ? (location.pathname === path || location.pathname.startsWith(path + "/") ? "text-blue-light" : "")
+                  : (location.pathname.includes(id) ? "text-blue-light" : "")
+                }`}
             >
               <span className="material-icons text-[42px]">{icon}</span>
             </button>
@@ -149,29 +142,19 @@ function Sidebar({ onCategoryChange }) {
               {label}
             </span>
 
-            {/* Dropdown submenu for vendors */}
-            {id === "vendors" && activeMenu === "vendors" && (
+            {/* Dropdown submenu - General implementation if needed later, but currently unused for vendors */}
+            {children && activeMenu === id && (
               <div className="mt-4 flex flex-col space-y-5 transition-all duration-300 ease-in-out">
                 {children.map((item, i) => (
                   <button
                     key={i}
                     onClick={() => {
-                      navigate(`/dashboard/vendors?category=${item.category}`);
-                      onCategoryChange(parseInt(item.category, 10));
-                      setActiveMenu("vendors"); // keep dropdown open
+                      // Logic for children if any exist
+                      // For now, vendors has no children.
                     }}
-                    className={`flex items-center gap-2 text-xs px-2 text-left transition-colors duration-200 ${categoryParam === item.category
-                      ? "text-blue-light font-semibold"
-                      : "text-gray-300 hover:text-blue-light"
-                      }`}
+                    className="flex items-center gap-2 text-xs px-2 text-left text-gray-300 hover:text-blue-light"
                   >
-                    <span className="material-icons text-[34px] ml-2">
-                      {item.label === "Contractors"
-                        ? "engineering"
-                        : item.label === "Consultants"
-                          ? "support_agent"
-                          : "local_shipping"}
-                    </span>
+                    {/* Child content */}
                   </button>
                 ))}
               </div>

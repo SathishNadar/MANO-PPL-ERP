@@ -10,20 +10,24 @@ import ForgotPasswordRoutes from './AuthAPI/ForgotPasswordAPI.js';
 import AppError from './utils/AppError.js';
 import errorHandler from './middleware/errorHandler.js';
 import ProjectRoutes from './ProjectAPI/Projects.js';
-// import ProjectContactsRoutes from './ProjectAPI/ProjectContacts.js';
 import ProjectDirectoryRoutes from './ProjectAPI/ProjectDirectory.js';
 import ProjectVendorsRoutes from './ProjectAPI/ProjectVendors.js';
 import ProjectRolesandResponsibilitiesRoutes from './ProjectAPI/ProjectRolesandResponsibilities.js';
+import ProjectAgendaRoutes from './ProjectAPI/ProjectAgenda.js';
+import ProjectMinutesOfMeetingRoutes from './ProjectAPI/ProjectMinutesOfMeeting.js';
+import ProjectDrawingsRoutes from './ProjectAPI/ProjectDrawings.js';
+import ProjectPlannedVsAchievedRoutes from './ProjectAPI/ProjectPlannedVsAchieved.js';
 import ReportRoutes from './ProjectAPI/Reports.js';
 import BudgetRoutes from './ProjectAPI/Budget.js';
 import HindranceRoutes from './ProjectAPI/Hindrance.js';
+import ProjectSummaryRoutes from './ProjectAPI/ProjectSummary.js';
 import VendorRoutes from './VendorClientAPI/vendor.js';
 import TaskRoutes from './Tasks/task.js';
 import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
 import WorkLocationRoutes from './Admin/WorkLocations.js';
 import S3Routes from './s3/s3Routes.js';
-import ProjectSummaryRoutes from './ProjectAPI/ProjectSummary.js';
+
 
 
 import './config.js';
@@ -64,9 +68,13 @@ app.use('/api', ForgotPasswordRoutes);
 app.use('/s3', S3Routes);
 
 app.use('/project', ProjectRoutes);
-app.use("/projectContacts", ProjectDirectoryRoutes);
+app.use("/projectDirectory", ProjectDirectoryRoutes);
 app.use("/projectVendors", ProjectVendorsRoutes);
 app.use("/projectStaffRoles", ProjectRolesandResponsibilitiesRoutes);
+app.use("/projectAgenda", ProjectAgendaRoutes);
+app.use("/projectMoM", ProjectMinutesOfMeetingRoutes);
+app.use("/projectDrawings", ProjectDrawingsRoutes);
+app.use("/projectDrawingsPA", ProjectPlannedVsAchievedRoutes);
 app.use("/projectSummary", ProjectSummaryRoutes);
 app.use("/report", ReportRoutes);
 app.use("/budget", BudgetRoutes);
@@ -99,6 +107,7 @@ const io = new SocketIO(server, {
   },
   // you can tune pingInterval/pingTimeout if needed
 });
+
 
 // basic connection handler
 io.on('connection', (socket) => {

@@ -296,13 +296,15 @@ const ProjectVendorList = () => {
                                             </td>
                                             {isEditing && (
                                                 <td className="p-4 text-center">
-                                                    <button
-                                                        onClick={() => handleDeleteVendor(vendor.pv_id || vendor.id)}
-                                                        className="text-red-500 hover:text-red-400 transition-colors"
-                                                        title="Remove from Project"
-                                                    >
-                                                        <span className="material-icons">delete</span>
-                                                    </button>
+                                                    <div className="flex justify-center">
+                                                        <button
+                                                            onClick={() => handleDeleteVendor(vendor.pv_id || vendor.id)}
+                                                            className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                            title="Remove from Project"
+                                                        >
+                                                            <span className="material-icons text-sm font-bold">delete</span>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             )}
                                         </tr>

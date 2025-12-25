@@ -83,14 +83,14 @@ const ProjectDirectory = () => {
 
     const fetchContacts = async () => {
         try {
-            // Using correct GET endpoint: /projectContacts/contacts/:project_id
-            const response = await fetch(`${API_BASE}/projectContacts/contacts/${projectId}`, {
+            // Using correct GET endpoint: /projectDirectory/list/:project_id
+            const response = await fetch(`${API_BASE}/projectDirectory/list/${projectId}`, {
                 credentials: 'include'
             });
             const data = await response.json();
-            // API returns {contacts: [...], contactCount: N }
-            if (data.contacts) {
-                setContacts(data.contacts || []);
+            // API returns { directory: [...], count: N }
+            if (data.directory) {
+                setContacts(data.directory || []);
             } else {
                 setContacts([]);
             }
@@ -101,8 +101,8 @@ const ProjectDirectory = () => {
         }
     };
 
-    // Helper: Robust ID extraction using pc_id
-    const getContactId = (contact) => contact.pc_id || contact.id;
+    // Helper: Robust ID extraction using pd_id
+    const getContactId = (contact) => contact.pd_id || contact.id;
 
     const handleVendorSelect = (tempId, vendor) => {
         setNewRows(newRows.map(row =>
@@ -238,8 +238,8 @@ const ProjectDirectory = () => {
                 return;
             }
 
-            // Using PUT for updates as per project pattern: /projectContacts/update/:pc_id
-            const response = await fetch(`${API_BASE}/projectContacts/update/${editingId}`, {
+            // Using PUT for updates: /projectDirectory/update/:id
+            const response = await fetch(`${API_BASE}/projectDirectory/update/${editingId}`, {
                 method: 'PUT',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -270,8 +270,8 @@ const ProjectDirectory = () => {
     const confirmDelete = async () => {
         if (!deleteId) return;
         try {
-            // Using DELETE for deletion
-            const response = await fetch(`${API_BASE}/projectContacts/delete/${deleteId}`, {
+            // Using DELETE for deletion: /projectDirectory/delete/:id
+            const response = await fetch(`${API_BASE}/projectDirectory/delete/${deleteId}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
@@ -336,9 +336,9 @@ const ProjectDirectory = () => {
                 address_line: row.address_line
             };
 
-            // Using POST /projectContacts/add/:project_id based on backend definition
-            console.log(`Creating contact at ${API_BASE}/projectContacts/add/${projectId}`);
-            const response = await fetch(`${API_BASE}/projectContacts/add/${projectId}`, {
+            // Using POST /projectDirectory/add/:project_id
+            console.log(`Creating contact at ${API_BASE}/projectDirectory/add/${projectId}`);
+            const response = await fetch(`${API_BASE}/projectDirectory/add/${projectId}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -504,20 +504,36 @@ const ProjectDirectory = () => {
                                                 <td className={tdClass}>
                                                     {isEditing ? (
                                                         <div className="flex gap-2 justify-center">
-                                                            <button onClick={handleSaveEdit} className="text-green-500 hover:text-green-400" title="Update">
-                                                                <span className="material-icons">save</span>
+                                                            <button
+                                                                onClick={handleSaveEdit}
+                                                                className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                title="Update"
+                                                            >
+                                                                <span className="material-icons text-sm font-bold">check</span>
                                                             </button>
-                                                            <button onClick={handleCancelEdit} className="text-gray-400 hover:text-gray-300" title="Cancel">
-                                                                <span className="material-icons">cancel</span>
+                                                            <button
+                                                                onClick={handleCancelEdit}
+                                                                className="w-8 h-8 rounded-full bg-gray-600 hover:bg-gray-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                title="Cancel"
+                                                            >
+                                                                <span className="material-icons text-sm font-bold">close</span>
                                                             </button>
                                                         </div>
                                                     ) : (
                                                         <div className="flex gap-2 justify-center">
-                                                            <button onClick={() => handleEditClick(contact)} className="text-blue-500 hover:text-blue-400" title="Edit">
-                                                                <span className="material-icons text-lg">edit</span>
+                                                            <button
+                                                                onClick={() => handleEditClick(contact)}
+                                                                className="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                title="Edit"
+                                                            >
+                                                                <span className="material-icons text-sm font-bold">edit</span>
                                                             </button>
-                                                            <button onClick={() => handleDeleteClick(id)} className="text-red-500 hover:text-red-400" title="Delete">
-                                                                <span className="material-icons text-lg">delete</span>
+                                                            <button
+                                                                onClick={() => handleDeleteClick(id)}
+                                                                className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                title="Delete"
+                                                            >
+                                                                <span className="material-icons text-sm font-bold">delete</span>
                                                             </button>
                                                         </div>
                                                     )}
@@ -583,11 +599,19 @@ const ProjectDirectory = () => {
                                         {(isEditMode || newRows.length > 0) && (
                                             <td className={tdClass}>
                                                 <div className="flex gap-2 justify-center">
-                                                    <button onClick={() => saveNewRow(row)} className="text-green-500 hover:text-green-400" title="Create">
-                                                        <span className="material-icons">check_circle</span>
+                                                    <button
+                                                        onClick={() => saveNewRow(row)}
+                                                        className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                        title="Create"
+                                                    >
+                                                        <span className="material-icons text-sm font-bold">check</span>
                                                     </button>
-                                                    <button onClick={() => removeNewRow(row.tempId)} className="text-red-500 hover:text-red-400" title="Discard">
-                                                        <span className="material-icons">delete_outline</span>
+                                                    <button
+                                                        onClick={() => removeNewRow(row.tempId)}
+                                                        className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                        title="Discard"
+                                                    >
+                                                        <span className="material-icons text-sm font-bold">delete</span>
                                                     </button>
                                                 </div>
                                             </td>

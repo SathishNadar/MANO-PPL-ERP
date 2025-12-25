@@ -317,13 +317,33 @@ const StaffRoles = () => {
                                                         <td className="p-4 text-center">
                                                             {isEditing ? (
                                                                 <div className="flex gap-2 justify-center">
-                                                                    <button onClick={handleUpdateStaff} className="text-green-500 hover:text-green-400"><span className="material-icons">save</span></button>
-                                                                    <button onClick={() => setEditingId(null)} className="text-red-500 hover:text-red-400"><span className="material-icons">close</span></button>
+                                                                    <button
+                                                                        onClick={handleUpdateStaff}
+                                                                        className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                    >
+                                                                        <span className="material-icons text-sm font-bold">check</span>
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setEditingId(null)}
+                                                                        className="w-8 h-8 rounded-full bg-gray-600 hover:bg-gray-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                    >
+                                                                        <span className="material-icons text-sm font-bold">close</span>
+                                                                    </button>
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex gap-2 justify-center">
-                                                                    <button onClick={() => handleEditClick(member)} className="text-blue-500 hover:text-blue-400"><span className="material-icons">edit</span></button>
-                                                                    <button onClick={() => handleDeleteStaff(member.psrr_id)} className="text-red-500 hover:text-red-400"><span className="material-icons">delete</span></button>
+                                                                    <button
+                                                                        onClick={() => handleEditClick(member)}
+                                                                        className="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                    >
+                                                                        <span className="material-icons text-sm font-bold">edit</span>
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteStaff(member.psrr_id)}
+                                                                        className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                    >
+                                                                        <span className="material-icons text-sm font-bold">delete</span>
+                                                                    </button>
                                                                 </div>
                                                             )}
                                                         </td>
@@ -385,8 +405,20 @@ const StaffRoles = () => {
                                                 {isManagementMode && (
                                                     <td className="p-4 text-center">
                                                         <div className="flex gap-2 justify-center">
-                                                            <button onClick={() => saveNewRow(row.tempId)} className="text-green-500 hover:text-green-400" title="Save"><span className="material-icons">save</span></button>
-                                                            <button onClick={() => discardNewRow(row.tempId)} className="text-red-500 hover:text-red-400" title="Cancel"><span className="material-icons">delete</span></button>
+                                                            <button
+                                                                onClick={() => saveNewRow(row.tempId)}
+                                                                className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                title="Save"
+                                                            >
+                                                                <span className="material-icons text-sm font-bold">check</span>
+                                                            </button>
+                                                            <button
+                                                                onClick={() => discardNewRow(row.tempId)}
+                                                                className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all"
+                                                                title="Cancel"
+                                                            >
+                                                                <span className="material-icons text-sm font-bold">delete</span>
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 )}

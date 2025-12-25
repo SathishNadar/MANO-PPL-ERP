@@ -4,48 +4,47 @@ import { knexDB } from "../Database.js";
 const router = express.Router();
 
 /* -------------------------------------------------------
-   FETCH CONTACTS (FILTERS + PAGINATION + SEARCH)
+   FETCH DIRECTORY (FILTERS + PAGINATION + SEARCH)
 -------------------------------------------------------- */
-export async function fetchProjectContacts(projectId) {
+export async function fetchProjectDirectory(projectId) {
   if (!projectId) {
     throw new Error("projectId is required");
   }
 
-  const contacts = await knexDB("project_contact as pc")
-    .leftJoin("vendors as v", "pc.vendor_id", "v.id")
+  const directory = await knexDB("project_directory as pd")
+    .leftJoin("vendors as v", "pd.vendor_id", "v.id")
     .leftJoin("job_nature as jn", "v.job_nature_id", "jn.job_id")
-    .where("pc.project_id", projectId)
+    .where("pd.project_id", projectId)
     .select([
-      "pc.pc_id",
-      "pc.project_id",
-      "pc.vendor_id",
+      "pd.pd_id",
+      "pd.project_id",
+      "pd.vendor_id",
       "v.name as company_name",
       "jn.job_name as job_nature",
-      "pc.contact_person",
-      "pc.designation",
-      "pc.responsibilities",
-      "pc.mobile_no",
-      "pc.email",
-      "pc.address_line",
-      "pc.created_at",
-      "pc.updated_at",
+      "pd.contact_person",
+      "pd.designation",
+      "pd.responsibilities",
+      "pd.mobile_no",
+      "pd.email",
+      "pd.address_line",
+      "pd.created_at",
+      "pd.updated_at",
     ])
-    .orderBy("pc.created_at", "desc");
+    .orderBy("pd.created_at", "desc");
 
   return {
-    contacts,
-    contactCount: contacts.length,
+    directory,
+    count: directory.length,
   };
 }
-
 
 
 
 /* -------------------------------------------------------
    METADATA
 -------------------------------------------------------- */
-async function fetchContactsCount(projectId = null) {
-  let query = knexDB("project_contact");
+async function fetchDirectoryCount(projectId = null) {
+  let query = knexDB("project_directory");
 
   if (projectId) query = query.where("project_id", projectId);
 
@@ -54,12 +53,11 @@ async function fetchContactsCount(projectId = null) {
 }
 
 
-
 /* -------------------------------------------------------
    CRUD OPERATIONS
 -------------------------------------------------------- */
-async function insertContact(data) {
-  const [pc_id] = await knexDB("project_contact").insert({
+async function insertDirectoryItem(data) {
+  const [pd_id] = await knexDB("project_directory").insert({
     project_id: data.project_id,
     vendor_id: data.vendor_id,
     contact_person: data.contact_person,
@@ -72,13 +70,13 @@ async function insertContact(data) {
     updated_at: knexDB.fn.now(),
   });
 
-  return { pc_id };
+  return { pd_id };
 }
 
 
-async function updateContact(id, data) {
-  const affected = await knexDB("project_contact")
-    .where("pc_id", id)
+async function updateDirectoryItem(id, data) {
+  const affected = await knexDB("project_directory")
+    .where("pd_id", id)
     .update({
       vendor_id: data.vendor_id,
       contact_person: data.contact_person,
@@ -94,9 +92,9 @@ async function updateContact(id, data) {
 }
 
 
-async function deleteContact(id) {
-  const affected = await knexDB("project_contact")
-    .where("pc_id", id)
+async function deleteDirectoryItem(id) {
+  const affected = await knexDB("project_directory")
+    .where("pd_id", id)
     .del();
 
   return { affectedRows: affected };
@@ -107,30 +105,24 @@ API Endpoints
 -------------------------------------------------------- */
 
 
-// Fetch contacts with search, pagination for a project
-// Fetch contacts for a project
-router.get("/contacts/:project_id", async (req, res) => {
+// Fetch directory for a project
+router.get("/list/:project_id", async (req, res) => {
   try {
     const projectId = parseInt(req.params.project_id, 10);
     if (Number.isNaN(projectId)) {
       return res.status(400).json({ message: "Invalid project_id" });
     }
 
-    const result = await fetchProjectContacts(projectId);
+    const result = await fetchProjectDirectory(projectId);
     res.json(result);
   } catch (err) {
-    console.error("Fetch contacts error:", err);
+    console.error("Fetch directory error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-
-
-
-
 // Insert
-// Insert (preferred): POST /:projectId/add
-// Insert contact for a specific project
+// Insert directory item for a specific project
 router.post("/add/:project_id", async (req, res) => {
   try {
     const projectId = parseInt(req.params.project_id, 10);
@@ -144,44 +136,40 @@ router.post("/add/:project_id", async (req, res) => {
 
     // Merge project_id from path into request body
     const payload = { ...req.body, project_id: projectId };
-    const result = await insertContact(payload);
+    const result = await insertDirectoryItem(payload);
 
-    res.json({ message: "Contact added", pc_id: result.pc_id });
+    res.json({ message: "Directory item added", pd_id: result.pd_id });
   } catch (err) {
     console.error("Insert error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-
-
 // Update (project-scoped): PUT /:projectId/update/:id
-// Update contact by pc_id only
-router.put("/update/:id", async (req, res) => {
+// Update directory item by pd_id only
+router.put("/update/:id", async (req, res) => { 
   try {
     const id = parseInt(req.params.id, 10);
     if (Number.isNaN(id)) {
       return res.status(400).json({ message: "id is required and must be a number" });
     }
 
-    // Ensure the contact exists
-    const existing = await knexDB("project_contact").where({ pc_id: id }).first();
+    // Ensure the item exists
+    const existing = await knexDB("project_directory").where({ pd_id: id }).first();
     if (!existing) {
-      return res.status(404).json({ message: "Contact not found" });
+      return res.status(404).json({ message: "Directory item not found" });
     }
 
-    const result = await updateContact(id, req.body);
-    res.json({ message: "Contact updated", affectedRows: result.affected });
+    const result = await updateDirectoryItem(id, req.body);
+    res.json({ message: "Directory item updated", affectedRows: result.affected });
   } catch (err) {
     console.error("Update error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-
-
 // Delete (project-scoped): DELETE /:projectId/delete/:id
-// Delete contact by pc_id only
+// Delete directory item by pd_id only
 router.delete("/delete/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -189,14 +177,14 @@ router.delete("/delete/:id", async (req, res) => {
       return res.status(400).json({ message: "id is required and must be a number" });
     }
 
-    // Ensure the contact exists
-    const existing = await knexDB("project_contact").where({ pc_id: id }).first();
+    // Ensure the item exists
+    const existing = await knexDB("project_directory").where({ pd_id: id }).first();
     if (!existing) {
-      return res.status(404).json({ message: "Contact not found" });
+      return res.status(404).json({ message: "Directory item not found" });
     }
 
-    const result = await deleteContact(id);
-    res.json({ message: "Contact deleted", affectedRows: result.affectedRows });
+    const result = await deleteDirectoryItem(id);
+    res.json({ message: "Directory item deleted", affectedRows: result.affectedRows });
   } catch (err) {
     console.error("Delete error:", err);
     res.status(500).json({ message: "Internal server error" });
@@ -205,3 +193,4 @@ router.delete("/delete/:id", async (req, res) => {
 
 
 export default router;
+

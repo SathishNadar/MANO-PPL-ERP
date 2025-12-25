@@ -9,75 +9,72 @@ const router = express.Router();
 
 
 /* -----------------------Queries-------------------------- */
+// Helper for building search queries
 export async function fetchVendors({
-  queryString = "",
-  category = 0,
+  category = 0, // Ignored in new logic but kept for signature compatibility if needed
   limit = 11,
   page = 1,
   locationIds = [],
-  jobNatureIds = [],
+  jobNatureIds = [], // IDs filter (from filter modal)
+  categories = [],   // Categories filter (from filter modal)
   order = 'ASC',
+  // New specific search fields
+  searchCompany = "",
+  searchJobNature = "",
+  searchPerson = ""
 } = {}) {
   const offset = (page - 1) * limit;
 
-  // Build base query
-  let query = knexDB('vendors');
+  // Start with base query
+  let query = knexDB('vendors')
+    .leftJoin('job_nature', 'vendors.job_nature_id', 'job_nature.job_id');
 
-  if (category !== 0) {
-    query = query.where('category_id', category);
-  }
-
-  if (locationIds.length > 0) {
-    query = query.whereIn('location_id', locationIds);
-  }
+  // Apply ID-based filters (existing functionality)
+  // locationIds removed due to schema change (location_id -> location_name)
+  // if (locationIds.length > 0) {
+  //   query = query.whereIn('vendors.location_id', locationIds);
+  // }
 
   if (jobNatureIds.length > 0) {
-    query = query.whereIn('job_nature_id', jobNatureIds);
+    query = query.whereIn('vendors.job_nature_id', jobNatureIds);
   }
 
-  // If no search string, fetch paginated results directly from DB
-  if (!queryString.trim()) {
-    // Get total count
-    const [{ total }] = await query.clone().count('* as total');
-
-    // Get paginated vendors
-    const vendors = await query
-      .orderBy('name', order === 'DESC' ? 'desc' : 'asc')
-      .limit(limit)
-      .offset(offset)
-      .select('*');
-
-    return {
-      vendors,
-      vendorCount: total,
-    };
+  // Apply Category Filter
+  if (categories.length > 0) {
+    query = query.whereIn('vendors.category', categories);
   }
 
-  // With search, fetch ALL matching vendors (no limit, no offset)
-  const allVendors = await query
-    .orderBy('name', order === 'DESC' ? 'desc' : 'asc')
-    .select('*');
+  // Apply Text-based Search Filters (New functionality)
+  // Using whereILike for case-insensitive partial matching (Postgres/MySQL compatible usually, defaulting to where like for broad compatibility if ILIKE not supported by DB driver, specifically sqlite needs setup. Assuming standard sql behavior or knex handles it)
+  // If specific DB doesn't support ILIKE, we might need LOWER(). keeping it simple with where + like %...%
 
-  const fuse = new Fuse(allVendors, {
-    keys: [
-      { name: "name", weight: 0.5 },
-      { name: "remarks", weight: 0.2 },
-      { name: "email", weight: 0.1 },
-      { name: "website", weight: 0.1 },
-      { name: "telephone_no", weight: 0.05 },
-      { name: "mobile", weight: 0.05 },
-      { name: "reference", weight: 0.025 },
-      { name: "contact_person", weight: 0.025 },
-    ],
-    threshold: 0.4,
-  });
+  if (searchCompany.trim()) {
+    query = query.where('vendors.name', 'like', `%${searchCompany}%`);
+  }
 
-  const results = fuse.search(queryString).map(r => r.item);
-  const paginatedResults = results.slice(offset, offset + limit);
+  if (searchPerson.trim()) {
+    query = query.where('vendors.contact_person', 'like', `%${searchPerson}%`);
+  }
+
+  if (searchJobNature.trim()) {
+    query = query.where('job_nature.job_name', 'like', `%${searchJobNature}%`);
+  }
+
+  // Clone to get total count
+  const [{ total }] = await query.clone().count('* as total');
+
+  // Get paginated results
+  const vendors = await query
+    .orderBy('vendors.name', order === 'DESC' ? 'desc' : 'asc')
+    .limit(limit)
+    .offset(offset)
+    .select('vendors.*', 'job_nature.job_name as job_nature_name_joined');
+  // Selecting job_name mainly for debug/consistency, though frontend maps IDs. 
+  // The frontend currently maps IDs, so returning vendors.* is fine.
 
   return {
-    vendors: paginatedResults,
-    vendorCount: results.length,
+    vendors,
+    vendorCount: total,
   };
 }
 
@@ -111,7 +108,7 @@ async function insertVendor(data) {
     contact_person: data.contact_person,
     telephone_no: data.telephone_no,
     mobile: data.mobile,
-    location_id: data.location_id,
+    location_name: data.location_name,
     email: data.email,
     address: data.address,
     gst_no: data.gst_no,
@@ -119,7 +116,7 @@ async function insertVendor(data) {
     website: data.website,
     reference: data.reference,
     remarks: data.remarks,
-    category_id: data.category_id
+    category: data.category
   });
 
   return { id };
@@ -142,7 +139,7 @@ async function updateVendor(id, data) {
       contact_person: data.contact_person,
       telephone_no: data.telephone_no,
       mobile: data.mobile,
-      location_id: data.location_id,
+      location_name: data.location_name,
       email: data.email,
       address: data.address,
       gst_no: data.gst_no,
@@ -150,7 +147,7 @@ async function updateVendor(id, data) {
       website: data.website,
       reference: data.reference,
       remarks: data.remarks,
-      category_id: data.category_id
+      category: data.category
     });
 
   return { affectedRows };
@@ -161,23 +158,27 @@ async function updateVendor(id, data) {
 // Post call to fetch Vendor data as per filters, pagination and search
 router.post("/", catchAsync(async (req, res) => {
   const {
-    queryString = "",
     limit = 11,
     page = 1,
     order = "ASC",
-    category = 0,
     locationIds = [],
-    jobNatureIds = []
+    jobNatureIds = [],
+    categories = [],
+    searchCompany = "",
+    searchJobNature = "",
+    searchPerson = ""
   } = req.body || {};
 
   const vendors = await fetchVendors({
-    queryString,
-    category,
     limit,
     page,
     locationIds,
     jobNatureIds,
-    order
+    categories,
+    order,
+    searchCompany,
+    searchJobNature,
+    searchPerson
   });
 
   res.json(vendors);
@@ -228,24 +229,48 @@ router.delete("/delete/:id", catchAsync(async (req, res) => {
 
 // GET call to fetch simplified vendors list for dropdowns etc.
 router.get("/vendors-jobnature", async (req, res) => {
-    try {
-        const vendors = await knexDB('vendors as v')
-            .leftJoin('job_nature as jn', 'v.job_nature_id', 'jn.job_id')
-            .select(
-                'v.id',
-                'v.name as company_name',
-                'jn.job_name as job_nature'
-            )
-            .orderBy('v.name', 'asc');
+  try {
+    const vendors = await knexDB('vendors as v')
+      .leftJoin('job_nature as jn', 'v.job_nature_id', 'jn.job_id')
+      .select(
+        'v.id',
+        'v.name as company_name',
+        'jn.job_name as job_nature'
+      )
+      .orderBy('v.name', 'asc');
 
-        res.json({ vendors });
-    } catch (error) {
-        console.error("Error fetching vendors list:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+    res.json({ vendors });
+  } catch (error) {
+    console.error("Error fetching vendors list:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 
 
+// Helper to insert job nature
+async function insertJobNature(jobName) {
+  const [id] = await knexDB('job_nature').insert({
+    job_name: jobName
+  });
+  return { id };
+}
+
+// ... existing routes ...
+
 export default router;
+
+// Add Job Nature Route
+router.post("/add-job-nature", catchAsync(async (req, res) => {
+  const { job_name } = req.body;
+
+  if (!job_name) {
+    throw new AppError("Job Nature Name is required", 400);
+  }
+
+  // Optional: Check existence. Assuming DB unique constraint might handle it or just let duplicates happen if schema allows? 
+  // Let's assume naive insert for now as requested.
+  const result = await insertJobNature(job_name);
+  res.json({ message: "Job Nature added", id: result.id });
+}));
 

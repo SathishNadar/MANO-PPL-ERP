@@ -1,35 +1,53 @@
-import React, {useState, useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
-function VendorFilter({ onClose, onApplyFilters }) {
-  const [jobNatures, setJobNatures] = useState([]);
-  const [locations, setLocations] = useState([]);
+function VendorFilter({ onClose, onApplyFilters, initialCategories = [], initialJobNatureIds = [] }) {
+  const [jobNatures, setJobNatures] = useState([
+    "3D Animation/Corporate Video",
+    "Acoustic Consulting",
+    "Advocate",
+    "Architect",
+    "Architectural & Interior Fittings",
+    "Art & Décor",
+    "Audio Video Equipments"
+  ]);
   const [jobNatureMap, setJobNatureMap] = useState({});
-  const [locationMap, setLocationMap] = useState({});
   const [selectedJobNatures, setSelectedJobNatures] = useState([]);
-  const [selectedLocations, setSelectedLocations] = useState([]);
+
+  const categories = ["Contractor", "Consultants", "Supplier"];
+  const [selectedCategories, setSelectedCategories] = useState(initialCategories);
+
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
         const response = await fetch(`${API_BASE}/vendor_api/metadata/`, {
           credentials: 'include',
-          });
+        });
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
-        setJobNatures(Object.keys(data.jobNatures || {}));
-        setLocations(Object.keys(data.locations || {}));
+        const serverJobNatures = Object.keys(data.jobNatures || {});
+        if (serverJobNatures.length > 0) {
+          setJobNatures(serverJobNatures);
+        }
         setJobNatureMap(data.jobNatures || {});
-        setLocationMap(data.locations || {});
       } catch (error) {
-        console.error("Error fetching metadata:", error); 
+        console.error("Error fetching metadata:", error);
       }
     };
     fetchMetadata();
   }, []);
+
+  // Sync initial IDs to names once metadata is loaded
   useEffect(() => {
-    console.log("Selected Filters =>", { selectedJobNatures, selectedLocations });
-  }, [selectedJobNatures, selectedLocations]);
+    if (Object.keys(jobNatureMap).length > 0 && initialJobNatureIds.length > 0) {
+      const names = Object.entries(jobNatureMap)
+        .filter(([name, id]) => initialJobNatureIds.includes(id))
+        .map(([name]) => name);
+      setSelectedJobNatures(names);
+    }
+  }, [jobNatureMap, initialJobNatureIds]);
+
   return (
     <div className="fixed inset-0 flex items-center justify-center font-poppins bg-transparent z-50">
       <div className="bg-gray-900 text-white rounded-lg shadow-lg p-8 w-full max-w-4xl">
@@ -86,46 +104,25 @@ function VendorFilter({ onClose, onApplyFilters }) {
             </div>
           </div>
           <div>
-            <h2 className="text-xl font-semibold mb-4">Location</h2>
-            <div className="relative mb-4">
-              <span className="material-icons absolute left-3 top-3 text-gray-500">search</span>
-              <input
-                list="locations"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Search Locations..."
-                type="text"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const value = e.target.value.trim();
-                    if (locations.includes(value) && !selectedLocations.includes(value)) {
-                      setSelectedLocations(prev => [...prev, value]);
-                    }
-                    e.target.value = '';
-                  }
-                }}
-              />
-              <datalist id="locations">
-                {locations.map((loc, index) => (
-                  <option key={index} value={loc} />
-                ))}
-              </datalist>
-            </div>
+            <h2 className="text-xl font-semibold mb-4">Category</h2>
+            {/* Spacer to align with search bar on the left */}
+            <div className="h-[42px] mb-4"></div>
             <div className="border border-gray-700 rounded-lg p-2 h-64 overflow-y-auto space-y-3">
-              {locations.map((loc, index) => (
+              {categories.map((cat, index) => (
                 <label key={index} className="flex items-center space-x-3 cursor-pointer">
                   <input
                     className="form-checkbox h-5 w-5 text-blue-500 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
                     type="checkbox"
-                    checked={selectedLocations.includes(loc)}
+                    checked={selectedCategories.includes(cat)}
                     onChange={() => {
-                      if (selectedLocations.includes(loc)) {
-                        setSelectedLocations(prev => prev.filter(l => l !== loc));
+                      if (selectedCategories.includes(cat)) {
+                        setSelectedCategories(prev => prev.filter(c => c !== cat));
                       } else {
-                        setSelectedLocations(prev => [...prev, loc]);
+                        setSelectedCategories(prev => [...prev, cat]);
                       }
                     }}
                   />
-                  <span>{loc}</span>
+                  <span>{cat}</span>
                 </label>
               ))}
             </div>
@@ -136,7 +133,8 @@ function VendorFilter({ onClose, onApplyFilters }) {
             className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300"
             onClick={() => {
               setSelectedJobNatures([]);
-              setSelectedLocations([]);
+              setSelectedCategories([]);
+              onApplyFilters({ jobNatureIds: [], categories: [] });
             }}
           >
             Clear Filters
@@ -145,12 +143,10 @@ function VendorFilter({ onClose, onApplyFilters }) {
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300"
             onClick={() => {
               const appliedJobNatureIds = selectedJobNatures.map(nature => jobNatureMap[nature]);
-              const appliedLocationIds = selectedLocations.map(loc => locationMap[loc]);
               onApplyFilters({
                 jobNatureIds: appliedJobNatureIds,
-                locationIds: appliedLocationIds
+                categories: selectedCategories
               });
-              onClose();
             }}
           >
             Apply Filters

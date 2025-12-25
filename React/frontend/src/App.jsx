@@ -18,6 +18,8 @@ import ProjectsView from "./pages/Dashboard/Projects/ProjectsView.jsx";
 import ProjectDescription from "./pages/Dashboard/Projects/ProjectDescription.jsx";
 import DPRList from "./pages/Dashboard/Projects/DPRList.jsx";
 import ProjectDirectory from "./pages/Dashboard/ProjectDirectory/ProjectDirectory.jsx";
+import DrawingDirectory from "./pages/Dashboard/DrawingDirectory/DrawingDirectory.jsx";
+import DrawingPlannedVsAchieved from "./pages/Dashboard/DrawingPlannedVsAchieved/DrawingPlannedVsAchieved.jsx";
 import ProjectVendorList from "./pages/Dashboard/ProjectVendorList/ProjectVendorList.jsx";
 import DprFetchViewer from "./pages/DPR/DprFetchViewer.jsx";
 import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
@@ -173,8 +175,35 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+
+        // ... inside Routes ...
+        <Route
+          path="/dashboard/project-description/:projectId/drawing-management"
+          element={
+            <ProtectedRoute>
+              <DrawingDirectory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/drawing-planned-vs-achieved"
+          element={
+            <ProtectedRoute>
+              <DrawingPlannedVsAchieved />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/dashboard/project-summary"
+          element={
+            <ProtectedRoute>
+              <ProjectSummary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-summary/:projectId"
           element={
             <ProtectedRoute>
               <ProjectSummary />
