@@ -139,8 +139,9 @@ function DprEditor() {
 
         if (response.ok) {
           const vendorList = Array.isArray(data.vendors) ? data.vendors : (Array.isArray(data) ? data : []);
-          // Extract only names as per requirement
-          const vendorNames = vendorList.map(v => v.name);
+          // Extract only names as per requirement - support both company_name and name
+          const vendorNames = vendorList.map(v => v.company_name || v.name);
+          console.log("Extracted vendor names:", vendorNames);
           setAllProjectVendors(vendorNames);
         } else {
           console.error(data.message || "Failed to fetch project vendors");
