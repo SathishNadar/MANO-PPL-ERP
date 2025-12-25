@@ -681,47 +681,60 @@ function BudgetUpdate() {
         {/* Popover Input */}
         {popover && popover.buttonRef && (() => {
           const buttonRect = popover.buttonRef.getBoundingClientRect();
-          const popoverWidth = 320; // min-w-[320px]
+          const popoverWidth = 320; // 320px width
 
-          // Calculate centered position
-          let left = buttonRect.left + (buttonRect.width / 2) - (popoverWidth / 2);
-          let top = buttonRect.bottom + 12; // 12px gap for arrow
-
-          // Viewport boundary checks
+          // Viewport dimensions
           const viewportWidth = window.innerWidth;
           const viewportHeight = window.innerHeight;
           const padding = 16; // padding from edges
 
-          // Adjust horizontal position if overflowing
+          // Calculate horizontal position (centered)
+          let left = buttonRect.left + (buttonRect.width / 2) - (popoverWidth / 2);
+
+          // Constrain horizontal position
           if (left < padding) {
             left = padding;
           } else if (left + popoverWidth > viewportWidth - padding) {
             left = viewportWidth - popoverWidth - padding;
           }
 
-          // Calculate arrow position (relative to popover)
+          // Calculate arrow position relative to popover
           const arrowLeft = buttonRect.left + (buttonRect.width / 2) - left;
 
-          // Check if popover would overflow bottom of viewport
-          const estimatedHeight = popover.type === 'category' ? 150 : 350;
-          const wouldOverflowBottom = top + estimatedHeight > viewportHeight - padding;
+          // Vertical positioning logic
+          const gap = 12;
+          const estimatedHeight = popover.type === 'category' ? 160 : 400; // slightly generous estimates
 
-          // If overflowing bottom, position above the button instead
+          const spaceBelow = viewportHeight - buttonRect.bottom - padding;
+          const spaceAbove = buttonRect.top - padding;
+
           let isAbove = false;
-          if (wouldOverflowBottom && buttonRect.top > estimatedHeight + padding) {
-            top = buttonRect.top - estimatedHeight - 12;
+          let style = {
+            left: `${left}px`,
+            width: `${popoverWidth}px`,
+            maxHeight: 'calc(100vh - 32px)',
+            display: 'flex',
+            flexDirection: 'column',
+          };
+
+          // Prefer below if it fits or if it has more space than above
+          if (spaceBelow >= estimatedHeight || spaceBelow >= spaceAbove) {
+            // Below
+            isAbove = false;
+            style.top = `${buttonRect.bottom + gap}px`;
+            style.maxHeight = `${spaceBelow - gap}px`;
+          } else {
+            // Above
             isAbove = true;
+            style.bottom = `${viewportHeight - buttonRect.top + gap}px`;
+            style.maxHeight = `${spaceAbove - gap}px`;
           }
 
           return (
             <div
               ref={popoverRef}
               className="fixed z-[100] animate-in fade-in duration-200"
-              style={{
-                top: `${top}px`,
-                left: `${left}px`,
-                width: `${popoverWidth}px`,
-              }}
+              style={style}
             >
               {/* Arrow */}
               <div
@@ -736,7 +749,7 @@ function BudgetUpdate() {
                 }}
               />
 
-              <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-4">
+              <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-4 overflow-y-auto">
                 <h3 className="text-sm font-semibold text-white mb-3">
                   {popover.type === 'category' ? 'Add Category' : 'Add Item'}
                 </h3>
