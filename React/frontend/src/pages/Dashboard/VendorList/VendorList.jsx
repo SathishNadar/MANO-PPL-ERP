@@ -47,7 +47,6 @@ function VendorList() {
       const data = await response.json();
       setJobNatures(flipObject(data.jobNatures || {}));
       setLocations(flipObject(data.locations || {}));
-      console.log(data)
     } catch (error) {
       console.error("Error fetching metadata:", error);
     }
@@ -73,7 +72,6 @@ function VendorList() {
         }),
       });
       const data = await res.json();
-      console.log(data)
       const { vendors: vendorList = [], vendorCount = 0 } = data;
       const enrichedVendors = vendorList.map(vendor => ({
         ...vendor,
@@ -153,9 +151,6 @@ function VendorList() {
     }, 300);
     return () => clearTimeout(delayDebounce);
   }, [searchCompany, searchPerson, searchJobNature]);
-
-  console.log("Pagination Pages:", Math.ceil(totalVendorCount / itemsPerPage));
-
   return (
     <div className="flex h-screen bg-[#0B1120] text-gray-300 font-sans overflow-hidden">
       <Sidebar />

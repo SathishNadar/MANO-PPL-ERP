@@ -102,6 +102,11 @@ function VendorCreate({ onClose, initialData = null }) {
       return;
     }
 
+    if (!jobNatureMap[form.job_nature_text]) {
+      toast.error("Please select a valid Nature of Job from the list.");
+      return;
+    }
+
     const payload = {
       name: form.name,
       contact_person: form.contact_person,
@@ -127,8 +132,6 @@ function VendorCreate({ onClose, initialData = null }) {
         url = `${API_BASE}/vendor_api/update/${initialData.id}`;
         method = 'PUT';
       }
-
-      console.log(`Submitting vendor (${method}) with payload:`, payload);
       const response = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
@@ -138,11 +141,11 @@ function VendorCreate({ onClose, initialData = null }) {
 
 
       const result = await response.json();
-      console.log("Vendor added:", result);
       toast.success(initialData ? "Vendor successfully updated" : "Vendor successfully added into Database");
       onClose(); // Close modal on success
     } catch (err) {
       console.error("Error submitting vendor:", err);
+      toast.error(err.message || "Failed to submit vendor");
     }
   };
 
