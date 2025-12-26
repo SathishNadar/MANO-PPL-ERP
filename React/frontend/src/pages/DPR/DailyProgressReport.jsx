@@ -185,6 +185,7 @@ function DailyProgressReport() {
   const [expandedBudgetNodes, setExpandedBudgetNodes] = useState(new Set());
   const [budgetItemUsage, setBudgetItemUsage] = useState({}); // Track used quantities per budget item ID
   const [consumedQuantities, setConsumedQuantities] = useState({}); // Track consumed quantities from all DPRs
+  const [cumulativeManpowerTillDate, setCumulativeManpowerTillDate] = useState(0);
 
   const UNIT_OPTIONS = ["No", "Rmt", "Sqm", "Cum", "Rft", "Sft", "Cft", "MT", "Kg", "Lit", "Day", "Each", "LS", "Shift", "Month", "Hrs"];
   useEffect(() => {
@@ -265,6 +266,10 @@ function DailyProgressReport() {
             credentials: "include",
           });
           const dprJson = await dprResp.json();
+          // Store cumulative manpower from previous DPRs
+          if (dprJson && dprJson.cumulative_manpower_till_date !== undefined) {
+            setCumulativeManpowerTillDate(Number(dprJson.cumulative_manpower_till_date) || 0);
+          }
 
           // Prefill today's progress from yesterday's tomorrow_plan
           if (dprJson?.todays_plan && Array.isArray(dprJson.todays_plan)) {
@@ -396,7 +401,8 @@ function DailyProgressReport() {
     }
 
     // --- cumulative_manpower ---
-    const cumulative_manpower = Array.isArray(labourReport)
+
+    const todays_manpower = Array.isArray(labourReport)
       ? labourReport.reduce(
         (sum, row) =>
           sum +
@@ -409,6 +415,9 @@ function DailyProgressReport() {
         0
       )
       : 0;
+
+    // Total cumulative = previous total + today's total
+    const cumulative_manpower = cumulativeManpowerTillDate + todays_manpower;
 
     // --- remarks field (top-level string) ---
     const remarksVal = remarksEnabled ? remarks : "NO General remarks";
