@@ -172,14 +172,7 @@ function transformApiData(apiData) {
     // Signatures
     prepared_by:
       apiData.report_footer?.prepared_by || "Mano Private Consulation Ltd.",
-    approved_by: apiData.report_footer?.distribute
-      ? {
-          reported_by: apiData.report_footer.distribute["reported-by"] || "",
-          approved_by: apiData.report_footer.distribute["approved-by"] || "",
-          final_approved:
-            apiData.report_footer.distribute["final-approval"] || "",
-        }
-      : null,
+    approved_by: apiData.report_footer?.distribute,
 
     // Keep report_footer for reference
     report_footer: apiData.report_footer || {},
@@ -270,7 +263,7 @@ function normalizeProgressData(progressData) {
   // [ { component_name, unit, quantity, remarks }, ... ]
   if (Array.isArray(progressData)) {
     return {
-      items: progressData.map((p) => p.component_name ?? p.item ?? "--"),
+      items: progressData.map((p) => p.item_name ?? p.component_name ?? p.item ?? "--"),
       remarks: progressData.map((p) => p.remarks ?? "--"),
       unit: progressData.map((p) => p.unit ?? "--"),
       qty: progressData.map((p) => p.quantity ?? p.qty ?? "--"),
@@ -556,18 +549,14 @@ function populateProgressTables(data) {
       const rowData = todayProgress[i] || ["--", "--", "--", "--"];
       const tr = document.createElement("tr");
       tr.innerHTML = `
-                <td style="text-align: center; border: 1px solid #000; width: 50% !important; padding: 4px;">${
-                  rowData[0] || "--"
-                }</td>
-                <td style="text-align: center; border: 1px solid #000; width: 25% !important; padding: 4px;">${
-                  rowData[1] || "--"
-                }</td>
-                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px;">${
-                  rowData[2] || "--"
-                }</td>
-                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px; border-right-width: 0px;">${
-                  rowData[3] || "--"
-                }</td>
+                <td style="text-align: center; border: 1px solid #000; width: 50% !important; padding: 4px;">${rowData[0] || "--"
+        }</td>
+                <td style="text-align: center; border: 1px solid #000; width: 25% !important; padding: 4px;">${rowData[1] || "--"
+        }</td>
+                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px;">${rowData[2] || "--"
+        }</td>
+                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px; border-right-width: 0px;">${rowData[3] || "--"
+        }</td>
             `;
       todayTbody.appendChild(tr);
     }
@@ -581,18 +570,14 @@ function populateProgressTables(data) {
       const rowData = tomorrowPlanning[i] || ["--", "--", "--", "--"];
       const tr = document.createElement("tr");
       tr.innerHTML = `
-                <td style="text-align: center; border: 1px solid #000; width: 50% !important; padding: 4px;">${
-                  rowData[0] || "--"
-                }</td>
-                <td style="text-align: center; border: 1px solid #000; width: 25% !important; padding: 4px;">${
-                  rowData[1] || "--"
-                }</td>
-                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px;">${
-                  rowData[2] || "--"
-                }</td>
-                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px; border-right: none !important;;">${
-                  rowData[3] || "--"
-                }</td>
+                <td style="text-align: center; border: 1px solid #000; width: 50% !important; padding: 4px;">${rowData[0] || "--"
+        }</td>
+                <td style="text-align: center; border: 1px solid #000; width: 25% !important; padding: 4px;">${rowData[1] || "--"
+        }</td>
+                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px;">${rowData[2] || "--"
+        }</td>
+                <td style="text-align: center; border: 1px solid #000; width: 12.5% !important; padding: 4px; border-right: none !important;;">${rowData[3] || "--"
+        }</td>
             `;
       tomorrowTbody.appendChild(tr);
     }
@@ -645,29 +630,41 @@ function populateRemarksAndEvents(data) {
     if (distributionEl) {
       distributionEl.innerHTML = ""; // clear old content
 
-      const { reported_by, approved_by, final_approved } = data.approved_by;
+      if (Array.isArray(data.approved_by)) {
+        if (data.approved_by.length === 0) {
+          distributionEl.textContent = "--";
+        } else {
+          data.approved_by.forEach((name) => {
+            const div = document.createElement("div");
+            div.textContent = name;
+            distributionEl.appendChild(div);
+          });
+        }
+      } else {
+        const { reported_by, approved_by, final_approved } = data.approved_by;
 
-      if (reported_by) {
-        const div = document.createElement("div");
-        div.textContent = `Reported by: ${reported_by}`;
-        distributionEl.appendChild(div);
-      }
+        if (reported_by) {
+          const div = document.createElement("div");
+          div.textContent = `Reported by: ${reported_by}`;
+          distributionEl.appendChild(div);
+        }
 
-      if (approved_by) {
-        const div = document.createElement("div");
-        div.textContent = `Approved by: ${approved_by}`;
-        distributionEl.appendChild(div);
-      }
+        if (approved_by) {
+          const div = document.createElement("div");
+          div.textContent = `Approved by: ${approved_by}`;
+          distributionEl.appendChild(div);
+        }
 
-      if (final_approved) {
-        const div = document.createElement("div");
-        div.textContent = `Final approved: ${final_approved}`;
-        distributionEl.appendChild(div);
-      }
+        if (final_approved) {
+          const div = document.createElement("div");
+          div.textContent = `Final approved: ${final_approved}`;
+          distributionEl.appendChild(div);
+        }
 
-      // Fallback if nothing is set at all
-      if (!reported_by && !approved_by && !final_approved) {
-        distributionEl.textContent = "--";
+        // Fallback if nothing is set at all
+        if (!reported_by && !approved_by && !final_approved) {
+          distributionEl.textContent = "--";
+        }
       }
     }
   }
