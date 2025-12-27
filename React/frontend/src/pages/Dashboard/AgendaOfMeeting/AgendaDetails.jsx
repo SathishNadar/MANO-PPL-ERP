@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
+import { toast } from "react-toastify";
 
 const AgendaDetails = () => {
     const { id } = useParams();
@@ -23,6 +24,9 @@ const AgendaDetails = () => {
     const [directory, setDirectory] = useState([]);
     const [directoryLoading, setDirectoryLoading] = useState(false);
     const [showDirectoryModal, setShowDirectoryModal] = useState(false);
+
+    // -- DND STATE --
+    const [draggedGroupIndex, setDraggedGroupIndex] = useState(null);
 
     const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
@@ -179,6 +183,59 @@ const AgendaDetails = () => {
         setEditParticipants(editParticipants.filter(p => p.pd_id !== pd_id));
     };
 
+    // --- DnD Logic (Organization Level) ---
+    // NOTE: Groups are derived from editParticipants. Reordering groups means reordering the editParticipants array.
+    const getEditGroups = () => {
+        // Use a Map or Object ensuring order of iteration matches array order
+        // Actually, to support DnD reordering of *entire groups*, we need to be careful.
+        // The current implementation groups by 'company_name'.
+        // To preserve user's drag order, we should compute groups based on the array order.
+        // If the array is [OrgA_p1, OrgA_p2, OrgB_p1], groups are OrgA, OrgB.
+        // If we swap to get [OrgB_p1, OrgA_p1, OrgA_p2], groups are OrgB, OrgA.
+        // So simply regrouping based on the flat list works for rendering.
+
+        const groups = [];
+        const seenCompanies = new Set();
+
+        editParticipants.forEach(p => {
+            const company = p.company_name || 'Unknown Organization';
+            if (!seenCompanies.has(company)) {
+                seenCompanies.add(company);
+                groups.push({ company_name: company, participants: [p] });
+            } else {
+                // Find the existing group and push
+                const g = groups.find(g => g.company_name === company);
+                g.participants.push(p);
+            }
+        });
+        return groups;
+    };
+
+    const handleGroupDragStart = (index) => {
+        setDraggedGroupIndex(index);
+    };
+
+    const handleGroupDragOver = (e) => {
+        e.preventDefault(); // Necessary to allow dropping
+    };
+
+    const handleGroupDrop = (dropIndex) => {
+        if (draggedGroupIndex === null || draggedGroupIndex === dropIndex) return;
+
+        const groups = getEditGroups();
+        const draggedGroup = groups[draggedGroupIndex];
+
+        // Remove dragged group
+        const newGroups = groups.filter((_, i) => i !== draggedGroupIndex);
+        // Insert at new position
+        newGroups.splice(dropIndex, 0, draggedGroup);
+
+        // Flatten back to participants list
+        const newParticipants = newGroups.flatMap(g => g.participants);
+        setEditParticipants(newParticipants);
+        setDraggedGroupIndex(null);
+    };
+
     // --- Save Logic ---
     const handleSave = async () => {
         setSaving(true);
@@ -221,10 +278,12 @@ const AgendaDetails = () => {
             }));
 
             setIsEditing(false);
+            toast.success("Agenda changes updated successfully");
 
         } catch (error) {
             console.error("Save error:", error);
             setError("Failed to save changes. Please try again.");
+            toast.error("Failed to save changes");
         } finally {
             setSaving(false);
         }
@@ -243,7 +302,7 @@ const AgendaDetails = () => {
         })
         : "-";
 
-
+    const editModeGroups = isEditing ? getEditGroups() : [];
 
     return (
         <div className="flex h-screen bg-background">
@@ -345,51 +404,84 @@ const AgendaDetails = () => {
                                     <th className="p-3 border-b border-gray-700 w-1/2">Representatives</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {/* View using processed, Edit using editParticipants flattening or similar grouping logic. 
-                                    For simplicity, let's just group Edit participants on fly for rendering 
-                                */}
-                                {(isEditing
-                                    ? (() => {
-                                        const grouped = {};
-                                        editParticipants.forEach(p => {
-                                            const company = p.company_name || 'Unknown';
-                                            if (!grouped[company]) grouped[company] = { company_name: company, participants: [] };
-                                            grouped[company].participants.push(p);
-                                        });
-                                        return Object.values(grouped);
-                                    })()
-                                    : agendaDetails.processedParticipants
-                                ).map((group, idx) => (
-                                    <tr key={idx} className="border-b border-gray-700 last:border-0 hover:bg-gray-700/20">
-                                        <td className="p-3 border-r border-gray-700 align-top text-white font-bold text-lg">{toTitleCase(group.company_name)}</td>
-                                        <td className="p-0 align-top border-r border-gray-700">
-                                            <div className="flex flex-col">
-                                                {group.participants.map((rep, rIdx) => (
-                                                    <div key={rIdx} className={`p-3 ${rIdx !== group.participants.length - 1 ? 'border-b border-gray-700' : ''} h-full`}>
-                                                        <span className="text-gray-300">{toTitleCase(rep.responsibilities)}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </td>
-                                        <td className="p-0 align-top">
-                                            {group.participants.map((rep, rIdx) => (
-                                                <div key={rIdx} className={`p-3 flex justify-between items-center ${rIdx !== group.participants.length - 1 ? 'border-b border-gray-700' : ''}`}>
-                                                    <div>
-                                                        <span className="text-gray-300 mr-2">{toTitleCase(rep.contact_person || rep.name)}</span>
-                                                        <span className="text-gray-500 text-xs uppercase tracking-wider">{rep.designation}</span>
-                                                    </div>
-                                                    {isEditing && (
-                                                        <button onClick={() => handleRemoveParticipant(rep.pd_id)} className="text-red-400 hover:text-red-300">
+                            {isEditing ? (
+                                // EDIT MODE: Use DnD and RowSpan
+                                editModeGroups.map((group, idx) => (
+                                    <tbody
+                                        key={idx}
+                                        draggable
+                                        onDragStart={() => handleGroupDragStart(idx)}
+                                        onDragOver={(e) => handleGroupDragOver(e)}
+                                        onDrop={() => handleGroupDrop(idx)}
+                                        className={`transition-colors cursor-move ${draggedGroupIndex === idx ? 'bg-gray-700/50 opacity-50' : 'hover:bg-gray-700/10'}`}
+                                        title="Drag to reorder organization"
+                                    >
+                                        {group.participants.map((rep, rIdx) => (
+                                            <tr key={rep.pd_id || rIdx} className="border-b border-gray-700 hover:bg-gray-700/20">
+                                                {/* Organization Cell: Only on first row */}
+                                                {rIdx === 0 && (
+                                                    <td
+                                                        rowSpan={group.participants.length}
+                                                        className="p-3 border-r border-gray-700 align-top text-white font-bold text-lg bg-gray-800/30"
+                                                    >
+                                                        <div className="flex items-start gap-2">
+                                                            <span className="material-icons text-gray-600 text-sm mt-1 cursor-grab">drag_indicator</span>
+                                                            {toTitleCase(group.company_name)}
+                                                        </div>
+                                                    </td>
+                                                )}
+
+                                                {/* Responsibility */}
+                                                <td className="p-3 border-r border-gray-700 align-top text-gray-300">
+                                                    {toTitleCase(rep.responsibilities)}
+                                                </td>
+
+                                                {/* Representatives */}
+                                                <td className="p-3 align-top">
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <span className="text-gray-300 mr-2 font-medium">{toTitleCase(rep.contact_person || rep.name)}</span>
+                                                            <span className="text-gray-500 text-xs uppercase tracking-wider">{rep.designation}</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleRemoveParticipant(rep.pd_id); }}
+                                                            className="text-red-400 hover:text-red-300 p-1 rounded hover:bg-red-500/10"
+                                                        >
                                                             <span className="material-icons text-sm">close</span>
                                                         </button>
-                                                    )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                ))
+                            ) : (
+                                // VIEW MODE
+                                <tbody>
+                                    {agendaDetails.processedParticipants.map((group, idx) => (
+                                        <tr key={idx} className="border-b border-gray-700 last:border-0 hover:bg-gray-700/20">
+                                            <td className="p-3 border-r border-gray-700 align-top text-white font-bold text-lg">{toTitleCase(group.company_name)}</td>
+                                            <td className="p-0 align-top border-r border-gray-700">
+                                                <div className="flex flex-col">
+                                                    {group.participants.map((rep, rIdx) => (
+                                                        <div key={rIdx} className={`p-3 ${rIdx !== group.participants.length - 1 ? 'border-b border-gray-700' : ''} h-full`}>
+                                                            <span className="text-gray-300">{toTitleCase(rep.responsibilities)}</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
+                                            </td>
+                                            <td className="p-0 align-top">
+                                                {group.participants.map((rep, rIdx) => (
+                                                    <div key={rIdx} className={`p-3 flex justify-between ${rIdx !== group.participants.length - 1 ? 'border-b border-gray-700' : ''}`}>
+                                                        <span className="text-gray-300">{toTitleCase(rep.contact_person)}</span>
+                                                        <span className="text-gray-500 text-xs uppercase tracking-wider">{rep.designation}</span>
+                                                    </div>
+                                                ))}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            )}
                         </table>
                     </div>
 
