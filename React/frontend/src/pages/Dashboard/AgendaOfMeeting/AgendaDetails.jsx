@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
 
@@ -6,82 +6,97 @@ const AgendaDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    // Mock data for Agenda Details
-    const agendaDetails = {
-        meetingNo: "MEETING - 12",
-        jobNo: "2223-57",
-        project: "Sati Darshan, Malad",
-        client: "Goyal Group",
-        subject: "Drawing Status & Site Progress",
-        venue: "Residency Sarovar Portico",
-        date: "12/12/2022",
-        participants: [
-            {
-                responsibility: "Client",
-                organization: "Goyal Group",
-                representatives: [
-                    { name: "Mr. Pranay Goyal", designation: "Director" },
-                    { name: "Mr. Devang Kanavia", designation: "Head Strategy" }
-                ]
-            },
-            {
-                responsibility: "Client",
-                organization: "Malpani Group",
-                representatives: [
-                    { name: "Mr. Ashish Malpani", designation: "Director" },
-                    { name: "Mrs. Rupali Nimbalkar", designation: "Architect" },
-                    { name: "Mr. Balasaheb Babar", designation: "Head Construction" },
-                    { name: "Malpani Team", designation: "-" }
-                ]
-            },
-            {
-                responsibility: "Project Management Consultants",
-                organization: "MANO Project Consultants Pvt Ltd.",
-                representatives: [
-                    { name: "Mr. Mugilan Muthaiah", designation: "CEO & Founder" },
-                    { name: "Mr. Santosh Kadam", designation: "Project Manager" },
-                    { name: "Ms. Shradha Nimbalkar", designation: "DM - Contracts" }
-                ]
-            },
-            {
-                responsibility: "Architect",
-                organization: "The Design Studio",
-                representatives: [
-                    { name: "Mr. Ubaid Pettiwala", designation: "Design Architect" }
-                ]
-            },
-            {
-                responsibility: "Structural Consultant",
-                organization: "Epicons Consultants Pvt Ltd",
-                representatives: [
-                    { name: "Mr. Mahendra Patil", designation: "Sr. Structural Engineer" },
-                    { name: "Mr. Nikhil H", designation: "Structural Engineer" }
-                ]
-            },
-            {
-                responsibility: "MEP Consultant",
-                organization: "Clancy Global Consulting Engineers",
-                representatives: [
-                    { name: "Mr. Ajay Kshirsagar", designation: "Project Manager" },
-                    { name: "Mr. Sagar Polad", designation: "Assistant Manager" }
-                ]
+    const [agendaDetails, setAgendaDetails] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+
+    useEffect(() => {
+        fetchAgendaDetails();
+    }, [id]);
+
+    const fetchAgendaDetails = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_BASE}/projectAgenda/agenda/${id}`, {
+                credentials: "include",
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        ],
-        points: [
-            { sl: "1", description: "MANO discussed following points with team" },
-            { sl: "1.1", description: "Delay in Release of MEP Co-ordinate caused delay in Architectural Ground Floor Plan (GFC)." },
-            { sl: "1.2", description: "Tender Documents not done as per revised drawing caused delay for Contractor deployment." },
-            { sl: "1.3", description: "Final Architectural Plan with Sections up to 3 Podiums & Typical Floor Levels are pending" },
-            { sl: "1.4", description: "As per planning, Plinth completion is target for end of December. We require 1st Podium Architectural, Structural and MEP drawings (GFC)." },
-            { sl: "1.5", description: "Interior & Landscape designing progress is getting delayed due to all above points." },
-            { sl: "1.6", description: "Improvement required in quality management required prompt action on curing , supervision during concreting on site." },
-            { sl: "1.7", description: "Improvement required in safety management like indication signages on site, daily housekeeping in toilets, fogging in labour colonies etc on site." },
-            { sl: "1.8", description: "Improvement required in documentation like maintaining records of incoming material like cement, sand, steel, concrete etc on site." },
-            { sl: "1.9", description: "Signed Civil work order is still awaited from Client." },
-            { sl: "2", description: "MANO asked DS about the updated Architectural plan revised as per column changes for Amended Approvals, DS replied they co-ordinate directly with GOYAL." },
-            { sl: "3", description: "MALPANI informed GOYAL and MANO that installation of Man-Material hoist and tower crane at site is complusory and if possible man material hoist utilisation charges to be debited from respective contractor bill on monthly basis, MANO and GOYAL agreed." },
-        ]
+
+            const data = await response.json();
+
+            // Process participants to group by company/organization
+            // Expected group structure: { company_name: "Name", participants: [ ... ] }
+            const groupedParticipants = {};
+
+            if (data.participants && Array.isArray(data.participants)) {
+                data.participants.forEach(p => {
+                    const company = p.company_name || 'Unknown Organization';
+                    if (!groupedParticipants[company]) {
+                        groupedParticipants[company] = {
+                            company_name: company,
+                            participants: []
+                        };
+                    }
+                    groupedParticipants[company].participants.push(p);
+                });
+            }
+
+            // Convert to array
+            const processedParticipants = Object.values(groupedParticipants);
+
+            // Parse content if it's a string, or use as is if array
+            let processedPoints = [];
+            if (typeof data.content === 'string') {
+                try {
+                    processedPoints = JSON.parse(data.content);
+                } catch (e) {
+                    console.error("Failed to parse content JSON", e);
+                    processedPoints = [];
+                }
+            } else if (Array.isArray(data.content)) {
+                processedPoints = data.content;
+            }
+
+
+            setAgendaDetails({
+                ...data,
+                processedParticipants,
+                processedPoints
+            });
+
+        } catch (err) {
+            console.error("Error fetching agenda details:", err);
+            setError("Failed to load agenda details.");
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (loading) return <div className="p-8 text-center text-gray-400">Loading details...</div>;
+    if (error) return <div className="p-8 text-center text-red-400">{error}</div>;
+    if (!agendaDetails) return <div className="p-8 text-center text-gray-400">Agenda not found.</div>;
+
+    const toTitleCase = (str) => {
+        if (!str) return "";
+        return String(str)
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
+    const dateStr = agendaDetails.date
+        ? new Date(agendaDetails.date).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        })
+        : "-";
 
     return (
         <div className="flex h-screen bg-background">
@@ -118,17 +133,17 @@ const AgendaDetails = () => {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <h3 className="text-lg font-semibold text-blue-400">{agendaDetails.meetingNo}</h3>
+                                <h3 className="text-lg font-semibold text-blue-400">MEETING NO - {agendaDetails.meeting_no}</h3>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-y-2 text-sm">
-                            <p><span className="text-gray-500 font-semibold">Project:</span> <span className="text-white">{agendaDetails.project}</span></p>
-                            <p className="text-right"><span className="text-gray-500 font-semibold">JOB No:</span> <span className="text-white">{agendaDetails.jobNo}</span></p>
+                            <p><span className="text-gray-500 font-semibold">Project:</span> <span className="text-white">{agendaDetails.project_name}</span></p>
+                            {/* Job No is not in the API response provided, omitting or using placeholder if needed */}
+                            {/* <p className="text-right"><span className="text-gray-500 font-semibold">JOB No:</span> <span className="text-white">{agendaDetails.jobNo}</span></p> */}
+                            <p className="text-right"><span className="text-gray-500 font-semibold">Date:</span> <span className="text-white">{dateStr}</span></p>
 
                             <p><span className="text-gray-500 font-semibold">Subject:</span> <span className="text-white">{agendaDetails.subject}</span></p>
-                            <p className="text-right"><span className="text-gray-500 font-semibold">Date:</span> <span className="text-white">{agendaDetails.date}</span></p>
-
                             <p className="col-span-2"><span className="text-gray-500 font-semibold">Venue:</span> <span className="text-white">{agendaDetails.venue}</span></p>
                         </div>
                     </div>
@@ -141,20 +156,33 @@ const AgendaDetails = () => {
                         <table className="w-full text-left border-collapse text-sm">
                             <thead>
                                 <tr className="bg-gray-900/40 text-gray-400">
-                                    <th className="p-3 border-r border-b border-gray-700 w-1/4">Responsibility</th>
                                     <th className="p-3 border-r border-b border-gray-700 w-1/4">Organization</th>
+                                    <th className="p-3 border-r border-b border-gray-700 w-1/4">Responsibility</th>
                                     <th className="p-3 border-b border-gray-700 w-1/2">Representatives</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {agendaDetails.participants.map((group, idx) => (
+                                {agendaDetails.processedParticipants.map((group, idx) => (
                                     <tr key={idx} className="border-b border-gray-700 last:border-0 hover:bg-gray-700/20">
-                                        <td className="p-3 border-r border-gray-700 align-top text-white font-medium">{group.responsibility}</td>
-                                        <td className="p-3 border-r border-gray-700 align-top text-gray-300">{group.organization}</td>
+                                        <td className="p-3 border-r border-gray-700 align-top text-white font-bold text-lg">{toTitleCase(group.company_name)}</td>
+                                        <td className="p-0 align-top border-r border-gray-700">
+                                            {/* Since we group by organization, different responsibilities might exist in the same org. 
+                                                 However, user request implies a row per org. We will likely list unique responsibilities or map them per person.
+                                                 The request said: "all person belonging to same org should be in the same row".
+                                                 We will list responsibilities corresponding to representatives or just unique ones.
+                                              */}
+                                            <div className="flex flex-col">
+                                                {group.participants.map((rep, rIdx) => (
+                                                    <div key={rIdx} className={`p-3 ${rIdx !== group.participants.length - 1 ? 'border-b border-gray-700' : ''} h-full`}>
+                                                        <span className="text-gray-300">{toTitleCase(rep.responsibilities)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </td>
                                         <td className="p-0 align-top">
-                                            {group.representatives.map((rep, rIdx) => (
-                                                <div key={rIdx} className={`p-3 flex justify-between ${rIdx !== group.representatives.length - 1 ? 'border-b border-gray-700' : ''}`}>
-                                                    <span className="text-gray-300">{rep.name}</span>
+                                            {group.participants.map((rep, rIdx) => (
+                                                <div key={rIdx} className={`p-3 flex justify-between ${rIdx !== group.participants.length - 1 ? 'border-b border-gray-700' : ''}`}>
+                                                    <span className="text-gray-300">{toTitleCase(rep.contact_person)}</span>
                                                     <span className="text-gray-500 text-xs uppercase tracking-wider">{rep.designation}</span>
                                                 </div>
                                             ))}
@@ -165,7 +193,7 @@ const AgendaDetails = () => {
                         </table>
                     </div>
 
-                    {/* Points Table - SIMPLIFIED for Agenda */}
+                    {/* Points Table */}
                     <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-md overflow-hidden">
                         <table className="w-full text-left border-collapse text-sm">
                             <thead>
@@ -175,9 +203,9 @@ const AgendaDetails = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {agendaDetails.points.map((point, idx) => (
+                                {agendaDetails.processedPoints.map((point, idx) => (
                                     <tr key={idx} className="border-b border-gray-700 last:border-0 hover:bg-gray-700/20">
-                                        <td className="p-3 border-r border-gray-700 text-center font-mono text-gray-500">{point.sl}</td>
+                                        <td className="p-3 border-r border-gray-700 text-center font-mono text-gray-500">{point.no || point.sl}</td>
                                         <td className="p-3 text-gray-300">{point.description}</td>
                                     </tr>
                                 ))}
