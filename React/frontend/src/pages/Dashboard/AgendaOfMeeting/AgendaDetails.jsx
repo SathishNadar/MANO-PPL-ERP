@@ -176,7 +176,6 @@ const AgendaDetails = () => {
     const handleAddParticipant = (person) => {
         if (editParticipants.find(p => p.pd_id === person.pd_id)) return;
         setEditParticipants([...editParticipants, person]);
-        setShowDirectoryModal(false);
     };
 
     const handleRemoveParticipant = (pd_id) => {
