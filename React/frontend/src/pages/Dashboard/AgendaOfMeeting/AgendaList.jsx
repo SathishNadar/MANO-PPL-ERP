@@ -70,7 +70,7 @@ const AgendaList = () => {
                     {/* Add button logic can be re-enabled when needed, likely needs projectId */}
                     <button
                         className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-6 rounded-lg shadow-lg hover:shadow-blue-500/20 transition-all duration-200 flex items-center space-x-2"
-                    // onClick={() => navigate('/dashboard/agenda/new', { state: { projectId } })} 
+                        onClick={() => navigate('/dashboard/agenda/create', { state: { projectId } })}
                     >
                         <span className="material-icons text-xl">add</span>
                         <span>New Agenda</span>
