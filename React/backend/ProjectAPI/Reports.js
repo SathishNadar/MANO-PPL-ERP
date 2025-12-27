@@ -14,16 +14,16 @@ const router = express.Router();
 async function getTodayProgByDprId(dpr_id) {
   // adjust table/columns as per your schema
   const rows = await knexDB("dpr_item_use as diu")
-  .join("item as i", "diu.item_id", "i.item_id")
-  .select(
-    "diu.dpr_use_id",
-    "i.item_id",
-    "i.name as item_name",
-    "i.unit",
-    "diu.quantity",
-    "diu.remarks",
-  )
-  .where("diu.dpr_id", dpr_id);
+    .join("item as i", "diu.item_id", "i.item_id")
+    .select(
+      "diu.dpr_use_id",
+      "i.item_id",
+      "i.name as item_name",
+      "i.unit",
+      "diu.quantity",
+      "diu.remarks",
+    )
+    .where("diu.dpr_id", dpr_id);
 
   return rows || null;
 }
@@ -32,16 +32,16 @@ async function getTodayProgByDprId(dpr_id) {
 async function getTomPlanByDprId(dpr_id) {
   // adjust table/columns as per your schema
   const rows = await knexDB("dpr_item_plan as dip")
-  .join("item as i", "dip.item_id", "i.item_id")
-  .select(
-    "dip.dpr_plan_id",
-    "i.item_id",
-    "i.name as item_name",
-    "i.unit",
-    "dip.quantity",
-    "dip.remarks",
-  )
-  .where("dip.dpr_id", dpr_id);
+    .join("item as i", "dip.item_id", "i.item_id")
+    .select(
+      "dip.dpr_plan_id",
+      "i.item_id",
+      "i.name as item_name",
+      "i.unit",
+      "dip.quantity",
+      "dip.remarks",
+    )
+    .where("dip.dpr_id", dpr_id);
 
   return rows || null;
 }
@@ -109,7 +109,6 @@ async function getLastDpr(project_id) {
     .where({ project_id })
     .orderBy("report_date", "desc")
     .first();
-  
   return await getDPRById(dpr_id);
 }
 
@@ -204,6 +203,8 @@ async function getLatestRatesForItems(itemIds) {
 
   const rows = await knexDB("item_rate")
     .whereIn("item_id", itemIds)
+    .where("is_active", 1)  // Only active rates
+    .where("effective_from", "<=", knexDB.fn.now())  // Only rates effective as of now
     .orderBy([
       { column: "item_id", order: "asc" },
       { column: "effective_from", order: "desc" }
@@ -216,14 +217,44 @@ async function getLatestRatesForItems(itemIds) {
     }
   }
 
-  // Mandatory check: If any item has no rate, throw error
+  // Verify all items have rates
   for (const itemId of itemIds) {
     if (!latest[itemId]) {
-      throw new Error(`Rate not found for item_id: ${itemId}`);
+      throw new Error(`No active rate found for item_id: ${itemId}. Please ensure the item has an active rate in the item_rate table.`);
     }
   }
 
   return latest;
+}
+
+// Get consumed quantities for items in a project
+async function getConsumedQuantitiesByProject(project_id, itemIds = []) {
+  try {
+    let query = knexDB("dpr_item_use as diu")
+      .join("dpr as d", "diu.dpr_id", "d.dpr_id")
+      .where("d.project_id", project_id)
+      .select("diu.item_id")
+      .sum("diu.quantity as total_consumed")
+      .groupBy("diu.item_id");
+
+    // If specific item IDs are provided, filter by them
+    if (Array.isArray(itemIds) && itemIds.length > 0) {
+      query = query.whereIn("diu.item_id", itemIds);
+    }
+
+    const rows = await query;
+
+    // Convert to object map: { item_id: total_consumed }
+    const consumedMap = {};
+    for (const row of rows) {
+      consumedMap[row.item_id] = parseFloat(row.total_consumed) || 0;
+    }
+
+    return consumedMap;
+  } catch (error) {
+    console.error("❌ Error fetching consumed quantities:", error);
+    throw error;
+  }
 }
 
 
@@ -236,13 +267,13 @@ async function insertTodayProg(dpr_id, items = []) {
 
   const itemIds = items.map(i => i.item_id);
 
-  // Fetch latest mandatory rates
+  // Fetch latest rates (will throw error if any rate is missing)
   const latestRates = await getLatestRatesForItems(itemIds);
 
   const rows = items.map(item => ({
     dpr_id,
     item_id: item.item_id,
-    rate_id: latestRates[item.item_id],  // always exists
+    rate_id: latestRates[item.item_id],  // Always exists
     quantity: item.quantity ?? 0,
     remarks: item.remarks ?? null
   }));
@@ -263,13 +294,13 @@ async function insertTomPlan(dpr_id, items = []) {
 
   const itemIds = items.map(i => i.item_id);
 
-  // Fetch latest mandatory rates
+  // Fetch latest rates (will throw error if any rate is missing)
   const latestRates = await getLatestRatesForItems(itemIds);
 
   const rows = items.map(item => ({
     dpr_id,
     item_id: item.item_id,
-    rate_id: latestRates[item.item_id], // always exists
+    rate_id: latestRates[item.item_id],  // Always exists
     quantity: item.quantity ?? 0,
     remarks: item.remarks ?? null
   }));
@@ -344,8 +375,8 @@ async function insertDPR(dprData) {
     site_condition: serialize(dprData.site_condition),
     labour_report: serialize(dprData.labour_report),
     cumulative_manpower: dprData.cumulative_manpower ?? 0,
-    today_prog: serialize(dprData.today_prog),
-    tomorrow_plan: serialize(dprData.tomorrow_plan),
+    // today_prog and tomorrow_plan are now stored in separate tables
+    // NOT in the dpr table columns
     report_footer: serialize(dprData.report_footer),
     created_by: dprData.user_id,
     current_handler: dprData.user_id,
@@ -493,7 +524,7 @@ async function checkUserProjectRole(user_id, project_id) {
     return { ok: true, role };
   } catch (error) {
     console.error(error);
-    return { ok: false, message: 'Internal error checking access.', role: null};
+    return { ok: false, message: 'Internal error checking access.', role: null };
   }
 }
 
@@ -515,7 +546,7 @@ async function dprInitData(project_id) {
 
   } catch (error) {
     console.error(error);
-    return { ok: false, message: 'Internal error checking access.', role: null};
+    return { ok: false, message: 'Internal error checking access.', role: null };
   }
 }
 
@@ -619,7 +650,6 @@ router.post("/insertDPR", authenticateJWT, async (req, res) => {
 
     const user_id = req.user.user_id;
     const role = await checkUserProjectRole(user_id, project_id);
-    
     // Check if user has permission to create DPR in this project
     if (!role.ok || !role.role || !role.role.can_create_dpr) {
       return res.status(403).json({
@@ -702,11 +732,9 @@ router.get("/getDPR/:id", authenticateJWT, async (req, res) => {
 
     const user_id = req.user.user_id;
     const DprData = await getDPRById(dpr_id);
-    
     if (!DprData) {
       return res.status(404).json({ message: "DPR not found" });
     }
-    
     const project_id = DprData.project_id;
     const role = await checkUserProjectRole(user_id, project_id);
 
@@ -731,7 +759,6 @@ router.get("/allDPR/:project_id", authenticateJWT, async (req, res) => {
     if (isNaN(project_id)) {
       return res.status(400).json({ message: "Invalid Project ID" });
     }
-    
     const user_id = req.user.user_id;
     const role = await checkUserProjectRole(user_id, project_id);
 
@@ -832,7 +859,6 @@ router.get("/submit/:dpr_id", authenticateJWT, async (req, res) => {
 
     // Call the DPR submit function
     const result = await submitDPR(dpr_id, user_id);
-    
     res.json({ success: true, message: "DPR submitted successfully", data: result });
   } catch (error) {
     // Permission or state errors
@@ -854,5 +880,34 @@ router.get("/submit/:dpr_id", authenticateJWT, async (req, res) => {
   }
 });
 
+// Get consumed quantities for items in a project
+router.get("/consumedQuantities/:project_id", authenticateJWT, async (req, res) => {
+  try {
+    const project_id = parseInt(req.params.project_id, 10);
+    if (isNaN(project_id)) {
+      return res.status(400).json({ success: false, message: "Invalid Project ID" });
+    }
+
+    const user_id = req.user.user_id;
+    const role = await checkUserProjectRole(user_id, project_id);
+
+    if (!role.ok || !role.role || !role.role.can_view_dpr) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You do not have permission to view DPR data for this project."
+      });
+    }
+
+    // Get item IDs from query params if provided
+    const itemIds = req.query.item_ids ? req.query.item_ids.split(',').map(id => parseInt(id, 10)) : [];
+
+    const consumedMap = await getConsumedQuantitiesByProject(project_id, itemIds);
+
+    res.json({ success: true, data: consumedMap });
+  } catch (error) {
+    console.error("❌ API error in consumedQuantities:", error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
 export default router;

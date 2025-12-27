@@ -4,6 +4,106 @@ import { ToastContainer, toast } from "react-toastify";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
+// BudgetTreeForDPR: Simplified budget tree for item selection in DPR
+function BudgetTreeForDPR({ tree, expanded, onToggle, onItemDoubleClick }) {
+  function formatINR(num) {
+    if (num == null || isNaN(num)) return '0.00';
+    const n = Number(num.toFixed(2));
+    const parts = n.toFixed(2).split('.');
+    let intPart = parts[0];
+    const decPart = parts[1];
+    const neg = intPart[0] === '-' ? '-' : '';
+    if (neg) intPart = intPart.slice(1);
+    if (intPart.length > 3) {
+      const last3 = intPart.slice(-3);
+      let rest = intPart.slice(0, -3);
+      rest = rest.replace(/\B(?=(?:\d{2})+(?!\d))/g, ',');
+      intPart = rest + ',' + last3;
+    }
+    return `${neg}${intPart}.${decPart}`;
+  }
+
+  function computeTotal(node) {
+    if (!node) return 0;
+    if (Number(node.is_leaf) === 1) {
+      const itemRate = Number(node.item_rate ?? 0) || 0;
+      const labourRate = Number(node.item_labour_rate ?? 0);
+      const qty = Number(node.quantity ?? 0) || 0;
+      return qty * (itemRate + labourRate);
+    }
+    if (!node.children || node.children.length === 0) return 0;
+    return node.children.reduce((sum, c) => sum + computeTotal(c), 0);
+  }
+
+  function BudgetNode({ node }) {
+    const isLeaf = Number(node.is_leaf) === 1;
+    const isExpanded = node.id && expanded.has(node.id);
+    const total = computeTotal(node);
+
+    if (isLeaf) {
+      return (
+        <div
+          className="ml-0 mb-2 cursor-pointer hover:bg-gray-700 transition-colors rounded-md"
+          onDoubleClick={() => onItemDoubleClick(node)}
+          title="Double-click to add this item"
+        >
+          <div className="bg-gray-800 p-3 rounded-md shadow-sm">
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="font-medium text-gray-300 text-sm">{node.item_name ?? node.name}</span>
+                <span className="text-sm text-gray-500 ml-2">({node.item_unit ?? ''})</span>
+                <div className="text-xs text-gray-400 mt-1">
+                  Qty: {node.quantity ?? 0} | Rate: ₹{formatINR(Number(node.item_rate ?? 0) + Number(node.item_labour_rate ?? 0))}
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold text-white">₹{formatINR(total)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="ml-0 mb-2">
+        <div className="bg-gray-900 p-4 rounded-lg shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button onClick={() => onToggle(node.id)} className="material-icons text-gray-400 text-base">
+                {isExpanded ? 'expand_more' : 'chevron_right'}
+              </button>
+              <span className="font-bold text-base text-gray-100">{node.name}</span>
+            </div>
+            <div className="text-right">
+              <p className="text-base font-semibold text-white">₹{formatINR(total)}</p>
+            </div>
+          </div>
+        </div>
+
+        {node.children && node.children.length > 0 && isExpanded && (
+          <div className="ml-6 mt-2 space-y-2 border-l border-gray-700 pl-4">
+            {node.children.map((child) => (
+              <BudgetNode key={child.id ?? child.name} node={child} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {tree.length === 0 && (
+        <div className="bg-gray-900 p-4 rounded-lg text-gray-400 text-center">No budget data found.</div>
+      )}
+      {tree.map((root) => (
+        <BudgetNode key={root.id ?? root.name} node={root} />
+      ))}
+    </div>
+  );
+}
+
 function DprUpdateSubmit() {
   const { projectId, dprId } = useParams();
   const navigate = useNavigate();
@@ -43,8 +143,18 @@ function DprUpdateSubmit() {
   ]);
   const [distribute, setDistribute] = useState([{ id: genId(), text: "" }]);
 
+
+
   const [preparedBy, setPreparedBy] = useState("");
   const initialDpr = useRef(null);
+
+  // --- Budget Integration States ---
+  const [budgetTree, setBudgetTree] = useState([]);
+  const [showTodayModal, setShowTodayModal] = useState(false);
+  const [showTomorrowModal, setShowTomorrowModal] = useState(false);
+  const [expandedBudgetNodes, setExpandedBudgetNodes] = useState(new Set());
+  const [budgetItemUsage, setBudgetItemUsage] = useState({}); // Track used quantities per budget item ID
+  const [consumedQuantities, setConsumedQuantities] = useState({}); // Track consumed quantities from all DPRs
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -108,6 +218,38 @@ function DprUpdateSubmit() {
       const { data } = await res.json();
       if (!mounted) return;
       setProject(data || null);
+
+      // --- Fetch Budget Tree ---
+      try {
+        const budgetResp = await fetch(`${API_BASE}/budget/fetch/${projectId}`, {
+          credentials: "include",
+        });
+        const budgetJson = await budgetResp.json();
+        if (budgetJson?.data) {
+          const bData = Array.isArray(budgetJson.data) ? budgetJson.data : [budgetJson.data];
+          setBudgetTree(bData);
+
+          // Expand all top-level nodes by default
+          const topExpanded = new Set();
+          bData.forEach((n) => { if (n && n.id) topExpanded.add(n.id); });
+          setExpandedBudgetNodes(topExpanded);
+
+          // Fetch consumed quantities for all items in the project
+          try {
+            const consumedResp = await fetch(`${API_BASE}/report/consumedQuantities/${projectId}`, {
+              credentials: "include",
+            });
+            const consumedJson = await consumedResp.json();
+            if (consumedJson?.success && consumedJson.data) {
+              setConsumedQuantities(consumedJson.data);
+            }
+          } catch (err) {
+            console.error("Error fetching consumed quantities:", err);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching budget tree:", err);
+      }
     }
 
     async function fetchDpr() {
@@ -158,6 +300,7 @@ function DprUpdateSubmit() {
             unit: row.unit ?? "",
             qty: row.quantity ?? row.qty ?? "",
             remarks: row.remarks ?? "",
+            budgetItemId: row.item_id || null, // Ensure budget item ID is tracked
           }));
 
           setTodayProg(
@@ -170,8 +313,8 @@ function DprUpdateSubmit() {
           const items = Array.isArray(tp.items)
             ? tp.items
             : Array.isArray(tp.progress)
-            ? tp.progress
-            : [];
+              ? tp.progress
+              : [];
           const qty = Array.isArray(tp.qty) ? tp.qty : [];
           const unit = Array.isArray(tp.unit) ? tp.unit : [];
           const remarks = Array.isArray(tp.remarks) ? tp.remarks : [];
@@ -215,6 +358,7 @@ function DprUpdateSubmit() {
             unit: row.unit ?? "",
             qty: row.quantity ?? row.qty ?? "",
             remarks: row.remarks ?? "",
+            budgetItemId: row.item_id || null, // Ensure budget item ID is tracked
           }));
 
           setTomorrowPlan(
@@ -227,8 +371,8 @@ function DprUpdateSubmit() {
           const items2 = Array.isArray(tp2.items)
             ? tp2.items
             : Array.isArray(tp2.plan)
-            ? tp2.plan
-            : [];
+              ? tp2.plan
+              : [];
           const qty2 = Array.isArray(tp2.qty) ? tp2.qty : [];
           const unit2 = Array.isArray(tp2.unit) ? tp2.unit : [];
           const remarks2 = Array.isArray(tp2.remarks) ? tp2.remarks : [];
@@ -261,9 +405,9 @@ function DprUpdateSubmit() {
       setEventsVisit(
         Array.isArray(data?.report_footer?.events_visit)
           ? data.report_footer.events_visit.map((text) => ({
-              id: genId(),
-              text,
-            }))
+            id: genId(),
+            text,
+          }))
           : [{ id: genId(), text: "" }]
       );
 
@@ -289,7 +433,19 @@ function DprUpdateSubmit() {
     (async () => {
       try {
         setLoading(true);
-        await Promise.all([fetchProject(), fetchDpr()]);
+        const fetchBudget = async () => {
+          try {
+            const res = await fetch(`${API_BASE}/budget/fetch/${projectId}`, { credentials: "include" });
+            const json = await res.json();
+            if (json.success && json.data) {
+              setBudgetTree(Array.isArray(json.data) ? json.data : [json.data]);
+            }
+          } catch (err) {
+            console.error("Failed to fetch budget", err);
+          }
+        };
+
+        await Promise.all([fetchProject(), fetchDpr(), fetchBudget()]);
       } catch (e) {
         console.error(e);
         toast.error("Failed to load data");
@@ -384,8 +540,8 @@ function DprUpdateSubmit() {
         items: Array.isArray(tp?.items)
           ? tp.items
           : Array.isArray(tp?.progress)
-          ? tp.progress
-          : [],
+            ? tp.progress
+            : [],
         unit: Array.isArray(tp?.unit) ? tp.unit : [],
         qty: Array.isArray(tp?.qty) ? tp.qty : [],
         remarks: Array.isArray(tp?.remarks) ? tp.remarks : [],
@@ -408,8 +564,8 @@ function DprUpdateSubmit() {
         items: Array.isArray(tp2?.items)
           ? tp2.items
           : Array.isArray(tp2?.plan)
-          ? tp2.plan
-          : [],
+            ? tp2.plan
+            : [],
         unit: Array.isArray(tp2?.unit) ? tp2.unit : [],
         qty: Array.isArray(tp2?.qty) ? tp2.qty : [],
         remarks: Array.isArray(tp2?.remarks) ? tp2.remarks : [],
@@ -460,6 +616,53 @@ function DprUpdateSubmit() {
     try {
       setSaving(true);
 
+      // Validate quantities before submission
+      for (const row of todayProg) {
+        if (row.budgetItemId && row.qty) {
+          const budgetItem = findBudgetItemById(budgetTree, row.budgetItemId);
+          if (budgetItem) {
+            // We need to fetch the *latest* consumed quantity to be accurate, 
+            // but using the state `consumedQuantities` is acceptable for client-side check.
+            // Note: The consumedQuantities from API includes ALL previous DPRs.
+            // It does NOT include the *current* DPR's previous value if we are editing.
+            // However, for simplicity and safety, we enforce: (Consumed_from_API + Current_Input) <= Total_Budget
+            // This might be slightly strict if editing an existing value, but prevents over-reporting.
+            // A more precise check would subtract the *old* value of this DPR items if it exists in DB, but that's complex to track here.
+
+            const consumed = consumedQuantities[row.budgetItemId] || 0;
+            const available = (budgetItem.quantity || 0) - consumed;
+            const currentQty = parseFloat(row.qty) || 0;
+
+            // If we want to allow editing without double-counting the current value:
+            // We would need to know the *original* quantity of this item in this DPR (initialDpr.current).
+            // Let's try to find it in initialDpr.current.today_prog
+            let originalQty = 0;
+            if (initialDpr.current?.today_prog) {
+              // today_prog in initialDpr is normalized or raw? 
+              // The API raw data has array of objects.
+              const rawTp = initialDpr.current.today_prog;
+              if (Array.isArray(rawTp)) {
+                const found = rawTp.find(r => r.item_id === row.budgetItemId);
+                if (found) originalQty = parseFloat(found.quantity || found.qty) || 0;
+              }
+            }
+
+            // correct logic: Available_for_this_edit = (Total - Consumed_Total) + Original_Qty_in_this_DPR
+            // Because Consumed_Total includes this DPR's previous value.
+            const effectiveAvailable = available + originalQty;
+
+            if (currentQty > effectiveAvailable) {
+              if (!silent) toast.error(
+                `Quantity exceeds limit for "${row.item}".  Limit: ${effectiveAvailable.toFixed(2)}, Entered: ${currentQty}`,
+                { autoClose: 5000 }
+              );
+              setSaving(false);
+              return false;
+            }
+          }
+        }
+      }
+
       const bottomRemarksArray = (() => {
         if (!generalRemark) return [""];
         const arr = generalRemark
@@ -477,18 +680,22 @@ function DprUpdateSubmit() {
           rain_timing: siteCondition.rain_timing,
         },
         labour_report: labourReport,
-        today_prog: {
-          items: todayProg.map((row) => row.item || ""),
-          unit: todayProg.map((row) => row.unit || ""),
-          qty: todayProg.map((row) => row.qty || ""),
-          remarks: todayProg.map((row) => row.remarks || ""),
-        },
-        tomorrow_plan: {
-          items: tomorrowPlan.map((row) => row.item || ""),
-          unit: tomorrowPlan.map((row) => row.unit || ""),
-          qty: tomorrowPlan.map((row) => row.qty || ""),
-          remarks: tomorrowPlan.map((row) => row.remarks || ""),
-        },
+        today_prog: todayProg
+          .filter((row) => row.budgetItemId && row.qty)
+          .map((row) => ({
+            item_id: row.budgetItemId,
+            quantity: parseFloat(row.qty) || 0,
+            remarks: row.remarks || "",
+            unit: row.unit || "",
+          })),
+        tomorrow_plan: tomorrowPlan
+          .filter((row) => row.budgetItemId && row.qty)
+          .map((row) => ({
+            item_id: row.budgetItemId,
+            quantity: parseFloat(row.qty) || 0,
+            remarks: row.remarks || "",
+            unit: row.unit || "",
+          })),
         events_remarks: eventsRemarks.map((e) => e.text),
         report_footer: {
           distribute: distribute.map((d) => d.text),
@@ -500,19 +707,9 @@ function DprUpdateSubmit() {
 
       const patch = deepSectionDiff(initialDpr.current || {}, currentDpr) || {};
 
-      patch.today_prog = {
-        items: todayProg.map((row) => row.item || ""),
-        unit: todayProg.map((row) => row.unit || ""),
-        qty: todayProg.map((row) => row.qty || ""),
-        remarks: todayProg.map((row) => row.remarks || ""),
-      };
-
-      patch.tomorrow_plan = {
-        items: tomorrowPlan.map((row) => row.item || ""),
-        unit: tomorrowPlan.map((row) => row.unit || ""),
-        qty: tomorrowPlan.map((row) => row.qty || ""),
-        remarks: tomorrowPlan.map((row) => row.remarks || ""),
-      };
+      // Ensure full arrays are sent to trigger backend "Replace All" logic for item tables
+      patch.today_prog = currentDpr.today_prog;
+      patch.tomorrow_plan = currentDpr.tomorrow_plan;
 
       // console.log("PATCH:", patch);
 
@@ -641,6 +838,70 @@ function DprUpdateSubmit() {
     setDistribute((p) =>
       p.map((row, i) => (i === idx ? { ...row, text: val } : row))
     );
+
+  // --- Budget Helper Functions ---
+  function toggleBudgetNode(id) {
+    setExpandedBudgetNodes((prev) => {
+      const copy = new Set(prev);
+      if (copy.has(id)) copy.delete(id);
+      else copy.add(id);
+      return copy;
+    });
+  }
+
+  // Find budget item by ID recursively
+  function findBudgetItemById(tree, itemId) {
+    for (const node of tree) {
+      if (Number(node.is_leaf) === 1 && node.item_id == itemId) {
+        return node;
+      }
+      if (node.children && node.children.length > 0) {
+        const found = findBudgetItemById(node.children, itemId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // Calculate total quantity available for a budget item (total - already used)
+  function getAvailableQuantity(budgetItemId, totalQty) {
+    const used = consumedQuantities[budgetItemId] || 0;
+    return totalQty - used;
+  }
+
+  // Handle budget item selection (double-click)
+  function handleBudgetItemSelect(budgetItem, modalType) {
+    // Prevent duplicate items
+    const targetList = modalType === "today" ? todayProg : tomorrowPlan;
+    const itemExists = targetList.some(row => row.budgetItemId === budgetItem.item_id); // Check against item_id or budgetItemId
+
+    if (itemExists) {
+      toast.warning(`"${budgetItem.item_name || budgetItem.name}" is already added!`, {
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    const newRow = {
+      id: genId(),
+      item: budgetItem.item_name || budgetItem.name,
+      unit: budgetItem.item_unit || "",
+      qty: "",
+      remarks: "",
+      budgetItemId: budgetItem.item_id,  // Use item_id from item table, not budget_category.id
+      totalAvailable: budgetItem.quantity || 0,
+    };
+
+    if (modalType === "today") {
+      setTodayProg((prev) => [...prev, newRow]);
+      toast.success(`Added ${budgetItem.item_name || budgetItem.name} to Today's Progress`);
+      setShowTodayModal(false);
+    } else {
+      setTomorrowPlan((prev) => [...prev, newRow]);
+      toast.success(`Added ${budgetItem.item_name || budgetItem.name} to Tomorrow's Planning`);
+      setShowTomorrowModal(false);
+    }
+  }
 
   //#endregion
 
@@ -942,7 +1203,7 @@ function DprUpdateSubmit() {
                         pattern="[0-9]*"
                         value={
                           labourReport[type] &&
-                          labourReport[type][rowIdx] !== undefined
+                            labourReport[type][rowIdx] !== undefined
                             ? labourReport[type][rowIdx]
                             : ""
                         }
@@ -1051,60 +1312,334 @@ function DprUpdateSubmit() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        <EditableTable4
-          title="Today's Progress"
-          rows={todayProg}
-          onAdd={() => addTodayRow()}
-          onRemove={removeTodayRow}
-          onChangeItem={(i, v) =>
-            setTodayProg((p) =>
-              p.map((r, idx) => (idx === i ? { ...r, item: v } : r))
-            )
-          }
-          onChangeRemarks={(i, v) =>
-            setTodayProg((p) =>
-              p.map((r, idx) => (idx === i ? { ...r, remarks: v } : r))
-            )
-          }
-          onChangeUnit={(i, v) =>
-            setTodayProg((p) =>
-              p.map((r, idx) => (idx === i ? { ...r, unit: v } : r))
-            )
-          }
-          onChangeQty={(i, v) =>
-            setTodayProg((p) =>
-              p.map((r, idx) => (idx === i ? { ...r, qty: v } : r))
-            )
-          }
-        />
-        <EditableTable4
-          title="Tomorrow's Planning"
-          rows={tomorrowPlan}
-          onAdd={() => addTomorrowRow()}
-          onRemove={removeTomorrowRow}
-          onChangeItem={(i, v) =>
-            setTomorrowPlan((p) =>
-              p.map((r, idx) => (idx === i ? { ...r, item: v } : r))
-            )
-          }
-          onChangeRemarks={(i, v) =>
-            setTomorrowPlan((p) =>
-              p.map((r, idx) => (idx === i ? { ...r, remarks: v } : r))
-            )
-          }
-          onChangeUnit={(i, v) =>
-            setTomorrowPlan((p) =>
-              p.map((r, idx) => (idx === i ? { ...r, unit: v } : r))
-            )
-          }
-          onChangeQty={(i, v) =>
-            setTomorrowPlan((p) =>
-              p.map((r, idx) => (idx === i ? { ...r, qty: v } : r))
-            )
-          }
-        />
+      {/* Today's Progress */}
+      <div className="mb-8">
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-blue-400">Today's Progress</h2>
+            <button
+              type="button"
+              onClick={() => setShowTodayModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+            >
+              <span className="material-icons text-sm">add</span>
+              Add from Budget
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-separate border-spacing-y-2">
+              <thead>
+                <tr className="text-gray-400 uppercase text-xs tracking-wider text-left">
+                  <th className="px-3 py-2">Item Description</th>
+                  <th className="px-3 py-2 w-20 text-center">Unit</th>
+                  <th className="px-3 py-2 w-28 text-center" title="Total Budget Quantity">Allocated</th>
+                  <th className="px-3 py-2 w-28 text-center" title="Consumed Before Today">Consumed</th>
+                  <th className="px-3 py-2 w-32 text-center">Quantity</th>
+                  <th className="px-3 py-2 w-28 text-center" title="Remaining After Today">Remaining</th>
+                  <th className="px-3 py-2 w-64">Remarks</th>
+                  <th className="px-3 py-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {todayProg.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="text-center py-8 text-gray-500 italic bg-gray-900/30 rounded-lg border border-dashed border-gray-700">
+                      No items added yet. Click "Add from Budget" to select items.
+                    </td>
+                  </tr>
+                ) : (
+                  todayProg.map((row, idx) => {
+                    const budgetItem = findBudgetItemById(budgetTree, row.budgetItemId);
+                    const totalBudgetQty = budgetItem?.quantity || row.totalAvailable || 0;
+
+                    // Logic to isolate "Prior Consumption"
+                    // consumedQuantities includes ALL DPRs (including this one's possibly old value).
+                    // Other_Consumption = Total_Consumed_API - Original_Qty_In_This_DPR
+                    let originalQty = 0;
+                    if (initialDpr.current?.today_prog) {
+                      const rawTp = Array.isArray(initialDpr.current.today_prog)
+                        ? initialDpr.current.today_prog
+                        : [];
+                      const found = rawTp.find(r => r.item_id === row.budgetItemId);
+                      if (found) originalQty = Number(found.quantity || found.qty) || 0;
+                    }
+
+                    const totalConsumedAPI = consumedQuantities[row.budgetItemId] || 0;
+                    const consumedByOthers = Math.max(0, totalConsumedAPI - originalQty);
+
+                    const currentInput = parseFloat(row.qty) || 0;
+
+                    // Remaining = Total - Prior - Current
+                    const remainingAfterInput = totalBudgetQty - consumedByOthers - currentInput;
+                    const isExceeded = remainingAfterInput < 0;
+
+                    return (
+                      <tr key={row.id} className="bg-gray-900/50 hover:bg-gray-700/30 transition-colors rounded-lg group">
+                        <td className="px-3 py-3 rounded-l-lg font-medium text-gray-200">
+                          {row.item}
+                        </td>
+                        <td className="px-3 py-3 text-center text-gray-400">
+                          {row.unit}
+                        </td>
+
+                        {/* Total Allocated */}
+                        <td className="px-3 py-3 text-center text-blue-300 font-medium">
+                          {totalBudgetQty}
+                        </td>
+
+                        {/* Consumed Prior */}
+                        <td className="px-3 py-3 text-center text-yellow-500 font-medium">
+                          {/* Add slight bg or distinct style if needed, kept simple */}
+                          {consumedByOthers.toFixed(2)}
+                        </td>
+
+                        {/* Quantity Input */}
+                        <td className="px-3 py-3">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={row.qty}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTodayProg(prev => {
+                                const updated = [...prev];
+                                updated[idx] = { ...updated[idx], qty: val };
+                                return updated;
+                              });
+                            }}
+                            className={`w-full bg-gray-800 border rounded px-2 py-1 text-center outline-none transition-all ${isExceeded
+                              ? 'border-red-500 text-red-400 focus:ring-red-500 focus:border-red-500'
+                              : 'border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                              }`}
+                            placeholder="0.00"
+                          />
+                        </td>
+
+                        {/* Remaining (Calculated) */}
+                        <td className={`px-3 py-3 text-center font-bold ${isExceeded ? 'text-red-500' : 'text-green-400'}`}>
+                          {remainingAfterInput.toFixed(2)}
+                        </td>
+
+                        <td className="px-3 py-3">
+                          <input
+                            type="text"
+                            value={row.remarks}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTodayProg(prev => {
+                                const updated = [...prev];
+                                updated[idx] = { ...updated[idx], remarks: val };
+                                return updated;
+                              });
+                            }}
+                            placeholder="Add remarks..."
+                            className="w-full bg-transparent border-b border-gray-600 focus:border-blue-500 outline-none py-1 text-gray-300 transition-colors"
+                          />
+                        </td>
+                        <td className="px-3 py-3 rounded-r-lg text-center">
+                          <button
+                            type="button"
+                            onClick={() => removeTodayRow(idx)}
+                            className="text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Remove item"
+                          >
+                            <span className="material-icons">close</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
+
+      {/* Tomorrow's Planning */}
+      <div className="mb-8">
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-blue-400">Tomorrow's Planning</h2>
+            <button
+              type="button"
+              onClick={() => setShowTomorrowModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+            >
+              <span className="material-icons text-sm">add</span>
+              Add from Budget
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-separate border-spacing-y-2">
+              <thead>
+                <tr className="text-gray-400 uppercase text-xs tracking-wider text-left">
+                  <th className="px-3 py-2">Item Description</th>
+                  <th className="px-3 py-2 w-20 text-center">Unit</th>
+                  <th className="px-3 py-2 w-28 text-center" title="Total Budget Quantity">Allocated</th>
+                  <th className="px-3 py-2 w-32 text-center">Quantity</th>
+                  <th className="px-3 py-2 w-28 text-center" title="Remaining Available">Remaining</th>
+                  <th className="px-3 py-2 w-64">Remarks</th>
+                  <th className="px-3 py-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {tomorrowPlan.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-8 text-gray-500 italic bg-gray-900/30 rounded-lg border border-dashed border-gray-700">
+                      No items added yet. Click "Add from Budget" to select items.
+                    </td>
+                  </tr>
+                ) : (
+                  tomorrowPlan.map((row, idx) => {
+                    const budgetItem = findBudgetItemById(budgetTree, row.budgetItemId);
+                    const totalBudgetQty = budgetItem?.quantity || row.totalAvailable || 0;
+
+                    // Available for planning = Total - Consumed
+                    const totalConsumedAPI = consumedQuantities[row.budgetItemId] || 0;
+                    const availableForPlan = totalBudgetQty - totalConsumedAPI;
+
+                    const currentInput = parseFloat(row.qty) || 0;
+                    const remainingAfterPlan = availableForPlan - currentInput;
+                    const isExceeded = row.budgetItemId && remainingAfterPlan < 0;
+
+                    return (
+                      <tr key={row.id} className="bg-gray-900/50 hover:bg-gray-700/30 transition-colors rounded-lg group">
+                        <td className="px-3 py-3 rounded-l-lg font-medium text-gray-200">
+                          {row.item}
+                        </td>
+                        <td className="px-3 py-3 text-center text-gray-400">
+                          {row.unit}
+                        </td>
+
+                        {/* Allocated */}
+                        <td className="px-3 py-3 text-center text-blue-300 font-medium">
+                          {row.budgetItemId ? totalBudgetQty : '-'}
+                        </td>
+
+                        {/* Quantity Input */}
+                        <td className="px-3 py-3">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={row.qty}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTomorrowPlan(prev => {
+                                const updated = [...prev];
+                                updated[idx] = { ...updated[idx], qty: val };
+                                return updated;
+                              });
+                            }}
+                            className={`w-full bg-gray-800 border rounded px-2 py-1 text-center outline-none transition-all ${isExceeded
+                              ? "border-yellow-500 text-yellow-500 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
+                              : "border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                              }`}
+                            placeholder="0.00"
+                            title={isExceeded ? "Warning: Quantity exceeds available budget" : ""}
+                          />
+                        </td>
+
+                        {/* Remaining */}
+                        <td className={`px-3 py-3 text-center font-medium ${isExceeded ? "text-yellow-500" : "text-green-400"}`}>
+                          {row.budgetItemId ? remainingAfterPlan.toFixed(2) : '-'}
+                        </td>
+
+                        <td className="px-3 py-3">
+                          <input
+                            type="text"
+                            value={row.remarks}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTomorrowPlan(prev => {
+                                const updated = [...prev];
+                                updated[idx] = { ...updated[idx], remarks: val };
+                                return updated;
+                              });
+                            }}
+                            placeholder="Add remarks..."
+                            className="w-full bg-transparent border-b border-gray-600 focus:border-blue-500 outline-none py-1 text-gray-300 transition-colors"
+                          />
+                        </td>
+                        <td className="px-3 py-3 rounded-r-lg text-center">
+                          <button
+                            type="button"
+                            onClick={() => removeTomorrowRow(idx)}
+                            className="text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Remove item"
+                          >
+                            <span className="material-icons">close</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Budget Selection Modals */}
+      {showTodayModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-gray-800 rounded-xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl border border-gray-700">
+            <div className="flex justify-between items-center p-6 border-b border-gray-700 bg-gray-800 rounded-t-xl">
+              <div>
+                <h3 className="text-xl font-bold text-white">Select Item for Today's Progress</h3>
+                <p className="text-sm text-gray-400 mt-1">Double-click an item to add it to the report</p>
+              </div>
+              <button
+                onClick={() => setShowTodayModal(false)}
+                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-full"
+              >
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-900/50">
+              <BudgetTreeForDPR
+                tree={budgetTree}
+                expanded={expandedBudgetNodes}
+                onToggle={toggleBudgetNode}
+                onItemDoubleClick={(item) => handleBudgetItemSelect(item, "today")}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTomorrowModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-gray-800 rounded-xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl border border-gray-700">
+            <div className="flex justify-between items-center p-6 border-b border-gray-700 bg-gray-800 rounded-t-xl">
+              <div>
+                <h3 className="text-xl font-bold text-white">Select Item for Tomorrow's Planning</h3>
+                <p className="text-sm text-gray-400 mt-1">Double-click an item to add it to the plan</p>
+              </div>
+              <button
+                onClick={() => setShowTomorrowModal(false)}
+                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-full"
+              >
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-900/50">
+              <BudgetTreeForDPR
+                tree={budgetTree}
+                expanded={expandedBudgetNodes}
+                onToggle={toggleBudgetNode}
+                onItemDoubleClick={(item) => handleBudgetItemSelect(item, "tomorrow")}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* General Remarks section with new layout */}
       <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -1190,8 +1725,8 @@ function DprUpdateSubmit() {
           onClick={onSave}
           disabled={saving}
           className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${saving
-              ? "bg-blue-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
+            ? "bg-blue-400 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"
             }`}
         >
           {saving ? "Saving..." : "Save Changes"}
@@ -1201,8 +1736,8 @@ function DprUpdateSubmit() {
           onClick={openSubmitModal}
           disabled={submitting}
           className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${submitting
-              ? "bg-blue-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
+            ? "bg-blue-400 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"
             }`}
         >
           {submitting ? "Submitting..." : "Submit"}

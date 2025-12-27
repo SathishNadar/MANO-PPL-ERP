@@ -604,7 +604,7 @@ const DprFetchViewer = () => {
             </table>
           </div>
           <div className="text-sm text-gray-400 mt-2">
-            Cumulative Manpower (until yesterday):{" "}
+            Cumulative Manpower (till today):{" "}
             <span id="cumulative-manpower">--</span>
           </div>
         </div>

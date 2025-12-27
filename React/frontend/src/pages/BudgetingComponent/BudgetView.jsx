@@ -70,7 +70,19 @@ function numberToWordsIndia(amount) {
 
   const words = parts.join(' ').replace(/\s+/g, ' ').trim();
   return words;
-//   return words + ' rupees';
+  //   return words + ' rupees';
+}
+
+// Added helper function for Easter egg
+function numberToWordsWithEasterEgg(amount) {
+  const num = Number(amount);
+
+  // Easter egg: ONLY for exact value 7
+  if (num === 7) {
+    return 'K-seven';
+  }
+
+  return numberToWordsIndia(num);
 }
 
 // BudgetView: fetches budget tree from backend and displays it in a styled hierarchy view
@@ -117,15 +129,16 @@ export default function BudgetView({ projectIdProp }) {
     return () => { mounted = false; };
   }, [projectId]);
 
-  // compute total cost for a node (recursive). Leaves use quantity * rate (prefer item_rate + quantity from backend, fallback to component)
+  // compute total cost for a node (recursive). Leaves use quantity * rate (prefer item_rate + quantity from backend, fallback to component) 
   function computeTotal(node) {
     if (!node) return 0;
 
     // Leaf nodes: use quantity * rate (prefer item_rate + quantity from backend, fallback to component)
     if (Number(node.is_leaf) === 1) {
-      const rate = Number(node.item_rate ?? (node.component && node.component.rate) ?? 0) || 0;
-      const qty = Number(node.quantity ?? (node.component && node.component.quantity) ?? 0) || 0;
-      return rate * qty;
+      const itemRate = Number(node.item_rate ?? 0) || 0;
+      const labourRate = Number(node.item_labour_rate ?? 0);
+      const qty = Number(node.quantity ?? 0) || 0;
+      return qty * (itemRate + labourRate);
     }
 
     // Non-leaf: sum cumulative totals of children recursively
@@ -142,36 +155,57 @@ export default function BudgetView({ projectIdProp }) {
   }
 
   // Render node recursively using markup inspired by provided design
+  // Render node recursively using markup inspired by provided design
   function Node({ node }) {
     const isLeaf = Number(node.is_leaf) === 1;
     const isExpanded = node.id && expanded.has(node.id);
     const total = computeTotal(node);
+
+    if (isLeaf) {
+      return (
+        <div className="ml-0 text-base mb-4">
+          <div className="bg-gray-800 p-4 rounded-md shadow-md">
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="font-medium text-gray-300 text-base">{node.item_name ?? node.name}</span>
+                <span className="text-base text-gray-500 ml-2">({node.item_unit ?? (node.component && node.component.unit) ?? ''})</span>
+
+                <div className="text-sm text-gray-400 mt-1">
+                  {node.quantity ?? 0} × ({node.item_rate ?? 0} + {node.item_labour_rate ?? 0})
+                  = ₹{formatINR(total)}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <p className="text-base font-semibold text-white">₹{formatINR(total)}</p>
+                <div className="text-sm text-gray-400 mt-1">{numberToWordsWithEasterEgg(total)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="ml-0 text-base"> {/* set base text larger for nodes */}
         <div className={`bg-gray-900 p-6 rounded-lg shadow-md mb-4`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {isLeaf ? <span className="w-6" /> : (
-                <button onClick={() => toggle(node.id)} className="material-icons text-gray-400">{isExpanded ? 'expand_more' : 'chevron_right'}</button>
-              )}
+              <button onClick={() => toggle(node.id)} className="material-icons text-gray-400">{isExpanded ? 'expand_more' : 'chevron_right'}</button>
               <div className="flex flex-col">
-                <span className={`${isLeaf ? 'text-xl font-medium text-gray-300' : 'font-bold text-lg text-gray-100'}`}>{node.name}</span>
-                {isLeaf && (
-                  <span className="text-base text-gray-500">({node.item_unit ?? (node.component && node.component.unit) ?? ''})</span>
-                )}
+                <span className="font-bold text-lg text-gray-100">{node.name}</span>
               </div>
             </div>
 
             <div className="text-right">
               <p className="text-lg font-semibold text-white">₹{formatINR(total)}</p>
-              <div className="text-sm text-gray-400 mt-1">{numberToWordsIndia(total)}</div>
+              <div className="text-sm text-gray-400 mt-1">{numberToWordsWithEasterEgg(total)}</div>
             </div>
           </div>
         </div>
 
         {/* children list */}
-        {!isLeaf && node.children && node.children.length > 0 && isExpanded && (
+        {node.children && node.children.length > 0 && isExpanded && (
           <ul className="space-y-4 pl-8 border-l border-gray-700 ml-3">
             {node.children.map((child) => (
               <li key={child.id ?? child.name} className="relative py-2">
@@ -183,17 +217,31 @@ export default function BudgetView({ projectIdProp }) {
                     <div className="flex justify-between items-center">
                       <div>
                         <span className="font-medium text-gray-300 text-base">{child.item_name ?? child.name}</span>
-                        <span className="text-base text-gray-500">({child.item_unit ?? ''})</span>
+                        <span className="text-base text-gray-500 ml-2">({child.item_unit ?? ''})</span>
 
-                        {/* quantity × rate breakdown */}
+                        {/* quantity × (rate + labour_rate) breakdown */}
                         <div className="text-sm text-gray-400 mt-1">
-                          ({child.quantity ?? 0}) × ({child.item_rate ?? 0}) = ₹{formatINR(Number(child.quantity ?? 0) * Number(child.item_rate ?? 0))}
+                          {child.quantity ?? 0} × ({child.item_rate ?? 0} + {child.item_labour_rate ?? 0})
+                          = ₹{formatINR(
+                            Number(child.quantity ?? 0) *
+                            (Number(child.item_rate ?? 0) + Number(child.item_labour_rate ?? 0))
+                          )}
                         </div>
                       </div>
 
                       <div className="text-right">
-                        <p className="text-base font-semibold text-white">₹{formatINR(Number(child.quantity ?? 0) * Number(child.item_rate ?? 0))}</p>
-                        <div className="text-sm text-gray-400 mt-1">{numberToWordsIndia(Number(child.quantity ?? 0) * Number(child.item_rate ?? 0))}</div>
+                        <p className="text-base font-semibold text-white">
+                          ₹{formatINR(
+                            Number(child.quantity ?? 0) *
+                            (Number(child.item_rate ?? 0) + Number(child.item_labour_rate ?? 0))
+                          )}
+                        </p>
+                        <div className="text-sm text-gray-400 mt-1">
+                          {numberToWordsWithEasterEgg(
+                            Number(child.quantity ?? 0) *
+                            (Number(child.item_rate ?? 0) + Number(child.item_labour_rate ?? 0))
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -214,16 +262,30 @@ export default function BudgetView({ projectIdProp }) {
                               <div className="flex justify-between items-center">
                                 <div>
                                   <span className="font-medium text-gray-300 text-base">{g.item_name ?? g.name}</span>
-                                  <span className="text-base text-gray-500">({g.item_unit ?? ''})</span>
+                                  <span className="text-base text-gray-500 ml-2">({g.item_unit ?? ''})</span>
 
                                   <div className="text-sm text-gray-400 mt-1">
-                                    ({g.quantity ?? 0}) × ({g.item_rate ?? 0}) = ₹{formatINR(Number(g.quantity ?? 0) * Number(g.item_rate ?? 0))}
+                                    {g.quantity ?? 0} × ({g.item_rate ?? 0} + {g.item_labour_rate ?? 0})
+                                    = ₹{formatINR(
+                                      Number(g.quantity ?? 0) *
+                                      (Number(g.item_rate ?? 0) + Number(g.item_labour_rate ?? 0))
+                                    )}
                                   </div>
                                 </div>
 
                                 <div className="text-right">
-                                  <p className="text-base font-semibold text-white">₹{formatINR(Number(g.quantity ?? 0) * Number(g.item_rate ?? 0))}</p>
-                                  <div className="text-sm text-gray-400 mt-1">{numberToWordsIndia(Number(g.quantity ?? 0) * Number(g.item_rate ?? 0))}</div>
+                                  <p className="text-base font-semibold text-white">
+                                    ₹{formatINR(
+                                      Number(g.quantity ?? 0) *
+                                      (Number(g.item_rate ?? 0) + Number(g.item_labour_rate ?? 0))
+                                    )}
+                                  </p>
+                                  <div className="text-sm text-gray-400 mt-1">
+                                    {numberToWordsWithEasterEgg(
+                                      Number(g.quantity ?? 0) *
+                                      (Number(g.item_rate ?? 0) + Number(g.item_labour_rate ?? 0))
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -266,7 +328,7 @@ export default function BudgetView({ projectIdProp }) {
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-green-400">₹{formatINR(computeTotal(root))}</p>
-                    <div className="text-sm text-gray-400 mt-1">{numberToWordsIndia(computeTotal(root))}</div>
+                    <div className="text-sm text-gray-400 mt-1">{numberToWordsWithEasterEgg(computeTotal(root))}</div>
                   </div>
                 </div>
               </div>

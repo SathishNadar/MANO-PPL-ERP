@@ -16,7 +16,7 @@ const ProjectVendorList = () => {
     // Add Vendor State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [masterVendors, setMasterVendors] = useState([]);
-    const [selectedVendorId, setSelectedVendorId] = useState("");
+    const [selectedVendorIds, setSelectedVendorIds] = useState(new Set()); // Changed to Set for multi-select
     const [searchTerm, setSearchTerm] = useState("");
     const [highlightedIndex, setHighlightedIndex] = useState(0);
     const [adding, setAdding] = useState(false);
@@ -92,6 +92,7 @@ const ProjectVendorList = () => {
     useEffect(() => {
         if (projectId) {
             fetchProjectVendors();
+            fetchMasterVendors();
         } else {
             // handle missing project id if needed, or just don't fetch
             setLoading(false);
@@ -101,42 +102,44 @@ const ProjectVendorList = () => {
     useEffect(() => {
         if (isAddModalOpen) {
             setSearchTerm(""); // Reset search
-            if (masterVendors.length === 0) {
-                fetchMasterVendors();
-            }
         }
     }, [isAddModalOpen]);
 
     // Handle Add Vendor
     const handleAddVendor = async () => {
-        if (!selectedVendorId) {
-            toast.warning("Please select a vendor");
+        if (selectedVendorIds.size === 0) {
+            toast.warning("Please select at least one vendor");
             return;
         }
 
         setAdding(true);
         try {
+            const vendorIdsArray = Array.from(selectedVendorIds);
             const response = await fetch(`${API_BASE}/projectVendors/add/${projectId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ vendors: [parseInt(selectedVendorId)] }),
+                body: JSON.stringify({ vendors: vendorIdsArray }),
                 credentials: 'include'
             });
 
             const data = await response.json();
             if (response.ok) {
-                toast.success("Vendor added successfully");
+                toast.success("Vendors added successfully");
 
-                // Optimistic UI Update
-                const addedVendor = masterVendors.find(v => v.id === parseInt(selectedVendorId));
-                if (addedVendor) {
-                    setVendors(prev => [...prev, { ...addedVendor, pv_id: data.pv_ids?.[0] || Date.now() }]);
-                }
+                // Optimistic UI Update - Loop through added IDs
+                const addedVendors = masterVendors.filter(v => selectedVendorIds.has(v.id));
+                // Basic check to avoid duplicates visually before refresh
+                const newVendors = addedVendors.map((v, idx) => ({
+                    ...v,
+                    pv_id: data.pv_ids?.[idx] || Date.now() + idx
+                }));
+
+                setVendors(prev => [...prev, ...newVendors]);
 
                 setIsAddModalOpen(false);
-                setSelectedVendorId("");
+                setSelectedVendorIds(new Set());
                 setSearchTerm(""); // Clear search on success
 
                 // Background refresh with delay to ensure backend consistency
@@ -144,11 +147,11 @@ const ProjectVendorList = () => {
                     fetchProjectVendors();
                 }, 500);
             } else {
-                toast.error(data.message || "Failed to add vendor");
+                toast.error(data.message || "Failed to add vendors");
             }
         } catch (error) {
-            console.error("Error adding vendor:", error);
-            toast.error("Error adding vendor");
+            console.error("Error adding vendors:", error);
+            toast.error("Error adding vendors");
         } finally {
             setAdding(false);
         }
@@ -188,6 +191,10 @@ const ProjectVendorList = () => {
             setDeleteId(null);
         }
     };
+
+    const availableVendors = masterVendors.filter(mv =>
+        !vendors.some(pv => pv.vendor_id === mv.id)
+    );
 
     return (
         <div className="flex h-screen bg-background">
@@ -332,7 +339,7 @@ const ProjectVendorList = () => {
                                         setHighlightedIndex(0); // Reset highlight on search
                                     }}
                                     onKeyDown={(e) => {
-                                        const filtered = masterVendors.filter(v =>
+                                        const filtered = availableVendors.filter(v =>
                                             v.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                             v.job_nature.toLowerCase().includes(searchTerm.toLowerCase())
                                         );
@@ -347,7 +354,13 @@ const ProjectVendorList = () => {
                                         } else if (e.key === 'Enter') {
                                             e.preventDefault();
                                             if (filtered[highlightedIndex]) {
-                                                setSelectedVendorId(filtered[highlightedIndex].id);
+                                                const vendorId = filtered[highlightedIndex].id;
+                                                setSelectedVendorIds(prev => {
+                                                    const newSet = new Set(prev);
+                                                    if (newSet.has(vendorId)) newSet.delete(vendorId);
+                                                    else newSet.add(vendorId);
+                                                    return newSet;
+                                                });
                                             }
                                         }
                                     }}
@@ -357,35 +370,43 @@ const ProjectVendorList = () => {
                                     ref={listRef}
                                     className="max-h-60 overflow-y-auto border border-gray-600 rounded-lg bg-gray-750 custom-scrollbar"
                                 >
-                                    {masterVendors.filter(v =>
+                                    {availableVendors.filter(v =>
                                         v.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                         v.job_nature.toLowerCase().includes(searchTerm.toLowerCase())
                                     ).length > 0 ? (
-                                        masterVendors.filter(v =>
+                                        availableVendors.filter(v =>
                                             v.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                             v.job_nature.toLowerCase().includes(searchTerm.toLowerCase())
-                                        ).map((v, idx) => (
-                                            <div
-                                                key={v.id}
-                                                ref={el => itemRefs.current[idx] = el}
-                                                onClick={() => {
-                                                    setSelectedVendorId(v.id);
-                                                    setHighlightedIndex(idx);
-                                                }}
-                                                className={`px-4 py-3 cursor-pointer transition-colors border-b border-gray-700 last:border-0 flex justify-between items-center ${highlightedIndex === idx
-                                                    ? 'bg-blue-600/30 border-l-4 border-l-blue-500'
-                                                    : 'hover:bg-gray-700'
-                                                    }`}
-                                            >
-                                                <div>
-                                                    <div className="font-semibold text-white text-sm">{v.company_name}</div>
-                                                    <div className="text-xs text-gray-400">{v.job_nature}</div>
+                                        ).map((v, idx) => {
+                                            const isSelected = selectedVendorIds.has(v.id);
+                                            return (
+                                                <div
+                                                    key={v.id}
+                                                    ref={el => itemRefs.current[idx] = el}
+                                                    onClick={() => {
+                                                        setSelectedVendorIds(prev => {
+                                                            const newSet = new Set(prev);
+                                                            if (newSet.has(v.id)) newSet.delete(v.id);
+                                                            else newSet.add(v.id);
+                                                            return newSet;
+                                                        });
+                                                        setHighlightedIndex(idx);
+                                                    }}
+                                                    className={`px-4 py-3 cursor-pointer transition-colors border-b border-gray-700 last:border-0 flex justify-between items-center ${highlightedIndex === idx
+                                                        ? 'bg-blue-600/20'
+                                                        : 'hover:bg-gray-700'
+                                                        } ${isSelected ? 'bg-blue-900/40' : ''}`}
+                                                >
+                                                    <div>
+                                                        <div className={`font-semibold text-sm ${isSelected ? 'text-blue-400' : 'text-white'}`}>{v.company_name}</div>
+                                                        <div className="text-xs text-gray-400">{v.job_nature}</div>
+                                                    </div>
+                                                    {isSelected && (
+                                                        <span className="material-icons text-blue-400 text-sm">check_circle</span>
+                                                    )}
                                                 </div>
-                                                {selectedVendorId === v.id && (
-                                                    <span className="material-icons text-blue-400 text-sm">check_circle</span>
-                                                )}
-                                            </div>
-                                        ))
+                                            )
+                                        })
                                     ) : (
                                         <div className="p-4 text-center text-gray-500 text-sm italic">
                                             No matching vendors found.
@@ -403,10 +424,10 @@ const ProjectVendorList = () => {
                                 </button>
                                 <button
                                     onClick={handleAddVendor}
-                                    disabled={adding || !selectedVendorId}
+                                    disabled={adding || selectedVendorIds.size === 0}
                                     className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                 >
-                                    {adding ? "Adding..." : "Add Vendor"}
+                                    {adding ? "Adding..." : `Add Vendors (${selectedVendorIds.size})`}
                                 </button>
                             </div>
                         </div>
