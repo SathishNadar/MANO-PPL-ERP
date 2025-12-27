@@ -28,7 +28,7 @@ const DocumentIndex = () => {
         } else if (item === "MANO's Staff Role & Responsibilties") {
             navigate(`/dashboard/project-description/${projectId}/staff-roles`);
         } else if (item === "Agenda of Meeting") {
-            navigate('/dashboard/agenda');
+            navigate('/dashboard/agenda', { state: { projectId } });
         } else if (item === "Minutes of Meeting") {
             navigate('/dashboard/minutes');
         } else if (item === "Events / Hindrance Report") {
