@@ -26,8 +26,10 @@ import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
 import StaffRoles from "./pages/Dashboard/StaffRoles/StaffRoles.jsx";
 import AgendaList from "./pages/Dashboard/AgendaOfMeeting/AgendaList.jsx";
 import AgendaDetails from "./pages/Dashboard/AgendaOfMeeting/AgendaDetails.jsx";
+import AgendaCreate from "./pages/Dashboard/AgendaOfMeeting/AgendaCreate.jsx";
 import MinutesList from "./pages/Dashboard/MinutesOfMeeting/MinutesList.jsx";
 import MinutesDetails from "./pages/Dashboard/MinutesOfMeeting/MinutesDetails.jsx";
+import MinutesCreate from "./pages/Dashboard/MinutesOfMeeting/MinutesCreate.jsx";
 import HindranceReport from "./pages/Dashboard/HindranceReport/HindranceReport.jsx";
 import ProjectSummary from "./pages/Dashboard/ProjectSummary/ProjectSummary.jsx";
 import OrganisationChart from "./pages/Dashboard/OrganisationChart/OrganisationChart.jsx";
@@ -144,6 +146,14 @@ function App() {
           }
         />
         <Route
+          path="/dashboard/agenda/create"
+          element={
+            <ProtectedRoute>
+              <AgendaCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dashboard/minutes"
           element={
             <ProtectedRoute>
@@ -156,6 +166,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MinutesDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/minutes/create"
+          element={
+            <ProtectedRoute>
+              <MinutesCreate />
             </ProtectedRoute>
           }
         />

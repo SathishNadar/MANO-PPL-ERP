@@ -50,11 +50,10 @@ const DocumentIndex = () => {
         } else if (item === "MANO's Staff Role & Responsibilties") {
             navigate(`/dashboard/project-description/${projectId}/staff-roles`);
         } else if (item === "Agenda of Meeting") {
-            navigate('/dashboard/agenda');
+            navigate('/dashboard/agenda', { state: { projectId } });
         } else if (item === "Minutes of Meeting") {
-            navigate('/dashboard/minutes');
+            navigate('/dashboard/minutes', { state: { projectId } });
         } else if (item === "Events / Hindrance Report") {
-            navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
             navigate(`/dashboard/project-description/${projectId}/hindrance-report`);
         } else if (item === "Project Summary") {
             navigate(`/dashboard/project-summary/${projectId}`);
