@@ -1,10 +1,11 @@
 import express from "express";
 import { knexDB } from "../Database.js";
+import { authenticateJWT } from "../AuthAPI/LoginAPI.js";
 
 const router = express.Router();
 
 //Fetch Planned vs Achieved Drawings Report
-router.get("/report/:project_id", async (req, res) => {
+router.get("/report/:project_id", authenticateJWT, async (req, res) => {
   try {
     const project_id = parseInt(req.params.project_id, 10);
 
@@ -31,7 +32,7 @@ router.get("/report/:project_id", async (req, res) => {
 
 
 //Insert Planned vs Achieved Drawings Report
-router.post("/add/:project_id", async (req, res) => {
+router.post("/add/:project_id", authenticateJWT, async (req, res) => {
   try {
     const project_id = parseInt(req.params.project_id, 10);
 
@@ -43,10 +44,17 @@ router.post("/add/:project_id", async (req, res) => {
       remarks
     } = req.body;
 
-    if (!drawing_type || !drawing_name) {
+    if (!drawing_name || !drawing_type || !planned_date) {
       return res.status(400).json({
         ok: false,
-        message: "drawing_type and drawing_name are required"
+        message: "drawing_name, drawing_type and planned_date are required"
+      });
+    }
+
+    if (received_date && received_date < planned_date) {
+      return res.status(400).json({
+        ok: false,
+        message: "Received date cannot be before planned date"
       });
     }
 
@@ -59,6 +67,7 @@ router.post("/add/:project_id", async (req, res) => {
       remarks
     });
 
+
     res.status(201).json({
       ok: true,
       message: "Drawing report added successfully"
@@ -70,7 +79,7 @@ router.post("/add/:project_id", async (req, res) => {
 });
 
 //Update Planned vs Achieved Drawings Report
-router.put("/update/:drawing_pa_id", async (req, res) => {
+router.put("/update/:drawing_pa_id", authenticateJWT, async (req, res) => {
   try {
     const drawing_pa_id = parseInt(req.params.drawing_pa_id, 10);
 
@@ -81,6 +90,20 @@ router.put("/update/:drawing_pa_id", async (req, res) => {
       received_date,
       remarks
     } = req.body;
+
+    if (!drawing_type || !drawing_name || !planned_date) {
+      return res.status(400).json({
+        ok: false,
+        message: "drawing_type,drawing_name and planned_date are required"
+      });
+    }
+
+    if (received_date && received_date < planned_date) {
+      return res.status(400).json({
+        ok: false,
+        message: "Received date cannot be before planned date"
+      });
+    }
 
     const exists = await knexDB("project_drawing_planned_achieved")
       .where({ drawing_pa_id })
@@ -115,7 +138,7 @@ router.put("/update/:drawing_pa_id", async (req, res) => {
 });
 
 //Delete Planned vs Achieved Drawings Report
-router.delete("/delete/:drawing_pa_id", async (req, res) => {
+router.delete("/delete/:drawing_pa_id", authenticateJWT, async (req, res) => {
   try {
     const drawing_pa_id = parseInt(req.params.drawing_pa_id, 10);
 
