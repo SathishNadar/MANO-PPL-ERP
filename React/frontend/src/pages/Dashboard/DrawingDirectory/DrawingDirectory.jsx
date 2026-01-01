@@ -19,15 +19,32 @@ const DrawingDirectory = () => {
         if (!isOpen || !anchorEl) return null;
 
         const rect = anchorEl.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const isBottomHalf = rect.bottom > viewportHeight / 2;
+
         const style = {
             position: 'absolute',
-            left: rect.left + window.scrollX,
-            top: rect.bottom + window.scrollY + 5,
-            transform: 'translateX(-50%)',
+            left: rect.left + window.scrollX + (rect.width / 2),
+            top: isBottomHalf
+                ? rect.top + window.scrollY - 12 // Space for arrow above
+                : rect.bottom + window.scrollY + 12, // Space for arrow below
+            transform: isBottomHalf ? 'translate(-50%, -100%)' : 'translateX(-50%)',
             zIndex: 9999,
             maxWidth: '500px',
             width: 'max-content',
             minWidth: '400px',
+        };
+
+        const arrowStyle = {
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '0',
+            height: '0',
+            borderLeft: '10px solid transparent',
+            borderRight: '10px solid transparent',
+            [isBottomHalf ? 'bottom' : 'top']: '-10px',
+            [isBottomHalf ? 'borderTop' : 'borderBottom']: '10px solid #3b82f6', // matches blue-500
         };
 
         return createPortal(
@@ -41,6 +58,8 @@ const DrawingDirectory = () => {
                     className="bg-gray-800 rounded-lg shadow-2xl border-2 border-blue-500"
                     onClick={e => e.stopPropagation()}
                 >
+                    {/* Arrow */}
+                    <div style={arrowStyle} />
                     {children}
                 </div>
             </>,
@@ -71,18 +90,6 @@ const DrawingDirectory = () => {
             return dateString;
         }
     };
-
-    const getFileType = (url) => {
-        if (!url) return null;
-        const ext = url.split('.').pop()?.toLowerCase();
-
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'image';
-        if (['pdf'].includes(ext)) return 'pdf';
-        if (['dwg', 'dxf'].includes(ext)) return 'cad';
-
-        return 'other';
-    };
-
 
     const handleAuthError = (response) => {
         if (response.status === 401 || response.status === 403) {
@@ -696,7 +703,7 @@ const DrawingDirectory = () => {
                                                                     setZoomLevel(1);
                                                                     setPan({ x: 0, y: 0 });
                                                                 }}
-                                                                className="text-whit-600 hover:text-blue-500 hover:underline text-[10px] px-3 py-1 flex items-center gap-1"
+                                                                className="text-blue-600  hover:underline text-[12px] px-3 py-1 flex items-center gap-1"
                                                             >
                                                                 View File
                                                             </button>
