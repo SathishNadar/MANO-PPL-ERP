@@ -7,7 +7,8 @@ const router = express.Router();
 // Fetch dar users
 router.get("/users", authenticateJWT, async (req, res) => {
     try {
-        if (String(req.user.title).toLowerCase() !== "admin") {
+        const userTitle = String(req.user.title).toLowerCase();
+        if (userTitle !== "admin") {
             return res.status(403).json({
                 ok: false,
                 message: "Access denied"
@@ -112,14 +113,13 @@ router.put("/update/:dar_id",
                 });
             }
 
+            const dar_id = parseInt(req.params.dar_id, 10);
             if (Number.isNaN(dar_id)) {
                 return res.status(400).json({
                     ok: false,
                     message: "Invalid dar_id"
                 });
             }
-
-            const dar_id = parseInt(req.params.dar_id, 10);
             const { user_id } = req.user;
             const { activity_report } = req.body;
 
@@ -176,21 +176,19 @@ router.put("/update/:dar_id",
 
 router.delete("/delete/:dar_id", authenticateJWT, async (req, res) => {
     try {
-        if (String(req.user.title).toLowerCase() === "admin") {
+        const userTitle = String(req.user.title).toLowerCase();
+        if (userTitle === "admin") {
             return res.status(403).json({
                 ok: false,
-                message: "Admin cannot delete DAR"
-            });
-        }
-
-        if (Number.isNaN(dar_id)) {
-            return res.status(400).json({
-                ok: false,
-                message: "Invalid dar_id"
+                message: "Admins cannot delete reports"
             });
         }
 
         const dar_id = parseInt(req.params.dar_id, 10);
+        if (Number.isNaN(dar_id)) {
+            return res.status(400).json({ ok: false, message: "Invalid dar_id" });
+        }
+
         const { user_id } = req.user;
 
         const dar = await knexDB("user_daily_activity_report")
@@ -202,14 +200,14 @@ router.delete("/delete/:dar_id", authenticateJWT, async (req, res) => {
         }
 
         if (dar.user_id !== user_id) {
-            return res.status(403).json({ ok: false, message: "Not allowed" });
+            return res.status(403).json({ ok: false, message: "Not allowed to delete this DAR" });
         }
 
         await knexDB("user_daily_activity_report")
             .where({ dar_id })
             .del();
 
-        res.json({ ok: true, message: "DAR deleted" });
+        res.json({ ok: true, message: "DAR deleted successfully" });
     } catch (error) {
         console.error("Delete DAR error:", error);
         res.status(500).json({ ok: false, message: "Internal server error" });

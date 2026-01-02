@@ -88,6 +88,14 @@ function Sidebar({ onCategoryChange }) {
     },
 
     {
+      icon: "assignment",
+      path: "/dashboard/daily-activity-report",
+      id: "daily-activity-report",
+      label: "Daily Activity Report",
+      roles: [1, 2, 6]
+    },
+
+    {
       icon: "admin_panel_settings",
       path: "/dashboard/admin",
       id: "admin",

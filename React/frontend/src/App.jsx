@@ -40,6 +40,7 @@ import AttendanceDashboard from "./pages/Dashboard/Attendance/AttendanceDashboar
 import AdminView from "./pages/Dashboard/Attendance/AdminView.jsx";
 
 import AttendanceUsers from "./pages/Dashboard/Attendance/AttendanceAdmin.jsx"
+import DailyActivityReport from "./pages/UserDailyActivityReport/DailyActivityReport.jsx";
 
 import BudgetingCreate from "./pages/BudgetingComponent/BudgetCreation.jsx"
 import BudgetingView from "./pages/BudgetingComponent/BudgetView.jsx"
@@ -326,6 +327,15 @@ function App() {
           element={
             <ProtectedRoute>
               <AttendanceUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/daily-activity-report"
+          element={
+            <ProtectedRoute>
+              <DailyActivityReport />
             </ProtectedRoute>
           }
         />
