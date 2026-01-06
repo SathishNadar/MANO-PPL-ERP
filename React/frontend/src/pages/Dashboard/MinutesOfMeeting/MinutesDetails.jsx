@@ -2,15 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
+import { PDFViewer } from '@react-pdf/renderer';
+import MinutesPDF from './MinutesPDF';
 
 const MinutesDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
+
     // -- VIEW STATE --
     const [minutesDetails, setMinutesDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    // -- PREVIEW STATE --
+    const [showPreview, setShowPreview] = useState(false);
+
 
     // -- EDIT STATE --
     const [isEditing, setIsEditing] = useState(false);
@@ -30,6 +36,9 @@ const MinutesDetails = () => {
 
     const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
+    // -- PROJECT STATE --
+    const [project, setProject] = useState(null);
+
     useEffect(() => {
         fetchMinutesDetails();
     }, [id]);
@@ -38,7 +47,7 @@ const MinutesDetails = () => {
         try {
             setLoading(true);
             const response = await fetch(`${API_BASE}/projectMoM/mom/${id}`, {
-                credentials: "include", // Ensure cookies are sent
+                credentials: "include",
             });
 
             if (!response.ok) {
@@ -47,16 +56,32 @@ const MinutesDetails = () => {
 
             const data = await response.json();
 
-            // Process participants for View Mode
-            const processParticipants = (rawParticipants) => {
+            // Fetch Project Details if project_id exists
+            if (data.project_id) {
+                try {
+                    const projectRes = await fetch(`${API_BASE}/project/getProject/${data.project_id}`, {
+                        credentials: "include",
+                    });
+                    if (projectRes.ok) {
+                        const projectData = await projectRes.json();
+                        if (projectData.success) {
+                            setProject(projectData.data);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to load project details:", err);
+                }
+            }
+
+            // Re-use logic: Process participants for View Mode
+            const processViewParticipants = (rawParticipants) => {
                 const grouped = {};
                 if (rawParticipants && Array.isArray(rawParticipants)) {
                     rawParticipants.forEach(p => {
-                        const company = p.organization || 'Unknown Organization';
+                        const company = p.company_name || 'Unknown Organization';
                         if (!grouped[company]) {
                             grouped[company] = {
                                 company_name: company,
-                                responsibility: p.responsibilities,
                                 participants: []
                             };
                         }
@@ -66,26 +91,26 @@ const MinutesDetails = () => {
                 return Object.values(grouped);
             };
 
-            const processedParticipants = processParticipants(data.participants);
+            const processedParticipants = processViewParticipants(data.participants);
 
-            // Parse content usually jsonB or array, handling string case just in case
-            let processedPoints = [];
+            // Parse content
+            let content = [];
             if (typeof data.content === 'string') {
-                try { processedPoints = JSON.parse(data.content); }
-                catch (e) { processedPoints = []; }
+                try { content = JSON.parse(data.content); }
+                catch (e) { content = []; }
             } else if (Array.isArray(data.content)) {
-                processedPoints = data.content;
+                content = data.content;
             }
 
             setMinutesDetails({
                 ...data,
-                content: processedPoints, // Ensure array
-                processedParticipants
+                processedParticipants,
+                content // Direct content array in minutes
             });
 
         } catch (err) {
             console.error("Error fetching minutes details:", err);
-            setError("Failed to load minutes details.");
+            setError(`Failed to load minutes details: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -342,14 +367,24 @@ const MinutesDetails = () => {
                         <span className="material-icons">{isEditing ? 'close' : 'arrow_back'}</span>
                         <span>{isEditing ? 'Cancel Edit' : 'Back'}</span>
                     </button>
+
                     {!isEditing ? (
-                        <button
-                            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
-                            onClick={handleEditClick}
-                        >
-                            <span className="material-icons">edit</span>
-                            <span>Edit</span>
-                        </button>
+                        <div className="flex gap-4">
+                            <button
+                                className="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                                onClick={() => setShowPreview(true)}
+                            >
+                                <span className="material-icons">visibility</span>
+                                <span>Preview & Print</span>
+                            </button>
+                            <button
+                                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                                onClick={handleEditClick}
+                            >
+                                <span className="material-icons">edit</span>
+                                <span>Edit</span>
+                            </button>
+                        </div>
                     ) : (
                         <button
                             className="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
@@ -622,6 +657,7 @@ const MinutesDetails = () => {
 
             </main>
 
+
             {/* Directory Modal */}
             {showDirectoryModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -652,8 +688,35 @@ const MinutesDetails = () => {
                     </div>
                 </div>
             )}
+
+            {/* Preview Modal */}
+            {showPreview && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm no-print p-4">
+                    <div className="bg-gray-900 w-full max-w-6xl h-[95vh] rounded-xl shadow-2xl border border-gray-700 flex flex-col overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <span className="material-icons text-cyan-400">print</span>
+                                Print Preview (PDF)
+                            </h3>
+                            <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+
+                        {/* PDF Viewer */}
+                        <div className="flex-1 bg-gray-800 flex justify-center items-center overflow-hidden">
+                            <PDFViewer width="100%" height="100%" className="w-full h-full border-none">
+                                <MinutesPDF minutesDetails={minutesDetails} project={project} />
+                            </PDFViewer>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
+
 
 export default MinutesDetails;

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@material-icons/font": "^1.0.36",
+    "@react-pdf/renderer": "^4.3.2",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
