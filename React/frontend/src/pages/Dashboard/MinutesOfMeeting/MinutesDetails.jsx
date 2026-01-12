@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
-import { PDFViewer } from '@react-pdf/renderer';
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import MinutesPDF from './MinutesPDF';
 
 const MinutesDetails = () => {
@@ -78,7 +78,7 @@ const MinutesDetails = () => {
                 const grouped = {};
                 if (rawParticipants && Array.isArray(rawParticipants)) {
                     rawParticipants.forEach(p => {
-                        const company = p.company_name || 'Unknown Organization';
+                        const company = p.organization || p.company_name || 'Unknown Organization';
                         if (!grouped[company]) {
                             grouped[company] = {
                                 company_name: company,
@@ -316,7 +316,7 @@ const MinutesDetails = () => {
             const grouped = {};
             editParticipants.forEach(p => {
                 const company = p.organization || p.company_name || 'Unknown Organization';
-                if (!grouped[company]) grouped[company] = { company_name: company, responsibility: p.responsibilities, participants: [] };
+                if (!grouped[company]) grouped[company] = { company_name: company, participants: [] };
                 grouped[company].participants.push(p);
             });
 
@@ -478,7 +478,7 @@ const MinutesDetails = () => {
                                     >
                                         {group.participants.map((rep, rIdx) => (
                                             <tr key={rep.pd_id || rIdx} className="border-b border-gray-700 hover:bg-gray-700/20">
-                                                {/* Organization Cell: First */}
+                                                {/* Organization Cell: First row of group only */}
                                                 {rIdx === 0 && (
                                                     <td
                                                         rowSpan={group.participants.length}
@@ -491,15 +491,10 @@ const MinutesDetails = () => {
                                                     </td>
                                                 )}
 
-                                                {/* Responsibility Cell: Second */}
-                                                {rIdx === 0 && (
-                                                    <td
-                                                        rowSpan={group.participants.length}
-                                                        className="p-3 border-r border-gray-700 align-top text-gray-300 bg-gray-800/20"
-                                                    >
-                                                        {toTitleCase(rep.responsibilities || group.responsibility)}
-                                                    </td>
-                                                )}
+                                                {/* Responsibility Cell: Individual per row */}
+                                                <td className="p-3 border-r border-gray-700 align-top text-gray-300">
+                                                    {toTitleCase(rep.responsibilities)}
+                                                </td>
 
                                                 <td className="p-3 align-top">
                                                     <div className="flex justify-between items-center">
@@ -526,9 +521,15 @@ const MinutesDetails = () => {
                                     ) : (
                                         minutesDetails.processedParticipants.map((group, idx) => (
                                             <tr key={idx} className="border-b border-gray-700 last:border-0 hover:bg-gray-700/20">
-                                                <td className="p-3 border-r border-gray-700 align-top text-gray-300">{toTitleCase(group.company_name)}</td>
-                                                <td className="p-3 border-r border-gray-700 align-top text-white font-medium">
-                                                    {toTitleCase(group.responsibility)}
+                                                <td className="p-3 border-r border-gray-700 align-top text-white font-bold text-lg">{toTitleCase(group.company_name)}</td>
+                                                <td className="p-0 align-top border-r border-gray-700">
+                                                    <div className="flex flex-col">
+                                                        {group.participants.map((rep, rIdx) => (
+                                                            <div key={rIdx} className={`p-3 ${rIdx !== group.participants.length - 1 ? 'border-b border-gray-700' : ''} h-full`}>
+                                                                <span className="text-gray-300">{toTitleCase(rep.responsibilities)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </td>
                                                 <td className="p-0 align-top">
                                                     {group.participants.map((rep, rIdx) => (
@@ -699,9 +700,23 @@ const MinutesDetails = () => {
                                 <span className="material-icons text-cyan-400">print</span>
                                 Print Preview (PDF)
                             </h3>
-                            <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
-                                <span className="material-icons">close</span>
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <PDFDownloadLink
+                                    document={<MinutesPDF minutesDetails={minutesDetails} project={project} />}
+                                    fileName={`mom-${minutesDetails.meeting_no}_${String(minutesDetails.project_name || "Minutes").replace(/[/\\?%*:|"<>]/g, '-')}.pdf`}
+                                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md"
+                                >
+                                    {({ loading }) => (
+                                        <>
+                                            <span className="material-icons">{loading ? 'sync' : 'download'}</span>
+                                            <span>{loading ? 'Preparing...' : 'Download PDF'}</span>
+                                        </>
+                                    )}
+                                </PDFDownloadLink>
+                                <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg transition-colors">
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
                         </div>
 
                         {/* PDF Viewer */}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
 
@@ -85,8 +84,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         borderBottom: '1pt solid #000000',
     },
-    colResponsibility: { width: '20%', borderRight: '1pt solid #000000', padding: 4, justifyContent: 'center', alignItems: 'center' },
     colOrganization: { width: '25%', borderRight: '1pt solid #000000', padding: 4, justifyContent: 'center', alignItems: 'center', fontFamily: 'Helvetica-Bold' },
+    colResponsibility: { width: '20%', borderRight: '1pt solid #000000', padding: 4, justifyContent: 'center', alignItems: 'center' },
 
     // Points Table Minutes Specific
     pointsHeader: {
@@ -122,20 +121,20 @@ const styles = StyleSheet.create({
     },
     noteBox: {
         marginTop: 10,
-        border: '1pt solid #d97706', // Amber-600
-        backgroundColor: '#fffbeb', // Amber-50
+        border: '1pt solid #d97706',
+        backgroundColor: '#fffbeb',
         padding: 5,
     },
     noteTitle: {
         fontFamily: 'Helvetica-Bold',
-        color: '#b45309', // Amber-700
+        color: '#000000',
         marginBottom: 2,
         fontSize: 9,
     },
     noteText: {
         fontSize: 8,
         marginBottom: 2,
-        color: '#4b5563',
+        color: '#000000',
     }
 });
 
@@ -215,33 +214,34 @@ const MinutesPDF = ({ minutesDetails, project }) => {
 
                     {/* Participants Table Header */}
                     <View style={styles.tableHeader}>
-                        <View style={{ width: '20%', borderRight: '1pt solid #000000', padding: 2, justifyContent: 'center' }}><Text>Responsibility</Text></View>
                         <View style={{ width: '25%', borderRight: '1pt solid #000000', padding: 2, justifyContent: 'center' }}><Text>Organization</Text></View>
+                        <View style={{ width: '20%', borderRight: '1pt solid #000000', padding: 2, justifyContent: 'center' }}><Text>Responsibility</Text></View>
                         <View style={{ width: '55%', padding: 2, justifyContent: 'center' }}><Text>Representatives</Text></View>
                     </View>
 
                     {/* Participants Rows */}
                     {(minutesDetails.processedParticipants || []).map((group, gIdx) => (
-                        <View key={gIdx} style={[styles.tableRow, { borderBottom: '1pt solid #000000' }]}>
-                            <View style={styles.colResponsibility}>
-                                <Text>{group.participants[0]?.responsibilities || "-"}</Text>
-                            </View>
+                        <View key={gIdx} style={styles.tableRow}>
                             <View style={styles.colOrganization}>
                                 <Text>{toTitleCase(group.company_name)}</Text>
                             </View>
 
-                            <View style={{ width: '55%', flexDirection: 'column' }}>
-                                {group.participants.map((p, pIdx) => (
+                            {/* Nested Rows Loop for Responsibility & Representatives */}
+                            <View style={{ width: '75%', flexDirection: 'column' }}>
+                                {(group.participants || []).map((p, pIdx) => (
                                     <View key={pIdx} style={{
                                         flexDirection: 'row',
                                         borderBottom: pIdx !== group.participants.length - 1 ? '1pt solid #000000' : 'none',
                                         minHeight: 20,
                                     }}>
-                                        <View style={{ width: '64%', borderRight: '1pt solid #000000', padding: 4, justifyContent: 'center' }}>
+                                        <View style={{ width: '26.67%', borderRight: '1pt solid #000000', padding: 4, justifyContent: 'center', alignItems: 'center' }}>
+                                            <Text>{p.responsibilities || "-"}</Text>
+                                        </View>
+                                        <View style={{ width: '46.66%', borderRight: '1pt solid #000000', padding: 4, justifyContent: 'center' }}>
                                             <Text>{toTitleCase(p.contact_person)}</Text>
                                         </View>
-                                        <View style={{ width: '36%', padding: 1, justifyContent: 'center' }}>
-                                            <Text style={{ fontFamily: 'Helvetica-Oblique', color: '#4b5563' }}>{p.designation}</Text>
+                                        <View style={{ width: '26.67%', padding: 4, justifyContent: 'center' }}>
+                                            <Text style={{ fontFamily: 'Helvetica-Oblique', color: '#000000' }}>{p.designation}</Text>
                                         </View>
                                     </View>
                                 ))}

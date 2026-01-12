@@ -32,6 +32,7 @@ export async function fetchMoMById(momId) {
     throw new Error("momId is required");
   }
 
+  console.log(`[fetchMoMById] Fetching header for mom_id: ${momId}`);
   // Fetch MoM header + project info
   const mom = await knexDB("project_mom as pm")
     .leftJoin("projects as p", "pm.project_id", "p.project_id")
@@ -49,9 +50,11 @@ export async function fetchMoMById(momId) {
     .first();
 
   if (!mom) {
+    console.log(`[fetchMoMById] No MoM found for id: ${momId}`);
     return null;
   }
 
+  console.log(`[fetchMoMById] Fetching participants for mom_id: ${momId}`);
   // Fetch participants
   const participants = await knexDB("project_mom_participants as pmp")
     .leftJoin("project_directory as pd", "pmp.pd_id", "pd.pd_id")
@@ -66,11 +69,18 @@ export async function fetchMoMById(momId) {
       "pd.designation",
     ]);
 
+  console.log(`[fetchMoMById] Found ${participants.length} participants`);
   mom.participants = participants;
 
-    // Parse content JSON
-  if (typeof mom.content === "string") {
-    mom.content = JSON.parse(mom.content);
+  // Parse content JSON safely
+  if (mom.content && typeof mom.content === "string") {
+    try {
+      console.log(`[fetchMoMById] Parsing content JSON`);
+      mom.content = JSON.parse(mom.content);
+    } catch (e) {
+      console.error(`[fetchMoMById] Error parsing MoM content for ID ${momId}:`, e.message);
+      // Keep as string if parsing fails
+    }
   }
 
   return mom;

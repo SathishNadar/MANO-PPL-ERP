@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
-import { PDFViewer } from '@react-pdf/renderer';
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import AgendaPDF from './AgendaPDF';
 
 const AgendaDetails = () => {
@@ -628,9 +628,23 @@ const AgendaDetails = () => {
                                 <span className="material-icons text-cyan-400">print</span>
                                 Print Preview (PDF)
                             </h3>
-                            <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
-                                <span className="material-icons">close</span>
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <PDFDownloadLink
+                                    document={<AgendaPDF agendaDetails={agendaDetails} project={project} />}
+                                    fileName={`agenda-${agendaDetails.meeting_no}_${String(agendaDetails.project_name || "Agenda").replace(/[/\\?%*:|"<>]/g, '-')}.pdf`}
+                                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md"
+                                >
+                                    {({ loading }) => (
+                                        <>
+                                            <span className="material-icons">{loading ? 'sync' : 'download'}</span>
+                                            <span>{loading ? 'Preparing...' : 'Download PDF'}</span>
+                                        </>
+                                    )}
+                                </PDFDownloadLink>
+                                <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
                         </div>
 
                         {/* PDF Viewer */}
