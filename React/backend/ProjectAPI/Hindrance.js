@@ -36,7 +36,8 @@ router.post('/create', authenticateJWT, catchAsync(async (req, res) => {
         actual_end_date,
         responsible_start,
         responsible_finish,
-        remarks
+        remarks_start,
+        remarks_end,
     } = req.body;
 
     if (!project_id || !description) {
@@ -52,7 +53,8 @@ router.post('/create', authenticateJWT, catchAsync(async (req, res) => {
         actual_end_date: actual_end_date || null,
         responsible_start,
         responsible_finish,
-        remarks
+        remarks_start,
+        remarks_end,
     });
 
     res.json({ success: true, message: "Hindrance created", id });

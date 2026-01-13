@@ -71,13 +71,13 @@ const DocumentIndex = () => {
         {
             title: "GENERAL DOCUMENTS",
             items: [
-                "Project Directory",
                 "Project Vendor List",
+                "Project Directory",
                 "MANO's Staff Role & Responsibilties",
                 "Project Summary",
-                "Organisation Chart",
                 "Agenda of Meeting",
                 "Minutes of Meeting",
+                "Organisation Chart",
             ]
         },
         {

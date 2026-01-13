@@ -11,12 +11,17 @@
   },
   "dependencies": {
     "@material-icons/font": "^1.0.36",
+    "@react-pdf/renderer": "^4.3.2",
     "@tailwindcss/vite": "^4.1.11",
+    "axios": "^1.13.2",
     "chart.js": "^4.5.1",
     "country-telephone-data": "^0.6.3",
+    "date-fns": "^4.1.0",
+    "dxf-parser": "^1.1.2",
     "framer-motion": "^12.23.25",
     "fuse.js": "^7.1.0",
     "leaflet": "^1.9.4",
+    "lucide-react": "^0.562.0",
     "luxon": "^3.7.2",
     "material-icons": "^1.13.14",
     "react": "^19.1.0",
@@ -26,7 +31,8 @@
     "react-select": "^5.10.2",
     "react-select-country-list": "^2.2.3",
     "react-toastify": "^11.0.5",
-    "supercluster": "^8.0.1"
+    "supercluster": "^8.0.1",
+    "three": "^0.182.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

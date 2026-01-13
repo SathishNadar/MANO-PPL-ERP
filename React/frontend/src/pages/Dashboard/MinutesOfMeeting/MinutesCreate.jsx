@@ -26,6 +26,11 @@ const MinutesCreate = () => {
     const [directoryLoading, setDirectoryLoading] = useState(false);
     const [showDirectoryModal, setShowDirectoryModal] = useState(false);
 
+    // -- IMPORT STATE --
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [unusedAgendas, setUnusedAgendas] = useState([]);
+    const [importLoading, setImportLoading] = useState(false);
+
     // -- DND STATE --
     const [draggedGroupIndex, setDraggedGroupIndex] = useState(null);
 
@@ -55,6 +60,97 @@ const MinutesCreate = () => {
             toast.error("Error loading directory.");
         } finally {
             setDirectoryLoading(false);
+        }
+    };
+
+    // --- Import Logic ---
+    const handleOpenImportModal = async () => {
+        setShowImportModal(true);
+        setImportLoading(true);
+        try {
+            const [agRes, minRes] = await Promise.all([
+                fetch(`${API_BASE}/projectAgenda/agendas/${projectId}`, { credentials: "include" }),
+                fetch(`${API_BASE}/projectMoM/moms/${projectId}`, { credentials: "include" })
+            ]);
+
+            let agendas = [];
+            let moms = [];
+
+            if (agRes.ok) {
+                const data = await agRes.json();
+                agendas = data.agendas || [];
+            }
+            if (minRes.ok) {
+                const data = await minRes.json();
+                moms = data.moms || [];
+            }
+
+            // Filter agendas whose meeting_no is NOT in moms
+            // Assuming meeting_no is standard string/number identifier
+            const usedMeetingNos = new Set(moms.map(m => String(m.meeting_no)));
+            const unused = agendas.filter(a => !usedMeetingNos.has(String(a.meeting_no)));
+
+            setUnusedAgendas(unused);
+
+        } catch (e) {
+            console.error("Error fetching agendas for import", e);
+            toast.error("Failed to load agendas.");
+        } finally {
+            setImportLoading(false);
+        }
+    };
+
+    const handleImportAgenda = async (agendaId) => {
+        setImportLoading(true);
+        try {
+            const res = await fetch(`${API_BASE}/projectAgenda/agenda/${agendaId}`, { credentials: "include" });
+            if (!res.ok) throw new Error("Failed to fetch agenda details");
+
+            const data = await res.json();
+
+            // Populate Form
+            setForm({
+                subject: data.subject || "",
+                venue: data.venue || "",
+                date: data.date ? data.date.split('T')[0] : "",
+                meeting_no: data.meeting_no || ""
+            });
+
+            // Populate Participants
+            // Agenda details usually returns 'participants' as full objects (joined) same as MoM details needs?
+            // Need to verify if 'data.participants' from agenda endpoint matches MoM participant structure.
+            // AgendaDetails: uses data.participants directly? 
+            // Let's assume structure is compatible (pd_id, company_name, etc.)
+            if (data.participants && Array.isArray(data.participants)) {
+                setParticipants(data.participants);
+            }
+
+            // Populate Content
+            let agendaContent = [];
+            if (typeof data.content === 'string') {
+                try { agendaContent = JSON.parse(data.content); } catch (e) { }
+            } else if (Array.isArray(data.content)) {
+                agendaContent = data.content;
+            }
+
+            // Map Agenda content { no, description } to MoM content { si_no, description, ... }
+            const mappedContent = agendaContent.map(item => ({
+                si_no: item.no || "",
+                description: item.description || "",
+                status: "F", // Default to Fresh? Or empty. User said "F" is Fresh. Let's leave empty or set F.
+                action_by: "",
+                target_date: ""
+            }));
+            setContent(mappedContent);
+
+            toast.success("Agenda imported successfully!");
+            setShowImportModal(false);
+
+        } catch (e) {
+            console.error("Import error", e);
+            toast.error("Failed to import agenda details.");
+        } finally {
+            setImportLoading(false);
         }
     };
 
@@ -238,14 +334,24 @@ const MinutesCreate = () => {
                         <span>Back</span>
                     </button>
 
-                    <button
-                        className="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
-                        onClick={handleCreate}
-                        disabled={saving}
-                    >
-                        <span className="material-icons">save</span>
-                        <span>{saving ? 'Creating...' : 'Create MoM'}</span>
-                    </button>
+                    <div className="flex gap-4">
+                        <button
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                            onClick={handleOpenImportModal}
+                        >
+                            <span className="material-icons">download</span>
+                            <span>Import Agenda</span>
+                        </button>
+
+                        <button
+                            className="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                            onClick={handleCreate}
+                            disabled={saving}
+                        >
+                            <span className="material-icons">save</span>
+                            <span>{saving ? 'Creating...' : 'Create MoM'}</span>
+                        </button>
+                    </div>
                 </header>
 
                 <div className="w-full space-y-6">
@@ -461,36 +567,74 @@ const MinutesCreate = () => {
             </main>
 
             {/* Directory Modal */}
-            {showDirectoryModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                    <div className="bg-gray-800 w-full max-w-2xl rounded-lg shadow-2xl border border-gray-700 max-h-[80vh] flex flex-col">
-                        <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-                            <h3 className="text-xl font-bold text-white">Add Participant</h3>
-                            <button onClick={() => setShowDirectoryModal(false)} className="text-gray-400 hover:text-white"><span className="material-icons">close</span></button>
-                        </div>
-                        <div className="p-4 overflow-y-auto flex-1 space-y-2">
-                            {directoryLoading ? <p className="text-center p-4">Loading directory...</p> :
-                                directory.filter(p => !participants.some(sp => sp.pd_id === p.pd_id)).length === 0 ? (
-                                    <p className="text-center text-gray-500 py-8">All loaded directory members are already added.</p>
-                                ) : (
-                                    directory
-                                        .filter(p => !participants.some(sp => sp.pd_id === p.pd_id))
-                                        .map(person => (
-                                            <div key={person.pd_id} className="flex justify-between items-center p-3 bg-gray-700/50 rounded hover:bg-gray-700 transition-colors">
-                                                <div>
-                                                    <p className="font-bold text-white">{toTitleCase(person.contact_person)}</p>
-                                                    <p className="text-xs text-gray-400">{toTitleCase(person.company_name)} • {person.designation}</p>
+            {
+                showDirectoryModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                        <div className="bg-gray-800 w-full max-w-2xl rounded-lg shadow-2xl border border-gray-700 max-h-[80vh] flex flex-col">
+                            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                                <h3 className="text-xl font-bold text-white">Add Participant</h3>
+                                <button onClick={() => setShowDirectoryModal(false)} className="text-gray-400 hover:text-white"><span className="material-icons">close</span></button>
+                            </div>
+                            <div className="p-4 overflow-y-auto flex-1 space-y-2">
+                                {directoryLoading ? <p className="text-center p-4">Loading directory...</p> :
+                                    directory.filter(p => !participants.some(sp => sp.pd_id === p.pd_id)).length === 0 ? (
+                                        <p className="text-center text-gray-500 py-8">All loaded directory members are already added.</p>
+                                    ) : (
+                                        directory
+                                            .filter(p => !participants.some(sp => sp.pd_id === p.pd_id))
+                                            .map(person => (
+                                                <div key={person.pd_id} className="flex justify-between items-center p-3 bg-gray-700/50 rounded hover:bg-gray-700 transition-colors">
+                                                    <div>
+                                                        <p className="font-bold text-white">{toTitleCase(person.contact_person)}</p>
+                                                        <p className="text-xs text-gray-400">{toTitleCase(person.company_name)} • {person.designation}</p>
+                                                    </div>
+                                                    <button onClick={() => handleAddParticipant(person)} className="text-blue-400 hover:text-blue-300 font-bold border border-blue-600 px-3 py-1 rounded hover:bg-blue-600/20">Add</button>
                                                 </div>
-                                                <button onClick={() => handleAddParticipant(person)} className="text-blue-400 hover:text-blue-300 font-bold border border-blue-600 px-3 py-1 rounded hover:bg-blue-600/20">Add</button>
-                                            </div>
-                                        ))
-                                )
-                            }
+                                            ))
+                                    )
+                                }
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+
+            {/* Import Agenda Modal */}
+            {
+                showImportModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                        <div className="bg-gray-800 w-full max-w-lg rounded-lg shadow-2xl border border-gray-700 max-h-[80vh] flex flex-col">
+                            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                                <h3 className="text-xl font-bold text-white">Import Agenda</h3>
+                                <button onClick={() => setShowImportModal(false)} className="text-gray-400 hover:text-white"><span className="material-icons">close</span></button>
+                            </div>
+                            <div className="p-4 overflow-y-auto flex-1 space-y-2">
+                                {importLoading ? <p className="text-center p-4 text-gray-500">Loading agendas...</p> :
+                                    unusedAgendas.length === 0 ? (
+                                        <p className="text-center text-gray-500 py-8">No pending agendas found to import.</p>
+                                    ) : (
+                                        unusedAgendas.map(agenda => (
+                                            <div key={agenda.agenda_id} className="p-4 bg-gray-700/50 rounded hover:bg-gray-700 transition-colors border border-gray-600/50 flex justify-between items-center">
+                                                <div>
+                                                    <h4 className="font-bold text-white text-lg">{agenda.subject}</h4>
+                                                    <p className="text-sm text-gray-400">Meeting No: {agenda.meeting_no} | Date: {new Date(agenda.date).toLocaleDateString()}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleImportAgenda(agenda.agenda_id)}
+                                                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-sm font-semibold transition-colors shadow-sm"
+                                                >
+                                                    Import
+                                                </button>
+                                            </div>
+                                        ))
+                                    )
+                                }
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

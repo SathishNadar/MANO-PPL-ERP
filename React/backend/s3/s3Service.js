@@ -11,7 +11,7 @@ import path from "path";
 import sharp from "sharp";
 import '../config.js';
 
-const s3 = new S3Client({ 
+const s3 = new S3Client({
   region: process.env.S3_REGION,
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY_ID,
@@ -52,15 +52,26 @@ export async function uploadFile({ fileBuffer, filePath, key, directory = "", co
 }
 
 // 2. Get Signed URL to Fetch File
-export async function getFileUrl({ key, directory = "", expiresIn = 3600 }) {
+export async function getFileUrl({
+  key,
+  directory = "",
+  expiresIn = 3600,
+  mode = "preview",
+}) {
   try {
     const finalKey = directory ? `${directory}/${key}` : key;
 
-    const cmd = new GetObjectCommand({
+    const params = {
       Bucket: BUCKET,
       Key: finalKey,
-    });
+    };
 
+    if (mode === "download") {
+      params.ResponseContentDisposition =
+        `attachment; filename="${path.basename(finalKey)}"`;
+    }
+
+    const cmd = new GetObjectCommand(params);
     const url = await getSignedUrl(s3, cmd, { expiresIn });
 
     return { success: true, url };
@@ -143,5 +154,3 @@ export async function uploadCompressedImage({
     throw error;
   }
 }
-
-

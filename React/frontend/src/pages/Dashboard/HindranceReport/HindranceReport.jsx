@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import HindrancePDF from './HindrancePDF';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:5001';
 
@@ -9,8 +11,10 @@ const HindranceReport = () => {
     const navigate = useNavigate();
     const { projectId } = useParams();
     const [reports, setReports] = useState([]);
+    const [project, setProject] = useState(null);
     const [newRows, setNewRows] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showPreview, setShowPreview] = useState(false);
 
     // Inline Editing State
     const [editingId, setEditingId] = useState(null);
@@ -26,7 +30,22 @@ const HindranceReport = () => {
     // Fetch on mount
     useEffect(() => {
         fetchReports();
+        fetchProjectDetails();
     }, [projectId]);
+
+    const fetchProjectDetails = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/project/getProject/${projectId}`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (data.success) {
+                setProject(data.data);
+            }
+        } catch (error) {
+            console.error("Error fetching project details:", error);
+        }
+    };
 
     const fetchReports = async () => {
         try {
@@ -85,7 +104,8 @@ const HindranceReport = () => {
             actual_end_date: formatDateForInput(report.actual_end_date),
             responsible_start: report.responsible_start,
             responsible_finish: report.responsible_finish,
-            remarks: report.remarks
+            remarks_start: report.remarks_start,
+            remarks_end: report.remarks_end
         });
     };
 
@@ -192,7 +212,8 @@ const HindranceReport = () => {
             actual_end_date: "",
             responsible_start: "",
             responsible_finish: "",
-            remarks: ""
+            remarks_start: "",
+            remarks_end: ""
         }]);
     };
 
@@ -223,7 +244,8 @@ const HindranceReport = () => {
                 actual_end_date: row.actual_end_date,
                 responsible_start: row.responsible_start,
                 responsible_finish: row.responsible_finish,
-                remarks: row.remarks
+                remarks_start: row.remarks_start,
+                remarks_end: row.remarks_end
             };
 
             const response = await fetch(`${API_BASE}/hindrance/create`, {
@@ -274,9 +296,9 @@ const HindranceReport = () => {
         }
     };
 
-    const thClass = "p-2 border border-gray-600 font-semibold tracking-wider text-center";
-    const tdClass = "p-2 border border-gray-600 text-center text-gray-300 align-middle";
-    const inputClass = "w-full bg-transparent border border-transparent hover:border-gray-600 focus:border-blue-500 rounded px-2 py-1 text-white text-center outline-none transition-all duration-200";
+    const thClass = `border border-gray-600 font-semibold tracking-wider text-center ${isEditMode ? "p-1 text-[10px]" : "p-2 text-xs"}`;
+    const tdClass = `border border-gray-600 text-center text-gray-300 align-middle ${isEditMode ? "p-1 text-[10px]" : "p-2 text-sm"}`;
+    const inputClass = "w-full bg-transparent border border-transparent hover:border-gray-600 focus:border-blue-500 rounded px-1 py-0.5 text-white text-center outline-none transition-all duration-200";
 
     return (
         <div className="flex h-screen bg-background">
@@ -301,6 +323,13 @@ const HindranceReport = () => {
 
                     <div className="flex gap-4">
                         <button
+                            className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                            onClick={() => setShowPreview(true)}
+                        >
+                            <span className="material-icons">visibility</span>
+                            <span>Preview & Print</span>
+                        </button>
+                        <button
                             onClick={() => setIsEditMode(!isEditMode)}
                             className={`px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 transition-colors ${isEditMode
                                 ? "bg-green-600 hover:bg-green-700 text-white"
@@ -322,18 +351,19 @@ const HindranceReport = () => {
 
                 <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-md overflow-hidden pb-4">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse border border-gray-600 min-w-[1200px]">
+                        <table className={`w-full text-left border-collapse border border-gray-600 ${isEditMode ? "min-w-[1000px]" : "min-w-[1200px]"}`}>
                             <thead className="bg-gray-900/50 text-xs uppercase text-gray-400">
                                 <tr>
                                     <th rowSpan="2" className={`${thClass} w-12`}>S. No.</th>
-                                    <th rowSpan="2" className={`${thClass} w-64`}>Description of Items</th>
+                                    <th rowSpan="2" className={`${thClass} ${isEditMode ? "w-40" : "w-64"}`}>Description of Items</th>
                                     <th colSpan="3" className={`${thClass} bg-gray-900/40`}>Planned Dates</th>
                                     <th colSpan="3" className={`${thClass} bg-gray-900/40`}>Actual Dates</th>
-                                    <th rowSpan="2" className={`${thClass} w-24`}>No. Of Days Delayed TO START</th>
-                                    <th rowSpan="2" className={`${thClass} w-32`}>Responsible (Start)</th>
-                                    <th rowSpan="2" className={`${thClass} w-24`}>No. Of Days Delayed TO FINISH</th>
-                                    <th rowSpan="2" className={`${thClass} w-32`}>Responsible (Finish)</th>
-                                    <th rowSpan="2" className={`${thClass} w-48`}>Remarks</th>
+                                    <th rowSpan="2" className={`${thClass} w-20`}>No. Of Days Delayed TO START</th>
+                                    <th rowSpan="2" className={`${thClass} ${isEditMode ? "w-24" : "w-32"}`}>Responsible (Start)</th>
+                                    <th rowSpan="2" className={`${thClass} ${isEditMode ? "w-32" : "w-48"}`}>Remarks (Start)</th>
+                                    <th rowSpan="2" className={`${thClass} w-20`}>No. Of Days Delayed TO FINISH</th>
+                                    <th rowSpan="2" className={`${thClass} ${isEditMode ? "w-24" : "w-32"}`}>Responsible (Finish)</th>
+                                    <th rowSpan="2" className={`${thClass} ${isEditMode ? "w-32" : "w-48"}`}>Remarks (End)</th>
                                     {(isEditMode || newRows.length > 0) && (
                                         <th rowSpan="2" className={`${thClass} w-24`}>Action</th>
                                     )}
@@ -388,12 +418,15 @@ const HindranceReport = () => {
                                             <td className={tdClass}>
                                                 {isEditing ? <input name="responsible_start" value={editFormData.responsible_start} onChange={handleEditChange} className={inputClass} /> : item.responsible_start}
                                             </td>
+                                            <td className={tdClass}>
+                                                {isEditing ? <textarea name="remarks_start" value={editFormData.remarks_start} onChange={handleEditChange} className={inputClass} /> : item.remarks_start}
+                                            </td>
                                             <td className={`${tdClass} ${dFinish > 0 ? 'text-red-400 font-bold' : ''}`}>{dFinish}</td>
                                             <td className={tdClass}>
                                                 {isEditing ? <input name="responsible_finish" value={editFormData.responsible_finish} onChange={handleEditChange} className={inputClass} /> : item.responsible_finish}
                                             </td>
                                             <td className={tdClass}>
-                                                {isEditing ? <textarea name="remarks" value={editFormData.remarks} onChange={handleEditChange} className={inputClass} /> : item.remarks}
+                                                {isEditing ? <textarea name="remarks_end" value={editFormData.remarks_end} onChange={handleEditChange} className={inputClass} /> : item.remarks_end}
                                             </td>
 
                                             {(isEditMode || newRows.length > 0) && (
@@ -499,6 +532,15 @@ const HindranceReport = () => {
                                                     placeholder="Responsible..."
                                                 />
                                             </td>
+                                            <td className={tdClass}>
+                                                <textarea
+                                                    rows={1}
+                                                    value={row.remarks_start}
+                                                    onChange={(e) => handleNewRowChange(row.tempId, 'remarks_start', e.target.value)}
+                                                    className={inputClass}
+                                                    placeholder="Remarks..."
+                                                />
+                                            </td>
                                             <td className={`${tdClass} ${dFinish > 0 ? 'text-red-400 font-bold' : ''}`}>{dFinish}</td>
                                             <td className={tdClass}>
                                                 <input
@@ -511,8 +553,8 @@ const HindranceReport = () => {
                                             <td className={tdClass}>
                                                 <textarea
                                                     rows={1}
-                                                    value={row.remarks}
-                                                    onChange={(e) => handleNewRowChange(row.tempId, 'remarks', e.target.value)}
+                                                    value={row.remarks_end}
+                                                    onChange={(e) => handleNewRowChange(row.tempId, 'remarks_end', e.target.value)}
                                                     className={inputClass}
                                                     placeholder="Remarks..."
                                                 />
@@ -591,6 +633,45 @@ const HindranceReport = () => {
                     </div>
                 )
             }
+
+            {/* Preview Modal */}
+            {showPreview && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm no-print p-4">
+                    <div className="bg-gray-900 w-full max-w-6xl h-[95vh] rounded-xl shadow-2xl border border-gray-700 flex flex-col overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <span className="material-icons text-cyan-400">print</span>
+                                Print Preview (PDF)
+                            </h3>
+                            <div className="flex items-center gap-3">
+                                <PDFDownloadLink
+                                    document={<HindrancePDF reports={reports} project={project} />}
+                                    fileName={`HindranceReport_${String(project?.project_name || "Report").replace(/[/\\?%*:|"<>]/g, '-')}.pdf`}
+                                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md"
+                                >
+                                    {({ loading }) => (
+                                        <>
+                                            <span className="material-icons">{loading ? 'sync' : 'download'}</span>
+                                            <span>{loading ? 'Preparing...' : 'Download PDF'}</span>
+                                        </>
+                                    )}
+                                </PDFDownloadLink>
+                                <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* PDF Viewer */}
+                        <div className="flex-1 bg-gray-800 flex justify-center items-center overflow-hidden">
+                            <PDFViewer width="100%" height="100%" className="w-full h-full border-none">
+                                <HindrancePDF reports={reports} project={project} />
+                            </PDFViewer>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

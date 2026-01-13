@@ -28,6 +28,7 @@ import AttendanceRoutes from './Attendance/Attendance.js';
 import Admin from './Admin/Admin.js';
 import WorkLocationRoutes from './Admin/WorkLocations.js';
 import S3Routes from './s3/s3Routes.js';
+import DailyActivityReportRoutes from './DailyActivityReport/DailyActivityReport.js';
 
 
 
@@ -86,6 +87,7 @@ app.use("/attendance", AttendanceRoutes);
 app.use("/admin", Admin);
 app.use("/admin/locations", WorkLocationRoutes);
 app.use("/hindrance", HindranceRoutes);
+app.use("/dailyActivityReport", DailyActivityReportRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');

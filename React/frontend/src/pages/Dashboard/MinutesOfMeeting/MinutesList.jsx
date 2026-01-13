@@ -8,42 +8,46 @@ const MinutesList = () => {
     const { projectId } = location.state || {};
 
     const [minutes, setMinutes] = useState([]);
+    const [agendas, setAgendas] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
     useEffect(() => {
         if (projectId) {
-            fetchMinutes();
+            fetchData();
         } else {
             console.warn("No projectId found in location state.");
             setLoading(false);
         }
     }, [projectId]);
 
-    const fetchMinutes = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_BASE}/projectMoM/moms/${projectId}`, {
-                credentials: "include",
-            });
+            const [minRes, agRes] = await Promise.all([
+                fetch(`${API_BASE}/projectMoM/moms/${projectId}`, { credentials: "include" }),
+                fetch(`${API_BASE}/projectAgenda/agendas/${projectId}`, { credentials: "include" })
+            ]);
 
-            if (!response.ok) {
-                // Fallback or retry logic if needed, but for now just log
-                console.error(`HTTP error! status: ${response.status}`);
+            if (minRes.ok) {
+                const data = await minRes.json();
+                if (data.moms && Array.isArray(data.moms)) setMinutes(data.moms);
             }
 
-            const data = await response.json();
-
-            if (data.moms && Array.isArray(data.moms)) {
-                setMinutes(data.moms);
+            if (agRes.ok) {
+                const data = await agRes.json();
+                if (data.agendas && Array.isArray(data.agendas)) setAgendas(data.agendas);
             }
+
         } catch (error) {
-            console.error("Error fetching minutes:", error);
+            console.error("Error fetching data:", error);
         } finally {
             setLoading(false);
         }
     };
+
+    const canCreateMoM = agendas.length > minutes.length;
 
     return (
         <div className="flex h-screen bg-background">
@@ -66,13 +70,24 @@ const MinutesList = () => {
                             </p>
                         </div>
                     </div>
-                    <button
-                        className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-6 rounded-lg shadow-lg hover:shadow-blue-500/20 transition-all duration-200 flex items-center space-x-2"
-                        onClick={() => navigate('/dashboard/minutes/create', { state: { projectId } })}
-                    >
-                        <span className="material-icons text-xl">add</span>
-                        <span>New MoM</span>
-                    </button>
+                    <div className="relative group/btn">
+                        <button
+                            className={`font-semibold py-2.5 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center space-x-2 
+                            ${canCreateMoM
+                                    ? "bg-blue-600 hover:bg-blue-500 hover:shadow-blue-500/20 text-white"
+                                    : "bg-gray-700 text-gray-500 cursor-not-allowed opacity-75"}`}
+                            onClick={() => canCreateMoM && navigate('/dashboard/minutes/create', { state: { projectId } })}
+                            disabled={!canCreateMoM}
+                        >
+                            <span className="material-icons text-xl">add</span>
+                            <span>New MoM</span>
+                        </button>
+                        {!canCreateMoM && !loading && (
+                            <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 w-48 bg-gray-800 text-xs text-gray-300 p-2 rounded shadow-xl border border-gray-700 pointer-events-none opacity-0 group-hover/btn:opacity-100 transition-opacity z-10 text-center">
+                                Create an Agenda first to create a MoM.
+                            </div>
+                        )}
+                    </div>
                 </header>
 
                 <div className="space-y-4">

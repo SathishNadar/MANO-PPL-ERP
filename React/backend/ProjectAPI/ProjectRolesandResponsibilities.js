@@ -3,9 +3,7 @@ import { knexDB } from "../Database.js";
 
 const router = express.Router();
 
-/* -------------------------------------------------------
-   FETCH STAFF
--------------------------------------------------------- */
+// Fetch staff for a project
 export async function fetchProjectStaff(projectId) {
   if (!projectId) {
     throw new Error("projectId is required");
@@ -21,9 +19,7 @@ export async function fetchProjectStaff(projectId) {
   };
 }
 
-/* -------------------------------------------------------
-   CRUD OPERATIONS
--------------------------------------------------------- */
+// Insert staff for a specific project
 async function insertStaff(data) {
   const [psrr_id] = await knexDB("project_staff_role_responsible").insert({
     project_id: data.project_id,
@@ -60,9 +56,6 @@ async function deleteStaff(id) {
   return { affectedRows: affected };
 }
 
-/* -------------------------------------------------------
-   API Endpoints
--------------------------------------------------------- */
 
 // Fetch staff for a project
 router.get("/staff/:project_id", async (req, res) => {

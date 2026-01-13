@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import AgendaPDF from './AgendaPDF';
 
 const AgendaDetails = () => {
     const { id } = useParams();
@@ -11,6 +13,8 @@ const AgendaDetails = () => {
     const [agendaDetails, setAgendaDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    // -- PREVIEW STATE --
+    const [showPreview, setShowPreview] = useState(false);
 
     // -- EDIT STATE --
     const [isEditing, setIsEditing] = useState(false);
@@ -30,6 +34,9 @@ const AgendaDetails = () => {
 
     const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
+    // -- PROJECT STATE --
+    const [project, setProject] = useState(null);
+
     useEffect(() => {
         fetchAgendaDetails();
     }, [id]);
@@ -46,6 +53,24 @@ const AgendaDetails = () => {
             }
 
             const data = await response.json();
+
+            // Fetch Project Details if project_id exists
+            if (data.project_id) {
+                try {
+                    const projectRes = await fetch(`${API_BASE}/project/getProject/${data.project_id}`, {
+                        credentials: "include",
+                    });
+                    if (projectRes.ok) {
+                        const projectData = await projectRes.json();
+                        if (projectData.success) {
+                            setProject(projectData.data);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to load project details:", err);
+                }
+            }
+
 
             // Re-use logic: Process participants for View Mode
             const processViewParticipants = (rawParticipants) => {
@@ -145,9 +170,15 @@ const AgendaDetails = () => {
         setEditContent(newContent);
     };
 
+    const handleRemarksChange = (index, value) => {
+        const newContent = [...editContent];
+        newContent[index].remarks = value;
+        setEditContent(newContent);
+    };
+
     const addMainPoint = () => {
         const newNo = (editContent.filter(p => !String(p.no).includes('.')).length + 1).toString();
-        setEditContent([...editContent, { no: newNo, description: "" }]);
+        setEditContent([...editContent, { no: newNo, description: "", remarks: "" }]);
     };
 
     const addSubPoint = (parentIndex) => {
@@ -164,7 +195,7 @@ const AgendaDetails = () => {
                 break;
             }
         }
-        newContent.splice(insertIndex, 0, { no: newNo, description: "" });
+        newContent.splice(insertIndex, 0, { no: newNo, description: "", remarks: "" });
         setEditContent(newContent);
     };
 
@@ -317,13 +348,22 @@ const AgendaDetails = () => {
                     </button>
 
                     {!isEditing ? (
-                        <button
-                            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
-                            onClick={handleEditClick}
-                        >
-                            <span className="material-icons">edit</span>
-                            <span>Edit</span>
-                        </button>
+                        <div className="flex gap-4">
+                            <button
+                                className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                                onClick={() => setShowPreview(true)}
+                            >
+                                <span className="material-icons">visibility</span>
+                                <span>Preview & Print</span>
+                            </button>
+                            <button
+                                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                                onClick={handleEditClick}
+                            >
+                                <span className="material-icons">edit</span>
+                                <span>Edit</span>
+                            </button>
+                        </div>
                     ) : (
                         <button
                             className="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
@@ -494,7 +534,8 @@ const AgendaDetails = () => {
                             <thead>
                                 <tr className="bg-gray-900/40 text-gray-400">
                                     <th className="p-3 border-r border-b border-gray-700 w-16 text-center">Sl No.</th>
-                                    <th className="p-3 border-b border-gray-700">Description</th>
+                                    <th className="p-3 border-r border-b border-gray-700 w-1/2">Description</th>
+                                    <th className="p-3 border-b border-gray-700 w-1/3">Remarks</th>
                                     {isEditing && <th className="p-3 border-b border-gray-700 w-16">Actions</th>}
                                 </tr>
                             </thead>
@@ -504,7 +545,7 @@ const AgendaDetails = () => {
                                         <td className="p-3 border-r border-gray-700 text-center font-mono text-gray-500 align-top pt-4">
                                             {point.no || point.sl}
                                         </td>
-                                        <td className="p-3 text-gray-300">
+                                        <td className="p-3 border-r border-gray-700 text-gray-300">
                                             {isEditing ? (
                                                 <textarea
                                                     className="w-full bg-gray-900/50 text-white p-2 rounded border border-gray-700 focus:border-blue-500 outline-none resize-none"
@@ -513,6 +554,17 @@ const AgendaDetails = () => {
                                                     onChange={e => handleContentChange(idx, e.target.value)}
                                                 />
                                             ) : point.description}
+                                        </td>
+                                        <td className="p-3 text-gray-300 border-r border-gray-700">
+                                            {isEditing ? (
+                                                <textarea
+                                                    className="w-full bg-gray-900/50 text-white p-2 rounded border border-gray-700 focus:border-blue-500 outline-none resize-none"
+                                                    rows={Math.max(2, Math.ceil((point.remarks || "").length / 80))}
+                                                    value={point.remarks || ""}
+                                                    onChange={e => handleRemarksChange(idx, e.target.value)}
+                                                    placeholder="Remarks"
+                                                />
+                                            ) : (point.remarks || "")}
                                         </td>
                                         {isEditing && (
                                             <td className="p-3 align-top pt-4 flex flex-col gap-2">
@@ -532,6 +584,7 @@ const AgendaDetails = () => {
 
                 </div>
             </main>
+
 
             {/* Directory Modal */}
             {showDirectoryModal && (
@@ -563,6 +616,47 @@ const AgendaDetails = () => {
                     </div>
                 </div>
             )}
+
+
+            {/* Preview Modal */}
+            {showPreview && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm no-print p-4">
+                    <div className="bg-gray-900 w-full max-w-6xl h-[95vh] rounded-xl shadow-2xl border border-gray-700 flex flex-col overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <span className="material-icons text-cyan-400">print</span>
+                                Print Preview (PDF)
+                            </h3>
+                            <div className="flex items-center gap-3">
+                                <PDFDownloadLink
+                                    document={<AgendaPDF agendaDetails={agendaDetails} project={project} />}
+                                    fileName={`agenda-${agendaDetails.meeting_no}_${String(agendaDetails.project_name || "Agenda").replace(/[/\\?%*:|"<>]/g, '-')}.pdf`}
+                                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md"
+                                >
+                                    {({ loading }) => (
+                                        <>
+                                            <span className="material-icons">{loading ? 'sync' : 'download'}</span>
+                                            <span>{loading ? 'Preparing...' : 'Download PDF'}</span>
+                                        </>
+                                    )}
+                                </PDFDownloadLink>
+                                <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* PDF Viewer */}
+                        <div className="flex-1 bg-gray-800 flex justify-center items-center overflow-hidden">
+                            <PDFViewer width="100%" height="100%" className="w-full h-full border-none">
+                                <AgendaPDF agendaDetails={agendaDetails} project={project} />
+                            </PDFViewer>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
