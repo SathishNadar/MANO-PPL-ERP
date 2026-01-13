@@ -71,13 +71,27 @@ const ProjectDirectory = () => {
 
     const fetchVendorList = async () => {
         try {
-            const response = await fetch(`${API_BASE}/vendor_api/vendors-jobnature`, { credentials: 'include' });
+            // Fetch project-specific vendors
+            // Endpoint: /projectVendors/:projectId (GET)
+            // It returns { vendors: [...] } where each item has { pv_id, vendor_id, company_name, job_nature, ... }
+            const response = await fetch(`${API_BASE}/projectVendors/${projectId}`, { credentials: 'include' });
             if (response.ok) {
                 const data = await response.json();
-                setAllVendors(data.vendors || []);
+                // Map the project vendor data to match dropdown expectations if needed
+                // Project vendor list returns objects that have `vendor_id` and `company_name` directly
+                // We need `id` for consistency in dropdown key, or just use `vendor_id`
+                const pVendors = (data.vendors || [])
+                    .map(v => ({
+                        id: v.vendor_id,        // Use the actual master vendor ID
+                        company_name: v.company_name || v.name || "", // Fallback to v.name
+                        job_nature: v.job_nature || v.natureOfJob || "",
+                        pv_id: v.pv_id          // Project Vendor ID if needed later
+                    }))
+                    .filter(v => v.company_name); // Optional: filter out those without names if critical
+                setAllVendors(pVendors);
             }
         } catch (error) {
-            console.error("Error fetching vendor list:", error);
+            console.error("Error fetching project vendor list:", error);
         }
     };
 
@@ -135,7 +149,7 @@ const ProjectDirectory = () => {
         if (!activeDropdownRow) return;
 
         const filtered = allVendors.filter(v =>
-            v.company_name.toLowerCase().includes(searchTerm.toLowerCase())
+            (v.company_name || "").toLowerCase().includes((searchTerm || "").toLowerCase())
         );
 
         if (e.key === 'ArrowDown') {
@@ -458,7 +472,7 @@ const ProjectDirectory = () => {
                                                                 isOpen={activeDropdownRow === id}
                                                                 onClose={() => { setActiveDropdownRow(null); setAnchorEl(null); }}
                                                             >
-                                                                {allVendors.filter(v => v.company_name.toLowerCase().includes(editFormData.company_name.toLowerCase())).map((vendor, vIndex) => (
+                                                                {allVendors.filter(v => (v.company_name || "").toLowerCase().includes((editFormData.company_name || "").toLowerCase())).map((vendor, vIndex) => (
                                                                     <li
                                                                         key={vendor.id}
                                                                         onClick={() => handleEditVendorSelect(vendor)}
@@ -469,7 +483,7 @@ const ProjectDirectory = () => {
                                                                         <div className="text-gray-400 text-[10px]">{vendor.job_nature}</div>
                                                                     </li>
                                                                 ))}
-                                                                {allVendors.filter(v => v.company_name.toLowerCase().includes(editFormData.company_name.toLowerCase())).length === 0 && (
+                                                                {allVendors.filter(v => (v.company_name || "").toLowerCase().includes((editFormData.company_name || "").toLowerCase())).length === 0 && (
                                                                     <li className="px-3 py-2 text-gray-500 text-xs italic">No matching vendors</li>
                                                                 )}
                                                             </PortalDropdown>
@@ -478,7 +492,7 @@ const ProjectDirectory = () => {
                                                 ) : contact.company_name}
                                             </td>
                                             <td className={tdClass}>
-                                                {isEditing ? <input name="job_nature" value={editFormData.job_nature || ""} onChange={handleEditChange} className={inputClass} readOnly /> : contact.job_nature}
+                                                {isEditing ? <input name="job_nature" value={editFormData.job_nature || ""} className={`${inputClass} text-gray-500 cursor-not-allowed`} readOnly title="Auto-filled from Vendor" /> : contact.job_nature}
                                             </td>
                                             <td className={tdClass}>
                                                 {isEditing ? <input name="contact_person" value={editFormData.contact_person || ""} onChange={handleEditChange} className={inputClass} /> : contact.contact_person}
@@ -572,7 +586,7 @@ const ProjectDirectory = () => {
                                                     isOpen={activeDropdownRow === row.tempId}
                                                     onClose={() => { setActiveDropdownRow(null); setAnchorEl(null); }}
                                                 >
-                                                    {allVendors.filter(v => v.company_name.toLowerCase().includes(row.company_name.toLowerCase())).map((vendor, vIndex) => (
+                                                    {allVendors.filter(v => (v.company_name || "").toLowerCase().includes((row.company_name || "").toLowerCase())).map((vendor, vIndex) => (
                                                         <li
                                                             key={vendor.id}
                                                             onClick={() => handleVendorSelect(row.tempId, vendor)}
@@ -583,16 +597,24 @@ const ProjectDirectory = () => {
                                                             <div className="text-gray-400 text-[10px]">{vendor.job_nature}</div>
                                                         </li>
                                                     ))}
-                                                    {allVendors.filter(v => v.company_name.toLowerCase().includes(row.company_name.toLowerCase())).length === 0 && (
+                                                    {allVendors.filter(v => (v.company_name || "").toLowerCase().includes((row.company_name || "").toLowerCase())).length === 0 && (
                                                         <li className="px-3 py-2 text-gray-500 text-xs italic">No matching vendors</li>
                                                     )}
                                                 </PortalDropdown>
                                             )}
                                         </td>
-                                        <td className={tdClass}><input value={row.job_nature} onChange={(e) => handleNewRowChange(row.tempId, 'job_nature', e.target.value)} className={inputClass} placeholder="Job..." /></td>
+                                        <td className={tdClass}>
+                                            <input
+                                                value={row.job_nature}
+                                                className={`${inputClass} text-gray-500 cursor-not-allowed`}
+                                                placeholder="Auto-filled..."
+                                                readOnly
+                                                title="Select a Company to auto-fill"
+                                            />
+                                        </td>
                                         <td className={tdClass}><input value={row.contact_person} onChange={(e) => handleNewRowChange(row.tempId, 'contact_person', e.target.value)} className={inputClass} placeholder="Name..." /></td>
                                         <td className={tdClass}><input value={row.designation} onChange={(e) => handleNewRowChange(row.tempId, 'designation', e.target.value)} className={inputClass} placeholder="Role..." /></td>
-                                        <td className={tdClass}><textarea rows={1} value={row.responsibilities} onChange={(e) => handleNewRowChange(row.tempId, 'responsibilities', e.target.value)} className={inputClass} placeholder="Calculations..." /></td>
+                                        <td className={tdClass}><textarea rows={1} value={row.responsibilities} onChange={(e) => handleNewRowChange(row.tempId, 'responsibilities', e.target.value)} className={inputClass} placeholder="Responsibility..." /></td>
                                         <td className={tdClass}><input value={row.mobile_no} onChange={(e) => handleNewRowChange(row.tempId, 'mobile_no', e.target.value)} className={inputClass} placeholder="Mobile..." /></td>
                                         <td className={tdClass}><input value={row.email} onChange={(e) => handleNewRowChange(row.tempId, 'email', e.target.value)} className={inputClass} placeholder="Email..." /></td>
                                         <td className={tdClass}><textarea rows={1} value={row.address_line} onChange={(e) => handleNewRowChange(row.tempId, 'address_line', e.target.value)} className={inputClass} placeholder="Address..." /></td>
