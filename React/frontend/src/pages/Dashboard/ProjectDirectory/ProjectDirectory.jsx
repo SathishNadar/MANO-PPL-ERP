@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import ProjectDirectoryPDF from './ProjectDirectoryPDF';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:5001';
 
@@ -43,8 +45,10 @@ const ProjectDirectory = () => {
     const navigate = useNavigate();
     const { projectId } = useParams();
     const [contacts, setContacts] = useState([]);
+    const [project, setProject] = useState(null);
     const [newRows, setNewRows] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showPreview, setShowPreview] = useState(false);
 
     // Inline Editing State
     const [editingId, setEditingId] = useState(null);
@@ -63,10 +67,27 @@ const ProjectDirectory = () => {
     // Edit Mode State
     const [isEditMode, setIsEditMode] = useState(false);
 
+    const fetchProjectDetails = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/project/getProject/${projectId}`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (data.success) {
+                setProject(data.data);
+            }
+        } catch (error) {
+            console.error("Error fetching project details:", error);
+        }
+    };
+
     // Fetch on mount
     useEffect(() => {
-        fetchContacts();
-        fetchVendorList();
+        if (projectId) {
+            fetchContacts();
+            fetchVendorList();
+            fetchProjectDetails();
+        }
     }, [projectId]);
 
     const fetchVendorList = async () => {
@@ -400,6 +421,13 @@ const ProjectDirectory = () => {
                     </div>
                     <div className="flex gap-4">
                         <button
+                            className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                            onClick={() => setShowPreview(true)}
+                        >
+                            <span className="material-icons">visibility</span>
+                            <span>Preview & Print</span>
+                        </button>
+                        <button
                             onClick={() => setIsEditMode(!isEditMode)}
                             className={`px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 transition-colors ${isEditMode
                                 ? "bg-green-600 hover:bg-green-700 text-white"
@@ -680,6 +708,45 @@ const ProjectDirectory = () => {
                                 <span className="material-icons text-sm">delete</span>
                                 Delete
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Preview Modal */}
+            {showPreview && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm no-print p-4">
+                    <div className="bg-gray-900 w-full max-w-6xl h-[95vh] rounded-xl shadow-2xl border border-gray-700 flex flex-col overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <span className="material-icons text-cyan-400">print</span>
+                                Print Preview (PDF)
+                            </h3>
+                            <div className="flex items-center gap-3">
+                                <PDFDownloadLink
+                                    document={<ProjectDirectoryPDF contacts={contacts} project={project} />}
+                                    fileName={`ProjectDirectory_${String(project?.project_name || "List").replace(/[/\\?%*:|"<>]/g, '-')}.pdf`}
+                                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md"
+                                >
+                                    {({ loading }) => (
+                                        <>
+                                            <span className="material-icons">{loading ? 'sync' : 'download'}</span>
+                                            <span>{loading ? 'Preparing...' : 'Download PDF'}</span>
+                                        </>
+                                    )}
+                                </PDFDownloadLink>
+                                <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* PDF Viewer */}
+                        <div className="flex-1 bg-gray-800 flex justify-center items-center overflow-hidden">
+                            <PDFViewer width="100%" height="100%" className="w-full h-full border-none">
+                                <ProjectDirectoryPDF contacts={contacts} project={project} />
+                            </PDFViewer>
                         </div>
                     </div>
                 </div>
