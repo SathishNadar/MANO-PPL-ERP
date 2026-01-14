@@ -256,10 +256,6 @@ async function insertJobNature(jobName) {
   return { id };
 }
 
-// ... existing routes ...
-
-export default router;
-
 // Add Job Nature Route
 router.post("/add-job-nature", catchAsync(async (req, res) => {
   const { job_name } = req.body;
@@ -273,4 +269,8 @@ router.post("/add-job-nature", catchAsync(async (req, res) => {
   const result = await insertJobNature(job_name);
   res.json({ message: "Job Nature added", id: result.id });
 }));
+
+export default router;
+
+
 
