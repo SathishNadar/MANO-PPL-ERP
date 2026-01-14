@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Sidebar from "../../SidebarComponent/sidebar";
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import ProjectSummaryPDF from './ProjectSummaryPDF';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:5001';
 
@@ -10,8 +12,10 @@ const ProjectSummary = () => {
     const { projectId } = useParams();
 
     const [summaryData, setSummaryData] = useState([]);
+    const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
 
     // Add Modal State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -41,9 +45,24 @@ const ProjectSummary = () => {
         }
     };
 
+    const fetchProjectDetails = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/project/getProject/${projectId}`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (data.success) {
+                setProject(data.data);
+            }
+        } catch (error) {
+            console.error("Error fetching project details:", error);
+        }
+    };
+
     useEffect(() => {
         if (projectId) {
             fetchSummary();
+            fetchProjectDetails();
         }
     }, [projectId]);
 
@@ -210,6 +229,13 @@ const ProjectSummary = () => {
                         </p>
                     </div>
                     <div className="flex gap-3">
+                        <button
+                            className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                            onClick={() => setShowPreview(true)}
+                        >
+                            <span className="material-icons">visibility</span>
+                            <span>Preview & Print</span>
+                        </button>
                         <button
                             onClick={() => {
                                 if (isEditing) handleSaveUpdates();
@@ -405,6 +431,45 @@ const ProjectSummary = () => {
                     </div>
                 )}
             </main>
+
+            {/* Preview Modal */}
+            {showPreview && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm no-print p-4">
+                    <div className="bg-gray-900 w-full max-w-6xl h-[95vh] rounded-xl shadow-2xl border border-gray-700 flex flex-col overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <span className="material-icons text-cyan-400">print</span>
+                                Print Preview (PDF)
+                            </h3>
+                            <div className="flex items-center gap-3">
+                                <PDFDownloadLink
+                                    document={<ProjectSummaryPDF summaryData={summaryData} project={project} />}
+                                    fileName={`ProjectSummary_${String(project?.project_name || "List").replace(/[/\\?%*:|"<>]/g, '-')}.pdf`}
+                                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md"
+                                >
+                                    {({ loading }) => (
+                                        <>
+                                            <span className="material-icons">{loading ? 'sync' : 'download'}</span>
+                                            <span>{loading ? 'Preparing...' : 'Download PDF'}</span>
+                                        </>
+                                    )}
+                                </PDFDownloadLink>
+                                <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* PDF Viewer */}
+                        <div className="flex-1 bg-gray-800 flex justify-center items-center overflow-hidden">
+                            <PDFViewer width="100%" height="100%" className="w-full h-full border-none">
+                                <ProjectSummaryPDF summaryData={summaryData} project={project} />
+                            </PDFViewer>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
