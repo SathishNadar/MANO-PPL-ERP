@@ -29,6 +29,7 @@ import Admin from './Admin/Admin.js';
 import WorkLocationRoutes from './Admin/WorkLocations.js';
 import S3Routes from './s3/s3Routes.js';
 import DailyActivityReportRoutes from './DailyActivityReport/DailyActivityReport.js';
+import ClientRoutes from './ClientListAPI/ClientList.js';
 
 
 
@@ -88,6 +89,7 @@ app.use("/admin", Admin);
 app.use("/admin/locations", WorkLocationRoutes);
 app.use("/hindrance", HindranceRoutes);
 app.use("/dailyActivityReport", DailyActivityReportRoutes);
+app.use("/client_api", ClientRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');
