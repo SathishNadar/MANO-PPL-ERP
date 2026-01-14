@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
 import { toast } from "react-toastify";
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import StaffRolesPDF from './StaffRolesPDF';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:5001';
 
@@ -11,6 +13,7 @@ const StaffRoles = () => {
     const [project, setProject] = useState(null);
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showPreview, setShowPreview] = useState(false);
 
     // UI States
     const [isManagementMode, setIsManagementMode] = useState(false); // Top toggle
@@ -209,6 +212,13 @@ const StaffRoles = () => {
                         </p>
                     </div>
                     <div className="flex gap-3">
+                        <button
+                            className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+                            onClick={() => setShowPreview(true)}
+                        >
+                            <span className="material-icons">visibility</span>
+                            <span>Preview & Print</span>
+                        </button>
                         <button
                             onClick={() => setIsManagementMode(!isManagementMode)}
                             className={`font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 ${isManagementMode
@@ -457,6 +467,45 @@ const StaffRoles = () => {
                                 <span className="material-icons text-sm">delete</span>
                                 Delete
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Preview Modal */}
+            {showPreview && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm no-print p-4">
+                    <div className="bg-gray-900 w-full max-w-6xl h-[95vh] rounded-xl shadow-2xl border border-gray-700 flex flex-col overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <span className="material-icons text-cyan-400">print</span>
+                                Print Preview (PDF)
+                            </h3>
+                            <div className="flex items-center gap-3">
+                                <PDFDownloadLink
+                                    document={<StaffRolesPDF staff={staff} project={project} />}
+                                    fileName={`StaffRoles_${String(project?.project_name || "List").replace(/[/\\?%*:|"<>]/g, '-')}.pdf`}
+                                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md"
+                                >
+                                    {({ loading }) => (
+                                        <>
+                                            <span className="material-icons">{loading ? 'sync' : 'download'}</span>
+                                            <span>{loading ? 'Preparing...' : 'Download PDF'}</span>
+                                        </>
+                                    )}
+                                </PDFDownloadLink>
+                                <button onClick={() => setShowPreview(false)} className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* PDF Viewer */}
+                        <div className="flex-1 bg-gray-800 flex justify-center items-center overflow-hidden">
+                            <PDFViewer width="100%" height="100%" className="w-full h-full border-none">
+                                <StaffRolesPDF staff={staff} project={project} />
+                            </PDFViewer>
                         </div>
                     </div>
                 </div>
