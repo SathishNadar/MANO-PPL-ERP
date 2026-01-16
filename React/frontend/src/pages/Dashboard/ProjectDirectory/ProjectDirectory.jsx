@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../SidebarComponent/sidebar";
@@ -67,6 +67,7 @@ const ProjectDirectory = () => {
     // Edit Mode State
     const [isEditMode, setIsEditMode] = useState(false);
 
+    // Fetch Project Details
     const fetchProjectDetails = async () => {
         try {
             const response = await fetch(`${API_BASE}/project/getProject/${projectId}`, {
@@ -80,6 +81,49 @@ const ProjectDirectory = () => {
             console.error("Error fetching project details:", error);
         }
     };
+
+    // Grouping Logic
+    const processedContacts = useMemo(() => {
+        // If in Edit Mode, return contacts without grouping
+        if (isEditMode) {
+            return contacts.map(c => ({ ...c, rowSpan: 1, isFirst: true }));
+        }
+
+        // Sort by company name to ensure grouping works
+        const sorted = [...contacts].sort((a, b) => (a.company_name || "").localeCompare(b.company_name || ""));
+
+        const result = [];
+        let currentCompany = null;
+        let startIndex = 0;
+
+        sorted.forEach((contact, index) => {
+            const company = contact.company_name;
+            if (company !== currentCompany) {
+                // New group
+                if (index > 0) {
+                    // Update previous group's first item with count
+                    // Ensure the previous start index is within bounds and valid
+                    if (result[startIndex]) {
+                        result[startIndex].rowSpan = index - startIndex;
+                    }
+                }
+                currentCompany = company;
+                startIndex = index;
+                // Add new item as first in group
+                result.push({ ...contact, rowSpan: 1, isFirst: true });
+            } else {
+                // Continued group
+                result.push({ ...contact, rowSpan: 0, isFirst: false });
+            }
+        });
+
+        // Close last group
+        if (result.length > 0 && result[startIndex]) {
+            result[startIndex].rowSpan = result.length - startIndex;
+        }
+
+        return result;
+    }, [contacts, isEditMode]);
 
     // Fetch on mount
     useEffect(() => {
@@ -467,61 +511,67 @@ const ProjectDirectory = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
-                                {contacts.map((contact, index) => {
+                                {processedContacts.map((contact, index) => {
                                     const id = getContactId(contact);
                                     const isEditing = editingId === id;
 
                                     return (
                                         <tr key={id} className="hover:bg-gray-700/30 transition-colors duration-150">
                                             <td className={`${tdClass} text-center`}>{index + 1}</td>
-                                            <td className={tdClass}>
-                                                {isEditing ? (
-                                                    <div>
-                                                        <input
-                                                            name="company_name"
-                                                            value={editFormData.company_name || ""}
-                                                            onChange={(e) => {
-                                                                handleEditChange(e);
-                                                                setActiveDropdownRow(id);
-                                                                setAnchorEl(e.currentTarget);
-                                                                setHighlightedIndex(0);
-                                                            }}
-                                                            onKeyDown={(e) => handleKeyDown(e, editFormData.company_name || "", true, id)}
-                                                            onFocus={(e) => {
-                                                                setActiveDropdownRow(id);
-                                                                setAnchorEl(e.currentTarget);
-                                                            }}
-                                                            className={inputClass}
-                                                            autoComplete="off"
-                                                        />
-                                                        {activeDropdownRow === id && editFormData.company_name && (
-                                                            <PortalDropdown
-                                                                anchorEl={anchorEl}
-                                                                isOpen={activeDropdownRow === id}
-                                                                onClose={() => { setActiveDropdownRow(null); setAnchorEl(null); }}
-                                                            >
-                                                                {allVendors.filter(v => (v.company_name || "").toLowerCase().includes((editFormData.company_name || "").toLowerCase())).map((vendor, vIndex) => (
-                                                                    <li
-                                                                        key={vendor.id}
-                                                                        onClick={() => handleEditVendorSelect(vendor)}
-                                                                        className={`px-3 py-2 cursor-pointer text-gray-200 text-xs border-b border-gray-700 last:border-0 ${vIndex === highlightedIndex ? "bg-blue-600" : "hover:bg-gray-700"
-                                                                            }`}
-                                                                    >
-                                                                        <div className="font-bold">{vendor.company_name}</div>
-                                                                        <div className="text-gray-400 text-[10px]">{vendor.job_nature}</div>
-                                                                    </li>
-                                                                ))}
-                                                                {allVendors.filter(v => (v.company_name || "").toLowerCase().includes((editFormData.company_name || "").toLowerCase())).length === 0 && (
-                                                                    <li className="px-3 py-2 text-gray-500 text-xs italic">No matching vendors</li>
-                                                                )}
-                                                            </PortalDropdown>
-                                                        )}
-                                                    </div>
-                                                ) : contact.company_name}
-                                            </td>
-                                            <td className={tdClass}>
-                                                {isEditing ? <input name="job_nature" value={editFormData.job_nature || ""} className={`${inputClass} text-gray-500 cursor-not-allowed`} readOnly title="Auto-filled from Vendor" /> : contact.job_nature}
-                                            </td>
+                                            {/* Company Name - Render only if first in group or in edit mode (where rowSpan is always 1) */}
+                                            {contact.isFirst && (
+                                                <td className={tdClass} rowSpan={contact.rowSpan}>
+                                                    {isEditing ? (
+                                                        <div>
+                                                            <input
+                                                                name="company_name"
+                                                                value={editFormData.company_name || ""}
+                                                                onChange={(e) => {
+                                                                    handleEditChange(e);
+                                                                    setActiveDropdownRow(id);
+                                                                    setAnchorEl(e.currentTarget);
+                                                                    setHighlightedIndex(0);
+                                                                }}
+                                                                onKeyDown={(e) => handleKeyDown(e, editFormData.company_name || "", true, id)}
+                                                                onFocus={(e) => {
+                                                                    setActiveDropdownRow(id);
+                                                                    setAnchorEl(e.currentTarget);
+                                                                }}
+                                                                className={inputClass}
+                                                                autoComplete="off"
+                                                            />
+                                                            {activeDropdownRow === id && editFormData.company_name && (
+                                                                <PortalDropdown
+                                                                    anchorEl={anchorEl}
+                                                                    isOpen={activeDropdownRow === id}
+                                                                    onClose={() => { setActiveDropdownRow(null); setAnchorEl(null); }}
+                                                                >
+                                                                    {allVendors.filter(v => (v.company_name || "").toLowerCase().includes((editFormData.company_name || "").toLowerCase())).map((vendor, vIndex) => (
+                                                                        <li
+                                                                            key={vendor.id}
+                                                                            onClick={() => handleEditVendorSelect(vendor)}
+                                                                            className={`px-3 py-2 cursor-pointer text-gray-200 text-xs border-b border-gray-700 last:border-0 ${vIndex === highlightedIndex ? "bg-blue-600" : "hover:bg-gray-700"
+                                                                                }`}
+                                                                        >
+                                                                            <div className="font-bold">{vendor.company_name}</div>
+                                                                            <div className="text-gray-400 text-[10px]">{vendor.job_nature}</div>
+                                                                        </li>
+                                                                    ))}
+                                                                    {allVendors.filter(v => (v.company_name || "").toLowerCase().includes((editFormData.company_name || "").toLowerCase())).length === 0 && (
+                                                                        <li className="px-3 py-2 text-gray-500 text-xs italic">No matching vendors</li>
+                                                                    )}
+                                                                </PortalDropdown>
+                                                            )}
+                                                        </div>
+                                                    ) : contact.company_name}
+                                                </td>
+                                            )}
+                                            {/* Nature of Job - Render only if first in group */}
+                                            {contact.isFirst && (
+                                                <td className={tdClass} rowSpan={contact.rowSpan}>
+                                                    {isEditing ? <input name="job_nature" value={editFormData.job_nature || ""} className={`${inputClass} text-gray-500 cursor-not-allowed`} readOnly title="Auto-filled from Vendor" /> : contact.job_nature}
+                                                </td>
+                                            )}
                                             <td className={tdClass}>
                                                 {isEditing ? <input name="contact_person" value={editFormData.contact_person || ""} onChange={handleEditChange} className={inputClass} /> : contact.contact_person}
                                             </td>

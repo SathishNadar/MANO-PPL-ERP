@@ -14,21 +14,21 @@ const DocumentIndex = () => {
     const [budgetExists, setBudgetExists] = useState(null);
 
     useEffect(() => {
-      if (!projectId) return;
+        if (!projectId) return;
 
-      const checkBudgetExists = async () => {
-        try {
-          const res = await fetch(`${API_BASE}/budget/exists/${projectId}`);
-          const data = await res.json();
-          if (data.success) {
-            setBudgetExists(data.exists);
-          }
-        } catch (err) {
-          console.error('Failed to check budget existence', err);
-        }
-      };
+        const checkBudgetExists = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/budget/exists/${projectId}`);
+                const data = await res.json();
+                if (data.success) {
+                    setBudgetExists(data.exists);
+                }
+            } catch (err) {
+                console.error('Failed to check budget existence', err);
+            }
+        };
 
-      checkBudgetExists();
+        checkBudgetExists();
     }, [projectId]);
 
     const toggleSection = (index) => {
@@ -58,7 +58,7 @@ const DocumentIndex = () => {
         } else if (item === "Project Summary") {
             navigate(`/dashboard/project-summary/${projectId}`);
         } else if (item === "Organisation Chart") {
-            navigate('/dashboard/organisation-chart');
+            navigate(`/dashboard/organisation-chart/${projectId}`);
         } else if (item === "Drawing Management") {
             navigate(`/dashboard/project-description/${projectId}/drawing-management`);
         } else if (item === "Drawing Planned vs Achieved") {
@@ -210,37 +210,36 @@ const DocumentIndex = () => {
                                                         </div>
                                                     </div>
                                                     <div className="flex space-x-2">
-                                                      <button
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          if (budgetExists === true) {
-                                                            navigate(`/dashboard/project-description/${projectId}/budgetUpdate`);
-                                                          } else {
-                                                            navigate(`/dashboard/project-description/${projectId}/budgetCreate`);
-                                                          }
-                                                        }}
-                                                        className={`flex-1 flex items-center justify-center space-x-1 py-1.5 rounded transition-colors text-xs font-medium ${
-                                                          budgetExists
-                                                            ? 'bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-400'
-                                                            : 'bg-green-600/20 hover:bg-green-600/40 text-green-400'
-                                                        }`}
-                                                        disabled={budgetExists === null}
-                                                      >
-                                                        <span className="material-icons text-sm">
-                                                          {budgetExists ? 'edit' : 'add'}
-                                                        </span>
-                                                        <span>{budgetExists ? 'Edit' : 'Create'}</span>
-                                                      </button>
-                                                      <button
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          navigate(`/dashboard/project-description/${projectId}/budgetView`);
-                                                        }}
-                                                        className="flex-1 flex items-center justify-center space-x-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 py-1.5 rounded transition-colors text-xs font-medium"
-                                                      >
-                                                        <span className="material-icons text-sm">visibility</span>
-                                                        <span>View</span>
-                                                      </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (budgetExists === true) {
+                                                                    navigate(`/dashboard/project-description/${projectId}/budgetUpdate`);
+                                                                } else {
+                                                                    navigate(`/dashboard/project-description/${projectId}/budgetCreate`);
+                                                                }
+                                                            }}
+                                                            className={`flex-1 flex items-center justify-center space-x-1 py-1.5 rounded transition-colors text-xs font-medium ${budgetExists
+                                                                    ? 'bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-400'
+                                                                    : 'bg-green-600/20 hover:bg-green-600/40 text-green-400'
+                                                                }`}
+                                                            disabled={budgetExists === null}
+                                                        >
+                                                            <span className="material-icons text-sm">
+                                                                {budgetExists ? 'edit' : 'add'}
+                                                            </span>
+                                                            <span>{budgetExists ? 'Edit' : 'Create'}</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/dashboard/project-description/${projectId}/budgetView`);
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center space-x-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 py-1.5 rounded transition-colors text-xs font-medium"
+                                                        >
+                                                            <span className="material-icons text-sm">visibility</span>
+                                                            <span>View</span>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             );

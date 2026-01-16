@@ -230,7 +230,7 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/organisation-chart"
+          path="/dashboard/organisation-chart/:projectId"
           element={
             <ProtectedRoute>
               <OrganisationChart />
