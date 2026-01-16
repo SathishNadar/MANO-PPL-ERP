@@ -151,7 +151,7 @@ function AttendanceDashboard() {
             </div>
 
             <div className="flex-1 relative bg-[#0f1724]">
-              <MapContainer whenCreated={handleMapReady} center={indiaCenter} zoom={defaultZoom} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+              <MapContainer whenCreated={handleMapReady} center={indiaCenter} zoom={defaultZoom} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }} zoomControl={false} attributionControl={false}>
                 <ZoomControl position="topright" />
                 <TileLayer attribution='&copy; OpenStreetMap contributors' url={tileUrl} noWrap={true} />
                 {(() => {
