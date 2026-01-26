@@ -2,7 +2,11 @@
     padding: 0;
     margin: 0;
     box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+
+    font-family:'Poppins', Arial, sans-serif;
+    font-size: 13px;
+    border-collapse: collapse;
 }
 
 body {
@@ -11,14 +15,22 @@ body {
     align-items: center;
 }
 
+table, tr, td {
+    border: 1px solid black;
+    border-right: none;
+    border-collapse: collapse;
+    font-size: 13px;
+    line-height: 20px;
+}
+
 #pdf-container {
     width: 100%;
 }
 
 .dpr-pdf-container {
+    border: 3px solid #000 !important;
     height: auto;
     width: 97%;
-    border: 1px solid black;
     border-bottom: none;
     display: grid;
     justify-content: center;
@@ -30,59 +42,75 @@ body {
     grid-template-columns: 1fr 1fr;
 }
 
+
+img {
+    width: 200px;
+    /* height: 55px; */
+}
+
 .logo {
+    padding: 5px;
+    border-bottom: 1px solid #000 !important ;
     grid-area: logo;
-    height: 50px;
-    width: 150px;
+    height: 60px;
 }
 
 .daily-progress-report {
     grid-area: daily-progress;
     text-align: center;
     border-left: 1px solid black;
+    border-top: none !important;
+    border-bottom: none !important;
 }
-.daily-progress-report-table{
+
+.daily-progress-report-table {
     width: 100%;
     height: 100%;
-}
-.daily-progress-report > .daily {
-    border-right: 1px solid black;
-    border-bottom: 1px solid black;
+    border-top: white;
+    border-bottom: none !important;
 }
 
-.daily-progress-report > .dynamic-date {
-    border-right: 1px solid black;
+.daily-progress-report-table tr:first-child td,
+.daily-progress-report-table tr:first-child th {
+  border-top: none !important;
 }
 
-.daily-progress-report > .report {
-    border-bottom: 1px solid black;
+/* also ensure the table itself doesn't draw a top border */
+.daily-progress-report-table {
+  border-top: none !important;
+  border-collapse: collapse;
 }
 
-.daily, .report, .dynamic-date {
-    font-size: 16px;
+.inside-labour-table-cotainer .bottom-of-labour-table {
+    border-left: none !important;
 }
+
 
 .project-label {
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    text-align: center;
     writing-mode: vertical-rl;
     width: 30px;
     transform: rotate(180deg);
+    border-bottom: 1px solid black;
+    border-top: 1px black;
+    padding-bottom: 10px;
+    padding-left: 1px;
 }
 
 .project-left {
     display: flex;
-}
-
-table, tr, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-    font-size: 14px;
-    line-height: 20px;
+    position: relative;
 }
 
 .project-table {
+    margin-left: -5px;
     table-layout: fixed;
     width: 100%;
+    border-collapse: collapse;
+    border-left: 2px solid black;
 }
 
 .project-table td:first-child,
@@ -93,148 +121,125 @@ table, tr, td {
     text-overflow: ellipsis;
 }
 
-#displayTable {
-    table-layout: fixed;
-    width: 100%;
-}
-
-#displayTable th, 
-#displayTable td {
-    padding: 4px;
-    text-align: center;
-    word-wrap: break-word;
-}
-
-/* Today/Tomorrow Planning Tables - Added Section */
-.today-tomorrow-table-container {
-    display: flex;
-    width: 100%;
-    margin-top: 10px;
-    page-break-inside: avoid;
-}
-
-#today-table, 
-#tomorrow-table {
-    table-layout: fixed;
-    width: 50%;
-    border-collapse: collapse;
-}
-
-#today-table {
-    border-right: none;
-}
-
-#tomorrow-table {
-    border-left: none;
-}
-
-#today-table th, 
-#tomorrow-table th {
-    
-    font-weight: bold;
-    text-align: center;
-    padding: 4px;
-    border: 1px solid black;
-}
-
-#today-table td, 
-#tomorrow-table td {
-    padding: 4px;
-    border: 1px solid black;
-    vertical-align: top;
-}
-
-/* Task column (70% width) */
-#today-table th:nth-child(1),  
-#today-table td:nth-child(1),  
-#tomorrow-table th:nth-child(1),
-#tomorrow-table td:nth-child(1) {
-    width: 85% !important;
-    min-width: 85% !important;
-    max-width: 85% !important;
-    word-break: break-word;
-    white-space: normal;
-    text-align: left;
-}
-
-/* Quantity column (30% width) */
-#today-table th:nth-child(2),  
-#today-table td:nth-child(2),  
-#tomorrow-table th:nth-child(2),
-#tomorrow-table td:nth-child(2) {
-    width: 15% !important;
-    min-width: 15% !important;
-    max-width: 15% !important;
-    text-align: center;
-}
-
-.labour-table-container {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-}
-
-.inside-labour-table-cotainer {
-    width: 100%;
-}
-
 .project-bottom {
+    font-family:'Poppins', Arial, sans-serif;
     display: flex;
-    margin-left: 1.9%;
+    margin-left: 24px;
+    border-left: 1px solid;
+    border-top: 1px solid;
+    width: calc(100%-24px);
 }
 
 .project-bottom > div {
-    border-bottom: 1px solid black;
     border-left: 1px solid black;
-    font-size: 14px;
 }
+.durr{
+    width: 15%; 
+    padding-left: 5px; 
+    border-bottom: 0px"
+}
+
+.total-value,
+.durr,
+.blank,.total,
+#days-passed,
+.balance{
+    /* border-right: 1px solid black; */
+}
+
+.total-value{
+    width: 13.12%; 
+    padding-left: 5px;
+    border-bottom: none;
+}
+
+.blank{
+    width: 30%; 
+    padding-left: 5px;
+    border-bottom: none;
+}
+
+/* site condition ---------------------------------------------------- */
 
 .site {
     display: flex;
-    margin-top: 0; 
+    margin-top: 0;
     width: 100%;
-    gap: 0px;
+    border: none;
+    margin-bottom: 8px;
+    border-collapse: collapse;
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
 }
 
-.site-label,
-.labour-table-lable {
+.site-label{
     width: auto;
-    font-size: 16px;
+    font-weight: 600;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
+    box-sizing: border-box;
+    padding-right: 5px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    /* margin-right: 1px; */
 }
 
-.labour-table-lable {
-    border-top: 1px solid black;
-    border-bottom: 1px solid black;
-    border-left: 1px solid black;
-}
+
 
 .site-condition {
-    border: 1px solid black;
+    border-right: 1px solid black;
+    border-left: 2px solid black;
     display: flex;
     justify-content: space-evenly;
     align-items: center;
-    padding: 5px;
-    font-size: 14px;
-    width: 30%;
+    /* padding: 5px; */
+    width: 36.8%;
     gap: 25px;
 }
 
+
 .from-to {
-    border: 1px solid black;
-    font-size: 14px;
-    width: 40%;
+    margin-right: -1px;
+    font-size: 12px;
+    width: 29%;
+    padding-left: 0px;
+    
 }
+
+.time-slot {
+    display: flex;
+    border-bottom: 1px solid black;
+    height: 26px;
+    width: 100%;
+}
+
+.time-slot:last-child {
+    border-bottom: none;
+}
+
+.time-slot span {
+    flex: 1;
+    text-align: center;
+    border-right: 1px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.time-slot span:last-child {
+    border-right: none;
+}   
 
 .slushy-dry {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
-    border: 1px solid black;
+    border-top: 0px;
+    border-bottom: 0px;
+    border-right: 0px;
     padding: 5px;
-    font-size: 14px;
-    width: 30%;
+    flex: 1;
+    width: auto;
 }
 
 .normal-day,
@@ -255,10 +260,215 @@ table, tr, td {
     border: 0.5px solid black;
 }
 
-img {
-    width: 150px;
-    height: 50px;
+
+.slushy-dry {
+    border-left: 1px solid black;
 }
+
+
+
+
+
+.labour-table-lable {
+    /* position: relative;
+    top: 0.5px; */
+    display: flex;
+    width: 26px;
+    font-weight: 600;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    padding: 9px 1px 9px 0;
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+    border-left: 1px solid black;
+    align-items: center;
+    justify-content: center;
+}
+
+
+#displayTable {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    flex: 1;
+}
+
+#displayTable th{
+    border-left: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+
+#displayTable th,
+#displayTable td {
+    padding: 4px;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+#displayTable td:last-child,
+#displayTable th:last-child {
+    border-right: none !important;
+}
+
+
+.inside-labour-table-cotainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    border-top: 1px solid black ;
+    /* border-left: 1px solid black ; */
+    border-right: none;
+}
+
+
+.labour-table-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 200px;
+}
+
+.bottom-of-labour-table{
+    border-top: 1px solid black;
+    border-bottom: 2px solid black;
+    border-left: none;
+    margin-top: 3px;
+}
+
+.bottom-of-labour-table td:nth-child(1) { width: 35%; font-size: 11px;}
+.bottom-of-labour-table td:nth-child(2) { width: 15%; }
+.bottom-of-labour-table td:nth-child(3) { width: 35%; font-size: 11px;}
+.bottom-of-labour-table td:nth-child(4) { width: 15%; }
+
+/* === Today/Tomorrow Planning Tables - FIXED COLUMN WIDTHS === */
+.today-tomorrow-table-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    border-top: 1px solid black;
+    border-left: 0px;
+    border-right: 0px;
+    margin-top: 8px;
+}
+
+/* Table styling for 4-column layout */
+#today-table,
+#tomorrow-table {
+    width: 50%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+#today-table {
+    border-right: 1px solid #000;
+}
+
+/* Header styling */
+.today-planning-header,
+.tomorrow-planning-header {
+    font-weight: bold;
+    padding: 8px;
+    border-bottom: 2px solid #000;
+    border-top: 2px solid #000;
+    font-size: 14px;
+}
+
+/* Table cell sizing with consistent heights */
+#today-table th,
+#today-table td,
+#tomorrow-table th,
+#tomorrow-table td {
+    border: 1px solid #000;
+    padding: 4px;
+    text-align: center;
+    word-wrap: break-word;
+    overflow: hidden;
+    height: 24px; 
+    /* min-height: 45px;
+    max-height: 45px; */
+    line-height: 1.2; /* Better text alignment */
+    vertical-align: middle;
+}
+
+/* FIXED: Specific column widths - 50% 25% 12.5% 12.5% */
+#today-table th:nth-child(1),
+#today-table td:nth-child(1),
+#tomorrow-table th:nth-child(1),
+#tomorrow-table td:nth-child(1) {
+    width: 50%; /* First column - 50% of table */
+    text-align: center;
+}
+#today-table th:nth-child(1),
+#today-table td:nth-child(1){
+    text-align: center;
+}
+
+#today-table th:nth-child(2),
+#today-table td:nth-child(2),
+#tomorrow-table th:nth-child(2),
+#tomorrow-table td:nth-child(2) {
+    width: 25%; /* Second column - 25% of table */
+}
+
+#today-table th:nth-child(3),
+#today-table td:nth-child(3),
+#tomorrow-table th:nth-child(3),
+#tomorrow-table td:nth-child(3) {
+    width: 12.5%; /* Third column - 12.5% of table */
+}
+
+#today-table th:nth-child(4),
+#today-table td:nth-child(4),
+#tomorrow-table th:nth-child(4),
+#tomorrow-table td:nth-child(4) {
+    width: 12.5%; /* Fourth column - 12.5% of table */
+    border-right-width: 0px;
+}
+
+/* Ensure table layout is fixed */
+#today-table,
+#tomorrow-table {
+    table-layout: fixed;
+}
+
+#today-table{
+    border-left: 2px solid black;
+}
+/* Responsive text for small columns - Smaller fonts for better fit */
+#today-table th,
+#tomorrow-table th {
+    font-size: 11px;
+    font-weight: bold;
+}
+
+#today-table td,
+#tomorrow-table td {
+    font-size: 14px;
+}
+
+#today-table td:nth-child(3),
+#today-table td:nth-child(4),
+#tomorrow-table td:nth-child(3),
+#tomorrow-table td:nth-child(4) {
+    font-size: 11px;
+    padding: 2px 1px;
+}
+
+/* Force consistent row heights for all rows */
+#today-table tbody tr,
+#tomorrow-table tbody tr {
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px;
+}
+
+/* === END of Today/Tomorrow Planning Tables Section === */
+
+
+
+
 
 .button-container {
     display: flex;
@@ -268,34 +478,9 @@ img {
     width: 100%;
 }
 
-button {
-    width: auto;
-    height: 50px;
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
 
-button:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-}
-
-button:active {
-    transform: scale(0.95);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-#labourTable,
-.bottom-of-labour-table {
-    table-layout: fixed;
+#labourTable{
+    margin-top: auto;
     width: 100%;
 }
 
@@ -304,352 +489,316 @@ button:active {
     width: 15%;
     min-width: 15%;
 }
-
 #displayTable th:nth-child(12),
 #displayTable td:nth-child(12) {
     width: 15%;
     min-width: 15%;
 }
-
 #displayTable th:nth-child(n+2):nth-child(-n+11),
 #displayTable td:nth-child(n+2):nth-child(-n+11) {
     white-space: nowrap;
     padding: 0 8px;
 }
 
-.bottom-of-labour-table td:nth-child(1) { width: 22%; }
-.bottom-of-labour-table td:nth-child(2) { width: 14%; }
-.bottom-of-labour-table td:nth-child(3) { width: 35%; }
-.bottom-of-labour-table td:nth-child(4) { width: 14%; }
-.bottom-of-labour-table td:nth-child(5) { width: 15%; }
 
-.additional-remarks-container{
-  display: flex;
-  flex-direction: column;
-}
-.events-remarks{
-  display: flex;
-  flex-direction: row;
-  border: 2px solid black;
-}
-.remarks-content-container{
+
+.additional-remarks-container {
     display: flex;
     flex-direction: column;
-    width: 70%;
-    flex: 6;
-    
 }
-.remarks{
+.events-remarks {
+    display: flex;
+    flex-direction: row;
+    border: 2px solid black;
+}
+
+.remarks {
     display: flex;
     flex-direction: row;
 }
-.remarks-label{ 
-  border: 1px solid black;
-  flex: 0.1;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-}
-.remarks-content{
+.remarks-label {
     border: 1px solid black;
-}
-.distribution,.prepared-by,.signature{
-    flex: 1;
-    border-left: 1px solid black;
-    border-right: 0px;
-    border-bottom: 1px solid black;
-    border-top: 0px;
-}
-
-.events-label{
+    /* flex: 0.1; */
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    border: 1px solid black;
-    border-right: 0;
-    flex: 0.1;
+    font-weight: 600;
+    padding: 10px 5px 10px 0;
+    border-top: none !important;
+    display:flex;
+    justify-content: center;
+    align-items: center;
 }
-.events-container{
+.remarks-content {
+    padding-left: 5px ;
+    border: 1px solid black;
+    background-color: #f9f9f9;
+}
+
+.prepared-by{
+    /* flex: 1; */
+    width: 17.5%;
+    /* border-bottom: 1px solid black; */
+    border-top: 1px solid;
+    /* border-right: 1px solid; */
+}
+
+
+.distribution {
+    /* flex: 1; */
+    /* border-bottom: 1px solid black; */
+    border-top: 1px solid;
+    border-right: 1px solid;
+    border-left: 2px solid;
+    padding: 6px;
+    width: 30%;
+}
+
+#distribution{
+    font-weight: 400;
+    font-size: 10px;
+}
+
+.events-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    border-left: 1px solid black;
+    padding: 10px 5px 10px 0;
+    flex: 0.1;
+    text-align: center;
+    font-weight: 600;
+}
+
+.events-container {
     flex: 9.9;
     border-left: 0px;
     border-top: 0px;
 }
-
-.events-field{
+.events-field {
     border: 1px solid black;
     display: flex;
     justify-content: center;
 }
-
-
 .remarks-content-container {
     display: flex;
     flex-direction: column;
+    border-top:none;
+    /* border-right: 1px solid; */
+    /* border-left: 1px solid; */
+    border-bottom: none !important;
+    width: 47.5%;
+    height: 100%;
+    /* flex: 6; */
 }
 
+
 .remarks-content {
-    border: 1px solid #e0e0e0;
     border: 1px solid black;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
     background-color: #f9f9f9;
-}   
- 
+}
 
 .events-container {
     display: flex;
     flex-direction: column;
     margin: 0;
+    border-right: none !important;
+    /* border-top: 1px solid black; */
+    border-bottom: 1px solid black;
+    /* border-left: 1px solid black; */
 }
-
 .events-content {
-    border: 1px solid black;
+    border: 1px solid;
+    border-bottom: none !important;
+    border-right: none !important;
     background-color: #f9f9f9;
-    padding: 0px;
+    padding-left: 5px;
     margin-bottom: 0px;
-    min-height: 20px;
+    min-height: 18px;
 }
 
-@media(max-width: 600px) {
-    .daily, .report, .dynamic-date, 
-    .project-label, .site-label {
-        font-size: 10px;
-    }
-    
-    table, tr, td,
-    .project-bottom > div,
-    .site-condition,
-    .from-to,
-    .slushy-dry {
-        font-size: 9px;
-    }
-    
-    .normal-day,
-    .rainy-day,
-    .slushy-day,
-    .dry-day {
-        font-size: 0.7em;
-    }
-    
-    .normal-day-checkbox,
-    .rainy-day-checkbox,
-    .slushy-day-checkbox,
-    .dry-day-checkbox {
-        height: 1em;
-        width: 1em;
-    }
-    
-    span {
-        font-size: 0.8em;
-    }
-
-    /* Mobile adjustments for today/tomorrow tables */
-    .today-tomorrow-table-container {
-        flex-direction: column;
-    }
-    
-    #today-table, 
-    #tomorrow-table {
-        width: 100% !important;
-    }
+.daily-progress-report-table tr:nth-child(2) td:nth-child(2) {
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
+    box-sizing: border-box;
 }
 
+
+
+/* Print-specific adjustments */
 @media print {
-    button {
-        display: none !important;
-    }
-    
-    body {
-        height: 29.7cm !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-        zoom: 90%;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        display: block !important;
-        font-size: 9pt !important;
-    }
-    
-    .dpr-pdf-container {
-        width: 95% !important;
-        max-width: 190mm !important;
-        margin: 0 auto !important;
-        border: 1px solid black !important;
-        position: relative;
-        left: 0;
-        right: 0;
-    }
-    
-    .daily, .report, .dynamic-date {
-        font-size: 10pt !important;
-    }
-    
-    .project-label, 
-    .site-label, 
-    .labour-table-lable {
-        font-size: 9pt !important;
-        writing-mode: vertical-rl !important;
-        transform: rotate(180deg) !important;
-        text-orientation: mixed !important;
-    }
-    
-    table, tr, td {
-        font-size: 8pt !important;
-    }
-    
-    table {
-        table-layout: fixed !important;
-        width: 100% !important;
-        page-break-inside: avoid !important;
-    }
-    
-    .today-planning-header,
-    .tomorrow-planning-header {
-        column-span: 2;
-        text-align: center;
-    }
-    
-    th, td {
-        white-space: normal !important;
-        overflow: visible !important;
-        padding: 0.5px 2px !important;
-        line-height: 1.2 !important;
-        height: auto !important;
-        min-height: 0 !important;
-        max-height: none !important;
-    }
-    
-    .project-table td:first-child,
-    .project-table th:first-child,
-    .durr {
-        width: 120px;
-    }
-    
-    #displayTable th:nth-child(1),
-    #displayTable td:nth-child(1) {
-        width: 15% !important;
-    }
-    
-    #displayTable th:nth-child(12),
-    #displayTable td:nth-child(12) {
-        width: 15% !important;
-    }
-    
-    #displayTable th:nth-child(n+2):nth-child(-n+11),
-    #displayTable td:nth-child(n+2):nth-child(-n+11) {
-        font-size: 7pt !important;
-        padding: 0 2px !important;
-        letter-spacing: -0.05em !important;
-    }
-    
-    #displayTable th:nth-child(5),
-    #displayTable td:nth-child(5) {
-        font-size: 6.5pt !important;
-        letter-spacing: -0.1em !important;
-    }
-    
-    .bottom-of-labour-table td:nth-child(1) { width: 22% !important; }
-    .bottom-of-labour-table td:nth-child(2) { width: 14% !important; }
-    .bottom-of-labour-table td:nth-child(3) { width: 35% !important; }
-    .bottom-of-labour-table td:nth-child(4) { width: 14% !important; }
-    .bottom-of-labour-table td:nth-child(5) { width: 15% !important; }
-    
-    .normal-day-checkbox,
-    .rainy-day-checkbox,
-    .slushy-day-checkbox,
-    .dry-day-checkbox {
-        width: 12px !important;
-        height: 12px !important;
-    }
-    
-    table, tr, td, th,
-    .daily-progress-report > div,
-    .project-bottom > div,
-    .site-condition,
-    .from-to,
-    .slushy-dry {
-        border-color: black !important;
-        border-style: solid !important;
-        border-width: 1px !important;
-        font-size: 0.80em;
-    }
+    /* Today/Tomorrow Tables Print Styles */
     
     #today-table td,
     #tomorrow-table td {
-        white-space: normal !important;
-        min-height: 10px !important;
-        max-height: 10px !important;
-        overflow: visible !important;
-    }
-    
-    .daily-progress-report {
-        margin-left: 7px;
-        border-left: none;
-    }
-    
-    .today-tomorrow-table-container {
-        display: flex !important;
-        width: 100% !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        gap: 0 !important;
-    }
-    
-    #today-table, 
-    #tomorrow-table {
-        width: 50% !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border-collapse: collapse;
-        height: auto !important;
-        max-height: none !important;
-        display: table !important;
-        visibility: visible !important;
-        overflow: visible !important;
-    }
-    
-    #today-table {
-        border-right: none !important;
-    }
-    
-    #tomorrow-table {
-        border-left: none !important;
-    }
-    
-    #today-table td, 
-    #tomorrow-table td {
-        padding: 1px 3px !important;
-        line-height: 1 !important;
-    }
-    
-    .project-bottom {
-        margin-left: 19px;
-        border-top: 0px;
-    }
-    
-    * {
-        box-shadow: none !important;
-        transform: none !important;
-        box-sizing: border-box !important;
-    }
-    
-    .commulative {
-        font-size: 5.5pt !important;
+        font-size: 10px !important;
+        height: 35px !important;
+        min-height: 35px !important;
+        max-height: 45px !important;
+        line-height: 1.1 !important;
+        padding: 2px 3px !important;
+        border: 1px solid #000 !important;
     }
 
-    /* Print styles for today/tomorrow tables */
-    #today-table th:nth-child(1),  
-    #today-table td:nth-child(1),  
+    #today-table tbody tr,
+    #tomorrow-table tbody tr {
+        height: 20px !important;
+        min-height: 20px !important;
+        max-height: 20px !important;
+    }
+
+    .today-planning-header,
+    .tomorrow-planning-header {
+        border: 1px solid #000;
+        height: 25px !important; 
+        font-size: 10px !important;
+        padding: 4px !important;
+    }
+
+    .tommorrow-planning-header{
+        border-top: 1px solid #000;
+        padding: 4px;
+        text-align: center;
+        word-wrap: break-word;
+        overflow: hidden;
+        height: 45px; /* Consistent row height */
+        min-height: 45px;
+        max-height: 45px;
+        line-height: 1.2; /* Better text alignment */
+        vertical-align: middle;
+    }
+
+    #today-table td:nth-child(3),
+    #today-table td:nth-child(4),
+    #tomorrow-table td:nth-child(3),
+    #tomorrow-table td:nth-child(4) {
+        font-size: 10px !important;
+        padding: 1px !important;
+    }
+
+    /* FIXED: Column widths for print - 50% 25% 12.5% 12.5% */
+    #today-table th:nth-child(1),
+    #today-table td:nth-child(1),
     #tomorrow-table th:nth-child(1),
     #tomorrow-table td:nth-child(1) {
-        width: 70% !important;
+        width: 50% !important;
+        font-size: 10px;
     }
-    
-    #today-table th:nth-child(2),  
-    #today-table td:nth-child(2),  
+
+    #today-table th:nth-child(2),
+    #today-table td:nth-child(2),
     #tomorrow-table th:nth-child(2),
     #tomorrow-table td:nth-child(2) {
-        width: 30% !important;
+        width: 25% !important;
+        font-size: 10px;
+    }
+
+    #today-table th:nth-child(3),
+    #today-table td:nth-child(3),
+    #tomorrow-table th:nth-child(3),
+    #tomorrow-table td:nth-child(3) {
+        width: 12.5% !important;
+    }
+
+    #today-table th:nth-child(4),
+    #today-table td:nth-child(4),
+    #tomorrow-table th:nth-child(4),
+    #tomorrow-table td:nth-child(4) {
+        width: 12.5% !important;
+    }
+
+    /* Ensure proper text wrapping in small columns */
+    
+    #today-table td,
+    #tomorrow-table td {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+    }
+
+    /* Specific adjustments for quantity and unit columns */
+    #today-table td:nth-child(3),
+    #today-table td:nth-child(4),
+    #tomorrow-table td:nth-child(3),
+    #tomorrow-table td:nth-child(4) {
+        text-align: center;
+    }
+
+    .project-bottom{
+        margin-left: 3.58%;
+    }
+    .header{
+        border-bottom: none;
+    }
+    
+    .slushy-dry{
+        font-size: 10px;
+    }
+    .site-condition{
+        font-size: 10px;
+    }
+    
+    .planning-table-header{
+        font-size: 5px;
+    }
+    #displayTable {
+        table-layout: fixed;
+        width: 100%;
+    }
+    #today-table th:nth-child(2),
+    #today-table td:nth-child(2),
+    #tomorrow-table th:nth-child(2),
+    #tomorrow-table td:nth-child(2) {
+        width: 25% !important;
+        min-width: 25% !important;
+        max-width: 25% !important;
+        text-align: center;
+    }
+    #today-table th:nth-child(1),
+    #today-table td:nth-child(1),
+    #tomorrow-table th:nth-child(1),
+    #tomorrow-table td:nth-child(1) {
+        width: 50% !important;
+        min-width: 50% !important;
+        max-width: 50% !important;
+        text-align: center;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+    #today-table {
+        border-right: none;
+    }
+    .labour-table-container{
+        min-height: unset;
+        height: auto;
+    }
+    .inside-labour-table-cotainer {
+        page-break-inside: avoid;
+    }
+    .project-start-date,.project-completion{
+        font-size: 10px;
+    }
+    
+    /* General print optimizations */
+    #displayTable th,
+    #displayTable td {
+        font-size: 10px;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        padding: 2px 4px;
+        line-height: 1.2;
+        border: 1px solid black !important;
     }
 }
+/* End of file */
+
+
+
+
+

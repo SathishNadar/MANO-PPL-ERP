@@ -13,6 +13,7 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+    
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
@@ -27,20 +28,19 @@
           <table class="daily-progress-report-table">
             <!--the table at the top right corner of the PDF page-->
             <tr>
-              <td colspan="2">DAILY PROGRESS REPORT</td>
+              <td style="border-right: none; font-weight: 600; font-size: 15px;" colspan="2">
+                DAILY PROGRESS REPORT
+              </td>
             </tr>
             <tr>
               <td>REPORT DATE</td>
-              <td>insert date here</td>
+              <td class="report-date-td"></td>
             </tr>
           </table>
-          <!-- <div class="daily">DAILY PROGRESS REPORT</div>
-                    <div class="report" id="report_date">REPORT DATE</div>
-                    <div class="dynamic-date">DYNAMIC</div> -->
         </div>
       </div>
       <div class="project-left">
-        <div class="project-label">Pro</div>
+        <div class="project-label">PROJECT</div>
         <table class="project-table">
           <tr>
             <td style="padding-left: 5px">NAME OF WORK</td>
@@ -57,47 +57,68 @@
             <td style="padding-left: 5px" id="project_code"></td>
           </tr>
           <tr>
-            <td style="padding-left: 5px">LOCATION</td>
+            <td style="padding-left: 5px">Location</td>
             <td style="padding-left: 5px" id="location"></td>
           </tr>
         </table>
-        <table style="width: 25%; border-right: 0px; border-left: 0px">
+        <table
+          class="top-right-date-table"
+          style="width: 25%; border-right: 0px; border-left: 0px"
+        >
           <tr>
-            <td style="padding-left: 5px; border: 0px">PROJECT START DATE</td>
             <td
-              style="padding-left: 5px; border-right: 0px"
+              class="project-start-date"
+              style="padding-left: 5px; border-left: 0px"
+            >
+              PROJECT START DATE
+            </td>
+            <td
+              style="
+                padding-left: 5px;
+                border-right: 0px;
+                width: 90px;
+                min-width: 90px;
+                max-width: 90px;
+              "
               id="start_date"
             ></td>
           </tr>
           <tr>
-            <td style="padding-left: 5px">PROJECT COMPLETION</td>
+            <td class="project-completion" style="padding-left: 5px">
+              PROJECT COMPLETION
+            </td>
             <td style="padding-left: 5px" id="end_date">Dynamic</td>
           </tr>
         </table>
       </div>
       <div class="project-bottom">
+        <div class="durr">Dur. in Days</div>
+        <div class="total" style="width: 10%; padding-left: 5px">Total</div>
+        <div class="total-value">Dy</div>
+        <div class="blank">Elapsed Days</div>
         <div
-          class="durr"
-          style="width: 15%; padding-left: 5px; border-bottom: 0px"
+          id="days-passed"
+          class="balance-left"
+          style="width: 8.1%; padding-left: 5px; border-bottom: none"
         >
-          Dur. in Days
+          Dyoooo
         </div>
         <div
-          class="total"
-          style="width: 10%; padding-left: 5px; border-bottom: 0px"
+          class="balance"
+          style="width: 10.2%; padding-left: 5px; border-bottom: none"
         >
-          Total
+          Balance
         </div>
-        <div class="total-value" style="width: 15%; padding-left: 5px">Dy</div>
-        <div class="blank" style="width: 30%; padding-left: 5px"></div>
-        <div class="balance-left" style="width: 10%; padding-left: 5px">Dy</div>
-        <div class="balance" style="width: 10%; padding-left: 5px">Balance</div>
-        <div class="balance-right" style="width: 10%; padding-left: 5px">
+        <div
+          id="remaining-days"
+          class="balance-right"
+          style="width: 10%; padding-left: 5px; border-bottom: none"
+        >
           Dyn
         </div>
       </div>
       <div class="site">
-        <div class="site-label">Site</div>
+        <div class="site-label">SITE</div>
         <div class="site-condition">
           <div id="normal-day" class="normal-day">
             <div id="normal-day-checkbox" class="normal-day-checkbox"></div>
@@ -112,7 +133,7 @@
           <!-- Time slots will be inserted here by JavaScript -->
         </div>
         <div class="slushy-dry">
-          <span>SITE CONDITION</span>
+          <!-- <span>SITE CONDITION</span> -->
           <div id="slushy-day" class="slushy-day">
             <div id="slushy-day-checkbox" class="slushy-day-checkbox"></div>
             SLUSHY
@@ -146,8 +167,12 @@
           </table>
           <table class="bottom-of-labour-table">
             <tr>
-              <td class="commulative" style="text-align: left">
-                commulative man power upto last date
+              <td
+                class="commulative"
+                style="text-align: center; 
+                border-left: none"
+              >
+                Cumulative man power upto last date
               </td>
               <td
                 style="text-align: center"
@@ -155,48 +180,98 @@
               >
                 --
               </td>
-              <td style="text-align: center"></td>
-              <td style="text-align: center"></td>
+              <td style="text-align: center;">Cumulative manpower up to today</td>
               <td style="text-align: center" id="cumulative-manpower-4"></td>
             </tr>
           </table>
         </div>
       </div>
-      <div
-        style="
-          width: 100%;
-          display: flex;
-          flex-direction: row;
-          border-top: 0px;
-          border-left: 0px;
-          border-right: 0px;
-        "
-        class="today-tomorrow-table-container"
-      >
-        <table id="today-table">
-          <tbody>
+      <div class="today-tomorrow-table-container">
+        <div style="border-left: 0px; border-right: 0px" class="events-label">
+          PROGRESS/PROGRAMME
+        </div>
+        <table
+          id="today-table"
+          style="width: 50%; table-layout: fixed; border-collapse: collapse"
+        >
+          <!-- ADDED COLGROUP FOR TODAY TABLE -->
+          <colgroup>
+            <col style="width: 37.5%" />
+            <col style="width: 37.5%" />
+            <col style="width: 12.5%" />
+            <col style="width: 12.5%" />
+          </colgroup>
+          <thead>
             <tr>
-              <th class="today-planning-header" style="text-align: center">
+              <th
+                class="today-planning-header"
+                colspan="4"
+                style="text-align: center; border: 1px solid #000;"
+              >
                 TODAY'S PROGRESS
               </th>
             </tr>
-            <tr>
-              <th style="text-align: center">Task</th>
-              <th>Quantity</th>
+            <tr">
+              <th style="text-align: center; border: 1px solid #000">Item</th>
+              <th style="text-align: center; border: 1px solid #000">
+                Remarks
+              </th>
+              <th style="text-align: center; border: 1px solid #000">Unit</th>
+              <th
+                style="
+                  text-align: center;
+                  border: 1px solid #000;
+                "
+              >
+                Qty
+              </th>
             </tr>
+          </thead>
+          <tbody style="border: 1px solid #000">
+            <!-- Data rows will be inserted here by JavaScript -->
           </tbody>
         </table>
-        <table id="tomorrow-table">
-          <tbody style="border-left: none; border-right: none">
+        <table
+          id="tomorrow-table"
+          style="width: 50%; table-layout: fixed; border-collapse: collapse; "
+        >
+          <!-- ADDED COLGROUP FOR TOMORROW TABLE -->
+          <colgroup>
+            <col style="width: 37.5%" />
+            <col style="width: 37.5%" />
+            <col style="width: 12.5%" />
+            <col style="width: 12.5%" />
+          </colgroup>
+          <thead>
             <tr>
-              <th class="tomorrow-planning-header" style="text-align: center">
+              <th
+                class="tomorrow-planning-header"
+                colspan="4"
+                style="text-align: center;
+                border-right: none !important;"
+              >
                 TOMORROW'S PLANNING
               </th>
             </tr>
             <tr>
-              <th style="text-align: center">Task</th>
-              <th>Quantity</th>
+              <th style="text-align: center; border: 1px solid #000">Item</th>
+              <th style="text-align: center; border: 1px solid #000">
+                Remarks
+              </th>
+              <th style="text-align: center; border: 1px solid #000">Unit</th>
+              <th
+                style="
+                  text-align: center;
+                  border: 1px solid #000;
+                  border-right: none !important;
+                "
+              >
+                Qty
+              </th>
             </tr>
+          </thead>
+          <tbody style="border: 1px solid #000; border-right: none !important;">
+            <!-- Data rows will be inserted here by JavaScript -->
           </tbody>
         </table>
       </div>
@@ -210,12 +285,10 @@
           "
           class="events-remarks"
         >
-          <div style="border-left: 0px; border-right: 0px" class="events-label">
-            EVENTS/REMARKS
+          <div  class="events-label">
+            EVENTS
           </div>
           <div class="events-container" id="events-container">
-            <div class="events-content">--</div>
-            <div class="events-content">--</div>
             <div class="events-content">--</div>
             <div class="events-content">--</div>
             <div class="events-content">--</div>
@@ -224,19 +297,25 @@
         </div>
         <div style="border-left: 0px; border-right: 0px" class="remarks">
           <div
-            style="border-left: 0px; border-right: 0px"
+            style="border-right: 0px; border-left: 2px solid black"
             class="remarks-label"
           >
             REMARKS
           </div>
-          <div class="remarks-content-container">
-            <div class="remarks-content">--</div>
-            <div class="remarks-content">--</div>
-            <div class="remarks-content">--</div>
+          <div class="remarks-content-container" >
+            <div class="remarks-content"></div>
+            <div class="remarks-content"></div>
+            <div class="remarks-content"></div>
           </div>
-          <div id="distribution" class="distribution">GOYAL</div>
-          <div id="prepared-by" class="prepared-by">MANO PCPL</div>
-          <div class="signature">MANO</div>
+          <div class="distribution" style="font-size: 10px; font-weight: 500;">
+            <div>Distribution</div>
+            <div id="distribution">--</div>
+          </div>
+          <div style="padding: 6px" id="prepared-by" class="prepared-by">
+            <div style="font-size: 12px; font-weight: 500;">Prepared-by</div>
+            <span style="font-size: 12px;">Mano PCPL.</span>
+          </div>
+
         </div>
       </div>
     </div>

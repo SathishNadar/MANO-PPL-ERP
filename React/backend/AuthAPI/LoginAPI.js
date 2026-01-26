@@ -32,7 +32,8 @@ export async function authenticateJWT(req, res, next) {
         user_id: decodedUser.user_id,
         user_name: decodedUser.user_name,
         email: decodedUser.email,
-        title: decodedUser.title,  
+        title: decodedUser.title_name,
+        title_id: decodedUser.title_id
       };
 
       next();
@@ -83,7 +84,8 @@ router.post("/login", async (req, res) => {
       user_id: user_data.user_id,
       user_name: user_data.user_name,
       email: user_data.email,
-      title: title_data,
+      title_name:user_data.title_name,
+      title_id:user_data.title_id
     };
 
     const token = await generateJWT(response_data);

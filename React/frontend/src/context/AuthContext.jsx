@@ -1,8 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+import { createContext, useState, useEffect, useContext} from 'react';
+import React from 'react';
 
 const AuthContext = createContext();
 

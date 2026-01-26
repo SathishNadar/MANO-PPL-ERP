@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+
 
 const countryCodes = [
   { code: "+1", label: "US" },
@@ -84,7 +84,7 @@ const Signup = ({ onSwitch }) => {
     }
 
     try {
-      const response = await fetch(`http://${API_URI}:${PORT}/api/start-signup`, {
+      const response = await fetch(`${API_BASE}/api/start-signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: trimmedUsername, email, password, phone: countryCode + phone }),

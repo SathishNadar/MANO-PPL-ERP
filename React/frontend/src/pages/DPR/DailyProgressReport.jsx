@@ -1,12 +1,151 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+// EditableList component: Simple editable list of strings with add, remove, and change handlers.
+// EditableList now expects items as array of {id, text}
+function EditableList({ items, onAdd, onRemove, onChange, placeholder, addButtonLabel }) {
+  return (
+    <div>
+      <ul className="flex flex-col gap-2">
+        {items.map((item, idx) => (
+          <li key={item.id ?? idx} className="flex items-center gap-2">
+            <input
+              type="text"
+              className="flex-1 bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={item.text}
+              onChange={e => onChange(idx, e.target.value)}
+              placeholder={placeholder}
+            />
+            <button
+              type="button"
+              className="text-red-400 hover:text-red-600 transition-colors"
+              title="Delete"
+              onClick={() => onRemove(idx)}
+            >
+              <span className="material-icons align-middle">close</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button
+        className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-4 py-1 w-full mt-2"
+        type="button"
+        onClick={onAdd}
+      >
+        {addButtonLabel || "Add"}
+      </button>
+    </div>
+  );
+}
+
+// BudgetTreeForDPR: Simplified budget tree for item selection in DPR
+function BudgetTreeForDPR({ tree, expanded, onToggle, onItemDoubleClick }) {
+  function formatINR(num) {
+    if (num == null || isNaN(num)) return '0.00';
+    const n = Number(num.toFixed(2));
+    const parts = n.toFixed(2).split('.');
+    let intPart = parts[0];
+    const decPart = parts[1];
+    const neg = intPart[0] === '-' ? '-' : '';
+    if (neg) intPart = intPart.slice(1);
+    if (intPart.length > 3) {
+      const last3 = intPart.slice(-3);
+      let rest = intPart.slice(0, -3);
+      rest = rest.replace(/\B(?=(?:\d{2})+(?!\d))/g, ',');
+      intPart = rest + ',' + last3;
+    }
+    return `${neg}${intPart}.${decPart}`;
+  }
+
+  function computeTotal(node) {
+    if (!node) return 0;
+    if (Number(node.is_leaf) === 1) {
+      const itemRate = Number(node.item_rate ?? 0) || 0;
+      const labourRate = Number(node.item_labour_rate ?? 0);
+      const qty = Number(node.quantity ?? 0) || 0;
+      return qty * (itemRate + labourRate);
+    }
+    if (!node.children || node.children.length === 0) return 0;
+    return node.children.reduce((sum, c) => sum + computeTotal(c), 0);
+  }
+
+  function BudgetNode({ node }) {
+    const isLeaf = Number(node.is_leaf) === 1;
+    const isExpanded = node.id && expanded.has(node.id);
+    const total = computeTotal(node);
+
+    if (isLeaf) {
+      return (
+        <div
+          className="ml-0 mb-2 cursor-pointer hover:bg-gray-700 transition-colors rounded-md"
+          onDoubleClick={() => onItemDoubleClick(node)}
+          title="Double-click to add this item"
+        >
+          <div className="bg-gray-800 p-3 rounded-md shadow-sm">
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="font-medium text-gray-300 text-sm">{node.item_name ?? node.name}</span>
+                <span className="text-sm text-gray-500 ml-2">({node.item_unit ?? ''})</span>
+                <div className="text-xs text-gray-400 mt-1">
+                  Qty: {node.quantity ?? 0} | Rate: ₹{formatINR(Number(node.item_rate ?? 0) + Number(node.item_labour_rate ?? 0))}
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold text-white">₹{formatINR(total)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="ml-0 mb-2">
+        <div className="bg-gray-900 p-4 rounded-lg shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button onClick={() => onToggle(node.id)} className="material-icons text-gray-400 text-base">
+                {isExpanded ? 'expand_more' : 'chevron_right'}
+              </button>
+              <span className="font-bold text-base text-gray-100">{node.name}</span>
+            </div>
+            <div className="text-right">
+              <p className="text-base font-semibold text-white">₹{formatINR(total)}</p>
+            </div>
+          </div>
+        </div>
+
+        {node.children && node.children.length > 0 && isExpanded && (
+          <div className="ml-6 mt-2 space-y-2 border-l border-gray-700 pl-4">
+            {node.children.map((child) => (
+              <BudgetNode key={child.id ?? child.name} node={child} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {tree.length === 0 && (
+        <div className="bg-gray-900 p-4 rounded-lg text-gray-400 text-center">No budget data found.</div>
+      )}
+      {tree.map((root) => (
+        <BudgetNode key={root.id ?? root.name} node={root} />
+      ))}
+    </div>
+  );
+}
+
+import { useParams, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Sidebar from "../SidebarComponent/sidebar";
 
 function DailyProgressReport() {
-  const API_URI = import.meta.env.VITE_API_URI;
-  const PORT = import.meta.env.VITE_BACKEND_PORT;
+  const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [condition, setCondition] = React.useState("normal"); // "normal" or "rainy"
   const [timeSlots, setTimeSlots] = React.useState([
@@ -20,6 +159,16 @@ function DailyProgressReport() {
   const [eventInput, setEventInput] = useState("");
   const [remarksEnabled, setRemarksEnabled] = useState(true);
 
+  // --- New state variables for redesigned Events & Remarks section ---
+  // Helper for unique IDs for list items
+  function generateListId() {
+    return Math.random().toString(36).substr(2, 9) + Date.now();
+  }
+  const [eventsRemarks, setEventsRemarks] = useState([]);
+  const [generalRemark, setGeneralRemark] = useState([]);
+  const [preparedBy, setPreparedBy] = useState("");
+  const [distribute, setDistribute] = useState([]);
+
   // --- New states for today's progress and tomorrow's plan ---
   const [todaysProgress, setTodaysProgress] = useState([]);
   const [tomorrowsPlan, setTomorrowsPlan] = useState([]);
@@ -28,12 +177,22 @@ function DailyProgressReport() {
   // New state for remarks textarea
   const [remarks, setRemarks] = useState("");
   const today = new Date();
+
+  // --- Budget Integration States ---
+  const [budgetTree, setBudgetTree] = useState([]);
+  const [showTodayModal, setShowTodayModal] = useState(false);
+  const [showTomorrowModal, setShowTomorrowModal] = useState(false);
+  const [expandedBudgetNodes, setExpandedBudgetNodes] = useState(new Set());
+  const [budgetItemUsage, setBudgetItemUsage] = useState({}); // Track used quantities per budget item ID
+  const [consumedQuantities, setConsumedQuantities] = useState({}); // Track consumed quantities from all DPRs
+  const [cumulativeManpowerTillDate, setCumulativeManpowerTillDate] = useState(0);
+
+  const UNIT_OPTIONS = ["No", "Rmt", "Sqm", "Cum", "Rft", "Sft", "Cft", "MT", "Kg", "Lit", "Day", "Each", "LS", "Shift", "Month", "Hrs"];
   useEffect(() => {
     if (!projectId) return;
     const fetchProjectDetails = async () => {
       try {
-        const response = await fetch(
-          `http://${API_URI}:${PORT}/project/getProject/${projectId}`,
+        const response = await fetch(`${API_BASE}/project/getProject/${projectId}`,
           {
             credentials: "include",
           }
@@ -101,38 +260,99 @@ function DailyProgressReport() {
             setLabourReport([]);
           }
         }
-        // --- Fetch last DPR for today's progress prefill ---
+        // --- Fetch last DPR for today's progress and tomorrow's plan prefill ---
         try {
-          const dprResp = await fetch(
-            `http://${API_URI}:${PORT}/report/initDPR/${projectId}`,
-            {
-              credentials: "include",
-            }
-          );
+          const dprResp = await fetch(`${API_BASE}/report/initDPR/${projectId}`, {
+            credentials: "include",
+          });
           const dprJson = await dprResp.json();
-          // Prefill today's progress directly from dprJson.todays_plan if available
-          if (
-            dprJson?.todays_plan &&
-            Array.isArray(dprJson.todays_plan.plan) &&
-            dprJson.todays_plan.plan.length > 0
-          ) {
-            setTodaysProgress(
-              dprJson.todays_plan.plan.map((task, idx) => ({
-                task: task || "",
-                qty:
-                  Array.isArray(dprJson.todays_plan.qty) &&
-                  typeof dprJson.todays_plan.qty[idx] !== "undefined"
-                    ? dprJson.todays_plan.qty[idx]
-                    : "",
-              }))
-            );
+          // Store cumulative manpower from previous DPRs
+          if (dprJson && dprJson.cumulative_manpower_till_date !== undefined) {
+            setCumulativeManpowerTillDate(Number(dprJson.cumulative_manpower_till_date) || 0);
+          }
+
+          // Prefill today's progress from yesterday's tomorrow_plan
+          if (dprJson?.todays_plan && Array.isArray(dprJson.todays_plan)) {
+            const arr = dprJson.todays_plan.map(item => ({
+              item: item.item_name || "",
+              qty: item.quantity || "",
+              unit: item.unit || "",
+              remarks: item.remarks || "",
+              budgetItemId: item.item_id || null,
+              totalAvailable: 0, // Will be updated from budget tree below
+            }));
+            setTodaysProgress(arr);
           } else {
             setTodaysProgress([]);
           }
+
+          // Tomorrow's plan is not prefilled from previous DPR
+          setTomorrowsPlan([]);
         } catch (err) {
           setTodaysProgress([]);
+          setTomorrowsPlan([]);
         }
-        setTomorrowsPlan([]);
+
+        // --- Fetch Budget Tree ---
+        try {
+          const budgetResp = await fetch(`${API_BASE}/budget/fetch/${projectId}`, {
+            credentials: "include",
+          });
+          const budgetJson = await budgetResp.json();
+          if (budgetJson?.data) {
+            const data = Array.isArray(budgetJson.data) ? budgetJson.data : [budgetJson.data];
+            setBudgetTree(data);
+
+            // Expand all top-level nodes by default
+            const topExpanded = new Set();
+            data.forEach((n) => { if (n && n.id) topExpanded.add(n.id); });
+            setExpandedBudgetNodes(topExpanded);
+
+            // Fetch consumed quantities for all items in the project
+            try {
+              const consumedResp = await fetch(`${API_BASE}/report/consumedQuantities/${projectId}`, {
+                credentials: "include",
+              });
+              const consumedJson = await consumedResp.json();
+              if (consumedJson?.success && consumedJson.data) {
+                setConsumedQuantities(consumedJson.data);
+                console.log("Consumed quantities:", consumedJson.data);
+              }
+            } catch (err) {
+              console.error("Error fetching consumed quantities:", err);
+            }
+
+            // Helper to find budget item by item_id (not budget_category.id)
+            const findItemByItemId = (tree, itemId) => {
+              for (const node of tree) {
+                if (Number(node.is_leaf) === 1 && node.item_id === itemId) {
+                  return node;
+                }
+                if (node.children && node.children.length > 0) {
+                  const found = findItemByItemId(node.children, itemId);
+                  if (found) return found;
+                }
+              }
+              return null;
+            };
+
+            // Update today's progress with budget quantities if items were loaded
+            setTodaysProgress(prev => prev.map(item => {
+              if (item.budgetItemId) {
+                const budgetItem = findItemByItemId(data, item.budgetItemId);
+                if (budgetItem) {
+                  return {
+                    ...item,
+                    totalAvailable: budgetItem.quantity || 0,
+                  };
+                }
+              }
+              return item;
+            }));
+          }
+        } catch (err) {
+          console.error("Error fetching budget tree:", err);
+        }
       } catch (error) {
         console.error("Error fetching project details:", error);
       }
@@ -181,19 +401,23 @@ function DailyProgressReport() {
     }
 
     // --- cumulative_manpower ---
-    const cumulative_manpower = Array.isArray(labourReport)
+
+    const todays_manpower = Array.isArray(labourReport)
       ? labourReport.reduce(
-          (sum, row) =>
-            sum +
-            (project?.metadata?.labour_type
-              ? project.metadata.labour_type.reduce(
-                  (rowSum, type) => rowSum + (Number(row[type]) || 0),
-                  0
-                )
-              : 0),
-          0
-        )
+        (sum, row) =>
+          sum +
+          (project?.metadata?.labour_type
+            ? project.metadata.labour_type.reduce(
+              (rowSum, type) => rowSum + (Number(row[type]) || 0),
+              0
+            )
+            : 0),
+        0
+      )
       : 0;
+
+    // Total cumulative = previous total + today's total
+    const cumulative_manpower = cumulativeManpowerTillDate + todays_manpower;
 
     // --- remarks field (top-level string) ---
     const remarksVal = remarksEnabled ? remarks : "NO General remarks";
@@ -207,14 +431,22 @@ function DailyProgressReport() {
     }
 
     // --- today_prog and tomorrow_plan ---
-    const today_prog = {
-      progress: todaysProgress.map((row) => row.task),
-      qty: todaysProgress.map((row) => row.qty),
-    };
-    const tomorrow_plan = {
-      plan: tomorrowsPlan.map((row) => row.task),
-      qty: tomorrowsPlan.map((row) => row.qty),
-    };
+    // New format: array of objects with item_id, quantity, remarks
+    const today_prog = todaysProgress
+      .filter(row => row.budgetItemId && row.qty) // Only include budget-linked items with quantity
+      .map((row) => ({
+        item_id: row.budgetItemId,
+        quantity: parseFloat(row.qty) || 0,
+        remarks: row.remarks || null,
+      }));
+
+    const tomorrow_plan = tomorrowsPlan
+      .filter(row => row.budgetItemId && row.qty) // Only include budget-linked items with quantity
+      .map((row) => ({
+        item_id: row.budgetItemId,
+        quantity: parseFloat(row.qty) || 0,
+        remarks: row.remarks || null,
+      }));
 
     // --- Compose object in required order ---
     return {
@@ -224,9 +456,7 @@ function DailyProgressReport() {
       labour_report,
       cumulative_manpower,
       today_prog,
-      today_qty: today_prog.qty,
       tomorrow_plan,
-      tomorrow_qty: tomorrow_plan.qty,
       remarks: remarksVal,
       events_remarks,
       created_at: getMySQLDateTime(),
@@ -234,46 +464,238 @@ function DailyProgressReport() {
     };
   }
 
-  // Function to post DPR to backend
   async function postDPRToBackend() {
     try {
-      const dprObj = generateCompleteDPRObject();
-      const response = await fetch(
-        `http://${API_URI}:${PORT}/report/insertDPR`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(dprObj),
+      // Validate quantities before submission
+      for (const row of todaysProgress) {
+        if (row.budgetItemId && row.qty) {
+          const consumed = consumedQuantities[row.budgetItemId] || 0;
+          const available = row.totalAvailable - consumed;
+          const currentQty = parseFloat(row.qty) || 0;
+
+          if (currentQty > available) {
+            toast.error(
+              `Quantity exceeds available limit for "${row.item}". Available: ${available}, Entered: ${currentQty}`,
+              { autoClose: 4000 }
+            );
+            return; // Stop submission
+          }
         }
+      }
+
+      const dprObj = generateCompleteDPRObject();
+
+      const report_footer = {
+        distribute: distribute.map((d) => d.text),
+        prepared_by: "Mano Projects Pvt. Ltd.",
+        events_visit: eventsRemarks.map((e) => e.text),
+        bottom_remarks: generalRemark ? [generalRemark] : [""],
+      };
+
+      const fullPayload = {
+        pr_id: null,
+        ...dprObj,
+        report_footer,
+        created_at: getMySQLDateTime(),
+        created_by: "system",
+        approved_by: null,
+        final_approved_by: null,
+        current_handler: null,
+        dpr_status: "pending",
+      };
+
+      const response = await fetch(`${API_BASE}/report/insertDPR`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(fullPayload),
+      });
+
+      // safe parse (avoid throw if invalid JSON)
+      const data = await response.json().catch(() => ({}));
+
+      // Robust success detection:
+      // - prefer explicit flags (data.success || data.ok)
+      // - fallback to HTTP response.ok
+      // - fallback to message containing 'insert' (covers "DPR inserted successfully")
+      const isSuccess = Boolean(
+        (data && (data.success || data.ok)) ||
+        response.ok ||
+        (typeof data.message === "string" && /insert(ed)?/i.test(data.message))
       );
-      const data = await response.json();
-      if (response.ok && data.success) {
-        alert("DPR generated and submitted successfully!");
+      const autoCloseMs = 2000;
+      if (isSuccess) {
+        // success toast and navigate when toast closes
+        toast.success(data.message || "DPR generated and submitted successfully!", {
+          autoClose: autoCloseMs,
+          onClose: () => {
+            navigate(`/dashboard/project-description/${projectId}`);
+          },
+        });
       } else {
-        alert(
-          `Failed to generate DPR: ${
-            data?.message || response.statusText || "Unknown error"
-          }`
-        );
+        toast.error(data?.message || response.statusText || "Failed to generate DPR", {
+          autoClose: autoCloseMs,
+          onClose: () => {
+            navigate(`/dashboard/project-description/${projectId}`);
+          }
+        });
       }
     } catch (err) {
-      alert(`Error submitting DPR: ${err.message}`);
+      toast.error(`Error submitting DPR: ${err?.message || err}`);
+      console.error("Error submitting DPR:", err);
     }
+  }
+
+  // --- EditableList handler functions for Events, Bottom Remarks, Distribute ---
+  // Events
+  function addEvent() {
+    setEventsRemarks(prev => [...prev, { id: generateListId(), text: "" }]);
+  }
+  function removeEvent(idx) {
+    setEventsRemarks(prev => prev.filter((_, i) => i !== idx));
+  }
+  function setEvent(idx, value) {
+    setEventsRemarks(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], text: value };
+      return updated;
+    });
+  }
+  // Bottom Remarks
+  function addBottomRemark() {
+    setBottomRemarks(prev => [...prev, { id: generateListId(), text: "" }]);
+  }
+  function removeBottomRemark(idx) {
+    setBottomRemarks(prev => prev.filter((_, i) => i !== idx));
+  }
+  function setBottomRemark(idx, value) {
+    setBottomRemarks(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], text: value };
+      return updated;
+    });
+  }
+  // Distribute
+  function addDistributor() {
+    setDistribute(prev => [...prev, { id: generateListId(), text: "" }]);
+  }
+  function removeDistributor(idx) {
+    setDistribute(prev => prev.filter((_, i) => i !== idx));
+  }
+  function setDistributor(idx, value) {
+    setDistribute(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], text: value };
+      return updated;
+    });
+  }
+
+  // --- Budget Helper Functions ---
+  function toggleBudgetNode(id) {
+    setExpandedBudgetNodes((prev) => {
+      const copy = new Set(prev);
+      if (copy.has(id)) copy.delete(id);
+      else copy.add(id);
+      return copy;
+    });
+  }
+
+  // Find budget item by ID recursively
+  function findBudgetItemById(tree, itemId) {
+    for (const node of tree) {
+      if (Number(node.is_leaf) === 1 && node.id === itemId) {
+        return node;
+      }
+      if (node.children && node.children.length > 0) {
+        const found = findBudgetItemById(node.children, itemId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // Calculate total quantity available for a budget item (total - already used)
+  function getAvailableQuantity(budgetItemId, totalQty) {
+    const used = budgetItemUsage[budgetItemId] || 0;
+    return totalQty - used;
+  }
+
+  // Handle budget item selection (double-click)
+  function handleBudgetItemSelect(budgetItem, modalType) {
+    // Prevent duplicate items
+    const targetList = modalType === "today" ? todaysProgress : tomorrowsPlan;
+    const itemExists = targetList.some(row => row.budgetItemId === budgetItem.item_id);
+
+    if (itemExists) {
+      toast.warning(`"${budgetItem.item_name || budgetItem.name}" is already added!`, {
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    const newRow = {
+      item: budgetItem.item_name || budgetItem.name,
+      unit: budgetItem.item_unit || "",
+      qty: "",
+      remarks: "",
+      budgetItemId: budgetItem.item_id,  // Use item_id from item table, not budget_category.id
+      totalAvailable: budgetItem.quantity || 0,
+    };
+
+    if (modalType === "today") {
+      setTodaysProgress((prev) => [...prev, newRow]);
+      toast.success(`Added ${budgetItem.item_name || budgetItem.name} to Today's Progress`);
+    } else {
+      setTomorrowsPlan((prev) => [...prev, newRow]);
+      toast.success(`Added ${budgetItem.item_name || budgetItem.name} to Tomorrow's Planning`);
+    }
+  }
+
+  // Compute total for a budget node (recursive)
+  function computeBudgetTotal(node) {
+    if (!node) return 0;
+    if (Number(node.is_leaf) === 1) {
+      const itemRate = Number(node.item_rate ?? 0) || 0;
+      const labourRate = Number(node.item_labour_rate ?? 0);
+      const qty = Number(node.quantity ?? 0) || 0;
+      return qty * (itemRate + labourRate);
+    }
+    if (!node.children || node.children.length === 0) return 0;
+    return node.children.reduce((sum, c) => sum + computeBudgetTotal(c), 0);
   }
 
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 min-h-screen bg-gray-900 text-gray-100 overflow-y-auto">
-        {/* Header */}
+        <ToastContainer
+          position="top-right"
+          autoClose={2000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+        {/* Header with Back Button and Date */}
         <div className="px-4 py-6 md:px-12 lg:px-24">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-extrabold text-white mb-2">
-              Daily Progress Report
-            </h1>
+          <div className="mb-8 flex justify-between items-center px-2">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => window.location.href = `/dashboard/project-description/${projectId}`}
+                className="flex items-center gap-2 bg-gray-700 text-gray-200 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                <span className="material-icons">arrow_back</span>
+                Back
+              </button>
+
+              <h1 className="text-2xl align-middle font-extrabold text-white">
+                Daily Progress Report
+              </h1>
+            </div>
+
             <p className="text-base text-[#BBDEFB]">
               {today.toLocaleDateString("en-GB", {
                 day: "numeric",
@@ -375,9 +797,8 @@ function DailyProgressReport() {
               <h2 className="text-xl font-semibold mb-4">Condition</h2>
               <div className="flex justify-around text-xs gap-8 text-gray-300">
                 <div
-                  className={`mx-1 text-center cursor-pointer pb-0.5 ${
-                    condition === "normal" ? "border-b-2 border-blue-400" : ""
-                  }`}
+                  className={`mx-1 text-center cursor-pointer pb-0.5 ${condition === "normal" ? "border-b-2 border-blue-400" : ""
+                    }`}
                   onClick={() => setCondition("normal")}
                 >
                   <span className="material-icons text-yellow-400">
@@ -386,9 +807,8 @@ function DailyProgressReport() {
                   <p>Normal Day</p>
                 </div>
                 <div
-                  className={`mx-1 text-center cursor-pointer pb-0.5 ${
-                    condition === "normal" ? "border-b-2 border-blue-400" : ""
-                  }`}
+                  className={`mx-1 text-center cursor-pointer pb-0.5 ${condition === "normal" ? "border-b-2 border-blue-400" : ""
+                    }`}
                   onClick={() => setCondition("normal")}
                 >
                   <span className="material-icons text-orange-400">
@@ -397,18 +817,16 @@ function DailyProgressReport() {
                   <p>Dry</p>
                 </div>
                 <div
-                  className={`mx-1 text-center cursor-pointer pb-0.5 ${
-                    condition === "rainy" ? "border-b-2 border-blue-400" : ""
-                  }`}
+                  className={`mx-1 text-center cursor-pointer pb-0.5 ${condition === "rainy" ? "border-b-2 border-blue-400" : ""
+                    }`}
                   onClick={() => setCondition("rainy")}
                 >
                   <span className="material-icons text-blue-400">umbrella</span>
                   <p>Rainy Day</p>
                 </div>
                 <div
-                  className={`mx-1 text-center cursor-pointer pb-0.5 ${
-                    condition === "rainy" ? "border-b-2 border-blue-400" : ""
-                  }`}
+                  className={`mx-1 text-center cursor-pointer pb-0.5 ${condition === "rainy" ? "border-b-2 border-blue-400" : ""
+                    }`}
                   onClick={() => setCondition("rainy")}
                 >
                   <span className="material-icons text-indigo-300">
@@ -495,8 +913,8 @@ function DailyProgressReport() {
             </h2>
             <div className="overflow-x-auto rounded-lg">
               {project?.metadata &&
-              Array.isArray(project.metadata.agency) &&
-              Array.isArray(project.metadata.labour_type) ? (
+                Array.isArray(project.metadata.agency) &&
+                Array.isArray(project.metadata.labour_type) ? (
                 (() => {
                   // Calculate column totals and grand total
                   const colTotals = project.metadata.labour_type.map((type) =>
@@ -706,96 +1124,154 @@ function DailyProgressReport() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Today's Progress Table */}
             <div className="bg-gray-800 rounded-xl p-6 mb-6 border border-gray-800">
-              <div className="flex items-center mb-4">
-                <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">
-                  Today's Progress
-                </h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">Today's Progress</h2>
+                  <button
+                    type="button"
+                    className="ml-1 text-gray-400 hover:text-blue-400 transition-colors"
+                    title={editToday ? "Done" : "Edit"}
+                    onClick={() => setEditToday((e) => !e)}
+                  >
+                    {!editToday ? (
+                      <span className="material-icons align-middle">edit</span>
+                    ) : (
+                      <span className="material-icons align-middle">check</span>
+                    )}
+                  </button>
+                </div>
                 <button
                   type="button"
-                  className="ml-1 text-gray-400 hover:text-blue-400 transition-colors"
-                  title={editToday ? "Done" : "Edit"}
-                  onClick={() => setEditToday((e) => !e)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  onClick={() => setShowTodayModal(true)}
                 >
-                  {!editToday ? (
-                    <span className="material-icons align-middle">edit</span>
-                  ) : (
-                    <span className="material-icons align-middle">check</span>
-                  )}
+                  <span className="material-icons text-sm">add</span>
+                  Add Task
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-separate border-spacing-0">
                   <thead>
                     <tr>
-                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">
-                        Task
-                      </th>
-                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">
-                        Quantity
-                      </th>
-                      {editToday && (
-                        <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>
-                      )}
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[30%]">Item</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[30%]">Remarks</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[15%]">Unit</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[25%]">Qty</th>
+                      {editToday && <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>}
                     </tr>
                   </thead>
                   <tbody>
                     {todaysProgress.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={editToday ? 3 : 2}
-                          className="text-center text-gray-400 px-4 py-2"
-                        >
-                          No tasks added yet.
-                        </td>
+                        <td colSpan={editToday ? 5 : 4} className="text-center text-gray-400 px-4 py-2">No tasks added yet.</td>
                       </tr>
                     )}
                     {todaysProgress.map((row, idx) => (
                       <tr key={idx} className="bg-gray-800">
-                        <td className="border-b border-gray-700 px-4 py-2">
+                        <td className="border-b border-gray-700 px-4 py-2 w-[30%]">
                           <input
                             className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Task"
-                            value={row.task}
+                            placeholder="Item"
+                            value={row.item}
+                            readOnly={!!row.budgetItemId}
+                            onChange={(e) => {
+                              if (!row.budgetItemId) {
+                                const val = e.target.value;
+                                setTodaysProgress((prev) => {
+                                  const updated = [...prev];
+                                  updated[idx] = { ...updated[idx], item: val };
+                                  return updated;
+                                });
+                              }
+                            }}
+                          />
+                        </td>
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[30%]">
+                          <input
+                            className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Remarks"
+                            value={row.remarks}
                             onChange={(e) => {
                               const val = e.target.value;
                               setTodaysProgress((prev) => {
                                 const updated = [...prev];
-                                updated[idx] = { ...updated[idx], task: val };
+                                updated[idx] = { ...updated[idx], remarks: val };
                                 return updated;
                               });
                             }}
                           />
                         </td>
-                        <td className="border-b border-gray-700 px-4 py-2">
-                          <input
-                            className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Quantity"
-                            value={row.qty}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setTodaysProgress((prev) => {
-                                const updated = [...prev];
-                                updated[idx] = { ...updated[idx], qty: val };
-                                return updated;
-                              });
-                            }}
-                          />
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[15%]">
+                          {row.budgetItemId ? (
+                            <input
+                              className="w-full bg-gray-600 text-gray-300 rounded px-2 py-1 border border-gray-700"
+                              value={row.unit}
+                              readOnly
+                            />
+                          ) : (
+                            <select
+                              className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              value={row.unit}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setTodaysProgress((prev) => {
+                                  const updated = [...prev];
+                                  updated[idx] = { ...updated[idx], unit: val };
+                                  return updated;
+                                });
+                              }}
+                            >
+                              <option value="">Select Unit</option>
+                              {UNIT_OPTIONS.map((u) => (
+                                <option key={u} value={u}>{u}</option>
+                              ))}
+                            </select>
+                          )}
                         </td>
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[25%]">
+                          <div className="flex flex-col gap-1">
+                            <input
+                              className={`w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border ${(() => {
+                                if (!row.budgetItemId) return 'border-gray-700';
+                                const consumed = consumedQuantities[row.budgetItemId] || 0;
+                                const available = row.totalAvailable - consumed;
+                                return Number(row.qty) > available ? 'border-red-500' : 'border-gray-700';
+                              })()} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                              placeholder="Quantity"
+                              type="number"
+                              value={row.qty}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setTodaysProgress((prev) => {
+                                  const updated = [...prev];
+                                  updated[idx] = { ...updated[idx], qty: val };
+                                  return updated;
+                                });
+                              }}
+                            />
+                            {row.budgetItemId && row.totalAvailable !== undefined && (() => {
+                              const consumed = consumedQuantities[row.budgetItemId] || 0;
+                              const available = row.totalAvailable - consumed;
+                              const current = Number(row.qty) || 0;
+                              const remaining = available - current;
+                              const isValid = current <= available;
+                              return (
+                                <div className={`text-xs ${!isValid ? 'text-red-400' : 'text-blue-400'
+                                  }`}>
+                                  {current}/{available} remaining {remaining} (consumed: {consumed})
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </td>
+
                         {editToday && (
                           <td className="border-b border-gray-700 px-2 py-2 text-center">
-                            <button
-                              type="button"
-                              className="text-red-400 hover:text-red-600 transition-colors"
-                              title="Delete"
-                              onClick={() =>
-                                setTodaysProgress((prev) =>
-                                  prev.filter((_, i) => i !== idx)
-                                )
-                              }
-                            >
-                              <span className="material-icons align-middle">
-                                close
-                              </span>
+                            <button type="button" className="text-red-400 hover:text-red-600 transition-colors" title="Delete" onClick={() => setTodaysProgress((prev) => prev.filter((_, i) => i !== idx))}>
+                              <span className="material-icons align-middle">close</span>
                             </button>
                           </td>
                         )}
@@ -804,108 +1280,147 @@ function DailyProgressReport() {
                   </tbody>
                 </table>
               </div>
-              <button
-                className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4"
-                type="button"
-                onClick={() =>
-                  setTodaysProgress((prev) => [...prev, { task: "", qty: "" }])
-                }
-              >
-                Add Task
-              </button>
+
             </div>
+
             {/* Tomorrow's Planning Table */}
             <div className="bg-gray-800 rounded-xl p-6 mb-6 border border-gray-800">
-              <div className="flex items-center mb-4">
-                <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">
-                  Tomorrow's Planning
-                </h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <h2 className="text-lg font-medium text-[#E0E0E0] mr-2">Tomorrow's Planning</h2>
+                  <button type="button" className="ml-1 text-gray-400 hover:text-blue-400 transition-colors" title={editTomorrow ? "Done" : "Edit"} onClick={() => setEditTomorrow((e) => !e)}>
+                    {!editTomorrow ? (
+                      <span className="material-icons align-middle">edit</span>
+                    ) : (
+                      <span className="material-icons align-middle">check</span>
+                    )}
+                  </button>
+                </div>
                 <button
                   type="button"
-                  className="ml-1 text-gray-400 hover:text-blue-400 transition-colors"
-                  title={editTomorrow ? "Done" : "Edit"}
-                  onClick={() => setEditTomorrow((e) => !e)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  onClick={() => setShowTomorrowModal(true)}
                 >
-                  {!editTomorrow ? (
-                    <span className="material-icons align-middle">edit</span>
-                  ) : (
-                    <span className="material-icons align-middle">check</span>
-                  )}
+                  <span className="material-icons text-sm">add</span>
+                  Add Plan
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-separate border-spacing-0">
                   <thead>
                     <tr>
-                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">
-                        Task
-                      </th>
-                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800">
-                        Quantity
-                      </th>
-                      {editTomorrow && (
-                        <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>
-                      )}
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[30%]">Item</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[30%]">Remarks</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[15%]">Unit</th>
+                      <th className="border-b border-gray-700 px-4 py-2 text-left text-gray-300 font-bold bg-gray-800 w-[25%]">Qty</th>
+                      {editTomorrow && <th className="border-b border-gray-700 px-2 py-2 bg-gray-800"></th>}
                     </tr>
                   </thead>
                   <tbody>
                     {tomorrowsPlan.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={editTomorrow ? 3 : 2}
-                          className="text-center text-gray-400 px-4 py-2"
-                        >
-                          No plans added yet.
-                        </td>
+                        <td colSpan={editTomorrow ? 5 : 4} className="text-center text-gray-400 px-4 py-2">No plans added yet.</td>
                       </tr>
                     )}
                     {tomorrowsPlan.map((row, idx) => (
                       <tr key={idx} className="bg-gray-800">
-                        <td className="border-b border-gray-700 px-4 py-2">
+                        <td className="border-b border-gray-700 px-4 py-2 w-[30%]">
                           <input
                             className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Task"
-                            value={row.task}
+                            placeholder="Item"
+                            value={row.item}
+                            readOnly={!!row.budgetItemId}
+                            onChange={(e) => {
+                              if (!row.budgetItemId) {
+                                const val = e.target.value;
+                                setTomorrowsPlan((prev) => {
+                                  const updated = [...prev];
+                                  updated[idx] = { ...updated[idx], item: val };
+                                  return updated;
+                                });
+                              }
+                            }}
+                          />
+                        </td>
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[30%]">
+                          <input
+                            className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Remarks"
+                            value={row.remarks}
                             onChange={(e) => {
                               const val = e.target.value;
                               setTomorrowsPlan((prev) => {
                                 const updated = [...prev];
-                                updated[idx] = { ...updated[idx], task: val };
+                                updated[idx] = { ...updated[idx], remarks: val };
                                 return updated;
                               });
                             }}
                           />
                         </td>
-                        <td className="border-b border-gray-700 px-4 py-2">
-                          <input
-                            className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Quantity"
-                            value={row.qty}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setTomorrowsPlan((prev) => {
-                                const updated = [...prev];
-                                updated[idx] = { ...updated[idx], qty: val };
-                                return updated;
-                              });
-                            }}
-                          />
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[15%]">
+                          {row.budgetItemId ? (
+                            <input
+                              className="w-full bg-gray-600 text-gray-300 rounded px-2 py-1 border border-gray-700"
+                              value={row.unit}
+                              readOnly
+                            />
+                          ) : (
+                            <select
+                              className="w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              value={row.unit}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setTomorrowsPlan((prev) => {
+                                  const updated = [...prev];
+                                  updated[idx] = { ...updated[idx], unit: val };
+                                  return updated;
+                                });
+                              }}
+                            >
+                              <option value="">Select Unit</option>
+                              {UNIT_OPTIONS.map((u) => (
+                                <option key={u} value={u}>{u}</option>
+                              ))}
+                            </select>
+                          )}
                         </td>
+
+                        <td className="border-b border-gray-700 px-4 py-2 w-[25%]">
+                          <div className="flex flex-col gap-1">
+                            <input
+                              className={`w-full bg-gray-700 text-gray-100 rounded px-2 py-1 border ${(() => {
+                                if (!row.budgetItemId) return 'border-gray-700';
+                                const consumed = consumedQuantities[row.budgetItemId] || 0;
+                                const available = row.totalAvailable - consumed;
+                                return Number(row.qty) > available ? 'border-red-500' : 'border-gray-700';
+                              })()} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                              placeholder="Quantity"
+                              type="number"
+                              value={row.qty}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setTomorrowsPlan((prev) => {
+                                  const updated = [...prev];
+                                  updated[idx] = { ...updated[idx], qty: val };
+                                  return updated;
+                                });
+                              }}
+                            />
+                            {row.budgetItemId && row.totalAvailable !== undefined && (
+                              <div className={`text-xs ${Number(row.qty) > row.totalAvailable ? 'text-red-400' : 'text-blue-400'
+                                }`}>
+                                {row.qty || 0}/{row.totalAvailable} remaining {row.totalAvailable - (Number(row.qty) || 0)}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+
                         {editTomorrow && (
                           <td className="border-b border-gray-700 px-2 py-2 text-center">
-                            <button
-                              type="button"
-                              className="text-red-400 hover:text-red-600 transition-colors"
-                              title="Delete"
-                              onClick={() =>
-                                setTomorrowsPlan((prev) =>
-                                  prev.filter((_, i) => i !== idx)
-                                )
-                              }
-                            >
-                              <span className="material-icons align-middle">
-                                close
-                              </span>
+                            <button type="button" className="text-red-400 hover:text-red-600 transition-colors" title="Delete" onClick={() => setTomorrowsPlan((prev) => prev.filter((_, i) => i !== idx))}>
+                              <span className="material-icons align-middle">close</span>
                             </button>
                           </td>
                         )}
@@ -914,147 +1429,63 @@ function DailyProgressReport() {
                   </tbody>
                 </table>
               </div>
-              <button
-                className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full mt-4"
-                type="button"
-                onClick={() =>
-                  setTomorrowsPlan((prev) => [...prev, { task: "", qty: "" }])
-                }
-              >
-                Add Plan
-              </button>
             </div>
           </div>
 
-          {/* Events & Remarks Section in grid */}
+          {/* --- Redesigned Events & Remarks Section using EditableList --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
-            {/* Events Section */}
+            {/* Events & Visits Section */}
             <div className="bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-800">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                <h2 className="text-lg font-medium mb-4 text-[#E0E0E0] mb-2 md:mb-0">
-                  Events
-                </h2>
-                <div className="flex items-center space-x-4">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={eventsEnabled}
-                      onChange={() => setEventsEnabled(true)}
-                      name="event-occurred"
-                      className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block mr-2 checked:border-blue-500 checked:bg-blue-500"
-                    />
-                    <span className="ml-2 text-gray-200">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={!eventsEnabled}
-                      onChange={() => {
-                        setEventsEnabled(false);
-                        setEventsList([]);
-                      }}
-                      name="event-occurred"
-                      className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block mr-2 checked:border-blue-500 checked:bg-blue-500"
-                    />
-                    <span className="ml-2 text-gray-200">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="flex flex-col md:flex-row md:items-center gap-4">
-                <input
-                  type="text"
-                  placeholder="Describe event..."
-                  value={eventInput}
-                  onChange={(e) => setEventInput(e.target.value)}
-                  disabled={!eventsEnabled}
-                  className="bg-gray-700 border border-gray-700 text-[#E0E0E0] px-3 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={() => {
-                    if (eventInput.trim() !== "") {
-                      setEventsList((prev) => [...prev, eventInput]);
-                      setEventInput("");
-                    }
-                  }}
-                  disabled={!eventsEnabled}
-                  className="bg-blue-500 text-white hover:bg-blue-700 rounded-lg font-medium cursor-pointer transition-colors duration-300 px-5 py-2 w-full md:w-auto"
-                >
-                  Add Event
-                </button>
-              </div>
-              {/* Render events as a list or placeholder below the Add Event button */}
-              {eventsEnabled && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold mb-2 text-blue-300">
-                    Event List
-                  </h3>
-                  {eventsList.length > 0 ? (
-                    <div className="space-y-2">
-                      {eventsList.map((ev, idx) => (
-                        <div
-                          key={idx}
-                          className="flex justify-between items-center bg-gray-700 p-2 rounded"
-                        >
-                          <span>{ev}</span>
-                          <button
-                            onClick={() =>
-                              setEventsList((prev) =>
-                                prev.filter((_, i) => i !== idx)
-                              )
-                            }
-                          >
-                            <span className="material-icons text-red-400">
-                              close
-                            </span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-400 text-sm">
-                      No events added yet.
-                    </p>
-                  )}
-                </div>
-              )}
+              <h2 className="text-lg font-medium mb-4 text-[#E0E0E0]">
+                Events &amp; Visits
+              </h2>
+              <EditableList
+                items={eventsRemarks}
+                onAdd={addEvent}
+                onRemove={removeEvent}
+                onChange={setEvent}
+                placeholder="Add event or visit..."
+                addButtonLabel="Add Event/Visit"
+              />
             </div>
-            {/* Remarks Section */}
-            <div className="bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-800">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                <h2 className="text-lg font-medium mb-4 text-[#E0E0E0] mb-2 md:mb-0">
-                  Remarks
-                </h2>
-                <div className="flex items-center space-x-4">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block relative cursor-pointer mr-2 checked:border-blue-500 checked:bg-blue-500"
-                      name="remarks-required"
-                      checked={remarksEnabled}
-                      onChange={() => setRemarksEnabled(true)}
-                    />
-                    <span className="ml-2 text-gray-200">Yes</span>
+            {/* General Remarks, Prepared By, Distribute Section */}
+            <div className="bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-800 flex flex-col gap-4">
+              <div>
+                <h2 className="text-lg font-medium mb-4 text-[#E0E0E0]">General Remarks</h2>
+                <textarea
+                  rows={4}
+                  className="w-full bg-gray-700 text-gray-100 rounded px-3 py-2 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                  placeholder="Enter general remarks..."
+                  value={generalRemark}
+                  onChange={(e) => setGeneralRemark(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col md:flex-row gap-4 mt-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Prepared By
                   </label>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      className="appearance-none w-5 h-5 border-2 border-gray-600 rounded-full inline-block relative cursor-pointer mr-2 checked:border-blue-500 checked:bg-blue-500"
-                      name="remarks-required"
-                      checked={!remarksEnabled}
-                      onChange={() => setRemarksEnabled(false)}
-                    />
-                    <span className="ml-2 text-gray-200">No</span>
+                  <input
+                    type="text"
+                    className="w-full bg-gray-700 text-gray-400 rounded px-3 py-2 border border-gray-700"
+                    value="Mano Projects Pvt. Ltd."
+                    disabled
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Distribute
                   </label>
+                  <EditableList
+                    items={distribute}
+                    onAdd={addDistributor}
+                    onRemove={removeDistributor}
+                    onChange={setDistributor}
+                    placeholder="Add recipient..."
+                    addButtonLabel="Add Recipient"
+                  />
                 </div>
               </div>
-              <textarea
-                rows={3}
-                placeholder="Add remarks..."
-                className="bg-gray-700 border border-gray-700 text-[#E0E0E0] px-3 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-                disabled={!remarksEnabled}
-              ></textarea>
             </div>
           </div>
           {/* Generate & Close Button */}
@@ -1066,6 +1497,252 @@ function DailyProgressReport() {
               Generate &amp; Close
             </button>
           </div>
+
+          {/* Budget Selection Modal for Today's Progress */}
+          {showTodayModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-700">
+                  <h2 className="text-2xl font-bold text-white">Add Task - Today's Progress</h2>
+                  <button
+                    onClick={() => setShowTodayModal(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <span className="material-icons text-3xl">close</span>
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div className="flex-1 overflow-hidden flex">
+                  {/* Budget Tree Section - Right Side */}
+                  <div className="w-1/2 border-r border-gray-700 p-6 overflow-y-auto">
+                    <h3 className="text-lg font-semibold text-white mb-4">Budget Items</h3>
+                    <p className="text-sm text-gray-400 mb-4">Double-click on any item to add it</p>
+                    <BudgetTreeForDPR
+                      tree={budgetTree}
+                      expanded={expandedBudgetNodes}
+                      onToggle={toggleBudgetNode}
+                      onItemDoubleClick={(item) => {
+                        handleBudgetItemSelect(item, "today");
+                      }}
+                    />
+                  </div>
+
+                  {/* Task List Section - Left Side */}
+                  <div className="w-1/2 p-6 overflow-y-auto">
+                    <h3 className="text-lg font-semibold text-white mb-4">Selected Tasks</h3>
+                    {todaysProgress.length === 0 ? (
+                      <div className="text-center text-gray-400 py-8">
+                        No tasks added yet. Double-click items from the budget tree to add them.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {todaysProgress.map((row, idx) => (
+                          <div key={idx} className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <div className="font-semibold text-white">{row.item || "Untitled"}</div>
+                                <div className="text-sm text-gray-400">Unit: {row.unit || "Not set"}</div>
+                              </div>
+                              <button
+                                onClick={() => setTodaysProgress((prev) => prev.filter((_, i) => i !== idx))}
+                                className="text-red-400 hover:text-red-600 transition-colors"
+                              >
+                                <span className="material-icons">delete</span>
+                              </button>
+                            </div>
+                            <div className="space-y-2">
+                              <input
+                                className="w-full bg-gray-700 text-gray-100 rounded px-3 py-2 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Add remarks..."
+                                value={row.remarks}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setTodaysProgress((prev) => {
+                                    const updated = [...prev];
+                                    updated[idx] = { ...updated[idx], remarks: val };
+                                    return updated;
+                                  });
+                                }}
+                              />
+                              <div className="flex gap-2">
+                                <input
+                                  type="number"
+                                  className={`flex-1 bg-gray-700 text-gray-100 rounded px-3 py-2 border ${(() => {
+                                    if (!row.budgetItemId) return 'border-gray-700';
+                                    const consumed = consumedQuantities[row.budgetItemId] || 0;
+                                    const available = row.totalAvailable - consumed;
+                                    return Number(row.qty) > available ? 'border-red-500' : 'border-gray-700';
+                                  })()} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                  placeholder="Quantity"
+                                  value={row.qty}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setTodaysProgress((prev) => {
+                                      const updated = [...prev];
+                                      updated[idx] = { ...updated[idx], qty: val };
+                                      return updated;
+                                    });
+                                  }}
+                                />
+                                {row.budgetItemId && row.totalAvailable !== undefined && (() => {
+                                  const consumed = consumedQuantities[row.budgetItemId] || 0;
+                                  const available = row.totalAvailable - consumed;
+                                  const current = Number(row.qty) || 0;
+                                  const remaining = available - current;
+                                  const isValid = current <= available;
+                                  return (
+                                    <div className={`flex items-center px-3 py-2 rounded text-sm ${!isValid ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'
+                                      }`}>
+                                      {current}/{available} remaining {remaining} (consumed: {consumed})
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex justify-end gap-3 p-6 border-t border-gray-700">
+                  <button
+                    onClick={() => setShowTodayModal(false)}
+                    className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Budget Selection Modal for Tomorrow's Planning */}
+          {showTomorrowModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-700">
+                  <h2 className="text-2xl font-bold text-white">Add Plan - Tomorrow's Planning</h2>
+                  <button
+                    onClick={() => setShowTomorrowModal(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <span className="material-icons text-3xl">close</span>
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div className="flex-1 overflow-hidden flex">
+                  {/* Budget Tree Section - Right Side */}
+                  <div className="w-1/2 border-r border-gray-700 p-6 overflow-y-auto">
+                    <h3 className="text-lg font-semibold text-white mb-4">Budget Items</h3>
+                    <p className="text-sm text-gray-400 mb-4">Double-click on any item to add it</p>
+                    <BudgetTreeForDPR
+                      tree={budgetTree}
+                      expanded={expandedBudgetNodes}
+                      onToggle={toggleBudgetNode}
+                      onItemDoubleClick={(item) => {
+                        handleBudgetItemSelect(item, "tomorrow");
+                      }}
+                    />
+                  </div>
+
+                  {/* Plan List Section - Left Side */}
+                  <div className="w-1/2 p-6 overflow-y-auto">
+                    <h3 className="text-lg font-semibold text-white mb-4">Selected Plans</h3>
+                    {tomorrowsPlan.length === 0 ? (
+                      <div className="text-center text-gray-400 py-8">
+                        No plans added yet. Double-click items from the budget tree to add them.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {tomorrowsPlan.map((row, idx) => (
+                          <div key={idx} className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <div className="font-semibold text-white">{row.item || "Untitled"}</div>
+                                <div className="text-sm text-gray-400">Unit: {row.unit || "Not set"}</div>
+                              </div>
+                              <button
+                                onClick={() => setTomorrowsPlan((prev) => prev.filter((_, i) => i !== idx))}
+                                className="text-red-400 hover:text-red-600 transition-colors"
+                              >
+                                <span className="material-icons">delete</span>
+                              </button>
+                            </div>
+                            <div className="space-y-2">
+                              <input
+                                className="w-full bg-gray-700 text-gray-100 rounded px-3 py-2 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Add remarks..."
+                                value={row.remarks}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setTomorrowsPlan((prev) => {
+                                    const updated = [...prev];
+                                    updated[idx] = { ...updated[idx], remarks: val };
+                                    return updated;
+                                  });
+                                }}
+                              />
+                              <div className="flex gap-2">
+                                <input
+                                  type="number"
+                                  className={`flex-1 bg-gray-700 text-gray-100 rounded px-3 py-2 border ${(() => {
+                                    if (!row.budgetItemId) return 'border-gray-700';
+                                    const consumed = consumedQuantities[row.budgetItemId] || 0;
+                                    const available = row.totalAvailable - consumed;
+                                    return Number(row.qty) > available ? 'border-red-500' : 'border-gray-700';
+                                  })()} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                  placeholder="Quantity"
+                                  value={row.qty}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setTomorrowsPlan((prev) => {
+                                      const updated = [...prev];
+                                      updated[idx] = { ...updated[idx], qty: val };
+                                      return updated;
+                                    });
+                                  }}
+                                />
+                                {row.budgetItemId && row.totalAvailable !== undefined && (() => {
+                                  const consumed = consumedQuantities[row.budgetItemId] || 0;
+                                  const available = row.totalAvailable - consumed;
+                                  const current = Number(row.qty) || 0;
+                                  const remaining = available - current;
+                                  const isValid = current <= available;
+                                  return (
+                                    <div className={`flex items-center px-3 py-2 rounded text-sm ${!isValid ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'
+                                      }`}>
+                                      {current}/{available} remaining {remaining} (consumed: {consumed})
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex justify-end gap-3 p-6 border-t border-gray-700">
+                  <button
+                    onClick={() => setShowTomorrowModal(false)}
+                    className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

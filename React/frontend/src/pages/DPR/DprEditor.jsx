@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function DprEditor() {
+  // ... (keeping existing code)
+
   const { projectId } = useParams();
+  const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
   const [projectName, setProjectName] = useState("");
@@ -32,130 +34,38 @@ function DprEditor() {
 
   const agencyInputRef = useRef(null);
   const labourInputRef = useRef(null);
-
-  const agencyDict = [
-    "A TO Z GRILL FABRICATION",
-    "AAKASH UNIVERSAL",
-    "ABHISHEK SHIRKE",
-    "ADITYA ENTERPRISES",
-    "AETREUM CONCRETE",
-    "AP INTERIOR",
-    "AP INTERIORS",
-    "ART DECORATOR",
-    "ASTECH ENGINEERS",
-    "ATERUM CONCRETE",
-    "BANDU PRABHU NARWADE",
-    "BANNAPPA PUJARI",
-    "BASANT FLOORING PVTLTD",
-    "BATH DÉCOR",
-    "BATH JEWELS",
-    "BHOOMI ROAD CONTRACTOR",
-    "BRIGHT LIGHT",
-    "CERA HUB",
-    "D & K WATER TANK CLEANER",
-    "DARSHIL FABMET PVTLTD",
-    "DHANJI PANGAM",
-    "EARTHSTONE INFRA PVTLTD",
-    "ELLAPPA BABULAL PAWAR",
-    "EMMACE CORPORATION",
-    "GAUD WATER PUMP SERVICE",
-    "GAYATRI GLASS",
-    "GOEL POWER ENGINEERS",
-    "HALLMARK HUDRO PROJECTS",
-    "HELARAM MANDAL",
-    "HIMALAYA TRADERS",
-    "HKS FLOORING LLP",
-    "INDIA WATER PUMP",
-    "JATIN CORPORATION",
-    "JESUS ENTERPRISE",
-    "JESUS ENTERPRISES",
-    "KALIMI ENTERPRISES",
-    "KAY TEE INTERNATIONAL",
-    "LABDHI TRADING CO",
-    "LABHDI TRADER",
-    "LEE TILES CERAMICS",
-    "LIME LIGHT",
-    "M D ENTERPRISES",
-    "MALACH CONSTRUCTION",
-    "MALLAPPA PUJARI",
-    "MAP WORLDWIDE SERVICES",
-    "MAYUR CONSTRUCTION",
-    "MD ENTERPRISE",
-    "MIDAS CONSTRUCTION",
-    "MIRA MACHINE TOOLS",
-    "MK ENTERPRISE",
-    "MK ENTERPRISES",
-    "NAIK ENVIRONMENTAL ENGINEERS",
-    "NARAYAN WATER SUPPLIES",
-    "NATIONAL ELECTRICAL WORLD",
-    "NATIONAL PLY LAMINATE",
-    "NEAT 'N' CLEAN",
-    "NJ ENTERPRISES",
-    "OM SAI APPLIANCE",
-    "OM SAI APPLIANCES",
-    "ORANGE MACHINETECH PVT LTD",
-    "PARTH HIGH RISE SAFETY",
-    "PIE ENTERPRISES",
-    "PIYALI DAS MANDAL",
-    "PLUMTECH ENGINEERING",
-    "POLLUCON ENVIRO ENGINEERS",
-    "POLLUCON ENVIRONMENT ENGINEERS PVTLTD",
-    "PRIYAL FABRICATION",
-    "R TECH ENGINEERING",
-    "RAKHI MANDAL",
-    "RAM PRAVESH GUPTA",
-    "RAYEES IMPEX PVTLTD",
-    "RISHAB STONE",
-    "S M ENTERPRISE",
-    "SAGAR CONSTRUCTION LIFTS",
-    "SAMARTH CONSTRUCTION",
-    "SAMBHAV TRADERS",
-    "SAMRAT ENTERPRISES",
-    "SHAMBHAV TRADERS",
-    "SHAMSUDDIN SHAIKH",
-    "SHREEJI ENTERPRISES",
-    "SHRI SATGURU KRIPA EARTH MOVERS",
-    "SIDDHI ENTERPRISE",
-    "SJASSOCIATES",
-    "SK HARDWARE",
-    "SM ENTERPRISES",
-    "SNMANE ROAD CONTRACTOR",
-    "SOLANKI TRADER",
-    "SOLANKI TRADERS",
-    "SOLGEN GREENTECH LLP",
-    "SPLENDID ENTERPRISES",
-    "TAG CONSTRUCTION AND GREEN SOLUTION",
-    "TK ENTERPRISES",
-    "TOSHIBA JOHNSON ELEVATORS INDIA PVT LTD",
-    "UN COPORATION",
-    "VIVAN WATER & ENVIRO SOLUTION",
-    "WELCOME COLOURS AND CHEMICALS",
-    "YASH ENTERPRISE",
-  ];
   const labourDict = [
-    "mason",
-    "electrical",
-    "painter",
-    "welder",
-    "carp",
-    "fitter",
-    "gypsum",
-    "plumber",
-    "helper",
-    "staff",
+    "Mason",
+    "Carpenter",
+    "Fitter",
+    "Plumber",
+    "Electrician",
+    "Skilled Labour",
+    "Unskilled Labour",
+    "Painter",
+    "Operator",
+    "Rigger",
+    "Staff",
+    "Security",
   ];
-
-  const [availableAgencies, setAvailableAgencies] = useState(agencyDict);
+  const [availableAgencies, setAvailableAgencies] = useState([]);
+  const [allProjectVendors, setAllProjectVendors] = useState([]); // Store fetched vendors
   const [availableLabourTypes, setAvailableLabourTypes] = useState(labourDict);
   const [initialRoles, setInitialRoles] = useState(null);
+  // Sync available agencies when vendors or metadata change
+  useEffect(() => {
+    const usedAgencies = metadata.agency || [];
+    const available = allProjectVendors.filter(name => !usedAgencies.includes(name));
+    setAvailableAgencies(available);
+  }, [metadata.agency, allProjectVendors]);
+
   // Fetch project and metadata
   useEffect(() => {
     if (!projectId) return;
     async function fetchProject() {
       setLoading(true);
       try {
-        const res = await fetch(
-          `http://${API_URI}:${PORT}/project/getProject/${projectId}`,
+        const res = await fetch(`${API_BASE}/project/getProject/${projectId}`,
           { credentials: "include" }
         );
         const data = await res.json();
@@ -170,23 +80,23 @@ function DprEditor() {
           setStartDate(
             data.data.start_date
               ? new Date(
-                  new Date(data.data.start_date).setDate(
-                    new Date(data.data.start_date).getDate() + 1
-                  )
+                new Date(data.data.start_date).setDate(
+                  new Date(data.data.start_date).getDate() + 1
                 )
-                  .toISOString()
-                  .split("T")[0]
+              )
+                .toISOString()
+                .split("T")[0]
               : ""
           );
           setEndDate(
             data.data.end_date
               ? new Date(
-                  new Date(data.data.end_date).setDate(
-                    new Date(data.data.end_date).getDate() + 1
-                  )
+                new Date(data.data.end_date).setDate(
+                  new Date(data.data.end_date).getDate() + 1
                 )
-                  .toISOString()
-                  .split("T")[0]
+              )
+                .toISOString()
+                .split("T")[0]
               : ""
           );
 
@@ -195,10 +105,9 @@ function DprEditor() {
               agency: data.data.metadata.agency || [],
               labour_type: data.data.metadata.labour_type || [],
             });
-            // remove already-selected items from available lists
-            setAvailableAgencies((prev) =>
-              prev.filter((a) => !(data.data.metadata.agency || []).includes(a))
-            );
+
+            // availableAgencies sync is now handled by useEffect
+
             setAvailableLabourTypes((prev) =>
               prev.filter(
                 (b) => !(data.data.metadata.labour_type || []).includes(b)
@@ -214,13 +123,41 @@ function DprEditor() {
     }
     fetchProject();
 
+    // New: Fetch Project Vendors
+    // New: Fetch Project Vendors
+    // Fetch Project Vendors (Adapted from ProjectVendorList.jsx)
+    async function fetchProjectVendors() {
+      if (!projectId) return;
+      try {
+        console.log(`Fetching project vendors for ${projectId}...`);
+        // Add cache busting matched from ProjectVendorList.jsx
+        const response = await fetch(`${API_BASE}/projectVendors/${projectId}?_t=${new Date().getTime()}`, {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        console.log("DPR Vendor Fetch Response:", data);
+
+        if (response.ok) {
+          const vendorList = Array.isArray(data.vendors) ? data.vendors : (Array.isArray(data) ? data : []);
+          // Extract only names as per requirement - support both company_name and name
+          const vendorNames = vendorList.map(v => v.company_name || v.name);
+          console.log("Extracted vendor names:", vendorNames);
+          setAllProjectVendors(vendorNames);
+        } else {
+          console.error(data.message || "Failed to fetch project vendors");
+        }
+      } catch (error) {
+        console.error("Error fetching vendors:", error);
+      }
+    }
+    fetchProjectVendors();
     async function fetchRoles() {
       try {
         const [rolesRes, usersRes] = await Promise.all([
-          fetch(`http://${API_URI}:${PORT}/project/getuserroles/${projectId}`, {
+          fetch(`${API_BASE}/project/getuserroles/${projectId}`, {
             credentials: "include",
           }),
-          fetch(`http://${API_URI}:${PORT}/Project/eligibleUsers`, {
+          fetch(`${API_BASE}/Project/eligibleUsers`, {
             credentials: "include",
           }),
         ]);
@@ -308,37 +245,42 @@ function DprEditor() {
     const userRoleChanges = buildUserRoleUpdatePayload(initialRoles, userRoles);
 
     try {
-      const res = await fetch(
-        `http://${API_URI}:${PORT}/project/updateProject/${projectId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            project_name: projectName,
-            Employer: employer,
-            location,
-            project_code: projectCode,
-            project_description: projectDescription,
-            start_date: startDate || null,
-            end_date: endDate || null,
-            metadata,
-            user_roles: userRoleChanges, // merge metadata into the same payload
-          }),
-        }
-      );
+      const res = await fetch(`${API_BASE}/project/updateProject/${projectId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          project_name: projectName,
+          Employer: employer,
+          location,
+          project_code: projectCode,
+          project_description: projectDescription,
+          start_date: startDate || null,
+          end_date: endDate || null,
+          metadata,
+          user_roles: userRoleChanges, // merge metadata into the same payload
+        }),
+      });
 
       const data = await res.json();
+      const autoCloseMs = 2000;
       if (res.ok && (data.ok || data.success)) {
-        toast.success("Project details & metadata saved successfully!");
+        toast.success("Project details & metadata saved successfully!", {
+          autoClose: autoCloseMs,
+          onClose: () => {
+            // SPA navigation to project description for this projectId
+            navigate(`/dashboard/project-description/${projectId}`);
+          },
+        });
         setInitialRoles(userRoles);
       } else {
         toast.error(data.message || "Failed to save project data");
       }
     } catch (e) {
       console.error("Error saving project:", e);
-      alert("Error saving project");
+      toast.error("Error saving project");
     }
+
     setSavingDetails(false);
   }
 
@@ -351,7 +293,7 @@ function DprEditor() {
       availableAgencies.includes(trimmed)
     ) {
       setMetadata((prev) => ({ ...prev, agency: [...prev.agency, trimmed] }));
-      setAvailableAgencies((prev) => prev.filter((a) => a !== trimmed));
+      // setAvailableAgencies handled by useEffect
     }
     if (inputRef) {
       inputRef.value = "";
@@ -363,9 +305,7 @@ function DprEditor() {
     setMetadata((prev) => {
       const removed = prev.agency[idx];
       const newAgency = prev.agency.filter((_, i) => i !== idx);
-      setAvailableAgencies((list) =>
-        list.includes(removed) ? list : [...list, removed]
-      );
+      // setAvailableAgencies handled by useEffect
       return { ...prev, agency: newAgency };
     });
   }
@@ -439,6 +379,17 @@ function DprEditor() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-6 py-8 md:px-16 lg:px-28">
+      <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <h1 className="text-3xl font-extrabold mb-8 text-white text-center">
         Daily Progress Report Editor
       </h1>
@@ -585,6 +536,11 @@ function DprEditor() {
               id="agencyInput"
               list="agency-list"
               placeholder="Select or type agency"
+              onClick={() => {
+                if (allProjectVendors.length === 0) {
+                  toast.error("No vendors added in project vendor list");
+                }
+              }}
               onChange={(e) =>
                 handleAddAgency(e.target.value, agencyInputRef.current)
               }
@@ -623,11 +579,10 @@ function DprEditor() {
             <button
               type="button"
               onClick={() => setEditMode((em) => !em)}
-              className={`ml-2 mb-1 px-2 py-1 rounded text-xs flex items-center gap-1 ${
-                editMode
-                  ? "bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-                  : "bg-gray-600 text-gray-200 hover:bg-gray-500"
-              }`}
+              className={`ml-2 mb-1 px-2 py-1 rounded text-xs flex items-center gap-1 ${editMode
+                ? "bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+                : "bg-gray-600 text-gray-200 hover:bg-gray-500"
+                }`}
               title={editMode ? "Exit Edit Mode" : "Enter Edit Mode"}
             >
               {/* Pencil icon SVG */}

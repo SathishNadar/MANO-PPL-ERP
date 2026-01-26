@@ -15,8 +15,7 @@ const PasswordReset = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const codeRefs = useRef([]);
 
-  const API_URI = import.meta.env.VITE_API_URI;
-  const PORT = import.meta.env.VITE_BACKEND_PORT
+  const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
   const navigate = useNavigate()
   useEffect(() => {
@@ -47,7 +46,7 @@ const PasswordReset = () => {
     }
 
     // 1. Fetch email from backend
-    const emailRes = await fetch(`http://${API_URI}:${PORT}/api/get-email`, {
+    const emailRes = await fetch(`${API_BASE}/api/get-email`, { 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: username.trim() }),
@@ -62,7 +61,7 @@ const PasswordReset = () => {
     setEmail(fetchedEmail);
 
     // 2. Send OTP to that email
-    const otpRes = await fetch(`http://${API_URI}:${PORT}/api/send-otp`, {
+    const otpRes = await fetch(`${API_BASE}/api/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: fetchedEmail }),
@@ -88,7 +87,7 @@ const PasswordReset = () => {
       throw new Error("Please enter the complete 6-digit code");
     }
 
-    const res = await fetch(`http://${API_URI}:${PORT}/api/verify-otp`, {
+    const res = await fetch(`${API_BASE}/api/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otp: codeString }),
@@ -118,7 +117,7 @@ const PasswordReset = () => {
   setIsLoading(true);
 
   try {
-    const response = await fetch(`http://${API_URI}:${PORT}/api/reset-password`, {
+    const response = await fetch(`${API_BASE}/api/reset-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

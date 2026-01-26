@@ -84,7 +84,88 @@ function Sidebar({ onCategoryChange }) {
     }
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+  }, [navigate]);
+
+  function logout() {
+    localStorage.removeItem("session");
+    navigate("/auth");
+  }
+
+  // Title ID map for roles
+  const TITLE_MAP = {
+    1: "client",
+    2: "admin",
+    3: "developer",
+    4: "ceo",
+    5: "engineer",
+    6: "new_user",
+  };
+
+  const menuItems = [
+    {
+      icon: "home",
+      path: "/dashboard/home",
+      id: "home",
+      label: "Home",
+      roles: [1, 2, 6, 5],
+    },
+    {
+      icon: "folder",
+      path: "/dashboard/projects",
+      id: "projects",
+      label: "Projects",
+      roles: [1, 2, 5],
+    },
+
+    {
+      icon: "receipt_long",
+      path: "/dashboard/vendors",
+      id: "vendors",
+      label: "Vendors",
+      roles: [2],
+    },
+
+    {
+      icon: "wysiwyg",
+      path: "/dashboard/work-in-progress",
+      id: "work",
+      label: "Work In Progress",
+      roles: [2, 5],
+    },
+
+    {
+      icon: "bar_chart",
+      path: "/dashboard/attendance",
+      id: "attendance",
+      label: "Attendance",
+      roles: [2]
+    },
+
+    {
+      icon: "assignment",
+      path: "/dashboard/daily-activity-report",
+      id: "daily-activity-report",
+      label: "Daily Activity Report",
+      roles: [1, 2, 6]
+    },
+
+    {
+      icon: "admin_panel_settings",
+      path: "/dashboard/admin",
+      id: "admin",
+      label: "Admin",
+      roles: [2],
+    },
+    // { icon: "summarize", id: "summary", label: "Summary", roles: [2] },
+  ];
+
+  // Filter menu items based on titleId
+  let filteredMenuItems = [];
+  if (titleId) {
+    filteredMenuItems = menuItems.filter((item) =>
+      item.roles.includes(titleId)
+    );
+  }
 
   return (
     <aside className="w-20 bg-sidebar shadow-lg flex flex-col items-center py-5 relative">
@@ -100,21 +181,23 @@ function Sidebar({ onCategoryChange }) {
             {/* --- Handle click navigation or dropdown --- */}
             <button
               onClick={() => {
-                if (item.id === "vendors") {
-                  setActiveMenu(prev => (prev === "vendors" ? "" : "vendors"));
-                  if (!location.pathname.includes("/dashboard/vendors")) {
-                    navigate("/dashboard/vendors?category=2");
-                  }
-                } else if (item.path) {
-                  navigate(item.path);
-                  setActiveMenu(""); // Collapse dropdown
+                // If it has children (future proofing), toggle menu. Otherwise navigate.
+                // Vendors no longer has children, so it falls through to navigation.
+                if (children) {
+                  setActiveMenu((prev) => (prev === id ? "" : id));
+                } else {
+                  path && navigate(path);
+                  setActiveMenu(""); // collapse dropdown on other clicks
                 }
               }}
               className={`text-secondary hover:text-blue-light transition-all duration-300 transform hover:scale-110 cursor-pointer w-full flex justify-center ${
-                location.pathname.includes(item.id) ? "text-blue-light" : ""
-              }`}
+                /* prefer matching by explicit `path` when available to avoid substring collisions like 'admin' */
+                path
+                  ? (location.pathname === path || location.pathname.startsWith(path + "/") ? "text-blue-light" : "")
+                  : (location.pathname.includes(id) ? "text-blue-light" : "")
+                }`}
             >
-              <span className="material-icons text-3xl">{item.icon}</span>
+              <span className="material-icons text-[42px]">{icon}</span>
             </button>
 
             {/* --- Tooltip --- */}
@@ -122,27 +205,19 @@ function Sidebar({ onCategoryChange }) {
               {item.label}
             </span>
 
-            {/* --- Dropdown submenu for vendors (dynamic, clean icons) --- */}
-            {item.id === "vendors" && activeMenu === "vendors" && (
+            {/* Dropdown submenu - General implementation if needed later, but currently unused for vendors */}
+            {children && activeMenu === id && (
               <div className="mt-4 flex flex-col space-y-5 transition-all duration-300 ease-in-out">
                 {item.children.map(child => (
                   <button
                     key={child.label}
                     onClick={() => {
-                      navigate(`/dashboard/vendors?category=${child.category}`);
-                      onCategoryChange(Number(child.category));
-                      setActiveMenu("vendors");
+                      // Logic for children if any exist
+                      // For now, vendors has no children.
                     }}
-                    className={`flex items-center gap-2 text-xs px-2 text-left transition-colors duration-200 ${
-                      categoryParam === child.category
-                        ? "text-blue-light font-semibold"
-                        : "text-gray-300 hover:text-blue-light"
-                    }`}
+                    className="flex items-center gap-2 text-xs px-2 text-left text-gray-300 hover:text-blue-light"
                   >
-                    <span className="material-icons text-[26px] ml-2">
-                      {child.icon}
-                    </span>
-                    {child.label}
+                    {/* Child content */}
                   </button>
                 ))}
               </div>

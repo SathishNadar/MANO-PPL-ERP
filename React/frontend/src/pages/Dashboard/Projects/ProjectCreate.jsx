@@ -1,7 +1,7 @@
 import React from 'react';
 
-const API_URI = import.meta.env.VITE_API_URI;
-const PORT = import.meta.env.VITE_BACKEND_PORT;
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+
 function ProjectCreate({ onClose }) {
   const [users, setUsers] = React.useState([]);
   const [approver, setApprover] = React.useState("");
@@ -10,7 +10,7 @@ function ProjectCreate({ onClose }) {
   const [reporters, setReporters] = React.useState([]);
 
   React.useEffect(() => {
-    fetch(`http://${API_URI}:${PORT}/project/eligibleUsers`, { 
+    fetch(`${API_BASE}/project/eligibleUsers`, { 
       credentials: 'include' 
     })
       .then(res => res.json())
@@ -70,7 +70,7 @@ function ProjectCreate({ onClose }) {
     };
 
     try {
-      const response = await fetch(`http://${API_URI}:${PORT}/project/insertProject`, {
+      const response = await fetch(`${API_BASE}/project/insertProject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',

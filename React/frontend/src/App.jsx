@@ -16,9 +16,35 @@ import ProjectEdit from "./pages/DPR/DprEditor.jsx";
 
 import ProjectsView from "./pages/Dashboard/Projects/ProjectsView.jsx";
 import ProjectDescription from "./pages/Dashboard/Projects/ProjectDescription.jsx";
+import DPRList from "./pages/Dashboard/Projects/DPRList.jsx";
+import ProjectDirectory from "./pages/Dashboard/ProjectDirectory/ProjectDirectory.jsx";
+import DrawingDirectory from "./pages/Dashboard/DrawingDirectory/DrawingDirectory.jsx";
+import DrawingPlannedVsAchieved from "./pages/Dashboard/DrawingPlannedVsAchieved/DrawingPlannedVsAchieved.jsx";
+import ProjectVendorList from "./pages/Dashboard/ProjectVendorList/ProjectVendorList.jsx";
 import DprFetchViewer from "./pages/DPR/DprFetchViewer.jsx";
 import DprUpdateSubmit from "./pages/DPR/DprUpdateSubmit.jsx";
+import StaffRoles from "./pages/Dashboard/StaffRoles/StaffRoles.jsx";
+import AgendaList from "./pages/Dashboard/AgendaOfMeeting/AgendaList.jsx";
+import AgendaDetails from "./pages/Dashboard/AgendaOfMeeting/AgendaDetails.jsx";
+import AgendaCreate from "./pages/Dashboard/AgendaOfMeeting/AgendaCreate.jsx";
+import MinutesList from "./pages/Dashboard/MinutesOfMeeting/MinutesList.jsx";
+import MinutesDetails from "./pages/Dashboard/MinutesOfMeeting/MinutesDetails.jsx";
+import MinutesCreate from "./pages/Dashboard/MinutesOfMeeting/MinutesCreate.jsx";
+import HindranceReport from "./pages/Dashboard/HindranceReport/HindranceReport.jsx";
+import ProjectSummary from "./pages/Dashboard/ProjectSummary/ProjectSummary.jsx";
+import OrganisationChart from "./pages/Dashboard/OrganisationChart/OrganisationChart.jsx";
 import Dummy from "./pages/Dashboard/VendorList/VendorFilter.jsx";
+import Admin from "./pages/admin/Admin.jsx";
+
+import AttendanceDashboard from "./pages/Dashboard/Attendance/AttendanceDashboard.jsx";
+import AdminView from "./pages/Dashboard/Attendance/AdminView.jsx";
+
+import AttendanceUsers from "./pages/Dashboard/Attendance/AttendanceAdmin.jsx"
+import DailyActivityReport from "./pages/UserDailyActivityReport/DailyActivityReport.jsx";
+
+import BudgetingCreate from "./pages/BudgetingComponent/BudgetCreation.jsx"
+import BudgetingView from "./pages/BudgetingComponent/BudgetView.jsx"
+import BudgetUpdate from "./pages/BudgetingComponent/BudgetUpdate.jsx"
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -79,6 +105,138 @@ function App() {
           }
         />
         <Route
+          path="/dashboard/project-description/:projectId/dpr-list"
+          element={
+            <ProtectedRoute>
+              <DPRList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/project-description/:projectId/project-vendor-list"
+          element={
+            <ProtectedRoute>
+              <ProjectVendorList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/staff-roles"
+          element={
+            <ProtectedRoute>
+              <StaffRoles />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/agenda"
+          element={
+            <ProtectedRoute>
+              <AgendaList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/agenda/:id"
+          element={
+            <ProtectedRoute>
+              <AgendaDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/agenda/create"
+          element={
+            <ProtectedRoute>
+              <AgendaCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/minutes"
+          element={
+            <ProtectedRoute>
+              <MinutesList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/minutes/:id"
+          element={
+            <ProtectedRoute>
+              <MinutesDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/minutes/create"
+          element={
+            <ProtectedRoute>
+              <MinutesCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/hindrance-report"
+          element={
+            <ProtectedRoute>
+              <HindranceReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/project-directory"
+          element={
+            <ProtectedRoute>
+              <ProjectDirectory />
+            </ProtectedRoute>
+          }
+        />
+
+
+        // ... inside Routes ...
+        <Route
+          path="/dashboard/project-description/:projectId/drawing-management"
+          element={
+            <ProtectedRoute>
+              <DrawingDirectory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/drawing-planned-vs-achieved"
+          element={
+            <ProtectedRoute>
+              <DrawingPlannedVsAchieved />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-summary"
+          element={
+            <ProtectedRoute>
+              <ProjectSummary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-summary/:projectId"
+          element={
+            <ProtectedRoute>
+              <ProjectSummary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/organisation-chart"
+          element={
+            <ProtectedRoute>
+              <OrganisationChart />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dashboard/project-description/:projectId/dprCreate"
           element={
             <ProtectedRoute>
@@ -110,7 +268,80 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/dummy2" element={<Dummy />} />
+        <Route
+          path="/dashboard/admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
+
+
+        <Route
+          path="/dashboard/project-description/:projectId/budgetCreate"
+          element={
+            <ProtectedRoute>
+              <BudgetingCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/budgetView"
+          element={
+            <ProtectedRoute>
+              <BudgetingView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/project-description/:projectId/budgetUpdate"
+          element={
+            <ProtectedRoute>
+              <BudgetUpdate />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/attendance"
+          element={
+            <ProtectedRoute>
+              <AttendanceDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/attendance/admin"
+          element={
+            <ProtectedRoute>
+              <AdminView />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/attendance/users"
+          element={
+            <ProtectedRoute>
+              <AttendanceUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/daily-activity-report"
+          element={
+            <ProtectedRoute>
+              <DailyActivityReport />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/dummy2"
+          element={<Dummy />}
+        />
       </Routes>
       <ToastContainer
         position="top-right"
@@ -119,7 +350,7 @@ function App() {
         pauseOnFocusLoss={false}
         pauseOnClick={false}
       />
-    </div>
+    </div >
   );
 }
 

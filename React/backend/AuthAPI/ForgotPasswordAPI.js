@@ -195,7 +195,7 @@ router.post('/reset-password', async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // Update password in database
-    await db.updateUserPassword(email, hashedPassword);
+    await db.updateUserByMail(email, { user_password: hashedPassword });
 
     // Clear OTP from store
     otpStore.delete(email);

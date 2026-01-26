@@ -32,7 +32,7 @@ export async function sendSignupVerificationEmail(userData) {
     expiresAt: Date.now() + 15 * 60 * 1000,
   });
 
-  const verificationLink = `http://${process.env.URI}:${process.env.PORT}/api/verify-signup?token=${token}`;
+  const verificationLink = `${process.env.URI_BASE}/api/verify-signup?token=${token}`; 
 
   // Configure nodemailer transporter with OAuth2
   const accessToken = await oAuth2Client.getAccessToken();

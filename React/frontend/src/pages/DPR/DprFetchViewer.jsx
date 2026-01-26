@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ToastContainer,toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "./DprFetchViewer.css";
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 const DprFetchViewer = () => {
   const navigate = useNavigate();
-  const API_URI = import.meta.env.VITE_API_URI;
-  const PORT = import.meta.env.VITE_BACKEND_PORT;
 
   const { projectId, dprId } = useParams();
   const [projectData, setProjectData] = useState(null);
   const [user, setUser] = useState(null)
-  
+
 
   const [submitting, setSubmitting] = useState(false);
   const [dprData, setDprData] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
   let projectStart = null;
   let projectEnd = null;
 
@@ -22,12 +24,9 @@ const DprFetchViewer = () => {
     const pid = projectId;
 
     try {
-      const response = await fetch(
-        `http://${API_URI}:${PORT}/project/getProject/${pid}`,
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${API_BASE}/project/getProject/${pid}`, {
+        credentials: "include",
+      });
       const { data: static_data } = await response.json();
       setProjectData(static_data);
       // console.log(static_data);
@@ -60,18 +59,61 @@ const DprFetchViewer = () => {
 
   const fetchandUpdateDprdata = async () => {
     //#region Helper Functions
-    const renderTable = (tableId, tasks = [], quantities = []) => {
+    const renderTable = (tableId, prog = {}) => {
       const table = document.getElementById(tableId);
       if (!table) return;
+
+      // ✅ CASE 1: New API shape → Array of objects
+      // [ { component_name, unit, quantity, remarks }, ... ]
+      if (Array.isArray(prog)) {
+        if (!prog.length) {
+          table.innerHTML = "";
+          return;
+        }
+
+        table.innerHTML = prog
+          .map((row) => {
+            const item = row.item_name ?? row.item ?? "--";
+            const remarks = row.remarks ?? "--";
+            const unit = row.unit ?? "--";
+            const qty = row.quantity ?? row.qty ?? "--";
+
+            return `
+          <tr class=" bg-gray-700 rounded">
+            <td class=" py-2 pl-4 text-left w-[35%]">${item || "--"}</td>
+            <td class=" py-2 pl-4 text-left w-[35%]">${remarks || "--"}</td>
+            <td class="text-center w-[17%]">${unit}</td>
+            <td class="text-center w-[13%]">${qty}</td>
+          </tr>
+        `;
+          })
+          .join("");
+        return;
+      }
+
+
+      // ✅ CASE 2: Legacy { progress: [], qty: [] } or { plan: [], qty: [] }
+      const tasks = Array.isArray(prog.progress)
+        ? prog.progress
+        : Array.isArray(prog.plan)
+        ? prog.plan
+        : [];
+      const quantities = Array.isArray(prog.qty) ? prog.qty : [];
+
+      if (!tasks || tasks.length === 0) {
+        table.innerHTML = "";
+        return;
+      }
+
       table.innerHTML =
         tasks
           ?.map(
             (task, i) => `
-        <tr class=" bg-gray-700 rounded">
-          <td class=" py-2 pl-4 text-left">${task || "--"}</td>
-          <td class="text-center">${quantities?.[i] ?? "--"}</td>
-        </tr>
-      `
+      <tr class=" bg-gray-700 rounded">
+        <td class=" py-2 pl-4 text-left">${task || "--"}</td>
+        <td class="text-center">${quantities?.[i] ?? "--"}</td>
+      </tr>
+    `
           )
           .join("") || "";
     };
@@ -82,7 +124,15 @@ const DprFetchViewer = () => {
 
       const arr = Array.isArray(items) ? items : [items];
       container.innerHTML = arr
-        .map((item) => `<div class="remarks-item">${item || "--"}</div>`)
+        .map((item) => {
+          if (typeof item === "string") {
+            return `<div class="remarks-item">${item}</div>`;
+          }
+          if (typeof item === "object" && item !== null) {
+            return `<div class="remarks-item">${item.text || "--"}</div>`;
+          }
+          return `<div class="remarks-item">--</div>`;
+        })
         .join("");
     };
 
@@ -215,11 +265,11 @@ const DprFetchViewer = () => {
       if (container) {
         container.innerHTML = rain_timing.length
           ? rain_timing
-              .map((t) => {
-                const [from, to] = t.split("-");
-                return `<span class="inline-block bg-gray-700 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${from}–${to}</span>`;
-              })
-              .join("")
+            .map((t) => {
+              const [from, to] = t.split("-");
+              return `<span class="inline-block bg-gray-700 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${from}–${to}</span>`;
+            })
+            .join("")
           : "—";
       }
     };
@@ -227,10 +277,9 @@ const DprFetchViewer = () => {
     //#endregion
 
     try {
-      const response = await fetch(
-        `http://${API_URI}:${PORT}/report/getDPR/${dprId}`,
-        { credentials: "include" }
-      );
+      const response = await fetch(`${API_BASE}/report/getDPR/${dprId}`, {
+        credentials: "include",
+      });
       const { data } = await response.json();
       setDprData(data);
 
@@ -272,23 +321,41 @@ const DprFetchViewer = () => {
         yesterdayCumulative.toLocaleString();
 
       // TODAY / TOMORROW TABLES
-      renderTable(
-        "today-table",
-        data.today_prog?.progress,
-        data.today_prog?.qty
-      );
-      renderTable(
-        "tomorrow-table",
-        data.tomorrow_plan?.plan,
-        data.tomorrow_plan?.qty
-      );
+      renderTable("today-table", data.today_prog || []);
+      renderTable("tomorrow-table", data.tomorrow_plan || []);
 
       // EVENTS & REMARKS
-      renderList("events-container", data.events_remarks);
-      renderList(
-        "remarks-content-container",
-        data.report_footer?.bottom_remarks
+      renderList("events-container", data.report_footer?.events_visit);
+      const remarksContainer = document.getElementById(
+        "remarks-content-container"
       );
+      if (remarksContainer) {
+        const bottom = data.report_footer?.bottom_remarks;
+        remarksContainer.innerHTML = "";
+
+        const pushLine = (line) => {
+          const div = document.createElement("div");
+          div.className = "remarks-item";
+          div.textContent = line || "";
+          remarksContainer.appendChild(div);
+        };
+
+        if (Array.isArray(bottom)) {
+          bottom.forEach((item) => {
+            if (typeof item === "string") {
+              item.split("\n").forEach((ln) => pushLine(ln.trim()));
+            } else if (item && typeof item === "object") {
+              (item.text || "")
+                .split("\n")
+                .forEach((ln) => pushLine(ln.trim()));
+            }
+          });
+        } else if (typeof bottom === "string") {
+          bottom.split("\n").forEach((ln) => pushLine(ln.trim()));
+        } else {
+          pushLine("--");
+        }
+      }
 
       // FOOTER DETAILS
       document.getElementById("prepared-by").textContent =
@@ -314,9 +381,9 @@ const DprFetchViewer = () => {
   useEffect(() => {
     fetchandUpdateDprdata();
     fetchandUpdateProjectData();
-    const session = localStorage.getItem('session');
+    const session = localStorage.getItem("session");
     setUser(session ? JSON.parse(session) : null);
-  }, []); 
+  }, []);
 
   const loadPdf = () => {
     localStorage.setItem("dprData", JSON.stringify(dprData));
@@ -342,32 +409,51 @@ const DprFetchViewer = () => {
     };
   };
 
-
   // Submit
-  const SubmitDPR = async () => {
-    const confirmSubmit = window.confirm(
-      "Are you sure you want to submit the DPR? This action cannot be undone."
-    );
+  // Open the custom confirm modal
+  const openSubmitModal = () => {
+    setShowConfirmModal(true);
+  };
 
-    if (!confirmSubmit) return;
+  const cancelSubmit = () => {
+    setShowConfirmModal(false);
+  };
 
+  const autoCloseMs = 2000;
+  // Confirmed submit handler
+  const confirmSubmit = async () => {
+    setShowConfirmModal(false);
     try {
       setSubmitting(true);
 
-      const response = await fetch(
-        `http://${API_URI}:${PORT}/report/submit/${dprId}`,
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${API_BASE}/report/submit/${dprId}`, {
+        credentials: "include",
+      });
 
       if (!response.ok) {
-        throw new Error("Request failed");
+        // try to parse error body for message
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.message || response.statusText || "Request failed");
       }
 
-      toast.success("Success:", await response.json());
+      const successBody = await response.json().catch(() => ({}));
+
+      // show success toast and redirect when it closes
+      toast.success(successBody.message || "DPR submitted successfully", {
+        autoClose: autoCloseMs,
+        onClose: () => {
+          navigate(`/dashboard/project-description/${projectId}/dpr-list`);
+        },
+      });
     } catch (error) {
-      toast.error("Error:", error);
+      console.error("Submit DPR error:", error);
+      // show error toast then redirect when it closes
+      toast.error(error?.message || "Error submitting DPR", {
+        autoClose: autoCloseMs,
+        onClose: () => {
+          navigate(`/dashboard/project-description/${projectId}`);
+        },
+      });
     } finally {
       setSubmitting(false);
     }
@@ -378,11 +464,36 @@ const DprFetchViewer = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center border-b border-gray-700 pb-4">
-          <h1 className="text-3xl font-bold">Daily Progress Report</h1>
-          <div className="bg-gray-800 px-4 py-2 rounded text-sm text-gray-300">
-            Report Date: <span id="report_date">--</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/dashboard/project-description/${projectId}/dpr-list`)}
+              className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-sm flex items-center gap-2"
+            >
+              <span className="material-icons">arrow_back</span>
+              <span>Back</span>
+            </button>
+            <h1 className="text-3xl font-bold">Daily Progress Report</h1>
+          </div>
+
+          <div className="ml-auto">
+            <div className="bg-gray-800 px-4 py-2 rounded text-sm text-gray-300">
+              Report Date: <span id="report_date">--</span>
+            </div>
           </div>
         </div>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={autoCloseMs}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
 
         {/* Grid Layout */}
         <div className="grid md:grid-cols-3 gap-4">
@@ -468,10 +579,7 @@ const DprFetchViewer = () => {
             <p className="text-[18px] text-center text-white mt-4">
               Time Slots:
               <span className="mt-1 grid">
-                <span
-                  className="[display:contents]"
-                  id="from-to-container"
-                ></span>
+                <span className="[contents]" id="from-to-container"></span>
               </span>
             </p>
           </div>
@@ -496,7 +604,7 @@ const DprFetchViewer = () => {
             </table>
           </div>
           <div className="text-sm text-gray-400 mt-2">
-            Cumulative Manpower (until yesterday):{" "}
+            Cumulative Manpower (till today):{" "}
             <span id="cumulative-manpower">--</span>
           </div>
         </div>
@@ -513,8 +621,14 @@ const DprFetchViewer = () => {
             <table className="w-full text-sm border-separate border-spacing-y-2">
               <thead className="text-gray-300 border-b border-gray-600">
                 <tr>
-                  <th className="py-2 pl-4 text-left text-[16px]">Task</th>
-                  <th className="text-center text-[16px]">Quantity</th>
+                  <th className="py-2 pl-4 text-left text-[16px] w-[35%]">
+                    Item
+                  </th>
+                  <th className="py-2 pl-4 text-left text-[16px] w-[35%]">
+                    Remarks
+                  </th>
+                  <th className="text-center text-[16px] w-[17%]">Unit</th>
+                  <th className="text-center text-[16px] w-[13%]">Qty</th>
                 </tr>
               </thead>
               <tbody className="text-white" id="today-table">
@@ -533,8 +647,14 @@ const DprFetchViewer = () => {
             <table className="w-full text-sm border-separate border-spacing-y-2">
               <thead className="text-gray-300 border-b border-gray-600">
                 <tr>
-                  <th className="py-2 pl-4 text-left ">Task</th>
-                  <th className="text-center text-[16px]">Quantity</th>
+                  <th className="py-2 pl-4 text-left text-[16px] w-[35%]">
+                    Item
+                  </th>
+                  <th className="py-2 pl-4 text-left text-[16px] w-[35%]">
+                    Remarks
+                  </th>
+                  <th className="text-center text-[16px] w-[17%]">Unit</th>
+                  <th className="text-center text-[16px] w-[13%]">Qty</th>
                 </tr>
               </thead>
               <tbody className="text-white" id="tomorrow-table">
@@ -547,7 +667,7 @@ const DprFetchViewer = () => {
         {/* Remarks Section */}
         <div className="grid md:grid-cols-3 gap-4">
           <div className="md:col-span-2 bg-gray-800 rounded-xl p-4">
-            <h2 className="text-lg font-semibold mb-2">Events & Remarks</h2>
+            <h2 className="text-lg font-semibold mb-2">Events & Visits</h2>
             <div
               className="space-y-2 text-l text-gray-300"
               id="events-container"
@@ -605,19 +725,32 @@ const DprFetchViewer = () => {
               </button>
               <button
                 type="button"
-                onClick={SubmitDPR}
+                onClick={openSubmitModal}
                 disabled={submitting}
-                className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${
-                  submitting
-                    ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
+                className={`px-5 py-2 rounded font-semibold hover:cursor-pointer ${submitting
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+                  }`}
               >
                 {submitting ? "Submitting..." : "Submit"}
               </button>
             </>
           )}
         </div>
+
+        {showConfirmModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black opacity-60"></div>
+            <div className="relative bg-gray-800 text-white rounded-lg p-6 w-11/12 max-w-md z-10 shadow-lg border border-gray-700">
+              <h3 className="text-lg font-semibold mb-2">Confirm Submit</h3>
+              <p className="mb-4 text-sm text-gray-300">Are you sure you want to submit the DPR? This action cannot be undone.</p>
+              <div className="flex justify-end gap-3">
+                <button onClick={cancelSubmit} className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm">Cancel</button>
+                <button onClick={confirmSubmit} className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold">{submitting ? 'Submitting...' : 'Submit'}</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-5 border border-gray-300 p-3 invisible">
           <div
@@ -626,7 +759,7 @@ const DprFetchViewer = () => {
           >
             <iframe
               id="pdfPreviewFrame"
-              className="flex-grow border-0 w-full min-h-[700px]"
+              className="grow border-0 w-full min-h-[700px]"
               title="PDF Preview"
             ></iframe>
           </div>
